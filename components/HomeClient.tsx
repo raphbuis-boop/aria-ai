@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { initials } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Client = {
   id: string;
@@ -72,6 +72,23 @@ export function HomeClient({
   const router = useRouter();
   const supabase = createClient();
   const [focus, setFocus] = useState(false);
+  const mlsSyncRan = useRef(false);
+
+  useEffect(() => {
+    if (mlsSyncRan.current) return;
+    mlsSyncRan.current = true;
+    void (async () => {
+      const res = await fetch("/api/mls/listings?limit=20");
+      const data = await res.json();
+      if (!data.listings?.length) return;
+      await fetch("/api/mls/apply-matches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listings: data.listings }),
+      });
+      router.refresh();
+    })();
+  }, [router]);
 
   const stack = useMemo(() => {
     const cards: React.ReactNode[] = [];
@@ -294,6 +311,7 @@ export function HomeClient({
             ["Log Showing", "/showings"],
             ["New Listing", "/listings/new"],
             ["Properties", "/properties"],
+            ["MLS Search", "/mls"],
             ["Market Pulse", "/market"],
             ["New Referral", "/referrals"],
           ].map(([label, href]) => (

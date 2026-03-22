@@ -1,5 +1,6 @@
 "use client";
 
+import type { MlsListingPayload } from "@/app/api/mls/listings/route";
 import { ActivityItem } from "@/components/ActivityItem";
 import { FileRow } from "@/components/FileRow";
 import { TaskItem } from "@/components/TaskItem";
@@ -49,6 +50,8 @@ export function ClientDetail({
     showing_date: "",
     feedback: "",
   });
+  const [mlsHits, setMlsHits] = useState<MlsListingPayload[]>([]);
+  const [mlsLoading, setMlsLoading] = useState(false);
 
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const portalUrl = `${site}/portal/${client.portal_token as string}`;
@@ -106,6 +109,22 @@ export function ClientDetail({
       body: "Manual note added",
     });
     router.refresh();
+  }
+
+  async function searchMlsForClient() {
+    setMlsLoading(true);
+    const params = new URLSearchParams();
+    const town = client.town as string | null;
+    const budgetMax = client.budget_max as number | null;
+    const bedsW = client.beds_wanted as number | null;
+    if (town) params.set("city", town);
+    if (budgetMax) params.set("maxPrice", String(budgetMax));
+    if (bedsW != null) params.set("minBeds", String(bedsW));
+    params.set("limit", "20");
+    const res = await fetch(`/api/mls/listings?${params}`);
+    const data = await res.json();
+    setMlsLoading(false);
+    setMlsHits(data.listings ?? []);
   }
 
   const overdue = useCallback((ts: Record<string, unknown>): boolean => {
@@ -321,6 +340,52 @@ export function ClientDetail({
 
       {tab === "Properties" ? (
         <div className="mt-4 space-y-3">
+          <button
+            type="button"
+            onClick={searchMlsForClient}
+            disabled={mlsLoading}
+            className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
+          >
+            {mlsLoading ? "Searching…" : "Search MLS for Matches"}
+          </button>
+          {mlsHits.map((l) => (
+            <div
+              key={l.id}
+              className="rounded-[14px] border border-border-card bg-bg-card p-3"
+            >
+              <div className="text-[14px] font-medium text-text-primary">
+                {l.address}
+              </div>
+              <div className="text-[11px] text-text-dim">
+                {l.city} · MLS {l.mlsNumber}
+              </div>
+              <div className="mt-1 text-[13px] text-accent-blue">
+                {fmtMoney(l.price)}
+              </div>
+              <div className="mt-2 text-[12px] text-text-muted">
+                {l.beds} bd · {l.baths} ba · {l.sqft.toLocaleString()} sqft
+              </div>
+              <button
+                type="button"
+                className="mt-2 rounded-[8px] border border-border-card px-3 py-2 text-[12px] text-accent-blue"
+                onClick={async () => {
+                  await fetch("/api/ai/draft-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      clientId: client.id,
+                      clientName: client.name,
+                      propertyContext: `${l.address} in ${l.city} at ${fmtMoney(l.price)}`,
+                      skipInsert: false,
+                    }),
+                  });
+                  toast.toast("Draft created — review in Inbox", "success");
+                }}
+              >
+                AI Text About This
+              </button>
+            </div>
+          ))}
           {matches.map((m) => {
             const p = m.properties as Record<string, unknown> | null;
             return (
