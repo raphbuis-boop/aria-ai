@@ -39,7 +39,9 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/api") ||
     path.startsWith("/portal") ||
     path === "/login" ||
-    path === "/setup";
+    path === "/setup" ||
+    path === "/landing" ||
+    path === "/landing.html";
 
   if (isPublic) {
     if (user && path === "/login") {
