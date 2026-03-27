@@ -1,9 +1,7 @@
+import { readFileSync } from 'fs'
+import { join } from 'path'
+
 export default function HomePage() {
-  return (
-    <iframe
-      src="/landing.html"
-      className="fixed inset-0 z-[200] h-[100dvh] w-full border-0 bg-black"
-      title="Aria — Your AI Real Estate Teammate"
-    />
-  );
+  const html = readFileSync(join(process.cwd(), 'public', 'landing.html'), 'utf8')
+  return <div dangerouslySetInnerHTML={{ __html: html }} />
 }
