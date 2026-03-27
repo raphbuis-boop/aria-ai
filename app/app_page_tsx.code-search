@@ -1,0 +1,30 @@
+# Query: app/page.tsx
+# ContextLines: 1
+
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import fs from 'fs'
+import path from 'path'
+
+export default async function HomePage() {
+  const supabase = createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  
+  if (session) {
+    redirect('/dashboard')
+  }
+
+  const filePath = path.join(process.cwd(), 'public', 'landing.html')
+  const html = fs.readFileSync(filePath, 'utf8')
+
+  return (
+    <div dangerouslySetInnerHTML={{ __html: html }} />
+  )
+}
+```
+
+Save it, then run:
+```
+git add .
+git commit -m "Fix landing page routing"
+git push
