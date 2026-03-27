@@ -12,7 +12,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const items = [
-  { href: "/", label: "Home", Icon: House },
+  { href: "/dashboard", label: "Home", Icon: House },
   { href: "/inbox", label: "Inbox", Icon: MessageSquare, badge: true },
   { href: "/pipeline", label: "Pipeline", Icon: LayoutGrid },
   { href: "/clients", label: "Clients", Icon: Users },
