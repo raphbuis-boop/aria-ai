@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
 import html2canvas from "html2canvas";
@@ -86,6 +87,7 @@ export function CmaInner() {
       <p className="mt-2 text-[13px] text-text-dim">
         Win your next listing presentation.
       </p>
+      <MarketsComingSoonNote className="mt-2" />
       <div className="mt-4 space-y-2">
         {(
           [

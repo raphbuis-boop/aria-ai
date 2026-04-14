@@ -32,6 +32,24 @@ export function SetupForm() {
           Create your private account (invite-only)
         </p>
         <div className="mt-8 space-y-4">
+          <div>
+            <div className="mb-1.5 text-[11px] font-medium text-text-dim">
+              Your state
+            </div>
+            <select
+              name="licenseState"
+              defaultValue="NJ"
+              className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-3 text-[14px] text-text-primary"
+            >
+              <option value="NJ">New Jersey (NJ)</option>
+              <option value="NY" disabled>
+                NY — Coming soon
+              </option>
+              <option value="CT" disabled>
+                CT — Coming soon
+              </option>
+            </select>
+          </div>
           <input
             name="fullName"
             required

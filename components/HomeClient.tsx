@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { ActionCard } from "@/components/ActionCard";
 import { AIBar } from "@/components/AIBar";
 import { FocusModeToggle } from "@/components/FocusModeCard";
@@ -327,6 +328,7 @@ export function HomeClient({
             </Link>
           ))}
         </div>
+        <MarketsComingSoonNote className="mt-2 px-0.5" />
       </div>
     </div>
   );

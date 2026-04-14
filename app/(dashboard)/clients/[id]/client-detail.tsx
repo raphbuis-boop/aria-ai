@@ -1,6 +1,7 @@
 "use client";
 
 import type { MlsListingPayload } from "@/app/api/mls/listings/route";
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { ActivityItem } from "@/components/ActivityItem";
 import { FileRow } from "@/components/FileRow";
 import { TaskItem } from "@/components/TaskItem";
@@ -367,6 +368,7 @@ export function ClientDetail({
             Search uses this client&apos;s town, budget, and beds vs live SimplyRETS
             NJ listings.
           </p>
+          <MarketsComingSoonNote className="mt-1" />
           <button
             type="button"
             onClick={searchMlsForClient}

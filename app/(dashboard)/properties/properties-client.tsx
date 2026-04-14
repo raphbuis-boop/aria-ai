@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { PropertyCard } from "@/components/PropertyCard";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -138,6 +139,7 @@ export function PropertiesClient({
           {availableCount} available
         </span>
       </header>
+      <MarketsComingSoonNote className="mt-2" />
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {(["All", "Available", "Pending", "Sold"] as const).map((f) => (
           <button

@@ -15,6 +15,7 @@ export default function SettingsPage() {
     full_name: "",
     phone: "",
     email: "",
+    license_state: "NJ",
   });
 
   useEffect(() => {
@@ -36,6 +37,9 @@ export default function SettingsPage() {
           full_name: String(data.full_name ?? ""),
           phone: String(data.phone ?? ""),
           email: String(data.email ?? ""),
+          license_state: String(
+            (data as Record<string, unknown>).license_state ?? "NJ",
+          ),
         });
       }
     })();
@@ -91,6 +95,7 @@ export default function SettingsPage() {
         full_name: profile.full_name,
         phone: profile.phone,
         email: profile.email,
+        license_state: profile.license_state,
       })
       .eq("id", user.id);
     toast.toast("Profile saved", "success");
@@ -162,6 +167,26 @@ export default function SettingsPage() {
       <div className="mt-8 space-y-2">
         <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
           Agent profile
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+            Your state
+          </div>
+          <select
+            value={profile.license_state}
+            onChange={(e) =>
+              setProfile({ ...profile, license_state: e.target.value })
+            }
+            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
+          >
+            <option value="NJ">New Jersey (NJ)</option>
+            <option value="NY" disabled>
+              NY — Coming soon
+            </option>
+            <option value="CT" disabled>
+              CT — Coming soon
+            </option>
+          </select>
         </div>
         <input
           value={profile.full_name}

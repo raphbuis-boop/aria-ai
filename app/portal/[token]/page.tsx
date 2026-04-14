@@ -1,4 +1,5 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { MarketCard } from "@/components/MarketCard";
 import { fmtMoney, fmtDate } from "@/lib/utils";
 
@@ -114,6 +115,7 @@ export default async function PortalPage({
         <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
           Market update
         </div>
+        <MarketsComingSoonNote className="mt-2" />
         {market ? (
           <div className="mt-3">
             <MarketCard

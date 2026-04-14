@@ -162,6 +162,10 @@ export default function MlsSearchPage() {
         <div className="text-[13px] text-text-dim">Live NJ listings (SimplyRETS)</div>
       </header>
 
+      <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-center text-[12px] text-text-dim">
+        <span className="font-medium text-accent-blue">NY &amp; CT MLS</span> coming soon
+      </div>
+
       <div className="mt-5 flex flex-wrap gap-2">
         <input
           value={city}

@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { MarketCard } from "@/components/MarketCard";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useMemo, useState } from "react";
@@ -59,8 +60,11 @@ export default function MarketPage() {
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
       <header>
-        <div className="text-[20px] font-medium text-text-primary">
-          Market Pulse
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-[20px] font-medium text-text-primary">
+            Market Pulse
+          </div>
+          <MarketsComingSoonNote variant="badge" />
         </div>
         <div className="text-[13px] text-text-dim">NJ real estate trends</div>
       </header>

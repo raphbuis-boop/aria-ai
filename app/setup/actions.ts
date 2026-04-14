@@ -6,11 +6,15 @@ import { revalidatePath } from "next/cache";
 export async function registerAgent(formData: FormData) {
   const fullName = String(formData.get("fullName") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
+  const licenseState = String(formData.get("licenseState") ?? "NJ").trim();
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirm") ?? "");
 
   if (!fullName || !email || !password) {
     return { error: "All fields are required." };
+  }
+  if (licenseState !== "NJ") {
+    return { error: "Only New Jersey is available at this time." };
   }
   if (password !== confirm) {
     return { error: "Passwords do not match." };
@@ -44,6 +48,7 @@ export async function registerAgent(formData: FormData) {
     id: created.user.id,
     full_name: fullName,
     email,
+    license_state: licenseState,
   });
 
   if (pErr) {

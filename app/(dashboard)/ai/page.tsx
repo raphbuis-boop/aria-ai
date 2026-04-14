@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { createClient } from "@/lib/supabase/client";
 import { Send } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -84,6 +85,7 @@ export default function AIPage() {
         <div className="text-[13px] text-text-dim">
           Your AI real estate teammate
         </div>
+        <MarketsComingSoonNote className="mt-2" />
       </header>
 
       <div className="mx-auto mt-6 flex w-full max-w-lg flex-1 flex-col gap-3">

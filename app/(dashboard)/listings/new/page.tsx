@@ -1,5 +1,6 @@
 "use client";
 
+import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
 import { useState } from "react";
@@ -121,6 +122,7 @@ export default function NewListingPage() {
         New Listing
       </div>
       <div className="mt-2 text-[12px] text-text-dim">Step {step} of 3</div>
+      <MarketsComingSoonNote className="mt-2" />
 
       {step === 1 ? (
         <div className="mt-4 space-y-2">
