@@ -12,6 +12,7 @@ export function PropertyCard({
   sqft,
   status,
   matchCount,
+  photoUrl,
   onFindMatches,
   onNotifyAll,
 }: {
@@ -24,11 +25,22 @@ export function PropertyCard({
   sqft: number | null;
   status: string | null;
   matchCount: number;
+  photoUrl?: string | null;
   onFindMatches: () => void;
   onNotifyAll: () => void;
 }) {
   return (
     <div className="rounded-[14px] border border-border-card bg-bg-card p-4">
+      {photoUrl ? (
+        <div className="mb-3 h-36 w-full overflow-hidden rounded-[10px] bg-bg-deep">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={photoUrl}
+            alt=""
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
       <div className="flex items-start justify-between gap-2">
         <div className="text-[14px] font-medium text-text-primary">{address}</div>
         <span className="rounded-[8px] bg-[rgba(59,130,246,0.15)] px-2 py-0.5 text-[10px] font-medium capitalize text-accent-blue">

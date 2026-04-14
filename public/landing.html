@@ -18,6 +18,8 @@
   .nav-links a:hover { color: #fff; }
   .nav-cta { background: #3B82F6; color: #fff; padding: 10px 22px; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: background 0.2s; }
   .nav-cta:hover { background: #2563EB; }
+  .nav-demo { color: #9CA3AF; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 400; cursor: pointer; border: 0.5px solid #222; background: transparent; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .nav-demo:hover { color: #fff; border-color: #444; }
 
   /* HERO */
   .hero { text-align: center; padding: 100px 40px 80px; max-width: 900px; margin: 0 auto; }
@@ -35,6 +37,10 @@
   .hero-form button:hover { background: #2563EB; }
   .hero-sub { font-size: 13px; color: #4B5563; }
   .hero-sub span { color: #6B7280; }
+  .hero-demo-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #6B7280; margin-top: 16px; transition: color 0.2s; text-decoration: none; }
+  .hero-demo-link:hover { color: #fff; }
+  .hero-demo-link svg { transition: transform 0.2s; }
+  .hero-demo-link:hover svg { transform: translateX(3px); }
 
   /* APP MOCKUP */
   .mockup-section { padding: 20px 40px 80px; max-width: 1000px; margin: 0 auto; }
@@ -188,7 +194,10 @@
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
   </div>
-  <button class="nav-cta" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <a href="/demo" class="nav-demo">▶ Try Demo</a>
+    <button class="nav-cta" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+  </div>
 </nav>
 
 <!-- HERO -->
@@ -205,6 +214,10 @@
   </div>
   <p class="hero-sub">Join <span id="count">47</span> NJ agents already on the waitlist. No credit card required.</p>
   <div class="success-msg" id="success-msg">🎉 You're on the list! We'll be in touch soon.</div>
+  <a href="/demo" class="hero-demo-link">
+    Or explore the live app
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
 </div>
 
 <!-- APP MOCKUP -->
@@ -449,6 +462,7 @@
     <button onclick="joinWaitlistFinal()">Get Early Access</button>
   </div>
   <div class="success-msg" id="final-success-msg" style="display:none;margin-top:16px;">🎉 You're on the list! We'll be in touch soon.</div>
+  <p style="margin-top:20px;font-size:14px;color:#4B5563;">Not ready to commit? <a href="/demo" style="color:#6B7280;text-decoration:underline;text-underline-offset:3px;transition:color 0.2s;" onmouseover="this.style.color='#9CA3AF'" onmouseout="this.style.color='#6B7280'">Try the live demo first →</a></p>
 </div>
 
 <!-- FOOTER -->
@@ -473,19 +487,24 @@
       alert('Please enter a valid email address');
       return;
     }
+    const apiUrl = new URL('/api/waitlist', window.location.origin).href;
     try {
-      const response = await fetch('/api/waitlist', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
+      if (!response.ok) {
+        const data = await response.json().catch(function () { return {}; });
+        alert(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
       document.getElementById('success-msg').style.display = 'block';
       document.getElementById('waitlist-email').value = '';
       const count = document.getElementById('count');
-      count.textContent = parseInt(count.textContent) + 1;
+      count.textContent = parseInt(count.textContent, 10) + 1;
     } catch (e) {
-      document.getElementById('success-msg').style.display = 'block';
-      document.getElementById('waitlist-email').value = '';
+      alert('Network error. Please check your connection and try again.');
     }
   }
 
@@ -495,13 +514,22 @@
       alert('Please enter a valid email address');
       return;
     }
+    const apiUrl = new URL('/api/waitlist', window.location.origin).href;
     try {
-      await fetch('/api/waitlist', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
       });
-    } catch (e) {}
+      if (!response.ok) {
+        const data = await response.json().catch(function () { return {}; });
+        alert(data.error || 'Something went wrong. Please try again.');
+        return;
+      }
+    } catch (e) {
+      alert('Network error. Please check your connection and try again.');
+      return;
+    }
     document.getElementById('final-success-msg').style.display = 'block';
     document.getElementById('final-email').value = '';
   }

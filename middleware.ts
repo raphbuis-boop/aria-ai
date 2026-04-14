@@ -36,8 +36,17 @@ export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   if (path === "/landing") {
+    if (user) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard";
+      return NextResponse.redirect(url);
+    }
+    return supabaseResponse;
+  }
+
+  if (user && path === "/") {
     const url = request.nextUrl.clone();
-    url.pathname = user ? "/dashboard" : "/";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
@@ -50,11 +59,6 @@ export async function middleware(request: NextRequest) {
     path === "/landing.html";
 
   if (isPublic) {
-    if (user && path === "/") {
-      const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
-      return NextResponse.redirect(url);
-    }
     if (user && path === "/login") {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";

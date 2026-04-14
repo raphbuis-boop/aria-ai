@@ -1,7 +1,5 @@
-import { readFileSync } from 'fs'
-import { join } from 'path'
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  const html = readFileSync(join(process.cwd(), 'public', 'landing.html'), 'utf8')
-  return <div dangerouslySetInnerHTML={{ __html: html }} />
+  redirect("/landing");
 }

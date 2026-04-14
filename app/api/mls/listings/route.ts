@@ -1,49 +1,23 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
+import {
+  getSimplyRetsAuthHeader,
+  isSimplyRetsConfigured,
+  mapSimplyRetsListing,
+  SIMPLYRETS_API_BASE,
+} from "@/lib/simplyrets";
+import type { MlsListingPayload } from "@/lib/simplyrets";
 
-export type MlsListingPayload = {
-  id: string;
-  address: string;
-  city: string;
-  price: number;
-  beds: number;
-  baths: number;
-  sqft: number;
-  description: string;
-  photos: string[];
-  status: string;
-  daysOnMarket: number | null;
-  mlsNumber: string;
-};
+export type { MlsListingPayload } from "@/lib/simplyrets";
 
-function mapListing(raw: Record<string, unknown>): MlsListingPayload {
-  const address = (raw.address as Record<string, unknown> | undefined) ?? {};
-  const property = (raw.property as Record<string, unknown> | undefined) ?? {};
-  const mls = (raw.mls as Record<string, unknown> | undefined) ?? {};
-  const photosRaw = raw.photos;
-  const photos = Array.isArray(photosRaw)
-    ? (photosRaw as string[])
-    : typeof photosRaw === "string"
-      ? [photosRaw]
-      : [];
-
-  const mlsId = String(raw.mlsId ?? raw.id ?? "");
-
-  return {
-    id: mlsId,
-    address: String(address.full ?? address.street ?? ""),
-    city: String(address.city ?? ""),
-    price: Number(raw.listPrice ?? 0),
-    beds: Number(property.bedrooms ?? 0),
-    baths: Number(property.bathsFull ?? property.bathsTotal ?? 0),
-    sqft: Number(property.area ?? property.livingArea ?? 0),
-    description: String(raw.remarks ?? raw.publicRemarks ?? ""),
-    photos,
-    status: String(mls.status ?? raw.status ?? "Active"),
-    daysOnMarket:
-      mls.daysOnMarket != null ? Number(mls.daysOnMarket) : null,
-    mlsNumber: mlsId,
-  };
+function parseListingsPayload(data: unknown): unknown[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === "object") {
+    const o = data as Record<string, unknown>;
+    if (Array.isArray(o.properties)) return o.properties;
+    if (Array.isArray(o.listings)) return o.listings;
+  }
+  return [];
 }
 
 export async function GET(req: Request) {
@@ -52,8 +26,21 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  if (!isSimplyRetsConfigured()) {
+    return NextResponse.json(
+      {
+        error:
+          "SimplyRETS is not configured. Set SIMPLYRETS_API_KEY and SIMPLYRETS_API_SECRET.",
+        listings: [] as MlsListingPayload[],
+        total: 0,
+      },
+      { status: 503 },
+    );
+  }
+
   const url = new URL(req.url);
   const city = url.searchParams.get("city") ?? undefined;
+  const state = url.searchParams.get("state") ?? "NJ";
   const minPrice = url.searchParams.get("minPrice");
   const maxPrice = url.searchParams.get("maxPrice");
   const minBeds = url.searchParams.get("minBeds");
@@ -63,40 +50,46 @@ export async function GET(req: Request) {
     Math.max(1, Number(url.searchParams.get("limit") ?? 20)),
   );
 
-  const key = process.env.SIMPLYRETS_API_KEY ?? "";
-  const secret = process.env.SIMPLYRETS_API_SECRET ?? "";
   const base =
-    process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ??
-    "https://api.simplyrets.com";
-
-  const auth = Buffer.from(`${key}:${secret}`).toString("base64");
+    process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
 
   const params = new URLSearchParams({
     status,
     limit: limit.toString(),
+    ...(state && { state }),
     ...(city && { cities: city }),
     ...(minPrice && { minprice: minPrice }),
     ...(maxPrice && { maxprice: maxPrice }),
     ...(minBeds && { minbeds: minBeds }),
   });
 
-  const response = await fetch(`${base}/properties?${params}`, {
-    headers: { Authorization: `Basic ${auth}` },
+  const endpoint = `${base}/properties?${params}`;
+
+  const response = await fetch(endpoint, {
+    headers: {
+      Authorization: getSimplyRetsAuthHeader(),
+      Accept: "application/json",
+    },
   });
 
   if (!response.ok) {
     const errText = await response.text();
     return NextResponse.json(
-      { error: errText || "SimplyRETS request failed", listings: [], total: 0 },
+      {
+        error:
+          errText?.slice(0, 500) || `SimplyRETS error (${response.status})`,
+        listings: [] as MlsListingPayload[],
+        total: 0,
+      },
       { status: 502 },
     );
   }
 
   const data = (await response.json()) as unknown;
-  const rawListings = Array.isArray(data) ? data : [];
+  const rawListings = parseListingsPayload(data);
 
   const listings: MlsListingPayload[] = rawListings.map((item) =>
-    mapListing(item as Record<string, unknown>),
+    mapSimplyRetsListing(item as Record<string, unknown>),
   );
 
   return NextResponse.json({

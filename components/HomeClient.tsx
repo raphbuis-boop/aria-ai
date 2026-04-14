@@ -78,7 +78,10 @@ export function HomeClient({
     if (mlsSyncRan.current) return;
     mlsSyncRan.current = true;
     void (async () => {
-      const res = await fetch("/api/mls/listings?limit=20");
+      const params = new URLSearchParams();
+      params.set("state", "NJ");
+      params.set("limit", "20");
+      const res = await fetch(`/api/mls/listings?${params}`);
       const data = await res.json();
       if (!data.listings?.length) return;
       await fetch("/api/mls/apply-matches", {

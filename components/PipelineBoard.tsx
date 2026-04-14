@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, relTime } from "@/lib/utils";
@@ -35,26 +36,53 @@ type Client = {
   last_engagement_at: string | null;
 };
 
-function LeadDot({ score }: { score: number }) {
+function accentColor(score: number) {
+  if (score >= 7) return "#3B82F6";
+  if (score >= 4) return "#F59E0B";
+  return "#374151";
+}
+
+function LeadBadge({ score }: { score: number }) {
   if (score >= 7) {
-    return <span className="h-2 w-2 rounded-full bg-accent-blue" />;
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-accent-blue/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-accent-blue">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent-blue" />
+        Hot · {score}
+      </span>
+    );
   }
   if (score >= 4) {
-    return <span className="h-2 w-2 rounded-full bg-accent-amber" />;
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-accent-amber/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-accent-amber">
+        <span className="h-1.5 w-1.5 rounded-full bg-accent-amber" />
+        Warm · {score}
+      </span>
+    );
   }
-  return <span className="h-2 w-2 rounded-full bg-text-dim" />;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-text-dim">
+      <span className="h-1.5 w-1.5 rounded-full bg-text-dim" />
+      New · {score}
+    </span>
+  );
 }
 
 function DraggableCard({ c }: { c: Client }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: c.id,
   });
-  const style = transform
-    ? {
-        transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`,
-        zIndex: isDragging ? 50 : undefined,
-      }
-    : undefined;
+  const score = c.lead_score ?? 0;
+  const style: React.CSSProperties = {
+    ...(transform
+      ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+      : {}),
+    zIndex: isDragging ? 50 : undefined,
+    boxShadow: isDragging
+      ? "0 16px 40px rgba(0,0,0,0.8)"
+      : "0 2px 12px rgba(0,0,0,0.5)",
+    borderLeft: `2px solid ${accentColor(score)}`,
+    opacity: isDragging ? 0.95 : 1,
+  };
 
   return (
     <div
@@ -62,15 +90,25 @@ function DraggableCard({ c }: { c: Client }) {
       style={style}
       {...listeners}
       {...attributes}
-      className="cursor-grab rounded-[10px] border border-border-card bg-bg-card p-3 active:cursor-grabbing"
+      className="cursor-grab rounded-[10px] border border-border-card bg-bg-card px-3 py-3.5 active:cursor-grabbing"
     >
-      <div className="text-[13px] font-medium text-text-primary">{c.name}</div>
-      <div className="mt-1 text-[11px] text-text-dim">
-        {fmtMoney(c.budget_max)} · {c.town ?? "—"}
+      <div className="mb-2">
+        <LeadBadge score={score} />
       </div>
-      <div className="mt-2 flex items-center justify-between">
-        <LeadDot score={c.lead_score ?? 0} />
-        <span className="text-[11px] text-text-dim">
+      <div className="text-[13px] font-semibold leading-tight text-text-primary">
+        {c.name}
+      </div>
+      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-dim">
+        <span className="font-medium text-text-muted">{fmtMoney(c.budget_max)}</span>
+        {c.town && (
+          <>
+            <span className="text-border-card">·</span>
+            <span>{c.town}</span>
+          </>
+        )}
+      </div>
+      <div className="mt-2.5 border-t border-border-card pt-2 text-right">
+        <span className="text-[10px] text-text-dim">
           {relTime(c.last_engagement_at)}
         </span>
       </div>
@@ -88,23 +126,43 @@ function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0);
   return (
-    <div className="flex w-[220px] shrink-0 flex-col">
-      <div className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-dim">
-        {col.label}
+    <div className="flex w-[85vw] shrink-0 snap-start flex-col sm:w-[228px]">
+      <div className="mb-2.5 flex items-center justify-between px-0.5">
+        <div className="text-[11px] font-semibold uppercase tracking-widest text-text-dim">
+          {col.label}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/5 px-1.5 text-[9px] font-medium text-text-dim">
+            {clients.length}
+          </span>
+        </div>
       </div>
       <div
         ref={setNodeRef}
-        className={`min-h-[240px] flex-1 space-y-2 rounded-[12px] border border-border-card bg-bg-deep p-2 ${
-          isOver ? "border-accent-blue" : ""
+        style={{
+          boxShadow: isOver
+            ? "0 0 0 1px #3B82F6, inset 0 0 0 1px #3B82F6"
+            : "0 2px 8px rgba(0,0,0,0.3)",
+          transition: "box-shadow 0.15s",
+        }}
+        className={`min-h-[260px] flex-1 space-y-2 rounded-[14px] border bg-bg-deep p-2.5 ${
+          isOver ? "border-accent-blue" : "border-border-card"
         }`}
       >
         {clients.map((c) => (
           <DraggableCard key={c.id} c={c} />
         ))}
+        {clients.length === 0 && (
+          <div className="flex h-16 items-center justify-center rounded-[8px] border border-dashed border-border-card">
+            <span className="text-[10px] text-text-dim">Drop here</span>
+          </div>
+        )}
       </div>
-      <div className="mt-2 text-[11px] text-text-muted">
-        Total: {fmtMoney(total)}
-      </div>
+      {total > 0 && (
+        <div className="mt-2 px-0.5 text-[10px] text-text-dim">
+          {fmtMoney(total)} total
+        </div>
+      )}
     </div>
   );
 }
@@ -175,7 +233,7 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
       collisionDetection={closestCorners}
       onDragEnd={onDragEnd}
     >
-      <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+      <div className="-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-3 [scroll-padding-left:1rem] snap-x snap-mandatory sm:snap-none">
         {COLS.map((col) => (
           <DroppableColumn key={col.id} col={col} clients={grouped[col.id]} />
         ))}

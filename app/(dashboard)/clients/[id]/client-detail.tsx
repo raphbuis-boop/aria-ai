@@ -52,6 +52,7 @@ export function ClientDetail({
   });
   const [mlsHits, setMlsHits] = useState<MlsListingPayload[]>([]);
   const [mlsLoading, setMlsLoading] = useState(false);
+  const [mlsSearched, setMlsSearched] = useState(false);
 
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const portalUrl = `${site}/portal/${client.portal_token as string}`;
@@ -114,17 +115,39 @@ export function ClientDetail({
   async function searchMlsForClient() {
     setMlsLoading(true);
     const params = new URLSearchParams();
+    params.set("state", "NJ");
     const town = client.town as string | null;
+    const budgetMin = client.budget_min as number | null;
     const budgetMax = client.budget_max as number | null;
     const bedsW = client.beds_wanted as number | null;
     if (town) params.set("city", town);
-    if (budgetMax) params.set("maxPrice", String(budgetMax));
+    if (budgetMin != null && budgetMin > 0) {
+      params.set("minPrice", String(budgetMin));
+    }
+    if (budgetMax != null && budgetMax > 0) {
+      params.set("maxPrice", String(budgetMax));
+    }
     if (bedsW != null) params.set("minBeds", String(bedsW));
     params.set("limit", "20");
-    const res = await fetch(`/api/mls/listings?${params}`);
-    const data = await res.json();
-    setMlsLoading(false);
-    setMlsHits(data.listings ?? []);
+    try {
+      const res = await fetch(`/api/mls/listings?${params}`);
+      const data = (await res.json()) as {
+        error?: string;
+        listings?: MlsListingPayload[];
+      };
+      if (!res.ok) {
+        toast.toast(data.error ?? "MLS search failed", "warn");
+        setMlsHits([]);
+        return;
+      }
+      setMlsHits(data.listings ?? []);
+    } catch {
+      toast.toast("Network error loading MLS.", "warn");
+      setMlsHits([]);
+    } finally {
+      setMlsLoading(false);
+      setMlsSearched(true);
+    }
   }
 
   const overdue = useCallback((ts: Record<string, unknown>): boolean => {
@@ -340,19 +363,49 @@ export function ClientDetail({
 
       {tab === "Properties" ? (
         <div className="mt-4 space-y-3">
+          <p className="text-[12px] text-text-dim">
+            Search uses this client&apos;s town, budget, and beds vs live SimplyRETS
+            NJ listings.
+          </p>
           <button
             type="button"
             onClick={searchMlsForClient}
             disabled={mlsLoading}
-            className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
+            className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white disabled:opacity-60"
           >
             {mlsLoading ? "Searching…" : "Search MLS for Matches"}
           </button>
-          {mlsHits.map((l) => (
+          {!mlsLoading && mlsHits.length === 0 && !mlsSearched ? (
+            <p className="text-center text-[12px] text-text-dim">
+              Run a search to see listings that fit this client.
+            </p>
+          ) : null}
+          {!mlsLoading && mlsSearched && mlsHits.length === 0 ? (
+            <p className="text-center text-[12px] text-text-dim">
+              No listings matched these criteria in the current feed.
+            </p>
+          ) : null}
+          {mlsHits.map((l) => {
+            const photo = l.photos?.[0];
+            return (
             <div
               key={l.id}
               className="rounded-[14px] border border-border-card bg-bg-card p-3"
             >
+              <div className="mb-2 h-32 w-full overflow-hidden rounded-[10px] bg-bg-deep">
+                {photo ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={photo}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-[11px] text-text-dim">
+                    No photo
+                  </div>
+                )}
+              </div>
               <div className="text-[14px] font-medium text-text-primary">
                 {l.address}
               </div>
@@ -363,7 +416,8 @@ export function ClientDetail({
                 {fmtMoney(l.price)}
               </div>
               <div className="mt-2 text-[12px] text-text-muted">
-                {l.beds} bd · {l.baths} ba · {l.sqft.toLocaleString()} sqft
+                {l.beds} bd · {l.baths} ba ·{" "}
+                {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
               </div>
               <button
                 type="button"
@@ -385,7 +439,8 @@ export function ClientDetail({
                 AI Text About This
               </button>
             </div>
-          ))}
+            );
+          })}
           {matches.map((m) => {
             const p = m.properties as Record<string, unknown> | null;
             return (

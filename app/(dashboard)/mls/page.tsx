@@ -5,7 +5,7 @@ import type { MlsListingPayload } from "@/app/api/mls/listings/route";
 import { fmtMoney } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type MatchHit = {
   clientId: string;
@@ -24,28 +24,73 @@ export default function MlsSearchPage() {
   const [minBeds, setMinBeds] = useState("");
   const [listings, setListings] = useState<MlsListingPayload[]>([]);
   const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [matchMap, setMatchMap] = useState<Record<string, MatchHit[]>>({});
   const [matchLoading, setMatchLoading] = useState<string | null>(null);
 
   const search = useCallback(async () => {
     setLoading(true);
+    setErrorMessage(null);
     const params = new URLSearchParams();
+    params.set("state", "NJ");
     if (city.trim()) params.set("city", city.trim());
     if (minPrice) params.set("minPrice", minPrice);
     if (maxPrice) params.set("maxPrice", maxPrice);
     if (minBeds) params.set("minBeds", minBeds);
     params.set("limit", "20");
-    const res = await fetch(`/api/mls/listings?${params}`);
-    const data = await res.json();
-    setLoading(false);
-    if (!res.ok) {
-      toast.toast(data.error ?? "Search failed", "warn");
+    try {
+      const res = await fetch(`/api/mls/listings?${params}`);
+      const data = (await res.json()) as {
+        error?: string;
+        listings?: MlsListingPayload[];
+      };
+      if (!res.ok) {
+        const msg = data.error ?? "Search failed";
+        setErrorMessage(msg);
+        toast.toast(msg, "warn");
+        setListings([]);
+        return;
+      }
+      setListings(data.listings ?? []);
+  } catch {
+      const msg = "Network error.";
+      setErrorMessage(msg);
+      toast.toast(msg, "warn");
       setListings([]);
-      return;
+    } finally {
+      setLoading(false);
     }
-    setListings(data.listings ?? []);
   }, [city, minPrice, maxPrice, minBeds, toast]);
+
+  useEffect(() => {
+    void (async () => {
+      setInitialLoad(true);
+      setErrorMessage(null);
+      const params = new URLSearchParams();
+      params.set("state", "NJ");
+      params.set("limit", "20");
+      try {
+        const res = await fetch(`/api/mls/listings?${params}`);
+        const data = (await res.json()) as {
+          error?: string;
+          listings?: MlsListingPayload[];
+        };
+        if (!res.ok) {
+          setErrorMessage(data.error ?? "Could not load listings.");
+          setListings([]);
+          return;
+        }
+        setListings(data.listings ?? []);
+      } catch {
+        setErrorMessage("Could not load listings.");
+        setListings([]);
+      } finally {
+        setInitialLoad(false);
+      }
+    })();
+  }, []);
 
   async function matchToClients(listing: MlsListingPayload) {
     const key = listing.id;
@@ -57,6 +102,10 @@ export default function MlsSearchPage() {
     });
     const data = await res.json();
     setMatchLoading(null);
+    if (!res.ok) {
+      toast.toast("Could not match clients", "warn");
+      return;
+    }
     setMatchMap((m) => ({ ...m, [key]: data.matches ?? [] }));
     setExpanded(key);
   }
@@ -98,13 +147,19 @@ export default function MlsSearchPage() {
     toast.toast("Draft created — check Inbox", "success");
   }
 
+  const showEmpty =
+    !loading &&
+    !initialLoad &&
+    listings.length === 0 &&
+    !errorMessage;
+
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
       <header>
         <div className="text-[20px] font-medium text-text-primary">
           MLS Search
         </div>
-        <div className="text-[13px] text-text-dim">Live NJ Listings</div>
+        <div className="text-[13px] text-text-dim">Live NJ listings (SimplyRETS)</div>
       </header>
 
       <div className="mt-5 flex flex-wrap gap-2">
@@ -137,13 +192,31 @@ export default function MlsSearchPage() {
         />
         <button
           type="button"
-          onClick={search}
+          onClick={() => void search()}
           disabled={loading}
-          className="rounded-[8px] bg-accent-blue px-4 py-2 text-[13px] font-medium text-white"
+          className="rounded-[8px] bg-accent-blue px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60"
         >
           {loading ? "…" : "Search"}
         </button>
       </div>
+
+      {errorMessage ? (
+        <div className="mt-4 rounded-[12px] border border-border-card bg-bg-card px-3 py-3 text-[13px] text-accent-amber">
+          {errorMessage}
+        </div>
+      ) : null}
+
+      {initialLoad || loading ? (
+        <div className="mt-8 text-center text-[13px] text-text-dim">
+          {initialLoad ? "Loading listings…" : "Searching…"}
+        </div>
+      ) : null}
+
+      {showEmpty ? (
+        <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
+          No listings match your filters. Try another town or price range.
+        </div>
+      ) : null}
 
       <div className="mt-6 grid gap-3">
         {listings.map((l) => {
@@ -169,7 +242,7 @@ export default function MlsSearchPage() {
                 )}
               </div>
               <div className="mt-3 text-[13px] font-medium text-text-primary">
-                {l.address}
+                {l.address || "—"}
               </div>
               <div className="text-[11px] text-text-dim">
                 {l.city} · MLS {l.mlsNumber}
@@ -178,7 +251,8 @@ export default function MlsSearchPage() {
                 {fmtMoney(l.price)}
               </div>
               <div className="mt-3 text-[12px] text-text-muted">
-                {l.beds} bd · {l.baths} ba · {l.sqft.toLocaleString()} sqft
+                {l.beds} bd · {l.baths} ba ·{" "}
+                {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
               </div>
               {l.daysOnMarket != null ? (
                 <div className="mt-2 inline-block rounded-[8px] bg-bg-deep px-2 py-1 text-[11px] text-text-dim">

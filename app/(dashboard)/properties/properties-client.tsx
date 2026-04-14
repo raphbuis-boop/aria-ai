@@ -156,10 +156,28 @@ export function PropertiesClient({
       </div>
 
       <div className="mt-4 space-y-4">
+        {filtered.length === 0 ? (
+          <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
+            No properties match this filter. Add listings from{" "}
+            <button
+              type="button"
+              onClick={() => router.push("/mls")}
+              className="font-medium text-accent-blue"
+            >
+              MLS Search
+            </button>{" "}
+            or use + to add manually.
+          </div>
+        ) : null}
         {filtered.map((p) => {
           const id = String(p.id);
           const matchCount =
             activePropertyId === id ? matchesFor.length : 1;
+          const rawPhotos = p.photos as unknown;
+          const photoUrl =
+            Array.isArray(rawPhotos) && typeof rawPhotos[0] === "string"
+              ? rawPhotos[0]
+              : null;
           return (
             <div key={id}>
               <PropertyCard
@@ -172,6 +190,7 @@ export function PropertiesClient({
                 sqft={p.sqft as number | null}
                 status={p.status as string | null}
                 matchCount={matchCount}
+                photoUrl={photoUrl}
                 onFindMatches={() => findMatches(id)}
                 onNotifyAll={() => notifyAll(id)}
               />
