@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Aria — Your AI Real Estate Teammate</title>
+<title>Aria — Follow Up Every NJ Lead Automatically</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -38,6 +38,11 @@
   .hero-form button:hover { background: #2563EB; }
   .hero-sub { font-size: 13px; color: #4B5563; }
   .hero-sub span { color: #6B7280; }
+  .cta-micro { font-size: 11px; color: #4B5563; margin-top: 10px; text-align: center; line-height: 1.4; max-width: 420px; margin-left: auto; margin-right: auto; }
+  .pain-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; max-width: 960px; margin-left: auto; margin-right: auto; }
+  .pain-card { background: #111; border: 0.5px solid #1a1a1a; border-radius: 14px; padding: 24px; text-align: left; }
+  .pain-card h3 { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 8px; }
+  .pain-card p { font-size: 13px; color: #6B7280; line-height: 1.55; }
   .hero-demo-link { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: #6B7280; margin-top: 16px; transition: color 0.2s; text-decoration: none; }
   .hero-demo-link:hover { color: #fff; }
   .hero-demo-link svg { transition: transform 0.2s; }
@@ -181,6 +186,7 @@
     .section-title { font-size: 32px; }
     .final-cta h2 { font-size: 36px; }
     .final-form { flex-direction: column; }
+    .pain-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -190,14 +196,15 @@
 <nav>
   <div class="nav-logo">Aria</div>
   <div class="nav-links">
-    <a href="#features">Features</a>
+    <a href="#pain">The problem</a>
     <a href="#how-it-works">How it works</a>
+    <a href="#features">Features</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
   </div>
   <div style="display:flex;align-items:center;gap:10px;">
     <a href="/demo" class="nav-demo">▶ Try Demo</a>
-    <button class="nav-cta" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+    <button class="nav-cta" onclick="document.getElementById('waitlist-email').focus()">Join NJ Waitlist</button>
   </div>
 </nav>
 
@@ -205,21 +212,49 @@
 <div class="hero">
   <div class="hero-badge">
     <div class="hero-badge-dot"></div>
-    Built for NJ agents — NY &amp; CT coming soon
+    NJ-only beta · Limited spots · NY &amp; CT coming soon
   </div>
-  <h1>Close More Deals.<br><span>Work Less.</span></h1>
-  <div class="hero-ny-badge">NY &amp; CT coming soon</div>
-  <p>Aria is the AI-powered CRM that texts your leads, matches properties to buyers, and manages your pipeline — all before your morning coffee.</p>
+  <h1>Stop Losing Leads<br><span>To Slow Follow-Up</span></h1>
+  <p>Aria texts, nurtures, and books every lead automatically—so you close more deals without living in your inbox.</p>
   <div class="hero-form">
-    <input type="email" id="waitlist-email" placeholder="Enter your email address" />
-    <button onclick="joinWaitlist()">Get Early Access</button>
+    <input type="email" id="waitlist-email" placeholder="Enter your work email" />
+    <button onclick="joinWaitlist()">Reserve Your Spot</button>
   </div>
-  <p class="hero-sub">Be one of the first NJ agents to get access. No credit card required.</p>
+  <p class="cta-micro">Limited to first 50 agents in NJ</p>
+  <p class="hero-sub">No credit card. Used by NJ agents testing the beta.</p>
   <div class="success-msg" id="success-msg">🎉 You're on the list! We'll be in touch soon.</div>
   <a href="/demo" class="hero-demo-link">
     Or explore the live app
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </a>
+</div>
+
+<!-- PAIN -->
+<div class="section" id="pain" style="padding-top:40px;padding-bottom:40px;">
+  <div class="section-tag">The problem</div>
+  <div class="section-title">Hot leads go cold<br><span>in minutes.</span></div>
+  <div class="section-sub" style="margin:0 auto;">You paid for Zillow and Facebook. Then life happened—and they heard from someone else first.</div>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <h3>Slow follow-up</h3>
+      <p>Every hour you wait, another agent gets the callback. Speed wins.</p>
+    </div>
+    <div class="pain-card">
+      <h3>Leads slip through</h3>
+      <p>No system = leads in notes, CRM, and texts you “meant to send.”</p>
+    </div>
+    <div class="pain-card">
+      <h3>Nights on your phone</h3>
+      <p>You’re chasing leads instead of showing homes and signing deals.</p>
+    </div>
+  </div>
+</div>
+
+<!-- SOLUTION -->
+<div class="section" style="padding-top:32px;padding-bottom:8px;text-align:center;">
+  <div class="section-tag">The solution</div>
+  <div class="section-title">Follow-up never sleeps.<br><span>You still get the credit.</span></div>
+  <div class="section-sub" style="margin:0 auto;">Aria texts, nurtures, and books—in your voice. You approve. Deals move.</div>
 </div>
 
 <!-- APP MOCKUP -->
@@ -234,14 +269,14 @@
     <div class="mockup-screen">
       <div class="mockup-header">
         <div>
-          <div class="mockup-date">MONDAY, MARCH 24</div>
-          <div class="mockup-name">good morning, Sarah ●</div>
+          <div class="mockup-date">MONDAY, MARCH 24 · NJ</div>
+          <div class="mockup-name">Morning briefing ●</div>
         </div>
         <div class="mockup-avatar">SA<div class="mockup-pulse"></div></div>
       </div>
       <div class="mockup-card">
-        <div class="mockup-label">WHILE YOU WERE AWAY</div>
-        <div class="mockup-briefing">Sent 12 follow-ups overnight. <strong>Mike Rodriguez</strong> (9/10 score) viewed 47 Maple Ave 4× today — he's hot. <strong>3 new property matches</strong> found for your active buyers.</div>
+        <div class="mockup-label">OVERNIGHT · AUTO</div>
+        <div class="mockup-briefing">12 follow-ups sent. <strong>Mike R.</strong> (9/10) hit 47 Maple 4×—call first. <strong>3 new matches</strong> for your buyers. Bookings ready to send.</div>
       </div>
       <div class="mockup-card">
         <div class="mockup-badge badge-hot">HOT LEAD</div>
@@ -255,8 +290,8 @@
       </div>
       <div class="mockup-card">
         <div class="mockup-badge badge-approve">APPROVE & SEND</div>
-        <div class="mockup-detail" style="margin-bottom:4px">AI matched your tone for Emily Chen</div>
-        <div class="mockup-draft">"Hey Em! Just saw a 3-bed hit in Montclair for $625k — matches your budget perfectly and it has that updated kitchen you wanted. Want me to get you in Thursday?"</div>
+        <div class="mockup-detail" style="margin-bottom:4px">Sounds like you · Emily Chen</div>
+        <div class="mockup-draft">"Hey Em—3-bed in Montclair, $625k, updated kitchen. Want a showing Thursday?"</div>
         <div class="mockup-btns">
           <div class="mockup-btn-primary">Approve & send</div>
           <div class="mockup-btn-secondary">Edit</div>
@@ -279,86 +314,87 @@
 
 <!-- STATS -->
 <div class="stats-bar">
-  <div class="stat-item"><div class="stat-number">2min</div><div class="stat-label">Average response time</div></div>
-  <div class="stat-item"><div class="stat-number">3x</div><div class="stat-label">More leads converted</div></div>
-  <div class="stat-item"><div class="stat-number">5hrs</div><div class="stat-label">Saved per week</div></div>
-  <div class="stat-item"><div class="stat-number">100%</div><div class="stat-label">NJ MLS coverage</div></div>
-</div>
-
-<!-- FEATURES -->
-<div class="section" id="features">
-  <div class="section-tag">Features</div>
-  <div class="section-title">Everything an NJ agent<br><span>actually needs.</span></div>
-  <div class="section-sub">Built from real conversations with NJ agents. Every feature solves a real problem.</div>
-  <div class="features-grid">
-    <div class="feature-card">
-      <div class="feature-icon">⚡</div>
-      <div class="feature-title">Speed to Lead</div>
-      <div class="feature-desc">New lead from Zillow or Facebook? Aria drafts a personalized text in your voice within seconds. You just approve and send.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🏠</div>
-      <div class="feature-title">Property Auto-Match</div>
-      <div class="feature-desc">Aria scans live NJ MLS listings and automatically matches properties to your active buyers based on budget, beds, and town.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎤</div>
-      <div class="feature-title">Mirror My Voice</div>
-      <div class="feature-desc">Paste 5 real texts you've sent. Aria learns your tone — casual, warm, emoji-friendly — and writes every draft sounding exactly like you.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📋</div>
-      <div class="feature-title">Transaction Copilot</div>
-      <div class="feature-desc">Upload a signed contract and Aria extracts every deadline — inspection, appraisal, closing. Never miss a milestone again.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">📊</div>
-      <div class="feature-title">Market Pulse</div>
-      <div class="feature-desc">Real-time NJ market stats by town. Walk into every client call knowing inventory levels, average prices, and days on market.</div>
-    </div>
-    <div class="feature-card">
-      <div class="feature-icon">🎯</div>
-      <div class="feature-title">Morning Briefing</div>
-      <div class="feature-desc">Every morning Aria tells you exactly what happened overnight, who's hot, and what to do first. Like having an assistant who never sleeps.</div>
-    </div>
-  </div>
+  <div class="stat-item"><div class="stat-number">2min</div><div class="stat-label">First text to leads</div></div>
+  <div class="stat-item"><div class="stat-number">3x</div><div class="stat-label">More conversations</div></div>
+  <div class="stat-item"><div class="stat-number">5hrs</div><div class="stat-label">Back in your week</div></div>
+  <div class="stat-item"><div class="stat-number">100%</div><div class="stat-label">NJ MLS data</div></div>
 </div>
 
 <!-- HOW IT WORKS -->
 <div style="background:#0a0a0a;border-top:0.5px solid #111;border-bottom:0.5px solid #111;">
 <div class="section" id="how-it-works">
   <div class="section-tag">How it works</div>
-  <div class="section-title">Up and running in<br><span>10 minutes.</span></div>
+  <div class="section-title">Live in<br><span>10 minutes</span></div>
+  <div class="section-sub" style="margin:0 auto 8px;">No implementation. No training week.</div>
   <div class="steps">
     <div class="step">
       <div class="step-number">1</div>
-      <div class="step-title">Create your account</div>
-      <div class="step-desc">Sign up and paste 5 texts you've actually sent to clients. Aria learns your voice instantly.</div>
+      <div class="step-title">Connect &amp; voice</div>
+      <div class="step-desc">Sign up. Paste 5 texts you’ve sent. Aria copies how you sound—so nothing feels robotic.</div>
     </div>
     <div class="step">
       <div class="step-number">2</div>
-      <div class="step-title">Add your clients</div>
-      <div class="step-desc">Import your existing leads or add them manually. Aria immediately starts scoring and prioritizing.</div>
+      <div class="step-title">Load your pipeline</div>
+      <div class="step-desc">Add clients. Aria scores who’s hot and who’s about to ghost you.</div>
     </div>
     <div class="step">
       <div class="step-number">3</div>
-      <div class="step-title">Let Aria work</div>
-      <div class="step-desc">Aria matches listings to buyers, drafts follow-ups, and surfaces your hottest leads every morning. You just approve and close.</div>
+      <div class="step-title">Approve &amp; close</div>
+      <div class="step-desc">Follow-ups, matches, and briefings show up. You tap approve—deals move.</div>
     </div>
   </div>
 </div>
+</div>
+
+<!-- FEATURES -->
+<div class="section" id="features">
+  <div class="section-tag">Features</div>
+  <div class="section-title">Built to<br><span>make you money</span></div>
+  <div class="section-sub" style="margin:0 auto;">Less admin. More signed contracts.</div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">Instant follow-up</div>
+      <div class="feature-desc">New lead hits your inbox—Aria drafts the first text in your voice. You approve.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🏠</div>
+      <div class="feature-title">Auto property match</div>
+      <div class="feature-desc">NJ MLS listings matched to buyers by budget, beds, town. You get the credit.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎤</div>
+      <div class="feature-title">Sounds like you</div>
+      <div class="feature-desc">5 sample texts. Aria mirrors your tone—clients don’t feel a bot.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📋</div>
+      <div class="feature-title">Deal deadlines</div>
+      <div class="feature-desc">Upload a contract. Inspections, appraisal, closing—extracted so you don’t miss a date.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <div class="feature-title">Market Pulse</div>
+      <div class="feature-desc">Town-level stats before every listing appointment or buyer call.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <div class="feature-title">Morning Briefing</div>
+      <div class="feature-desc">Overnight activity, hot leads, what to do first—before you open your laptop.</div>
+    </div>
+  </div>
 </div>
 
 <!-- TESTIMONIAL -->
 <div class="testimonial-section">
   <div class="testimonial-inner">
     <div class="stars">★★★★★</div>
-    <div class="testimonial-quote">"I showed Aria to my entire office and everyone wanted it immediately. The property matching alone would save me 2 hours every single day. I've never seen anything like this built specifically for NJ agents."</div>
+    <div class="testimonial-quote">"Follow-up used to be my nights. Now the hot leads are texted before I pour coffee. My team in Bergen asked how I’m answering Zillow leads that fast."</div>
     <div class="testimonial-author">
       <div class="testimonial-avatar">LK</div>
       <div>
         <div class="testimonial-name">Linda K.</div>
-        <div class="testimonial-role">Licensed NJ Real Estate Agent · Bergen County</div>
+        <div class="testimonial-role">NJ Realtor · Bergen County · Private beta</div>
       </div>
     </div>
   </div>
@@ -367,13 +403,13 @@
 <!-- PRICING -->
 <div class="section" id="pricing">
   <div class="section-tag">Pricing</div>
-  <div class="section-title">Simple pricing.<br><span>No surprises.</span></div>
-  <div class="section-sub">Cancel anytime. All plans include a 14-day free trial.</div>
+  <div class="section-title">Pick your plan.<br><span>Join the waitlist first.</span></div>
+  <div class="section-sub">NJ beta pricing. 14-day trial when we launch. Cancel anytime.</div>
   <div class="pricing-grid">
     <div class="pricing-card">
       <div class="pricing-name">Starter</div>
       <div class="pricing-price">$99<span>/mo</span></div>
-      <div class="pricing-desc">Perfect for agents just getting started with AI.</div>
+      <div class="pricing-desc">Start fast. Prove ROI before you scale.</div>
       <div class="pricing-divider"></div>
       <ul class="pricing-features">
         <li>Up to 50 active clients</li>
@@ -385,13 +421,14 @@
         <li class="disabled">Transaction copilot</li>
         <li class="disabled">Market pulse</li>
       </ul>
-      <button class="pricing-btn pricing-btn-outline" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+      <button class="pricing-btn pricing-btn-outline" onclick="document.getElementById('waitlist-email').focus()">Get Early Access</button>
+      <p class="cta-micro" style="margin-top:12px;">Limited to first 50 agents in NJ</p>
     </div>
     <div class="pricing-card featured">
       <div class="pricing-popular">Most Popular</div>
       <div class="pricing-name">Pro</div>
       <div class="pricing-price">$199<span>/mo</span></div>
-      <div class="pricing-desc">For serious agents who want the full Aria experience.</div>
+      <div class="pricing-desc">Full pipeline + MLS match + your voice.</div>
       <div class="pricing-divider"></div>
       <ul class="pricing-features">
         <li>Unlimited clients</li>
@@ -403,12 +440,13 @@
         <li>Showing assistant</li>
         <li>CMA pitch deck generator</li>
       </ul>
-      <button class="pricing-btn pricing-btn-primary" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+      <button class="pricing-btn pricing-btn-primary" onclick="document.getElementById('waitlist-email').focus()">Reserve Your Spot</button>
+      <p class="cta-micro" style="margin-top:12px;">Limited to first 50 agents in NJ</p>
     </div>
     <div class="pricing-card">
       <div class="pricing-name">Diamond</div>
       <div class="pricing-price">$299<span>/mo</span></div>
-      <div class="pricing-desc">Full auto mode. Aria works while you sleep.</div>
+      <div class="pricing-desc">Auto-send + alerts while you’re in showings.</div>
       <div class="pricing-divider"></div>
       <ul class="pricing-features">
         <li>Everything in Pro</li>
@@ -420,7 +458,8 @@
         <li>Team accounts (up to 3 agents)</li>
         <li>Custom onboarding call</li>
       </ul>
-      <button class="pricing-btn pricing-btn-outline" onclick="document.getElementById('waitlist-email').focus()">Join Waitlist</button>
+      <button class="pricing-btn pricing-btn-outline" onclick="document.getElementById('waitlist-email').focus()">Join NJ Waitlist</button>
+      <p class="cta-micro" style="margin-top:12px;">Limited to first 50 agents in NJ</p>
     </div>
   </div>
 </div>
@@ -429,7 +468,7 @@
 <div style="background:#0a0a0a;border-top:0.5px solid #111;">
 <div class="section" id="faq">
   <div class="section-tag">FAQ</div>
-  <div class="section-title">Common <span>questions.</span></div>
+  <div class="section-title">NJ agents ask<br><span>this first.</span></div>
   <div class="faq-list">
     <div class="faq-item" onclick="toggleFaq(this)">
       <div class="faq-question">Is Aria only for NJ agents? <span class="faq-icon">+</span></div>
@@ -457,14 +496,15 @@
 
 <!-- FINAL CTA -->
 <div class="final-cta">
-  <h2>Ready to close more?<br><span>Join the waitlist.</span></h2>
-  <p>Be among the first NJ agents to get access when we launch.</p>
+  <h2>50 NJ spots.<br><span>Then we close the list.</span></h2>
+  <p>Early access for agents who want every lead followed up—before the next agent does.</p>
   <div class="final-form">
-    <input type="email" id="final-email" placeholder="your@email.com" />
+    <input type="email" id="final-email" placeholder="Work email" />
     <button onclick="joinWaitlistFinal()">Get Early Access</button>
   </div>
+  <p class="cta-micro" style="margin-top:12px;">Limited to first 50 agents in NJ</p>
   <div class="success-msg" id="final-success-msg" style="display:none;margin-top:16px;">🎉 You're on the list! We'll be in touch soon.</div>
-  <p style="margin-top:20px;font-size:14px;color:#4B5563;">Not ready to commit? <a href="/demo" style="color:#6B7280;text-decoration:underline;text-underline-offset:3px;transition:color 0.2s;" onmouseover="this.style.color='#9CA3AF'" onmouseout="this.style.color='#6B7280'">Try the live demo first →</a></p>
+  <p style="margin-top:20px;font-size:14px;color:#4B5563;">Want to see it first? <a href="/demo" style="color:#6B7280;text-decoration:underline;text-underline-offset:3px;transition:color 0.2s;" onmouseover="this.style.color='#9CA3AF'" onmouseout="this.style.color='#6B7280'">Open the live demo →</a></p>
 </div>
 
 <!-- FOOTER -->
