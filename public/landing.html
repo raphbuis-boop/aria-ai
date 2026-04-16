@@ -7,11 +7,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+  body { background: #000; color: #fff; font-family: 'Inter', sans-serif; overflow-x: hidden; padding-top: 44px; }
   a { text-decoration: none; color: inherit; }
 
+  /* LAUNCH BANNER */
+  .launch-banner {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+    background: #1a1f3a; color: #fff; text-align: center;
+    padding: 11px 16px; font-size: 13px; font-weight: 500;
+    border-bottom: 0.5px solid rgba(255,255,255,0.08);
+    line-height: 1.35;
+  }
+  .launch-banner .sep { opacity: 0.5; margin: 0 6px; }
+
   /* NAV */
-  nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 0.5px solid #1a1a1a; position: sticky; top: 0; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 100; }
+  nav { display: flex; justify-content: space-between; align-items: center; padding: 20px 40px; border-bottom: 0.5px solid #1a1a1a; position: sticky; top: 44px; background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); z-index: 100; }
   .nav-logo { font-size: 22px; font-weight: 700; color: #3B82F6; letter-spacing: -0.5px; }
   .nav-links { display: flex; gap: 32px; }
   .nav-links a { font-size: 14px; color: #6B7280; font-weight: 400; transition: color 0.2s; }
@@ -21,8 +31,45 @@
   .nav-demo { color: #9CA3AF; padding: 10px 16px; border-radius: 8px; font-size: 14px; font-weight: 400; cursor: pointer; border: 0.5px solid #222; background: transparent; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
   .nav-demo:hover { color: #fff; border-color: #444; }
 
+  /* LIVE WAITLIST COUNTER */
+  .live-waitlist-line {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap;
+    font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 20px; max-width: 640px; margin-left: auto; margin-right: auto;
+  }
+  .live-dot-red {
+    width: 8px; height: 8px; background: #ef4444; border-radius: 50%;
+    animation: pulseRed 1.4s ease-in-out infinite;
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45);
+  }
+  @keyframes pulseRed {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.45); }
+    50% { opacity: 0.85; box-shadow: 0 0 12px 2px rgba(239, 68, 68, 0.35); }
+  }
+  .live-waitlist-line .muted { color: #6B7280; font-weight: 500; }
+  .hero-referral-line { font-size: 13px; color: #2563EB; margin-bottom: 16px; font-weight: 500; }
+
+  /* MOBILE HERO GLOW CARDS */
+  .hero-mobile-glow {
+    display: none; flex-direction: column; gap: 10px; max-width: 340px; margin: 0 auto 24px;
+  }
+  .hero-glow-card {
+    background: rgba(37, 99, 235, 0.06);
+    border: 0.5px solid rgba(37, 99, 235, 0.4);
+    border-radius: 12px;
+    padding: 14px 18px;
+    text-align: left;
+    font-size: 14px; font-weight: 600; color: #E5E7EB;
+    animation: heroGlow 2.8s ease-in-out infinite;
+  }
+  .hero-glow-card:nth-child(2) { animation-delay: 0.35s; }
+  .hero-glow-card:nth-child(3) { animation-delay: 0.7s; }
+  @keyframes heroGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.12); border-color: rgba(37, 99, 235, 0.35); }
+    50% { box-shadow: 0 0 24px rgba(37, 99, 235, 0.25); border-color: rgba(37, 99, 235, 0.55); }
+  }
+
   /* HERO */
-  .hero { text-align: center; padding: 100px 40px 80px; max-width: 900px; margin: 0 auto; }
+  .hero { text-align: center; padding: 72px 40px 80px; max-width: 900px; margin: 0 auto; }
   .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(59,130,246,0.1); border: 0.5px solid rgba(59,130,246,0.3); border-radius: 20px; padding: 6px 16px; font-size: 13px; color: #3B82F6; margin-bottom: 32px; }
   .hero-badge-dot { width: 6px; height: 6px; background: #3B82F6; border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
@@ -47,6 +94,30 @@
   .hero-demo-link:hover { color: #fff; }
   .hero-demo-link svg { transition: transform 0.2s; }
   .hero-demo-link:hover svg { transform: translateX(3px); }
+
+  /* POST-SIGNUP REFERRAL PANEL */
+  .hero-success-panel {
+    display: none; text-align: left; max-width: 480px; margin: 0 auto 24px;
+    background: #111; border: 0.5px solid #222; border-radius: 14px; padding: 24px;
+  }
+  .hero-success-panel.visible { display: block; }
+  .hero-success-panel .pos-line { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 16px; }
+  .hero-success-panel .pos-line span { color: #2563EB; }
+  .hero-success-panel .ref-label { font-size: 11px; color: #6B7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; }
+  .hero-success-panel .ref-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .hero-success-panel .ref-row input {
+    flex: 1; min-width: 0; background: #0a0a0a; border: 0.5px solid #333; border-radius: 8px; padding: 10px 12px; color: #E5E7EB; font-size: 13px; font-family: ui-monospace, monospace;
+  }
+  .hero-success-panel .copy-btn {
+    background: #2563EB; color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; white-space: nowrap;
+  }
+  .hero-success-panel .copy-btn:hover { background: #1d4ed8; }
+  .hero-success-panel .share-label { font-size: 11px; color: #6B7280; margin-bottom: 6px; }
+  .hero-success-panel textarea {
+    width: 100%; min-height: 88px; background: #0a0a0a; border: 0.5px solid #333; border-radius: 8px; padding: 12px; color: #D1D5DB; font-size: 13px; line-height: 1.5; font-family: 'Inter', sans-serif; resize: vertical; margin-bottom: 14px;
+  }
+  .hero-success-panel .ref-boost { font-size: 17px; font-weight: 800; color: #fff; line-height: 1.35; margin-bottom: 8px; }
+  .hero-success-panel .ref-count { font-size: 14px; color: #9CA3AF; }
 
   /* APP MOCKUP */
   .mockup-section { padding: 20px 40px 80px; max-width: 1000px; margin: 0 auto; }
@@ -174,6 +245,8 @@
 
   /* RESPONSIVE */
   @media (max-width: 768px) {
+    .hero-mobile-glow { display: flex; }
+    .live-waitlist-line { font-size: 13px; }
     .hero h1 { font-size: 40px; }
     .hero p { font-size: 17px; }
     .hero-form { flex-direction: column; }
@@ -192,6 +265,10 @@
 </head>
 <body>
 
+<div class="launch-banner" id="launch-banner" aria-live="polite">
+  ⚡ Launch in <span id="banner-days">—</span> <span id="banner-days-unit">days</span><span class="sep">·</span><span id="banner-spots">—</span> spots remaining<span class="sep">·</span>NJ-only beta
+</div>
+
 <!-- NAV -->
 <nav>
   <div class="nav-logo">Aria</div>
@@ -209,21 +286,51 @@
 </nav>
 
 <!-- HERO -->
-<div class="hero">
+<div class="hero" id="hero">
+  <div class="live-waitlist-line" id="live-waitlist-line" aria-live="polite">
+    <span class="live-dot-red" aria-hidden="true"></span>
+    <span><span id="count-anim">0</span> NJ agents on the waitlist</span>
+    <span class="muted">—</span>
+    <span><span id="spots-anim">50</span> spots left</span>
+  </div>
+  <p class="hero-referral-line" id="referral-self-line" style="display:none;"></p>
+
+  <div class="hero-mobile-glow" aria-hidden="true">
+    <div class="hero-glow-card">12 follow-ups sent overnight</div>
+    <div class="hero-glow-card">3 new MLS matches</div>
+    <div class="hero-glow-card">$4.2M pipeline tracked</div>
+  </div>
+
   <div class="hero-badge">
     <div class="hero-badge-dot"></div>
     NJ-only beta · Limited spots · NY &amp; CT coming soon
   </div>
   <h1>Stop Losing Leads<br><span>To Slow Follow-Up</span></h1>
   <p>Aria texts, nurtures, and books every lead automatically—so you close more deals without living in your inbox.</p>
-  <div class="hero-form">
-    <input type="email" id="waitlist-email" placeholder="Enter your work email" />
-    <button onclick="joinWaitlist()">Reserve Your Spot</button>
+
+  <div id="hero-form-block">
+    <div class="hero-form">
+      <input type="email" id="waitlist-email" placeholder="Enter your work email" autocomplete="email" />
+      <button type="button" onclick="joinWaitlist()">Reserve Your Spot</button>
+    </div>
+    <p class="cta-micro">Limited to first 50 agents in NJ</p>
+    <p class="hero-sub">No credit card. Used by NJ agents testing the beta.</p>
   </div>
-  <p class="cta-micro">Limited to first 50 agents in NJ</p>
-  <p class="hero-sub">No credit card. Used by NJ agents testing the beta.</p>
-  <div class="success-msg" id="success-msg">🎉 You're on the list! We'll be in touch soon.</div>
-  <a href="/demo" class="hero-demo-link">
+
+  <div class="hero-success-panel" id="hero-success-panel">
+    <div class="pos-line">You're <span id="success-position">#—</span> on the waitlist</div>
+    <div class="ref-label">Your referral link</div>
+    <div class="ref-row">
+      <input type="text" readonly id="referral-link-input" value="" />
+      <button type="button" class="copy-btn" id="copy-ref-btn" onclick="copyReferralLink()">Copy link</button>
+    </div>
+    <div class="share-label">Share message</div>
+    <textarea id="referral-share-text" readonly></textarea>
+    <div class="ref-boost">Each agent you refer moves you up the list</div>
+    <p class="ref-count" id="success-referral-count"></p>
+  </div>
+
+  <a href="/demo" class="hero-demo-link" id="hero-demo-link">
     Or explore the live app
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </a>
@@ -518,61 +625,217 @@
   </div>
 </footer>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
-  function toggleFaq(el) {
-    el.classList.toggle('open');
-  }
+(function captureRefFromUrl() {
+  try {
+    var p = new URLSearchParams(window.location.search);
+    var r = p.get('ref');
+    if (r && /^[a-z0-9]{6}$/i.test(r)) {
+      sessionStorage.setItem('aria_waitlist_ref', r.toLowerCase());
+    }
+  } catch (e) {}
+})();
 
-  async function joinWaitlist() {
-    const email = document.getElementById('waitlist-email').value;
-    if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address');
+var WAITLIST_CAP = 50;
+var REFERRAL_ORIGIN = 'https://getariaai.com';
+var REFERRAL_PATH = '/landing.html';
+
+function getReferralUrl(code) {
+  return REFERRAL_ORIGIN + REFERRAL_PATH + '?ref=' + encodeURIComponent(code);
+}
+
+function getLaunchDaysRemaining() {
+  var launch = new Date();
+  launch.setHours(0, 0, 0, 0);
+  launch.setDate(launch.getDate() + 14);
+  var now = new Date();
+  now.setHours(0, 0, 0, 0);
+  return Math.max(0, Math.ceil((launch.getTime() - now.getTime()) / 86400000));
+}
+
+function animateNumber(el, target, duration) {
+  if (!el) return;
+  var start = 0;
+  var t0 = null;
+  function easeOutQuad(t) { return 1 - (1 - t) * (1 - t); }
+  function frame(t) {
+    if (t0 === null) t0 = t;
+    var p = Math.min(1, (t - t0) / duration);
+    var v = Math.round(easeOutQuad(p) * target);
+    el.textContent = String(v);
+    if (p < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+function updateBannerAndHero(count) {
+  var spots = Math.max(0, WAITLIST_CAP - count);
+  var bd = document.getElementById('banner-days');
+  var bs = document.getElementById('banner-spots');
+  var bu = document.getElementById('banner-days-unit');
+  var days = getLaunchDaysRemaining();
+  if (bd) bd.textContent = String(days);
+  if (bu) bu.textContent = days === 1 ? 'day' : 'days';
+  if (bs) bs.textContent = String(spots);
+}
+
+var __waitlistCountCached = 0;
+
+async function fetchWaitlistCountViaSupabase(bootstrap) {
+  if (!bootstrap || !bootstrap.supabaseUrl || !bootstrap.supabaseAnonKey || !window.supabase || !window.supabase.createClient) {
+    return bootstrap && typeof bootstrap.count === 'number' ? bootstrap.count : 0;
+  }
+  try {
+    var sb = window.supabase.createClient(bootstrap.supabaseUrl, bootstrap.supabaseAnonKey);
+    var res = await sb.rpc('waitlist_public_stats');
+    if (res.error) return bootstrap.count;
+    var d = res.data;
+    if (d && typeof d.count === 'number') return d.count;
+    if (typeof d === 'number') return d;
+  } catch (e) {}
+  return bootstrap.count;
+}
+
+async function loadBootstrap() {
+  var bootstrap = { count: 0, spotsRemaining: WAITLIST_CAP, cap: WAITLIST_CAP };
+  try {
+    var res = await fetch(new URL('/api/waitlist/public-stats', window.location.origin).href);
+    bootstrap = await res.json();
+    if (typeof bootstrap.count !== 'number') bootstrap.count = 0;
+  } catch (e) {}
+  return bootstrap;
+}
+
+async function initWaitlistUi() {
+  var bootstrap = await loadBootstrap();
+  var count = await fetchWaitlistCountViaSupabase(bootstrap);
+  __waitlistCountCached = count;
+
+  var countEl = document.getElementById('count-anim');
+  var spotsEl = document.getElementById('spots-anim');
+  animateNumber(countEl, count, 900);
+  animateNumber(spotsEl, Math.max(0, WAITLIST_CAP - count), 900);
+  updateBannerAndHero(count);
+}
+
+async function refreshCountsAfterJoin() {
+  var bootstrap = await loadBootstrap();
+  var count = await fetchWaitlistCountViaSupabase(bootstrap);
+  __waitlistCountCached = count;
+  var cEl = document.getElementById('count-anim');
+  var sEl = document.getElementById('spots-anim');
+  if (cEl) cEl.textContent = String(count);
+  if (sEl) sEl.textContent = String(Math.max(0, WAITLIST_CAP - count));
+  updateBannerAndHero(count);
+}
+
+async function refreshReferralSelfLine() {
+  var code = localStorage.getItem('aria_waitlist_my_code');
+  var el = document.getElementById('referral-self-line');
+  if (!code || !el) return;
+  try {
+    var r = await fetch(new URL('/api/waitlist/referral-stats?code=' + encodeURIComponent(code), window.location.origin).href);
+    var d = await r.json();
+    if (typeof d.referral_count === 'number') {
+      el.textContent = "You've referred " + d.referral_count + " agent" + (d.referral_count === 1 ? '' : 's') + " so far";
+      el.style.display = 'block';
+    }
+  } catch (e) {}
+}
+
+function showReferralSuccess(data) {
+  var code = data.referral_code || '';
+  if (code) localStorage.setItem('aria_waitlist_my_code', code);
+  var link = getReferralUrl(code);
+  document.getElementById('hero-form-block').style.display = 'none';
+  var selfLine = document.getElementById('referral-self-line');
+  if (selfLine) selfLine.style.display = 'none';
+  var panel = document.getElementById('hero-success-panel');
+  panel.classList.add('visible');
+  document.getElementById('success-position').textContent = '#' + (data.position || '—');
+  var inp = document.getElementById('referral-link-input');
+  inp.value = link;
+  var share = 'Just secured my spot on Aria — the AI CRM built specifically for NJ agents. Only 50 spots. Get in: ' + link;
+  document.getElementById('referral-share-text').value = share;
+  var rc = typeof data.referral_count === 'number' ? data.referral_count : 0;
+  document.getElementById('success-referral-count').textContent =
+    "You've referred " + rc + " agent" + (rc === 1 ? '' : 's') + " so far";
+  var demo = document.getElementById('hero-demo-link');
+  if (demo) demo.style.marginTop = '8px';
+  refreshReferralSelfLine();
+}
+
+async function submitWaitlist(email, source) {
+  if (!email || !email.includes('@')) {
+    alert('Please enter a valid email address');
+    return;
+  }
+  var ref = '';
+  try {
+    ref = sessionStorage.getItem('aria_waitlist_ref') || '';
+  } catch (e) {}
+  var apiUrl = new URL('/api/waitlist', window.location.origin).href;
+  try {
+    var response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email, ref: ref })
+    });
+    var data = await response.json().catch(function () { return {}; });
+    if (!response.ok) {
+      alert(data.error || 'Something went wrong. Please try again.');
       return;
     }
-    const apiUrl = new URL('/api/waitlist', window.location.origin).href;
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(function () { return {}; });
-        alert(data.error || 'Something went wrong. Please try again.');
-        return;
-      }
-      document.getElementById('success-msg').style.display = 'block';
+    if (source === 'final') {
+      document.getElementById('final-email').value = '';
+      var fsm = document.getElementById('final-success-msg');
+      if (fsm) fsm.style.display = 'none';
+      document.getElementById('hero').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    if (document.getElementById('waitlist-email')) {
       document.getElementById('waitlist-email').value = '';
-    } catch (e) {
-      alert('Network error. Please check your connection and try again.');
     }
+    showReferralSuccess(data);
+    refreshCountsAfterJoin();
+  } catch (e) {
+    alert('Network error. Please check your connection and try again.');
   }
+}
 
-  async function joinWaitlistFinal() {
-    const email = document.getElementById('final-email').value;
-    if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address');
-      return;
-    }
-    const apiUrl = new URL('/api/waitlist', window.location.origin).href;
-    try {
-      const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      if (!response.ok) {
-        const data = await response.json().catch(function () { return {}; });
-        alert(data.error || 'Something went wrong. Please try again.');
-        return;
-      }
-    } catch (e) {
-      alert('Network error. Please check your connection and try again.');
-      return;
-    }
-    document.getElementById('final-success-msg').style.display = 'block';
-    document.getElementById('final-email').value = '';
+function joinWaitlist() {
+  var email = document.getElementById('waitlist-email').value;
+  submitWaitlist(email, 'hero');
+}
+
+function joinWaitlistFinal() {
+  var email = document.getElementById('final-email').value;
+  submitWaitlist(email, 'final');
+}
+
+function copyReferralLink() {
+  var inp = document.getElementById('referral-link-input');
+  if (!inp || !inp.value) return;
+  var toCopy = inp.value;
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(toCopy).then(function () {
+      var b = document.getElementById('copy-ref-btn');
+      if (b) { var o = b.textContent; b.textContent = 'Copied!'; setTimeout(function () { b.textContent = o; }, 1800); }
+    });
+  } else {
+    inp.select();
+    document.execCommand('copy');
   }
+}
+
+function toggleFaq(el) {
+  el.classList.toggle('open');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  initWaitlistUi();
+  refreshReferralSelfLine();
+});
 </script>
 
 </body>
