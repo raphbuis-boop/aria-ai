@@ -1,6 +1,7 @@
 /**
  * SimplyRETS live MLS API — https://api.simplyrets.com/properties
  * Auth: Basic (SIMPLYRETS_API_KEY:SIMPLYRETS_API_SECRET)
+ * or (SIMPLYRETS_USERNAME:SIMPLYRETS_PASSWORD) per env setup.
  */
 
 export const SIMPLYRETS_API_BASE = "https://api.simplyrets.com";
@@ -21,13 +22,21 @@ export type MlsListingPayload = {
 };
 
 export function isSimplyRetsConfigured(): boolean {
-  return Boolean(
+  const userPass =
+    process.env.SIMPLYRETS_USERNAME?.trim() &&
+    process.env.SIMPLYRETS_PASSWORD?.trim();
+  const keySecret =
     process.env.SIMPLYRETS_API_KEY?.trim() &&
-      process.env.SIMPLYRETS_API_SECRET?.trim(),
-  );
+      process.env.SIMPLYRETS_API_SECRET?.trim();
+  return Boolean(userPass || keySecret);
 }
 
 export function getSimplyRetsAuthHeader(): string {
+  const u = process.env.SIMPLYRETS_USERNAME?.trim();
+  const p = process.env.SIMPLYRETS_PASSWORD?.trim();
+  if (u && p) {
+    return `Basic ${Buffer.from(`${u}:${p}`).toString("base64")}`;
+  }
   const key = process.env.SIMPLYRETS_API_KEY ?? "";
   const secret = process.env.SIMPLYRETS_API_SECRET ?? "";
   return `Basic ${Buffer.from(`${key}:${secret}`).toString("base64")}`;
@@ -63,6 +72,52 @@ function pickAddressLine(addr: Record<string, unknown>): string {
 /**
  * Maps a single SimplyRETS /properties JSON object to our payload.
  */
+export async function fetchMlsListingsForClient(opts: {
+  city: string | null | undefined;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  minBeds?: number | null;
+  limit?: number;
+}): Promise<MlsListingPayload[]> {
+  if (!isSimplyRetsConfigured()) return [];
+  const { city, minPrice, maxPrice, minBeds, limit = 20 } = opts;
+  if (!city?.trim()) return [];
+
+  const base =
+    process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
+  const params = new URLSearchParams({
+    state: "NJ",
+    cities: city.trim(),
+    status: "Active",
+    limit: String(Math.min(100, limit)),
+    ...(minPrice != null && minPrice > 0
+      ? { minprice: String(minPrice) }
+      : {}),
+    ...(maxPrice != null && maxPrice > 0
+      ? { maxprice: String(maxPrice) }
+      : {}),
+    ...(minBeds != null && minBeds > 0 ? { minbeds: String(minBeds) } : {}),
+  });
+
+  const res = await fetch(`${base}/properties?${params}`, {
+    headers: {
+      Authorization: getSimplyRetsAuthHeader(),
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  if (!res.ok) return [];
+  const data = (await res.json()) as unknown;
+  const rawListings = Array.isArray(data)
+    ? data
+    : data && typeof data === "object" && Array.isArray((data as Record<string, unknown>).properties)
+      ? (data as Record<string, unknown>).properties
+      : [];
+  return (rawListings as Record<string, unknown>[]).map((item) =>
+    mapSimplyRetsListing(item),
+  );
+}
+
 export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPayload {
   const address = (raw.address as Record<string, unknown> | undefined) ?? {};
   const property = (raw.property as Record<string, unknown> | undefined) ?? {};

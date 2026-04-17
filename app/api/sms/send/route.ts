@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { formatPhoneE164 } from "@/lib/utils";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
@@ -32,7 +34,8 @@ export async function POST(req: Request) {
 
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_PHONE_NUMBER;
+  const from =
+    process.env.TWILIO_PHONE_NUMBER ?? process.env.TWILIO_FROM_NUMBER;
 
   if (!sid || !token || !from) {
     return NextResponse.json(
@@ -52,20 +55,24 @@ export async function POST(req: Request) {
     if (activityId) {
       await supabase
         .from("activities")
-        .update({ sent: true, approved: true })
+        .update({
+          sent: true,
+          approved: true,
+          body: textBody,
+        })
         .eq("id", activityId)
         .eq("agent_id", user.id);
+    } else {
+      await supabase.from("activities").insert({
+        client_id: clientId,
+        agent_id: user.id,
+        type: "text",
+        body: textBody,
+        ai_draft: false,
+        approved: true,
+        sent: true,
+      });
     }
-
-    await supabase.from("activities").insert({
-      client_id: clientId,
-      agent_id: user.id,
-      type: "text",
-      body: textBody,
-      ai_draft: false,
-      approved: true,
-      sent: true,
-    });
 
     return NextResponse.json({ success: true, messageSid: msg.sid });
   } catch (e: unknown) {

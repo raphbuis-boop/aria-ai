@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { callClaude, getAnthropic } from "@/lib/ai";
 import { getRouteSupabase } from "@/lib/api-auth";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(req: Request) {
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
@@ -20,17 +22,24 @@ export async function POST(req: Request) {
   const propertyContext = body.propertyContext
     ? String(body.propertyContext)
     : "";
+  const matchPing = Boolean(body.matchPing);
 
   const samplesBlock = voiceSamples
     .map((s: string, i: number) => `Sample ${i + 1}: ${s}`)
     .join("\n");
 
-  const system =
-    "You are ghostwriting a text message for a real estate agent. Match their tone exactly from the 5 samples. 1-3 sentences max. If propertyContext provided, introduce the property naturally. Return ONLY the message.";
+  const system = matchPing
+    ? `You ghost-write a single SMS for a New Jersey real estate agent.
+Sound human and warm. One message only, under ~320 characters.
+Pattern like: "Hey [first name], just found a [N]-bed in [Town] at [price] that checks your boxes — want to see it [weekday]?"
+Use concrete details from Property. Return ONLY the message text.`
+    : "You are ghostwriting a text message for a real estate agent. Match their tone exactly from the 5 samples. 1-3 sentences max. If propertyContext provided, introduce the property naturally. Return ONLY the message.";
 
-  const userMsg = `Client: ${clientName}\nScenario: ${scenario}\nContext: ${context}\nProperty: ${propertyContext}\n\nVoice samples:\n${samplesBlock || "(no samples — warm NJ agent tone)"}`;
+  const userMsg = matchPing
+    ? `Client name: ${clientName}\nProperty details:\n${propertyContext || context}\n\nWrite the SMS now.`
+    : `Client: ${clientName}\nScenario: ${scenario}\nContext: ${context}\nProperty: ${propertyContext}\n\nVoice samples:\n${samplesBlock || "(no samples — warm NJ agent tone)"}`;
 
-  let draft = await callClaude(system, userMsg, 150);
+  let draft = await callClaude(system, userMsg, matchPing ? 220 : 150);
   if (!getAnthropic() || !draft.trim()) {
     draft = `Hey ${clientName.split(" ")[0] || "there"} — quick check-in on your search. I’ve got a Ridgewood option that lines up with what you wanted; want me to send details?`;
   }

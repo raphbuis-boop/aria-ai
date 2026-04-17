@@ -1,3 +1,4 @@
+import { fetchMlsListingsForClient } from "@/lib/simplyrets";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ClientDetail } from "./client-detail";
@@ -51,6 +52,14 @@ export default async function ClientDetailPage({
     .eq("client_id", params.id)
     .order("match_score", { ascending: false });
 
+  const mlsLive = await fetchMlsListingsForClient({
+    city: client.town as string | null,
+    minPrice: client.budget_min as number | null,
+    maxPrice: client.budget_max as number | null,
+    minBeds: client.beds_wanted as number | null,
+    limit: 24,
+  });
+
   return (
     <ClientDetail
       client={client}
@@ -59,6 +68,7 @@ export default async function ClientDetailPage({
       files={files ?? []}
       showings={showings ?? []}
       matches={matches ?? []}
+      mlsLive={mlsLive}
     />
   );
 }

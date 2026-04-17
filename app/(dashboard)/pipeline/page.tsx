@@ -1,5 +1,6 @@
 import { PipelineBoard } from "@/components/PipelineBoard";
 import { createClient } from "@/lib/supabase/server";
+import { fmtMoney } from "@/lib/utils";
 
 export default async function PipelinePage() {
   const supabase = createClient();
@@ -11,7 +12,7 @@ export default async function PipelinePage() {
   const { data: clients } = await supabase
     .from("clients")
     .select(
-      "id, name, town, budget_max, lead_score, status, last_engagement_at",
+      "id, name, town, budget_min, budget_max, lead_score, status, last_engagement_at",
     )
     .eq("agent_id", user.id);
 
@@ -22,7 +23,7 @@ export default async function PipelinePage() {
       <header className="flex items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Pipeline</div>
         <div className="text-[16px] font-medium text-accent-blue">
-          ${Math.round(total / 1000)}k
+          {fmtMoney(total)}
         </div>
       </header>
       <div className="mt-6">

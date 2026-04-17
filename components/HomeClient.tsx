@@ -7,7 +7,7 @@ import { FocusModeToggle } from "@/components/FocusModeCard";
 import { MorningBriefing } from "@/components/MorningBriefing";
 import { PulseIndicator } from "@/components/PulseIndicator";
 import { createClient } from "@/lib/supabase/client";
-import { initials } from "@/lib/utils";
+import { fmtMoney, initials } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -32,6 +32,9 @@ type MatchRow = {
   properties: {
     address: string | null;
     price: number | null;
+    beds?: number | null;
+    baths?: number | null;
+    photos?: unknown;
   } | null;
   clients: { name: string | null } | null;
 };
@@ -204,11 +207,38 @@ export function HomeClient({
                 key={m.id}
                 className="rounded-[14px] border border-border-card bg-bg-card p-4"
               >
+                {(() => {
+                  const ph = m.properties?.photos;
+                  const url =
+                    Array.isArray(ph) && ph[0]
+                      ? typeof ph[0] === "string"
+                        ? ph[0]
+                        : String((ph[0] as { href?: string }).href ?? "")
+                      : null;
+                  return url ? (
+                    <div className="mb-3 h-28 w-full overflow-hidden rounded-[10px] bg-bg-deep">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={url}
+                        alt=""
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : null;
+                })()}
                 <div className="text-[14px] font-medium text-text-primary">
                   {m.properties?.address}
                 </div>
                 <div className="text-[13px] text-accent-blue">
-                  ${m.properties?.price?.toLocaleString() ?? "—"}
+                  {m.properties?.price != null
+                    ? fmtMoney(m.properties.price)
+                    : "—"}
+                </div>
+                <div className="mt-1 text-[11px] text-text-dim">
+                  {m.properties?.beds != null ? `${m.properties.beds} bd` : ""}
+                  {m.properties?.baths != null
+                    ? ` · ${m.properties.baths} ba`
+                    : ""}
                 </div>
                 <div className="mt-2 text-[12px] text-text-secondary">
                   Matches{" "}
@@ -238,7 +268,8 @@ export function HomeClient({
                         body: JSON.stringify({
                           clientId,
                           clientName: m.clients?.name,
-                          propertyContext: `${m.properties?.address} at $${m.properties?.price}`,
+                          matchPing: true,
+                          propertyContext: `${m.properties?.beds ?? "?"} bed / ${m.properties?.baths ?? "?"} bath at ${m.properties?.address} — ${fmtMoney(m.properties?.price ?? null)}`,
                           scenario: "Property match text",
                           skipInsert: false,
                         }),
@@ -273,7 +304,7 @@ export function HomeClient({
         <div className="rounded-[14px] border border-border-card bg-bg-deep p-3">
           <div className="text-[11px] text-text-dim">Pipeline value</div>
           <div className="mt-1 text-[18px] font-medium text-accent-blue">
-            ${Math.round(stats.pipeline / 1000)}k
+            {fmtMoney(stats.pipeline)}
           </div>
         </div>
         <div className="rounded-[14px] border border-border-card bg-bg-deep p-3">
@@ -316,7 +347,7 @@ export function HomeClient({
             ["New Listing", "/listings/new"],
             ["Properties", "/properties"],
             ["MLS Search", "/mls"],
-            ["Market Pulse", "/market"],
+            ["Market Pulse", "/market-pulse"],
             ["New Referral", "/referrals"],
           ].map(([label, href]) => (
             <Link

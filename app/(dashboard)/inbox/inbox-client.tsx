@@ -1,7 +1,7 @@
 "use client";
 
-import { ActivityItem } from "@/components/ActivityItem";
-import { useMemo, useState } from "react";
+import { InboxActivityCard } from "@/components/InboxActivityCard";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type Row = {
@@ -35,6 +35,18 @@ export function InboxClient({
   const router = useRouter();
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
   const [rows] = useState(initial);
+
+  useEffect(() => {
+    void (async () => {
+      const res = await fetch("/api/inbox/backfill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const data = (await res.json()) as { updated?: number };
+      if ((data.updated ?? 0) > 0) router.refresh();
+    })();
+  }, [router]);
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -105,7 +117,7 @@ export function InboxClient({
 
       <div className="mt-4 space-y-3">
         {filtered.map((r) => (
-          <ActivityItem
+          <InboxActivityCard
             key={r.id}
             id={r.id}
             type={r.type}
@@ -117,7 +129,6 @@ export function InboxClient({
             sent={!!r.sent}
             clientId={r.client_id}
             clientPhone={r.clients?.phone}
-            onApproved={() => router.refresh()}
           />
         ))}
         {!filtered.length ? (

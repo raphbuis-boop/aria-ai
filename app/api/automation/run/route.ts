@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
+import { generateInboxSmsDraft, type ClientDraftContext } from "@/lib/inbox-drafts";
+
+export const dynamic = "force-dynamic";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -37,12 +40,22 @@ export async function POST() {
     let nextDay = automationDay;
     let did = false;
 
+    const ctx: ClientDraftContext = {
+      name: c.name,
+      status: c.status,
+      town: c.town,
+      budget_min: c.budget_min,
+      budget_max: c.budget_max,
+      last_engagement_at: c.last_engagement_at,
+    };
+
     if (shouldRun(1)) {
+      const body = await generateInboxSmsDraft(ctx, "welcome");
       await supabase.from("activities").insert({
         client_id: c.id,
         agent_id: user.id,
         type: "automation",
-        body: `Welcome sequence (Day 1): drafted intro text for ${c.name}.`,
+        body,
         ai_draft: true,
         approved: false,
         sent: false,
@@ -50,11 +63,12 @@ export async function POST() {
       nextDay = Math.max(nextDay, 1);
       did = true;
     } else if (shouldRun(2)) {
+      const body = await generateInboxSmsDraft(ctx, "followup_email");
       await supabase.from("activities").insert({
         client_id: c.id,
         agent_id: user.id,
         type: "email",
-        body: `Follow-up email draft (Day 2) for ${c.name} — ready for your review.`,
+        body,
         ai_draft: true,
         approved: false,
         sent: false,
@@ -73,11 +87,12 @@ export async function POST() {
       nextDay = Math.max(nextDay, 5);
       did = true;
     } else if (shouldRun(14)) {
+      const body = await generateInboxSmsDraft(ctx, "reengage");
       await supabase.from("activities").insert({
         client_id: c.id,
         agent_id: user.id,
         type: "automation",
-        body: `Re-engagement text draft (Day 14) for ${c.name}.`,
+        body,
         ai_draft: true,
         approved: false,
         sent: false,

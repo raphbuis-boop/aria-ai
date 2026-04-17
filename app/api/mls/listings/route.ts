@@ -8,6 +8,8 @@ import {
 } from "@/lib/simplyrets";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 
+export const dynamic = "force-dynamic";
+
 export type { MlsListingPayload } from "@/lib/simplyrets";
 
 function parseListingsPayload(data: unknown): unknown[] {

@@ -32,8 +32,21 @@ export function relTime(iso: string | null | undefined): string {
   }
 }
 
+/** e.g. $500k, $1.2M — avoids "$8000k" for large numbers */
 export function fmtMoney(n: number | null | undefined): string {
   if (n == null) return "—";
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) {
+    const m = n / 1_000_000;
+    const rounded = Math.round(m * 10) / 10;
+    const s = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1);
+    return `$${s}M`;
+  }
+  if (abs >= 1_000) {
+    const k = n / 1000;
+    const s = Number.isInteger(k) ? String(k) : k.toFixed(1).replace(/\.0$/, "");
+    return `$${s}k`;
+  }
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",

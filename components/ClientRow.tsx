@@ -1,6 +1,6 @@
 "use client";
 
-import { initials, relTime } from "@/lib/utils";
+import { fmtMoney, initials, relTime } from "@/lib/utils";
 import Link from "next/link";
 
 export type ClientRowData = {
@@ -53,9 +53,7 @@ export function ClientRow({ c }: { c: ClientRowData }) {
         <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-text-dim">
           <span>{c.town ?? "—"}</span>
           <span>
-            {c.budget_max != null
-              ? `Up to $${Math.round(c.budget_max / 1000)}k`
-              : "—"}
+            {c.budget_max != null ? `Up to ${fmtMoney(c.budget_max)}` : "—"}
           </span>
           <span>{relTime(c.last_engagement_at)}</span>
         </div>

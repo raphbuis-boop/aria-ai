@@ -24,6 +24,7 @@ export default async function InboxPage() {
     `,
     )
     .eq("agent_id", user.id)
+    .or("ai_draft.eq.false,sent.eq.false")
     .order("created_at", { ascending: false })
     .limit(200);
 

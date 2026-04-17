@@ -1,17 +1,17 @@
 "use client";
 
-import type { MlsListingPayload } from "@/app/api/mls/listings/route";
-import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { ActivityItem } from "@/components/ActivityItem";
 import { FileRow } from "@/components/FileRow";
 import { TaskItem } from "@/components/TaskItem";
 import { useToast } from "@/components/ToastProvider";
+import type { MlsListingPayload } from "@/lib/simplyrets";
+import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
-import { fmtMoney } from "@/lib/utils";
-import { ArrowLeft } from "lucide-react";
+import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
+import { ArrowLeft, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { isPast, parseISO } from "date-fns";
 
 const tabs = [
@@ -30,6 +30,7 @@ export function ClientDetail({
   files,
   showings,
   matches,
+  mlsLive = [],
 }: {
   client: Record<string, unknown>;
   activities: Record<string, unknown>[];
@@ -37,6 +38,7 @@ export function ClientDetail({
   files: Record<string, unknown>[];
   showings: Record<string, unknown>[];
   matches: Record<string, unknown>[];
+  mlsLive?: MlsListingPayload[];
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -51,9 +53,33 @@ export function ClientDetail({
     showing_date: "",
     feedback: "",
   });
-  const [mlsHits, setMlsHits] = useState<MlsListingPayload[]>([]);
+  const [mlsHits, setMlsHits] = useState<MlsListingPayload[]>(mlsLive);
   const [mlsLoading, setMlsLoading] = useState(false);
-  const [mlsSearched, setMlsSearched] = useState(false);
+  const [mlsSearched, setMlsSearched] = useState(mlsLive.length > 0);
+  const [editOpen, setEditOpen] = useState(false);
+  const townList = String(client.town ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const [edit, setEdit] = useState({
+    name: String(client.name ?? ""),
+    phone: String(client.phone ?? ""),
+    email: String(client.email ?? ""),
+    budget_min: client.budget_min != null ? String(client.budget_min) : "",
+    budget_max: client.budget_max != null ? String(client.budget_max) : "",
+    towns: townList.length ? townList : ([] as string[]),
+    beds: client.beds_wanted != null ? String(client.beds_wanted) : "",
+    baths: client.baths_wanted != null ? String(client.baths_wanted) : "",
+    client_role:
+      (client.client_role as string) === "seller" ? "seller" : "buyer",
+    notes: String(client.notes ?? ""),
+    status: String(client.status ?? "new"),
+  });
+
+  useEffect(() => {
+    setMlsHits(mlsLive);
+    setMlsSearched(mlsLive.length > 0);
+  }, [client.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const site = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const portalUrl = `${site}/portal/${client.portal_token as string}`;
@@ -113,11 +139,52 @@ export function ClientDetail({
     router.refresh();
   }
 
+  function toggleTownEdit(t: string) {
+    setEdit((e) => ({
+      ...e,
+      towns: e.towns.includes(t)
+        ? e.towns.filter((x) => x !== t)
+        : [...e.towns, t],
+    }));
+  }
+
+  async function saveClientEdit() {
+    const phoneE164 = edit.phone.trim() ? formatPhoneE164(edit.phone) : null;
+    if (edit.phone.trim() && !phoneE164) {
+      toast.toast("Invalid phone", "warn");
+      return;
+    }
+    const { error } = await supabase
+      .from("clients")
+      .update({
+        name: edit.name.trim(),
+        phone: phoneE164,
+        email: edit.email.trim() || null,
+        budget_min: edit.budget_min ? Number(edit.budget_min) : null,
+        budget_max: edit.budget_max ? Number(edit.budget_max) : null,
+        town: edit.towns.length ? edit.towns.join(", ") : null,
+        beds_wanted: edit.beds ? Number(edit.beds) : null,
+        baths_wanted: edit.baths ? Number(edit.baths) : null,
+        notes: edit.notes.trim() || null,
+        client_role: edit.client_role,
+        status: edit.status,
+      })
+      .eq("id", client.id as string);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast("Saved", "success");
+    setEditOpen(false);
+    router.refresh();
+  }
+
   async function searchMlsForClient() {
     setMlsLoading(true);
     const params = new URLSearchParams();
     params.set("state", "NJ");
-    const town = client.town as string | null;
+    const town =
+      (client.town as string | null)?.split(",")[0]?.trim() ?? null;
     const budgetMin = client.budget_min as number | null;
     const budgetMax = client.budget_max as number | null;
     const bedsW = client.beds_wanted as number | null;
@@ -177,8 +244,19 @@ export function ClientDetail({
             <span className="rounded-[8px] bg-bg-deep px-2 py-0.5 text-[10px] font-medium text-text-dim">
               {String(client.status ?? "new").replace("_", " ")}
             </span>
+            <span className="rounded-[8px] bg-bg-deep px-2 py-0.5 text-[10px] font-medium text-text-dim">
+              {(client.client_role as string) === "seller" ? "Seller" : "Buyer"}
+            </span>
           </div>
         </div>
+        <button
+          type="button"
+          onClick={() => setEditOpen(true)}
+          className="rounded-full border border-border-card p-2 text-text-dim hover:text-accent-blue"
+          aria-label="Edit client"
+        >
+          <Pencil size={18} />
+        </button>
       </div>
 
       <div className="mt-4 flex items-center gap-2">
@@ -196,6 +274,61 @@ export function ClientDetail({
             />
           ))}
         </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={async () => {
+            await fetch("/api/ai/draft-text", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                clientId: client.id,
+                clientName: client.name,
+                scenario: "Friendly check-in",
+              }),
+            });
+            toast.toast("Draft in Inbox", "success");
+            router.push("/inbox");
+          }}
+          className="rounded-[8px] bg-accent-blue px-3 py-2 text-[12px] font-medium text-white"
+        >
+          AI text
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
+            if (!user) return;
+            await supabase.from("activities").insert({
+              client_id: client.id as string,
+              agent_id: user.id,
+              type: "call",
+              body: "Call logged",
+              ai_draft: false,
+              approved: true,
+              sent: false,
+            });
+            toast.toast("Call logged", "success");
+            router.refresh();
+          }}
+          className="rounded-[8px] border border-border-card px-3 py-2 text-[12px] text-text-primary"
+        >
+          Log call
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            setTab("Showings");
+            setShowModal(true);
+          }}
+          className="rounded-[8px] border border-border-card px-3 py-2 text-[12px] text-accent-blue"
+        >
+          Schedule showing
+        </button>
       </div>
 
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
@@ -365,17 +498,15 @@ export function ClientDetail({
       {tab === "Properties" ? (
         <div className="mt-4 space-y-3">
           <p className="text-[12px] text-text-dim">
-            Search uses this client&apos;s town, budget, and beds vs live SimplyRETS
-            NJ listings.
+            Listings from SimplyRETS using this client&apos;s town, budget, and beds.
           </p>
-          <MarketsComingSoonNote className="mt-1" />
           <button
             type="button"
             onClick={searchMlsForClient}
             disabled={mlsLoading}
             className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white disabled:opacity-60"
           >
-            {mlsLoading ? "Searching…" : "Search MLS for Matches"}
+            {mlsLoading ? "Searching…" : "Refresh MLS search"}
           </button>
           {!mlsLoading && mlsHits.length === 0 && !mlsSearched ? (
             <p className="text-center text-[12px] text-text-dim">
@@ -431,33 +562,53 @@ export function ClientDetail({
                     body: JSON.stringify({
                       clientId: client.id,
                       clientName: client.name,
-                      propertyContext: `${l.address} in ${l.city} at ${fmtMoney(l.price)}`,
+                      matchPing: true,
+                      propertyContext: `${l.beds} bed / ${l.baths} bath at ${l.address}, ${l.city} — ${fmtMoney(l.price)}`,
                       skipInsert: false,
                     }),
                   });
                   toast.toast("Draft created — review in Inbox", "success");
                 }}
               >
-                AI Text About This
+                AI Text Client
               </button>
             </div>
             );
           })}
           {matches.map((m) => {
             const p = m.properties as Record<string, unknown> | null;
+            const photosRaw = p?.photos as unknown;
+            const photo =
+              Array.isArray(photosRaw) && photosRaw[0]
+                ? String(photosRaw[0])
+                : null;
+            const beds = p?.beds != null ? Number(p.beds) : null;
+            const baths = p?.baths != null ? Number(p.baths) : null;
             return (
               <div
                 key={String(m.id)}
                 className="rounded-[14px] border border-border-card bg-bg-card p-3"
               >
+                {photo ? (
+                  <div className="mb-2 h-32 w-full overflow-hidden rounded-[10px] bg-bg-deep">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={photo}
+                      alt=""
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                ) : null}
                 <div className="text-[14px] font-medium">
                   {String(p?.address ?? "Property")}
                 </div>
                 <div className="text-[13px] text-accent-blue">
-                  ${Number(p?.price ?? 0).toLocaleString()}
+                  {fmtMoney(Number(p?.price ?? 0) || null)}
                 </div>
                 <div className="mt-2 text-[12px] text-text-muted">
-                  Score {String(m.match_score ?? 0)}
+                  {beds != null ? `${beds} bd` : ""}
+                  {baths != null ? ` · ${baths} ba` : ""} · Score{" "}
+                  {String(m.match_score ?? 0)}
                 </div>
                 <button
                   type="button"
@@ -469,18 +620,159 @@ export function ClientDetail({
                       body: JSON.stringify({
                         clientId: client.id,
                         clientName: client.name,
-                        propertyContext: `${p?.address} at $${p?.price}`,
+                        matchPing: true,
+                        propertyContext: `${beds ?? "?"} bed / ${baths ?? "?"} bath at ${String(p?.address)} — ${fmtMoney(Number(p?.price ?? 0) || null)}`,
                         skipInsert: false,
                       }),
                     });
                     toast.toast("Draft created — review in Inbox", "success");
                   }}
                 >
-                  AI Text About This Property
+                  AI Text Client
                 </button>
               </div>
             );
           })}
+        </div>
+      ) : null}
+
+      {editOpen ? (
+        <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/70 p-4">
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[14px] border border-border-card bg-bg-card p-4">
+            <div className="text-[16px] font-medium text-text-primary">
+              Edit client
+            </div>
+            <div className="mt-3 space-y-2">
+              <input
+                value={edit.name}
+                onChange={(e) => setEdit({ ...edit, name: e.target.value })}
+                className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                placeholder="Name"
+              />
+              <input
+                value={edit.phone}
+                onChange={(e) => setEdit({ ...edit, phone: e.target.value })}
+                className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                placeholder="Phone"
+              />
+              <input
+                value={edit.email}
+                onChange={(e) => setEdit({ ...edit, email: e.target.value })}
+                className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                placeholder="Email"
+              />
+              <div className="flex gap-2">
+                <input
+                  value={edit.budget_min}
+                  onChange={(e) =>
+                    setEdit({ ...edit, budget_min: e.target.value })
+                  }
+                  className="w-1/2 rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                  placeholder="Budget min"
+                  inputMode="numeric"
+                />
+                <input
+                  value={edit.budget_max}
+                  onChange={(e) =>
+                    setEdit({ ...edit, budget_max: e.target.value })
+                  }
+                  className="w-1/2 rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                  placeholder="Budget max"
+                  inputMode="numeric"
+                />
+              </div>
+              <div className="text-[11px] text-text-dim">Preferred towns</div>
+              <div className="flex max-h-28 flex-wrap gap-1.5 overflow-y-auto">
+                {NJ_TOWN_OPTIONS.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => toggleTownEdit(t)}
+                    className={`rounded-full border px-2 py-1 text-[10px] font-medium ${
+                      edit.towns.includes(t)
+                        ? "border-accent-blue bg-accent-blue/15 text-accent-blue"
+                        : "border-border-card text-text-dim"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={edit.beds}
+                  onChange={(e) => setEdit({ ...edit, beds: e.target.value })}
+                  className="w-1/2 rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                  placeholder="Beds"
+                  inputMode="numeric"
+                />
+                <input
+                  value={edit.baths}
+                  onChange={(e) => setEdit({ ...edit, baths: e.target.value })}
+                  className="w-1/2 rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                  placeholder="Baths"
+                  inputMode="decimal"
+                />
+              </div>
+              <div className="flex gap-2">
+                {(["buyer", "seller"] as const).map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setEdit({ ...edit, client_role: r })}
+                    className={`flex-1 rounded-[8px] border py-2 text-[12px] capitalize ${
+                      edit.client_role === r
+                        ? "border-accent-blue text-accent-blue"
+                        : "border-border-card text-text-dim"
+                    }`}
+                  >
+                    {r}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={edit.status}
+                onChange={(e) => setEdit({ ...edit, status: e.target.value })}
+                className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              >
+                {[
+                  "new",
+                  "contacted",
+                  "showing",
+                  "offer",
+                  "under_contract",
+                  "closed",
+                  "dead",
+                ].map((s) => (
+                  <option key={s} value={s}>
+                    {s.replace("_", " ")}
+                  </option>
+                ))}
+              </select>
+              <textarea
+                value={edit.notes}
+                onChange={(e) => setEdit({ ...edit, notes: e.target.value })}
+                className="min-h-[80px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
+                placeholder="Notes"
+              />
+            </div>
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => void saveClientEdit()}
+                className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
+              >
+                Save
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditOpen(false)}
+                className="rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-text-dim"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
 

@@ -14,8 +14,10 @@ import {
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
+import { GripVertical } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const COLS = [
   { id: "new", label: "New" },
@@ -30,6 +32,7 @@ type Client = {
   id: string;
   name: string;
   town: string | null;
+  budget_min: number | null;
   budget_max: number | null;
   lead_score: number | null;
   status: string | null;
@@ -67,7 +70,13 @@ function LeadBadge({ score }: { score: number }) {
   );
 }
 
-function DraggableCard({ c }: { c: Client }) {
+function DraggableCard({
+  c,
+  onOpen,
+}: {
+  c: Client;
+  onOpen: (c: Client) => void;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: c.id,
   });
@@ -88,29 +97,44 @@ function DraggableCard({ c }: { c: Client }) {
     <div
       ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
-      className="cursor-grab rounded-[10px] border border-border-card bg-bg-card px-3 py-3.5 active:cursor-grabbing"
+      className="rounded-[10px] border border-border-card bg-bg-card"
     >
-      <div className="mb-2">
-        <LeadBadge score={score} />
-      </div>
-      <div className="text-[13px] font-semibold leading-tight text-text-primary">
-        {c.name}
-      </div>
-      <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-dim">
-        <span className="font-medium text-text-muted">{fmtMoney(c.budget_max)}</span>
-        {c.town && (
-          <>
-            <span className="text-border-card">·</span>
-            <span>{c.town}</span>
-          </>
-        )}
-      </div>
-      <div className="mt-2.5 border-t border-border-card pt-2 text-right">
-        <span className="text-[10px] text-text-dim">
-          {relTime(c.last_engagement_at)}
-        </span>
+      <div className="flex gap-2 px-2 pt-2">
+        <button
+          type="button"
+          {...listeners}
+          {...attributes}
+          className="shrink-0 cursor-grab touch-none rounded-md p-1 text-text-dim hover:bg-bg-deep active:cursor-grabbing"
+          aria-label="Drag to change stage"
+        >
+          <GripVertical size={18} />
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpen(c)}
+          className="min-w-0 flex-1 pb-2 text-left"
+        >
+          <div className="mb-2">
+            <LeadBadge score={score} />
+          </div>
+          <div className="text-[13px] font-semibold leading-tight text-text-primary">
+            {c.name}
+          </div>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-dim">
+            <span className="font-medium text-text-muted">{fmtMoney(c.budget_max)}</span>
+            {c.town && (
+              <>
+                <span className="text-border-card">·</span>
+                <span>{c.town}</span>
+              </>
+            )}
+          </div>
+          <div className="mt-2.5 border-t border-border-card pt-2 text-right">
+            <span className="text-[10px] text-text-dim">
+              {relTime(c.last_engagement_at)}
+            </span>
+          </div>
+        </button>
       </div>
     </div>
   );
@@ -119,9 +143,11 @@ function DraggableCard({ c }: { c: Client }) {
 function DroppableColumn({
   col,
   clients,
+  onOpen,
 }: {
   col: (typeof COLS)[number];
   clients: Client[];
+  onOpen: (c: Client) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0);
@@ -150,7 +176,7 @@ function DroppableColumn({
         }`}
       >
         {clients.map((c) => (
-          <DraggableCard key={c.id} c={c} />
+          <DraggableCard key={c.id} c={c} onOpen={onOpen} />
         ))}
         {clients.length === 0 && (
           <div className="flex h-16 items-center justify-center rounded-[8px] border border-dashed border-border-card">
@@ -172,6 +198,12 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
   const router = useRouter();
   const toast = useToast();
   const [clients, setClients] = useState(initial);
+  const [drawer, setDrawer] = useState<Client | null>(null);
+
+  useEffect(() => {
+    setClients(initial);
+  }, [initial]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
@@ -197,14 +229,20 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
     const prev = clients.find((c) => c.id === activeId);
     if (!prev || prev.status === targetCol) return;
 
+    const snapshot = clients;
     setClients((list) =>
       list.map((c) => (c.id === activeId ? { ...c, status: targetCol } : c)),
     );
 
-    await supabase
+    const { error } = await supabase
       .from("clients")
       .update({ status: targetCol })
       .eq("id", activeId);
+    if (error) {
+      toast.toast(error.message, "warn");
+      setClients(snapshot);
+      return;
+    }
 
     if (targetCol === "offer") {
       toast.toast("AI can draft offer cover letter?", "success");
@@ -228,16 +266,103 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
   }
 
   return (
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCorners}
-      onDragEnd={onDragEnd}
-    >
-      <div className="-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-3 [scroll-padding-left:1rem] snap-x snap-mandatory sm:snap-none">
-        {COLS.map((col) => (
-          <DroppableColumn key={col.id} col={col} clients={grouped[col.id]} />
-        ))}
-      </div>
-    </DndContext>
+    <>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCorners}
+        onDragEnd={onDragEnd}
+      >
+        <div className="-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-3 [scroll-padding-left:1rem] snap-x snap-mandatory sm:snap-none">
+          {COLS.map((col) => (
+            <DroppableColumn
+              key={col.id}
+              col={col}
+              clients={grouped[col.id]}
+              onOpen={setDrawer}
+            />
+          ))}
+        </div>
+      </DndContext>
+
+      {drawer ? (
+        <div className="fixed inset-0 z-[100] flex items-end justify-center bg-black/70">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0"
+            onClick={() => setDrawer(null)}
+          />
+          <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[16px] border border-border-card bg-bg-card p-4">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-card" />
+            <div className="text-[18px] font-semibold text-text-primary">
+              {drawer.name}
+            </div>
+            <div className="mt-3 space-y-2 text-[13px] text-text-secondary">
+              <div>
+                Budget: {fmtMoney(drawer.budget_min)} – {fmtMoney(drawer.budget_max)}
+              </div>
+              <div>Town: {drawer.town ?? "—"}</div>
+              <div>Lead score: {drawer.lead_score ?? "—"}</div>
+              <div>Last contact: {relTime(drawer.last_engagement_at)}</div>
+              <div className="capitalize text-text-muted">
+                Stage: {(drawer.status ?? "new").replace(/_/g, " ")}
+              </div>
+            </div>
+            <div className="mt-4 flex flex-col gap-2">
+              <button
+                type="button"
+                className="w-full rounded-[8px] bg-accent-blue py-3 text-[14px] font-medium text-white"
+                onClick={async () => {
+                  await fetch("/api/ai/draft-text", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      clientId: drawer.id,
+                      clientName: drawer.name,
+                      scenario: "Pipeline follow-up",
+                    }),
+                  });
+                  toast.toast("Draft queued — check Inbox", "success");
+                  router.push("/inbox");
+                }}
+              >
+                AI Text
+              </button>
+              <button
+                type="button"
+                className="w-full rounded-[8px] border border-border-card py-3 text-[14px] text-text-primary"
+                onClick={async () => {
+                  const {
+                    data: { user },
+                  } = await supabase.auth.getUser();
+                  if (!user) return;
+                  await supabase.from("activities").insert({
+                    client_id: drawer.id,
+                    agent_id: user.id,
+                    type: "call",
+                    body: "Call logged from pipeline",
+                    ai_draft: false,
+                    approved: true,
+                    sent: false,
+                  });
+                  toast.toast("Call logged", "success");
+                  router.refresh();
+                  setDrawer(null);
+                }}
+              >
+                Log Call
+              </button>
+              <Link
+                href={`/clients/${drawer.id}`}
+                className="block w-full rounded-[8px] border border-border-card py-3 text-center text-[14px] text-accent-blue"
+                onClick={() => setDrawer(null)}
+              >
+                View Client
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </>
   );
 }

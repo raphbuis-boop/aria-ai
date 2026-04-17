@@ -170,7 +170,7 @@ export default async function HomePage() {
       notified,
       property_id,
       client_id,
-      properties ( address, price ),
+      properties ( address, price, beds, baths, photos ),
       clients ( name )
     `,
     )

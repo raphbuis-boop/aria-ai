@@ -1,0 +1,23 @@
+/** Common NJ markets for multi-select in forms. */
+export const NJ_TOWN_OPTIONS = [
+  "Ridgewood",
+  "Montclair",
+  "Summit",
+  "Hoboken",
+  "Westfield",
+  "Short Hills",
+  "Maplewood",
+  "Glen Ridge",
+  "Jersey City",
+  "Princeton",
+  "Madison",
+  "Chatham",
+  "Millburn",
+  "South Orange",
+  "Fort Lee",
+  "Edgewater",
+  "Englewood",
+  "Tenafly",
+  "Alpine",
+  "Cresskill",
+] as const;
