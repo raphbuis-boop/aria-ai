@@ -34,7 +34,11 @@ export function InboxClient({
 }) {
   const router = useRouter();
   const [filter, setFilter] = useState<(typeof filters)[number]>("All");
-  const [rows] = useState(initial);
+  const [rows, setRows] = useState(initial);
+
+  useEffect(() => {
+    setRows(initial);
+  }, [initial]);
 
   useEffect(() => {
     void (async () => {
@@ -47,6 +51,10 @@ export function InboxClient({
       if ((data.updated ?? 0) > 0) router.refresh();
     })();
   }, [router]);
+
+  function removeRow(id: string) {
+    setRows((list) => list.filter((r) => r.id !== id));
+  }
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -65,7 +73,7 @@ export function InboxClient({
     for (const r of drafts) {
       const phone = r.clients?.phone;
       if (!phone || !r.body) continue;
-      await fetch("/api/sms/send", {
+      const res = await fetch("/api/sms/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -75,6 +83,8 @@ export function InboxClient({
           body: r.body,
         }),
       });
+      const data = (await res.json().catch(() => ({}))) as { success?: boolean };
+      if (data.success) removeRow(r.id);
     }
     router.refresh();
   }
@@ -129,6 +139,7 @@ export function InboxClient({
             sent={!!r.sent}
             clientId={r.client_id}
             clientPhone={r.clients?.phone}
+            onRemove={() => removeRow(r.id)}
           />
         ))}
         {!filtered.length ? (

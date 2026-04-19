@@ -1,4 +1,5 @@
 import { getAnthropic } from "@/lib/ai";
+import { fmtMoney } from "@/lib/utils";
 
 export const INBOX_DRAFT_MODEL = "claude-sonnet-4-20250514";
 
@@ -44,9 +45,9 @@ export async function generateInboxSmsDraft(
   const budgetMax = client.budget_max;
   let budgetLine = "";
   if (budgetMin != null && budgetMax != null) {
-    budgetLine = `$${Math.round(budgetMin / 1000)}k–$${Math.round(budgetMax / 1000)}k`;
+    budgetLine = `${fmtMoney(budgetMin)}–${fmtMoney(budgetMax)}`;
   } else if (budgetMax != null) {
-    budgetLine = `up to $${Math.round(budgetMax / 1000)}k`;
+    budgetLine = `up to ${fmtMoney(budgetMax)}`;
   } else {
     budgetLine = "their range";
   }

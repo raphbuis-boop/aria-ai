@@ -36,6 +36,7 @@ export function InboxActivityCard({
   sent,
   clientId,
   clientPhone,
+  onRemove,
 }: {
   id: string;
   type: string;
@@ -47,6 +48,7 @@ export function InboxActivityCard({
   sent?: boolean;
   clientId: string;
   clientPhone?: string | null;
+  onRemove?: () => void;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -86,6 +88,7 @@ export function InboxActivityCard({
       if (data.success) {
         toast.toast(`Sent to ${clientName} ✓`, "success");
         setOpen(false);
+        onRemove?.();
         router.refresh();
       } else {
         toast.toast(data.error ?? "Could not send", "warn");
@@ -104,6 +107,7 @@ export function InboxActivityCard({
     }
     toast.toast("Dismissed", "success");
     setOpen(false);
+    onRemove?.();
     router.refresh();
   }
 

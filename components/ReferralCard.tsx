@@ -1,5 +1,7 @@
 "use client";
 
+import { fmtMoney } from "@/lib/utils";
+
 const statusClass: Record<string, string> = {
   pending: "bg-[rgba(245,158,11,0.15)] text-accent-amber",
   accepted: "bg-[rgba(16,185,129,0.15)] text-accent-green",
@@ -31,9 +33,7 @@ export function ReferralCard({
           </div>
           <div className="text-[12px] text-text-dim">
             {town} ·{" "}
-            {budget_max != null
-              ? `Up to $${Math.round(budget_max / 1000)}k`
-              : "—"}
+            {budget_max != null ? `Up to ${fmtMoney(budget_max)}` : "—"}
           </div>
           {meta ? <div className="mt-1 text-[11px] text-text-muted">{meta}</div> : null}
         </div>

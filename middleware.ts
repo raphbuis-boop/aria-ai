@@ -53,8 +53,10 @@ export async function middleware(request: NextRequest) {
   const isPublic =
     path.startsWith("/api") ||
     path.startsWith("/portal") ||
+    path.startsWith("/demo") ||
     path === "/login" ||
     path === "/setup" ||
+    path === "/privacy" ||
     path === "/" ||
     path === "/landing.html";
 
