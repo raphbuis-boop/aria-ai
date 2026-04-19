@@ -399,7 +399,7 @@
 <body>
 
 <div class="launch-banner" id="launch-banner" aria-live="polite">
-  ⚡ Launch in <span id="banner-days">—</span> <span id="banner-days-unit">days</span><span class="sep">·</span><span id="banner-spots">—</span> spots remaining<span class="sep">·</span>NJ-only beta
+  ⚡ Launch in <span id="banner-days">—</span> <span id="banner-days-unit">days</span><span class="sep">·</span>NJ-only beta
 </div>
 
 <!-- NAV -->
@@ -420,14 +420,6 @@
 
 <!-- HERO -->
 <div class="hero" id="hero">
-  <div class="live-waitlist-line" id="live-waitlist-line" aria-live="polite">
-    <span class="live-dot-red" aria-hidden="true"></span>
-    <span><span id="count-anim">0</span> NJ agents on the waitlist</span>
-    <span class="muted">—</span>
-    <span><span id="spots-anim">50</span> spots left</span>
-  </div>
-  <p class="hero-referral-line" id="referral-self-line" style="display:none;"></p>
-
   <div class="hero-mobile-glow" aria-hidden="true">
     <div class="hero-glow-card">12 follow-ups sent overnight</div>
     <div class="hero-glow-card">3 new MLS matches</div>
@@ -446,7 +438,6 @@
       <input type="email" id="waitlist-email" placeholder="Enter your work email" autocomplete="email" />
       <button type="button" onclick="joinWaitlist()">Reserve Your Spot</button>
     </div>
-    <p class="cta-micro">Limited to first 50 agents in NJ</p>
     <p class="hero-sub">No credit card. Used by NJ agents testing the beta.</p>
   </div>
 
@@ -782,7 +773,7 @@
 
 <!-- FINAL CTA -->
 <div class="final-cta">
-  <h2>50 NJ spots.<br><span>Then we close the list.</span></h2>
+  <h2>Join the<br><span>NJ beta.</span></h2>
   <p>Early access for agents who want every lead followed up—before the next agent does.</p>
   <div class="final-form">
     <input type="email" id="final-email" placeholder="Work email" />
@@ -935,7 +926,7 @@ function showReferralSuccess(data) {
   document.getElementById('success-position').textContent = '#' + (data.position || '—');
   var inp = document.getElementById('referral-link-input');
   inp.value = link;
-  var share = 'Just secured my spot on Aria — the AI CRM built specifically for NJ agents. Only 50 spots. Get in: ' + link;
+  var share = 'Just secured my spot on Aria — the AI CRM built specifically for NJ agents. Get in: ' + link;
   document.getElementById('referral-share-text').value = share;
   var rc = typeof data.referral_count === 'number' ? data.referral_count : 0;
   document.getElementById('success-referral-count').textContent =
