@@ -160,11 +160,13 @@
   .stat-label { font-size: 14px; color: #6B7280; margin-top: 4px; }
 
   /* SECTION HEADERS */
-  .section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; }
+  .section { padding: 80px 40px; max-width: 1100px; margin: 0 auto; text-align: center; }
   .section-tag { font-size: 12px; color: #3B82F6; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
   .section-title { font-size: 42px; font-weight: 700; letter-spacing: -1px; margin-bottom: 16px; line-height: 1.2; }
   .section-title span { color: #3B82F6; }
-  .section-sub { font-size: 18px; color: #6B7280; line-height: 1.7; max-width: 560px; }
+  .section-sub { font-size: 18px; color: #6B7280; line-height: 1.7; max-width: 640px; margin: 0 auto; }
+  /* Cards inside centered sections stay left-aligned internally */
+  .pain-card, .feature-card, .pricing-card, .voice-card { text-align: left; }
 
   /* FEATURES */
   .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 48px; }
@@ -215,7 +217,7 @@
   .pricing-btn-outline:hover { border-color: #3B82F6; color: #3B82F6; }
 
   /* FAQ */
-  .faq-list { margin-top: 48px; max-width: 700px; }
+  .faq-list { margin: 48px auto 0; max-width: 700px; text-align: left; }
   .faq-item { border-bottom: 0.5px solid #1a1a1a; padding: 24px 0; cursor: pointer; }
   .faq-question { font-size: 16px; font-weight: 500; display: flex; justify-content: space-between; align-items: center; }
   .faq-answer { font-size: 15px; color: #6B7280; line-height: 1.7; margin-top: 12px; display: none; }
@@ -243,6 +245,132 @@
   /* SUCCESS */
   .success-msg { display: none; text-align: center; padding: 16px; color: #10B981; font-size: 15px; font-weight: 500; }
 
+  /* COST SECTION */
+  .cost-section { padding: 40px 24px 80px; }
+  .cost-inner {
+    max-width: 860px;
+    margin: 0 auto;
+    background: linear-gradient(180deg, #0b1530 0%, #0a0f1f 100%);
+    border: 0.5px solid rgba(59,130,246,0.35);
+    border-radius: 20px;
+    padding: 56px 40px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 60px rgba(59,130,246,0.08), inset 0 0 40px rgba(59,130,246,0.04);
+  }
+  .cost-inner::before {
+    content: "";
+    position: absolute;
+    top: -80px; left: 50%;
+    transform: translateX(-50%);
+    width: 360px; height: 160px;
+    background: radial-gradient(circle, rgba(59,130,246,0.35) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .cost-tag { font-size: 12px; color: #3B82F6; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; position: relative; }
+  .cost-headline { font-size: 36px; font-weight: 700; letter-spacing: -1px; line-height: 1.2; margin-bottom: 20px; position: relative; }
+  .cost-headline span { color: #3B82F6; }
+  .cost-sub { font-size: 17px; color: #9CA3AF; line-height: 1.7; max-width: 620px; margin: 0 auto 40px; position: relative; }
+  .cost-sub strong { color: #E5E7EB; font-weight: 600; }
+  .cost-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+    position: relative;
+  }
+  .cost-stat {
+    background: rgba(0,0,0,0.35);
+    border: 0.5px solid #1a2340;
+    border-radius: 12px;
+    padding: 20px 16px;
+  }
+  .cost-stat-value { font-size: 24px; font-weight: 700; color: #3B82F6; letter-spacing: -0.5px; margin-bottom: 4px; }
+  .cost-stat-label { font-size: 12px; color: #6B7280; line-height: 1.4; }
+  .cost-closing {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.5px;
+    margin: 0;
+    position: relative;
+  }
+  .cost-closing::before {
+    content: "";
+    display: block;
+    width: 40px; height: 2px;
+    background: #3B82F6;
+    margin: 0 auto 20px;
+    border-radius: 2px;
+  }
+
+  /* VOICE / BEFORE-AFTER SECTION */
+  .voice-compare {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    margin-top: 48px;
+    text-align: left;
+  }
+  .voice-card {
+    border-radius: 16px;
+    padding: 28px;
+    border: 0.5px solid #1a1a1a;
+    background: #111;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    position: relative;
+    transition: transform 0.2s;
+  }
+  .voice-card.voice-bad {
+    background: linear-gradient(180deg, #141416 0%, #0f1011 100%);
+    border-color: rgba(239,68,68,0.25);
+  }
+  .voice-card.voice-good {
+    background: linear-gradient(180deg, #0d1a2e 0%, #0a1224 100%);
+    border-color: rgba(59,130,246,0.45);
+    box-shadow: 0 0 48px rgba(59,130,246,0.18), inset 0 0 24px rgba(59,130,246,0.04);
+  }
+  .voice-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 6px 12px;
+    border-radius: 20px;
+    width: fit-content;
+  }
+  .voice-badge-bad { background: rgba(239,68,68,0.12); color: #F87171; border: 0.5px solid rgba(239,68,68,0.3); }
+  .voice-badge-good { background: rgba(59,130,246,0.15); color: #60A5FA; border: 0.5px solid rgba(59,130,246,0.5); }
+  .voice-sms {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #E5E7EB;
+    background: rgba(0,0,0,0.4);
+    border-radius: 12px;
+    padding: 16px 18px;
+    border: 0.5px solid rgba(255,255,255,0.04);
+  }
+  .voice-bad .voice-sms { color: #9CA3AF; }
+  .voice-good .voice-sms { color: #F3F4F6; }
+  .voice-verdict {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .voice-verdict-bad { color: #9CA3AF; }
+  .voice-verdict-good { color: #60A5FA; }
+  .voice-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .voice-dot-bad { background: #EF4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+  .voice-dot-good { background: #3B82F6; box-shadow: 0 0 10px rgba(59,130,246,0.7); }
+
   /* RESPONSIVE */
   @media (max-width: 768px) {
     .hero-mobile-glow { display: flex; }
@@ -260,6 +388,11 @@
     .final-cta h2 { font-size: 36px; }
     .final-form { flex-direction: column; }
     .pain-grid { grid-template-columns: 1fr; }
+    .cost-inner { padding: 40px 24px; }
+    .cost-headline { font-size: 28px; }
+    .cost-stats { grid-template-columns: 1fr; }
+    .cost-closing { font-size: 18px; }
+    .voice-compare { grid-template-columns: 1fr; }
   }
 </style>
 </head>
@@ -354,6 +487,30 @@
       <h3>Nights on your phone</h3>
       <p>You’re chasing leads instead of showing homes and signing deals.</p>
     </div>
+  </div>
+</div>
+
+<!-- COST OF SLOW FOLLOW-UP -->
+<div class="cost-section">
+  <div class="cost-inner">
+    <div class="cost-tag">The math</div>
+    <h2 class="cost-headline">Here's what slow follow-up <span>actually costs you</span>.</h2>
+    <p class="cost-sub">The average NJ agent loses <strong>2–3 deals a year</strong> to slow follow-up. At a <strong>$550k</strong> average sale price and <strong>2.5%</strong> commission, that's <strong>$27,500–$41,000</strong> walking out the door — every year.</p>
+    <div class="cost-stats">
+      <div class="cost-stat">
+        <div class="cost-stat-value">2–3</div>
+        <div class="cost-stat-label">deals lost per year</div>
+      </div>
+      <div class="cost-stat">
+        <div class="cost-stat-value">$550k</div>
+        <div class="cost-stat-label">NJ average sale price</div>
+      </div>
+      <div class="cost-stat">
+        <div class="cost-stat-value">$27k–$41k</div>
+        <div class="cost-stat-label">commission left on the table</div>
+      </div>
+    </div>
+    <p class="cost-closing">Aria costs less than one lost deal.</p>
   </div>
 </div>
 
@@ -502,6 +659,31 @@
       <div>
         <div class="testimonial-name">Linda K.</div>
         <div class="testimonial-role">NJ Realtor · Bergen County · Private beta</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- VOICE / BEFORE-AFTER -->
+<div class="section" id="voice">
+  <div class="section-tag">Your voice</div>
+  <div class="section-title">Sounds like you.<br><span>Not a robot.</span></div>
+  <div class="section-sub">Aria learns your voice, your tone, your style from real texts you've sent. Every message is personalized to that specific lead — their budget, neighborhood, what they're searching for. You approve every message before it sends. Your clients never know AI touched it. They just think you're on top of everything.</div>
+  <div class="voice-compare">
+    <div class="voice-card voice-bad">
+      <div class="voice-badge voice-badge-bad">Generic AI</div>
+      <div class="voice-sms">"Hi [FIRST NAME], just checking in to see if you're still interested in buying a home. Let me know if you have any questions!"</div>
+      <div class="voice-verdict voice-verdict-bad">
+        <span class="voice-dot voice-dot-bad"></span>
+        Clients spot it instantly. Deleted.
+      </div>
+    </div>
+    <div class="voice-card voice-good">
+      <div class="voice-badge voice-badge-good">Aria · in your voice</div>
+      <div class="voice-sms">"Hey Marcus! Still thinking about 14 Elm St? Ridgewood inventory is moving fast right now — 3 homes went under contract this week in your range. Want to get you in before the weekend?"</div>
+      <div class="voice-verdict voice-verdict-good">
+        <span class="voice-dot voice-dot-good"></span>
+        Sounds personal. They reply.
       </div>
     </div>
   </div>

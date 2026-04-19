@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { formatPhoneE164 } from "@/lib/utils";
 import { Plus } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 
 const chips = [
   "All",
@@ -26,10 +26,20 @@ export function ClientsPageClient({
 }) {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [q, setQ] = useState("");
   const [chip, setChip] = useState<(typeof chips)[number]>("All");
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("new");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
   const [form, setForm] = useState({
     name: "",
     phone: "",

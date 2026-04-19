@@ -3,8 +3,8 @@
 import { ShowingCard } from "@/components/ShowingCard";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
-import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isFuture, parseISO } from "date-fns";
 
 export function ShowingsClient({
@@ -14,6 +14,7 @@ export function ShowingsClient({
 }) {
   const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
@@ -67,6 +68,16 @@ export function ShowingsClient({
     setClients((data as { id: string; name: string }[]) ?? []);
     setOpen(true);
   }
+
+  useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      void openModal();
+      const url = new URL(window.location.href);
+      url.searchParams.delete("new");
+      window.history.replaceState({}, "", url.toString());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   async function save() {
     const {
