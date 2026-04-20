@@ -151,31 +151,31 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border-card bg-bg-primary">
-        <div className="mx-auto flex h-full max-w-lg items-end justify-between px-2 pb-1 pt-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e1e2e] bg-[#0a0a0f]/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-lg items-end justify-between px-2 pb-2 pt-1">
           {primary.map(({ href, label, Icon, badge }) => {
             const active = pathname === href || pathname.startsWith(href + "/");
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex w-[60px] flex-col items-center gap-[7px] pb-1"
+                className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
               >
                 <span className="relative">
                   <Icon
-                    className={active ? "text-accent-blue" : "text-text-dim"}
+                    className={active ? "text-[#4f7bff]" : "text-[#555566]"}
                     size={22}
                     strokeWidth={2}
                   />
                   {badge && unread > 0 ? (
-                    <span className="absolute -right-2 -top-1 flex h-[16px] min-w-[16px] items-center justify-center rounded-full bg-accent-blue px-[4px] text-[9px] font-medium text-white">
+                    <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
                       {unread > 9 ? "9+" : unread}
                     </span>
                   ) : null}
                 </span>
                 <span
-                  className={`text-[9px] ${
-                    active ? "text-accent-blue" : "text-text-dim"
+                  className={`text-[10px] font-medium ${
+                    active ? "text-[#4f7bff]" : "text-[#555566]"
                   }`}
                 >
                   {label}
@@ -193,8 +193,7 @@ export function BottomNav() {
               }}
               aria-label="Quick actions"
               aria-expanded={quickOpen}
-              className="-mt-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#1D4ED8] text-white transition-transform active:scale-95"
-              style={{ boxShadow: "0 0 0 8px rgba(59,130,246,0.15)" }}
+              className="-mt-5 flex h-[52px] w-[52px] items-center justify-center rounded-[18px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] text-white transition-transform active:scale-95"
             >
               <Plus
                 size={28}
@@ -212,16 +211,16 @@ export function BottomNav() {
               <Link
                 key={href}
                 href={href}
-                className="flex w-[60px] flex-col items-center gap-[7px] pb-1"
+                className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
               >
                 <Icon
-                  className={active ? "text-accent-blue" : "text-text-dim"}
+                  className={active ? "text-[#4f7bff]" : "text-[#555566]"}
                   size={22}
                   strokeWidth={2}
                 />
                 <span
-                  className={`text-[9px] ${
-                    active ? "text-accent-blue" : "text-text-dim"
+                  className={`text-[10px] font-medium ${
+                    active ? "text-[#4f7bff]" : "text-[#555566]"
                   }`}
                 >
                   {label}
@@ -238,18 +237,18 @@ export function BottomNav() {
             }}
             aria-label="More"
             aria-expanded={moreOpen}
-            className="flex w-[60px] flex-col items-center gap-[7px] pb-1"
+            className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
           >
             <Grid3x3
               className={
-                moreActive || moreOpen ? "text-accent-blue" : "text-text-dim"
+                moreActive || moreOpen ? "text-[#4f7bff]" : "text-[#555566]"
               }
               size={22}
               strokeWidth={2}
             />
             <span
-              className={`text-[9px] ${
-                moreActive || moreOpen ? "text-accent-blue" : "text-text-dim"
+              className={`text-[10px] font-medium ${
+                moreActive || moreOpen ? "text-[#4f7bff]" : "text-[#555566]"
               }`}
             >
               More
@@ -268,7 +267,7 @@ export function BottomNav() {
 
 function QuickActionsSheet({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70">
       <button
         type="button"
         aria-label="Close quick actions"
@@ -277,10 +276,10 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
       />
       <div
         role="menu"
-        className="relative z-10 mb-16 w-full max-w-lg rounded-t-[18px] border border-border-card border-b-0 bg-bg-card p-4 shadow-2xl"
+        className="relative z-10 mb-16 w-full max-w-lg rounded-t-[24px] border border-[#1e1e2e] border-b-0 bg-[#0f0f1a] px-5 pb-6 pt-4"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-card" />
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-dim">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#2a2a3e]" />
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#555566]">
           Quick actions
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -289,15 +288,15 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
               key={label}
               href={href}
               onClick={onClose}
-              className="flex flex-col items-center gap-2 rounded-[14px] border border-border-card bg-bg-deep px-3 py-4 text-center transition hover:border-accent-blue/50"
+              className="flex flex-col items-center gap-2 rounded-[16px] border border-[#1e1e2e] bg-[#12121e] px-3 py-4 text-center active:border-[#4f7bff]"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4f7bff]/15 text-[#6f9bff]">
                 <Icon size={20} />
               </span>
-              <span className="text-[12px] font-medium text-text-primary">
+              <span className="text-[12px] font-medium text-white">
                 {label}
               </span>
-              <span className="text-[10px] leading-tight text-text-dim">
+              <span className="text-[10px] leading-tight text-[#666680]">
                 {hint}
               </span>
             </Link>
@@ -310,7 +309,7 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
 
 function MoreSheet({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70">
       <button
         type="button"
         aria-label="Close menu"
@@ -319,10 +318,10 @@ function MoreSheet({ onClose }: { onClose: () => void }) {
       />
       <div
         role="menu"
-        className="relative z-10 mb-16 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-[18px] border border-border-card border-b-0 bg-bg-card p-4 shadow-2xl"
+        className="relative z-10 mb-16 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border border-[#1e1e2e] border-b-0 bg-[#0f0f1a] px-5 pb-8 pt-4"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-card" />
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-dim">
+        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#2a2a3e]" />
+        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#555566]">
           More
         </div>
         <div className="space-y-1.5">
@@ -331,16 +330,16 @@ function MoreSheet({ onClose }: { onClose: () => void }) {
               key={href}
               href={href}
               onClick={onClose}
-              className="flex items-center gap-3 rounded-[12px] border border-border-card bg-bg-deep px-3 py-3 transition hover:border-accent-blue/50"
+              className="flex items-center gap-3 rounded-[14px] border border-[#1e1e2e] bg-[#12121e] px-4 py-3.5 transition hover:border-[#4f7bff] active:border-[#4f7bff]"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4f7bff]/15 text-[#6f9bff]">
                 <Icon size={18} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium text-text-primary">
+                <div className="text-[13px] font-medium text-white">
                   {label}
                 </div>
-                <div className="truncate text-[11px] text-text-dim">{desc}</div>
+                <div className="truncate text-[11px] text-[#666680]">{desc}</div>
               </div>
             </Link>
           ))}
