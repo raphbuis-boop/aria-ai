@@ -18,14 +18,18 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (!user) { setLoading(false); return }
-      const { data } = await supabase
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) { setLoading(false); return }
+      setUser(session.user)
+      const firstName = session.user?.user_metadata?.full_name?.split(' ')[0] || session.user?.email?.split('@')[0] || 'there'
+      
+      const { data, error } = await supabase
         .from('clients')
         .select('id, name, town, status, lead_score, budget_min, budget_max, phone, client_role')
         .order('lead_score', { ascending: false })
         .limit(20)
+      
+      console.log('clients data:', data, 'error:', error)
       setClients(data || [])
       setLoading(false)
     }

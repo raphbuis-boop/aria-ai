@@ -19,14 +19,14 @@ export default async function PipelinePage() {
   const total = (clients ?? []).reduce((s, c) => s + (c.budget_max ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-28 pt-6">
-      <header className="flex items-center justify-between gap-2">
-        <div className="text-[20px] font-medium text-text-primary">Pipeline</div>
-        <div className="text-[16px] font-medium text-accent-blue">
+    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
+      <div className="px-5 pt-6 flex items-center justify-between mb-2">
+        <div className="text-[26px] font-semibold text-white">Pipeline</div>
+        <div className="text-[#4f7bff] font-semibold text-sm">
           {fmtMoney(total)}
         </div>
-      </header>
-      <div className="mt-6">
+      </div>
+      <div className="mt-4">
         <PipelineBoard initial={clients ?? []} />
       </div>
     </div>

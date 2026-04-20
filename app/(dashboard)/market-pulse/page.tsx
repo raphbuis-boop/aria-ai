@@ -45,13 +45,11 @@ export default function MarketPulsePage() {
   }, [load]);
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <header className="flex items-center justify-between gap-2">
+    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
+      <div className="px-5 pt-6 pb-4 flex items-start justify-between gap-2">
         <div>
-          <div className="text-[20px] font-medium text-text-primary">
-            Market Pulse
-          </div>
-          <div className="text-[13px] text-text-dim">
+          <div className="text-[26px] font-semibold mb-1">Market Pulse</div>
+          <div className="text-xs text-[#444460]">
             Active NJ listings (SimplyRETS)
           </div>
         </div>
@@ -59,77 +57,67 @@ export default function MarketPulsePage() {
           type="button"
           onClick={() => void load()}
           disabled={loading}
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-border-card text-text-dim hover:text-accent-blue disabled:opacity-50"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-[#1e1e2e] text-[#666680] hover:text-[#4f7bff] disabled:opacity-50"
           aria-label="Refresh"
         >
-          <RefreshCw
-            size={18}
-            className={loading ? "animate-spin" : ""}
-          />
+          <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
         </button>
-      </header>
+      </div>
 
       {err ? (
-        <div className="mt-4 rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
+        <div className="mx-5 bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4 text-sm text-[#666680]">
           {err}
         </div>
       ) : null}
 
       {loading && !towns.length ? (
-        <div className="mt-6 text-[13px] text-text-dim">Loading…</div>
+        <div className="px-5 text-sm text-[#444460]">Loading…</div>
       ) : null}
 
-      <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {towns.map((t) => (
-          <div
-            key={t.town}
-            className="rounded-[14px] border border-border-card bg-bg-card p-4"
-          >
-            <div className="text-[15px] font-semibold text-text-primary">
-              {t.town}
-            </div>
-            <div className="mt-3 space-y-2 text-[13px] text-text-secondary">
-              <div className="flex justify-between gap-2">
-                <span className="text-text-dim">Active listings</span>
-                <span className="font-medium text-text-primary">
-                  {t.activeCount}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-text-dim">Median price</span>
-                <span className="font-medium text-accent-blue">
-                  {t.medianPrice != null ? fmtMoney(t.medianPrice) : "—"}
-                </span>
-              </div>
-              <div className="flex justify-between gap-2">
-                <span className="text-text-dim">Avg. days on market</span>
-                <span className="font-medium">
+      <div className="px-5 space-y-2 mt-2">
+        {towns.map((t) => {
+          const pct = t.momentumPct;
+          const momentumClass =
+            pct != null && pct >= 0
+              ? "text-xs text-green-400 flex items-center gap-1"
+              : "text-xs text-red-400 flex items-center gap-1";
+          return (
+            <div
+              key={t.town}
+              className="flex items-center justify-between py-3 border-b border-[#141420]"
+            >
+              <div className="min-w-0">
+                <div className="text-sm font-semibold text-[#d0d0e0]">
+                  {t.town}
+                </div>
+                <div className="text-[11px] text-[#555570] mt-0.5">
+                  {t.activeCount} active
                   {t.avgDaysOnMarket != null
-                    ? Math.round(t.avgDaysOnMarket)
-                    : "—"}
-                </span>
+                    ? ` · ${Math.round(t.avgDaysOnMarket)}d avg`
+                    : ""}
+                </div>
               </div>
-              <div className="flex items-center justify-between gap-2 border-t border-border-card pt-2 text-[11px] text-text-dim">
-                <span>Momentum (fresh vs aged)</span>
-                <span className="flex items-center gap-1 font-medium text-text-primary">
-                  {t.momentumPct != null ? (
-                    <>
-                      {t.momentumPct >= 0 ? (
-                        <ArrowUp className="text-accent-green" size={14} />
-                      ) : (
-                        <ArrowDown className="text-accent-amber" size={14} />
-                      )}
-                      {t.momentumPct > 0 ? "+" : ""}
-                      {t.momentumPct}%
-                    </>
-                  ) : (
-                    "—"
-                  )}
-                </span>
+              <div className="text-right">
+                <div className="text-sm font-semibold text-[#4f7bff]">
+                  {t.medianPrice != null ? fmtMoney(t.medianPrice) : "—"}
+                </div>
+                {pct != null ? (
+                  <div className={`${momentumClass} justify-end`}>
+                    {pct >= 0 ? (
+                      <ArrowUp size={12} />
+                    ) : (
+                      <ArrowDown size={12} />
+                    )}
+                    {pct > 0 ? "+" : ""}
+                    {pct}%
+                  </div>
+                ) : (
+                  <div className="text-xs text-[#555570]">—</div>
+                )}
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
