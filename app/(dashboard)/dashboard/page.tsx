@@ -1,218 +1,246 @@
-import { HomeClient } from "@/components/HomeClient";
-import { createClient } from "@/lib/supabase/server";
-import {
-  endOfMonth,
-  isSameMonth,
-  isToday,
-  parseISO,
-  startOfMonth,
-} from "date-fns";
+"use client";
 
-export default async function HomePage() {
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { fmtMoney } from "@/lib/utils";
+
+type Client = {
+  id: string;
+  name: string;
+  town: string | null;
+  status: string | null;
+  lead_score: number | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  phone: string | null;
+};
+
+const ACTIVE_STATUSES = new Set([
+  "new",
+  "contacted",
+  "showing",
+  "offer",
+  "under_contract",
+]);
+
+export default function DashboardPage() {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
+  const [firstName, setFirstName] = useState("there");
+  const [initial, setInitial] = useState("A");
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const { data: profile } = await supabase
-    .from("agent_profiles")
-    .select("full_name")
-    .eq("id", user.id)
-    .maybeSingle();
+  useEffect(() => {
+    async function load() {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
 
-  const displayName = profile?.full_name?.split(" ")[0] ?? "Agent";
+      const { data: profile } = await supabase
+        .from("agent_profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .maybeSingle();
+      const metaName = user.user_metadata?.full_name as string | undefined;
+      const fullName = (profile?.full_name as string | null) ?? metaName ?? "";
+      const first = fullName.split(" ")[0] || "there";
+      setFirstName(first);
+      setInitial(first[0]?.toUpperCase() ?? "A");
 
-  const since24 = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-  const since4h = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("clients")
+        .select(
+          "id, name, town, status, lead_score, budget_min, budget_max, phone",
+        )
+        .eq("agent_id", user.id)
+        .order("lead_score", { ascending: false })
+        .limit(50);
+      setClients((data as Client[]) ?? []);
+      setLoading(false);
+    }
+    void load();
+  }, [supabase]);
 
-  const { count: act24 } = await supabase
-    .from("activities")
-    .select("*", { count: "exact", head: true })
-    .eq("agent_id", user.id)
-    .gte("created_at", since24);
+  const hotLeads = clients.filter((c) => (c.lead_score ?? 0) >= 7);
+  const pipelineTotal = clients
+    .filter((c) => ACTIVE_STATUSES.has(c.status ?? ""))
+    .reduce((sum, c) => sum + (c.budget_max ?? 0), 0);
+  const closingsCount = clients.filter(
+    (c) => c.status === "under_contract",
+  ).length;
+  const firstHot = hotLeads[0];
 
-  const { data: clients } = await supabase
-    .from("clients")
-    .select("*")
-    .eq("agent_id", user.id);
-
-  const clientList = clients ?? [];
-
-  const top = [...clientList].sort(
-    (a, b) => (b.lead_score ?? 0) - (a.lead_score ?? 0),
-  )[0];
-
-  const { data: recentActs } = await supabase
-    .from("activities")
-    .select("client_id, created_at")
-    .eq("agent_id", user.id)
-    .gte("created_at", since4h);
-
-  const hotIds = new Set(
-    (recentActs ?? []).map((a) => a.client_id).filter(Boolean) as string[],
-  );
-  const hotActivityNames = clientList
-    .filter((c) => hotIds.has(c.id))
-    .map((c) => c.name);
-
-  const { count: matchCount } = await supabase
-    .from("property_matches")
-    .select("*", { count: "exact", head: true })
-    .eq("agent_id", user.id)
-    .eq("notified", false);
-
-  const briefingParts: string[] = [];
-  briefingParts.push(`${act24 ?? 0} activities logged in the last 24 hours.`);
-  if (top) {
-    briefingParts.push(
-      `Top lead: ${top.name} (${top.status ?? "new"}) in ${top.town ?? "NJ"}.`,
-    );
-  }
-  if (hotActivityNames.length) {
-    briefingParts.push(
-      `Recent engagement in the last 4 hours — prioritize follow-ups.`,
-    );
-  }
-  if ((matchCount ?? 0) > 0) {
-    briefingParts.push(
-      `${matchCount} new property matches found for your active buyers.`,
-    );
-  }
-
-  const briefing = briefingParts.join(" ");
-
-  const hotClients = clientList
-    .filter((c) => (c.lead_score ?? 0) >= 8)
-    .slice(0, 2);
-
-  const { data: draftAct } = await supabase
-    .from("activities")
-    .select("id, body, client_id")
-    .eq("agent_id", user.id)
-    .eq("ai_draft", true)
-    .eq("approved", false)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  let approveDraft: {
-    id: string;
-    clientId: string;
-    clientName: string;
-    phone: string | null;
-    body: string;
-  } | null = null;
-
-  if (draftAct?.client_id) {
-    const { data: cli } = await supabase
-      .from("clients")
-      .select("name, phone")
-      .eq("id", draftAct.client_id)
-      .maybeSingle();
-    approveDraft = {
-      id: draftAct.id,
-      clientId: draftAct.client_id,
-      clientName: cli?.name ?? "Client",
-      phone: cli?.phone ?? null,
-      body: String(draftAct.body ?? ""),
-    };
-  }
-
-  const closingClient =
-    clientList.find((c) => c.status === "under_contract") ?? null;
-
-  const activeStatuses = new Set([
-    "new",
-    "contacted",
-    "showing",
-    "offer",
-    "under_contract",
-  ]);
-  const pipeline = clientList
-    .filter((c) => activeStatuses.has(c.status ?? ""))
-    .reduce((s, c) => s + (c.budget_max ?? 0), 0);
-
-  const hot = clientList.filter((c) => (c.lead_score ?? 0) >= 8).length;
-
-  const { data: tasks } = await supabase
-    .from("tasks")
-    .select("due_at, done")
-    .eq("agent_id", user.id)
-    .eq("done", false);
-
-  const tasksToday =
-    tasks?.filter((t) => t.due_at && isToday(parseISO(t.due_at))).length ?? 0;
-
-  const { data: txs } = await supabase
-    .from("transactions")
-    .select("closing_date")
-    .eq("agent_id", user.id);
-
-  const monthStart = startOfMonth(new Date());
-  const monthEnd = endOfMonth(new Date());
-  const closings =
-    txs?.filter(
-      (t) =>
-        t.closing_date &&
-        isSameMonth(parseISO(t.closing_date), new Date()) &&
-        parseISO(t.closing_date) >= monthStart &&
-        parseISO(t.closing_date) <= monthEnd,
-    ).length ?? 0;
-
-  const { data: matchRows } = await supabase
-    .from("property_matches")
-    .select(
-      `
-      id,
-      match_score,
-      match_reasons,
-      notified,
-      property_id,
-      client_id,
-      properties ( address, price, beds, baths, photos ),
-      clients ( name )
-    `,
-    )
-    .eq("agent_id", user.id)
-    .eq("notified", false)
-    .order("match_score", { ascending: false })
-    .limit(4);
-
-  const context = `Agent: ${displayName}. Clients: ${clientList.length}. Hot leads: ${hot}. Pipeline: ${pipeline}. Tasks due today: ${tasksToday}.`;
-
-  const matchesNormalized = (matchRows ?? []).map((m) => {
-    const p = m.properties as
-      | { address: string | null; price: number | null }
-      | { address: string | null; price: number | null }[]
-      | null;
-    const c = m.clients as { name: string | null } | { name: string | null }[] | null;
-    const reasons = m.match_reasons as string[] | null;
-    return {
-      ...m,
-      properties: Array.isArray(p) ? p[0] ?? null : p,
-      clients: Array.isArray(c) ? c[0] ?? null : c,
-      match_reasons: Array.isArray(reasons) ? reasons : reasons ?? [],
-    };
+  const today = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
   });
+  const hour = new Date().getHours();
+  const greeting =
+    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <HomeClient
-      displayName={displayName}
-      briefing={briefing}
-      hotActivityNames={hotActivityNames}
-      hotClients={hotClients}
-      approveDraft={approveDraft}
-      closingClient={closingClient}
-      stats={{
-        pipeline,
-        hot,
-        tasksToday,
-        closings,
-      }}
-      matches={matchesNormalized}
-      context={context}
-      hasHotLeadPulse={clientList.some((c) => (c.lead_score ?? 0) >= 8)}
-    />
+    <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
+      <div className="px-5 pt-6 pb-2">
+        <p className="text-xs font-semibold text-[#4f7bff] uppercase tracking-widest mb-1">
+          {today}
+        </p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-semibold">
+            {greeting}, {firstName}
+          </h1>
+          <div className="w-9 h-9 rounded-full bg-[#4f7bff]/20 flex items-center justify-center text-[#6f9bff] font-bold text-sm">
+            {initial}
+          </div>
+        </div>
+      </div>
+
+      <div className="px-5 space-y-3 mt-4">
+        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border border-[#1e2a4e] rounded-2xl p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4f7bff] animate-pulse" />
+            <span className="text-xs font-bold text-[#4f7bff] uppercase tracking-widest">
+              While you were away
+            </span>
+          </div>
+          <p className="text-sm text-[#a0a0c0] leading-relaxed">
+            {loading
+              ? "Loading your briefing..."
+              : `${hotLeads.length} hot lead${hotLeads.length === 1 ? "" : "s"} need${hotLeads.length === 1 ? "s" : ""} attention. ${clients.length} active client${clients.length === 1 ? "" : "s"} in your pipeline.`}
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between mt-5 mb-2">
+          <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460]">
+            Action Stack
+          </p>
+        </div>
+
+        {firstHot ? (
+          <div className="bg-[#12121e] border border-[#2a1a1a] rounded-2xl p-4">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-bold tracking-widest uppercase bg-red-500/10 text-red-400 border border-red-500/20 rounded px-2 py-0.5">
+                Hot Lead
+              </span>
+              <span className="text-xs text-[#444460]">now</span>
+            </div>
+            <Link href={`/clients/${firstHot.id}`}>
+              <p className="text-base font-semibold mb-1">
+                {firstHot.name}
+                {firstHot.town ? ` · ${firstHot.town}` : ""}
+              </p>
+            </Link>
+            <p className="text-xs text-[#666680] mb-3 capitalize">
+              {(firstHot.status ?? "new").replace("_", " ")}
+            </p>
+            <div className="flex gap-2">
+              <Link
+                href={`/inbox?client=${firstHot.id}`}
+                className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-lg py-2 text-xs font-semibold"
+              >
+                AI text
+              </Link>
+              {firstHot.phone ? (
+                <a
+                  href={`tel:${firstHot.phone}`}
+                  className="flex-1 text-center bg-green-500/12 text-green-400 border border-green-500/20 rounded-lg py-2 text-xs font-semibold"
+                >
+                  Call now
+                </a>
+              ) : (
+                <span className="flex-1 text-center bg-green-500/5 text-[#444460] border border-green-500/10 rounded-lg py-2 text-xs font-semibold">
+                  No phone
+                </span>
+              )}
+              <Link
+                href={`/clients/${firstHot.id}`}
+                className="flex-1 text-center bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-lg py-2 text-xs font-semibold"
+              >
+                View
+              </Link>
+            </div>
+          </div>
+        ) : null}
+
+        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mt-5 mb-2">
+          Stats
+        </p>
+        <div className="grid grid-cols-2 gap-2.5">
+          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1">
+              Pipeline
+            </p>
+            <p className="text-2xl font-semibold text-[#4f7bff]">
+              {fmtMoney(pipelineTotal)}
+            </p>
+          </div>
+          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1">
+              Hot leads
+            </p>
+            <p className="text-2xl font-semibold text-amber-400">
+              {hotLeads.length}
+            </p>
+          </div>
+          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1">
+              Active clients
+            </p>
+            <p className="text-2xl font-semibold">{clients.length}</p>
+          </div>
+          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1">
+              Closings
+            </p>
+            <p className="text-2xl font-semibold text-green-400">
+              {closingsCount}
+            </p>
+          </div>
+        </div>
+
+        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mt-5 mb-2">
+          Ask Aria
+        </p>
+        <Link
+          href="/ai"
+          className="bg-[#12121e] border border-[#2a2a3e] rounded-2xl p-3.5 flex items-center gap-3"
+        >
+          <span className="w-2 h-2 rounded-full bg-[#4f7bff]" />
+          <span className="text-sm text-[#555570]">Ask Aria anything...</span>
+        </Link>
+
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Link
+            href="/clients?new=1"
+            className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium"
+          >
+            + New Client
+          </Link>
+          <Link
+            href="/showings?new=1"
+            className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium"
+          >
+            Log Showing
+          </Link>
+          <Link
+            href="/properties"
+            className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium"
+          >
+            Properties
+          </Link>
+          <Link
+            href="/pipeline"
+            className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium"
+          >
+            Pipeline
+          </Link>
+        </div>
+      </div>
+    </div>
   );
 }
