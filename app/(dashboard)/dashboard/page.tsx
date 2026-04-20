@@ -24,7 +24,6 @@ export default function DashboardPage() {
       const { data } = await supabase
         .from('clients')
         .select('id, name, town, status, lead_score, budget_min, budget_max, phone, client_role')
-        .eq('agent_id', user.id)
         .order('lead_score', { ascending: false })
         .limit(20)
       setClients(data || [])
