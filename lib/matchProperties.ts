@@ -1,5 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import {
+  scoreFuzzyMatch,
+  matchBadgeReasons,
+  MATCH_MIN_SCORE,
+  type MatchClient,
+  type MatchProperty,
+} from "@/lib/matching";
 
+/**
+ * Backwards-compatible shapes used by existing callers. The full
+ * smart-matching shape lives in `lib/matching.ts`.
+ */
 export type ClientRow = {
   id: string;
   budget_max: number | null;
@@ -8,6 +19,12 @@ export type ClientRow = {
   beds_wanted: number | null;
   baths_wanted: number | null;
   status: string | null;
+  // Smart-matching fields — optional for backwards compat with older rows.
+  preferred_towns?: string[] | null;
+  nearby_towns_ok?: boolean | null;
+  budget_flex_pct?: number | null;
+  bed_flex?: number | null;
+  bath_flex?: number | null;
 };
 
 export type PropertyRow = {
@@ -20,52 +37,26 @@ export type PropertyRow = {
 
 export type MatchReason = { score: number; reason: string };
 
+/**
+ * Score a (client, property) pair. Returns the total 0..100 score and a list
+ * of short reason strings (for backwards compatibility with the existing
+ * `match_reasons` column).
+ */
 export function scoreMatch(
   client: ClientRow,
   property: PropertyRow,
 ): { score: number; reasons: MatchReason[] } {
-  const reasons: MatchReason[] = [];
-  let score = 0;
-  const price = property.price ?? 0;
-  const budgetMax = client.budget_max ?? 0;
-
-  if (budgetMax > 0) {
-    if (price <= budgetMax) {
-      score += 40;
-      reasons.push({ score: 40, reason: "budget ✅" });
-    } else if (price <= budgetMax * 1.1) {
-      score += 20;
-      reasons.push({ score: 20, reason: "slightly over budget" });
-    }
-  }
-
-  const town = (client.town ?? "").toLowerCase();
-  const pTown = (property.town ?? "").toLowerCase();
-  if (town && pTown && town === pTown) {
-    score += 30;
-    reasons.push({ score: 30, reason: "preferred town ✅" });
-  }
-
-  const bedsW = client.beds_wanted ?? 0;
-  const bedsP = property.beds ?? 0;
-  if (bedsW > 0) {
-    if (bedsP >= bedsW) {
-      score += 20;
-      reasons.push({ score: 20, reason: "beds ✅" });
-    } else if (bedsP >= bedsW - 1) {
-      score += 10;
-      reasons.push({ score: 10, reason: "close on beds" });
-    }
-  }
-
-  const bathsW = Number(client.baths_wanted ?? 0);
-  const bathsP = Number(property.baths ?? 0);
-  if (bathsW > 0 && bathsP >= bathsW) {
-    score += 10;
-    reasons.push({ score: 10, reason: "baths ✅" });
-  }
-
-  return { score, reasons };
+  const result = scoreFuzzyMatch(
+    client as MatchClient,
+    property as MatchProperty,
+  );
+  return {
+    score: result.score,
+    reasons: matchBadgeReasons(result).map((reason) => ({
+      score: result.score,
+      reason,
+    })),
+  };
 }
 
 const ACTIVE = new Set([
@@ -82,7 +73,11 @@ export async function runPropertyMatching(
   propertyId?: string,
 ) {
   const { data: properties } = propertyId
-    ? await supabase.from("properties").select("*").eq("id", propertyId).eq("agent_id", agentId)
+    ? await supabase
+        .from("properties")
+        .select("*")
+        .eq("id", propertyId)
+        .eq("agent_id", agentId)
     : await supabase.from("properties").select("*").eq("agent_id", agentId);
 
   const { data: clients } = await supabase
@@ -109,7 +104,7 @@ export async function runPropertyMatching(
     for (const c of clients as ClientRow[]) {
       if (!c.status || !ACTIVE.has(c.status)) continue;
       const { score, reasons } = scoreMatch(c, p);
-      if (score < 40) continue;
+      if (score < MATCH_MIN_SCORE) continue;
       rows.push({
         property_id: p.id,
         client_id: c.id,

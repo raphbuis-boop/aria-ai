@@ -1,9 +1,9 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
-import { Check, Copy, FileSignature, ShieldAlert } from "lucide-react";
+import { Check, Copy, FileSignature, FileText, ShieldAlert } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type BbaRecord = {
   signed_at: string;
@@ -14,6 +14,12 @@ type BbaRecord = {
   agent_name: string;
   client_name: string;
 } | null;
+
+type TemplateDto = {
+  id: string;
+  template_name: string;
+  is_default: boolean;
+};
 
 export function BbaSection({
   clientId,
@@ -29,16 +35,43 @@ export function BbaSection({
   const toast = useToast();
   const [bba, setBba] = useState<BbaRecord>(initialBba);
   const [sending, setSending] = useState(false);
+  const [templates, setTemplates] = useState<TemplateDto[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string | "">("");
 
   useEffect(() => {
     setBba(initialBba);
   }, [initialBba]);
 
+  // Pull the agent's brokerage templates so they can pick which one to send.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/bba-templates", { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (cancelled) return;
+        const list = (json.templates ?? []) as TemplateDto[];
+        setTemplates(list);
+        const def = list.find((t) => t.is_default) ?? list[0];
+        if (def) setSelectedTemplate(def.id);
+      } catch {
+        // Settings UI surfaces errors; silently skip here.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const signed = !!bba;
-  const signingUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/bba/sign/${clientId}`
-      : `/bba/sign/${clientId}`;
+  const signingUrl = useMemo(() => {
+    const base =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/bba/sign/${clientId}`
+        : `/bba/sign/${clientId}`;
+    return selectedTemplate ? `${base}?template=${selectedTemplate}` : base;
+  }, [clientId, selectedTemplate]);
 
   async function copyLink() {
     try {
@@ -77,6 +110,28 @@ export function BbaSection({
       setSending(false);
     }
   }
+
+  const templateSelector =
+    templates.length > 1 ? (
+      <label className="mt-3 flex items-center gap-2 rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-2.5 py-1.5">
+        <FileText size={12} className="text-[#666680]" />
+        <span className="text-[10px] uppercase tracking-wider text-[#666680]">
+          Template
+        </span>
+        <select
+          value={selectedTemplate}
+          onChange={(e) => setSelectedTemplate(e.target.value)}
+          className="flex-1 bg-transparent text-[12px] text-[#d0d0e0] outline-none"
+        >
+          {templates.map((t) => (
+            <option key={t.id} value={t.id}>
+              {t.template_name}
+              {t.is_default ? " · default" : ""}
+            </option>
+          ))}
+        </select>
+      </label>
+    ) : null;
 
   return (
     <div className="mb-5">
@@ -150,6 +205,7 @@ export function BbaSection({
               </p>
             </div>
           </div>
+          {templateSelector}
           <div className="mt-3 grid grid-cols-2 gap-2">
             <button
               type="button"
@@ -161,7 +217,10 @@ export function BbaSection({
               {sending ? "Sending…" : "Send BBA for signature"}
             </button>
             <Link
-              href={`/bba/sign/${clientId}`}
+              href={signingUrl.replace(
+                typeof window !== "undefined" ? window.location.origin : "",
+                "",
+              )}
               className="rounded-[10px] border border-[#2a2a3e] py-2 text-center text-[12px] font-semibold text-[#9090a8]"
             >
               Sign in person

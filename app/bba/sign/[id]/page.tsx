@@ -1,14 +1,37 @@
 "use client";
 
 import SignatureCanvas from "react-signature-canvas";
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Check, ChevronLeft, Eraser, FileSignature, ShieldCheck } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import {
+  Check,
+  ChevronLeft,
+  Download,
+  Eraser,
+  FileSignature,
+  ShieldCheck,
+} from "lucide-react";
+
+// pdfjs imports WebWorker + canvas APIs — SSR would crash.
+const BbaPdfViewer = dynamic(
+  () => import("@/components/BbaPdfViewer").then((m) => m.BbaPdfViewer),
+  { ssr: false, loading: () => <PdfLoading /> },
+);
+
+function PdfLoading() {
+  return (
+    <div className="rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] py-10 text-center text-[12px] text-[#888898]">
+      Loading agreement PDF…
+    </div>
+  );
+}
 
 type Loaded = {
   client: { id: string; name: string };
   agent: { name: string };
   bba: {
+    id: string;
     signed_at: string;
     commission_pct: number;
     term_start: string;
@@ -16,6 +39,14 @@ type Loaded = {
     search_area: string | null;
     agent_name: string;
     client_name: string;
+    template_id: string | null;
+  } | null;
+  signed_pdf_url: string | null;
+  template: {
+    id: string;
+    name: string;
+    is_default: boolean;
+    url: string | null;
   } | null;
 };
 
@@ -30,13 +61,16 @@ function toYmd(d: Date) {
 
 export default function SignBbaPage() {
   const params = useParams<{ id: string }>();
+  const search = useSearchParams();
   const router = useRouter();
   const clientId = params?.id;
+  const templateOverride = search?.get("template");
   const sigRef = useRef<SignatureCanvas | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<Loaded | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pdfWidth, setPdfWidth] = useState(540);
 
   const today = new Date();
   const [form, setForm] = useState({
@@ -48,13 +82,18 @@ export default function SignBbaPage() {
     searchArea: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<{ signedPdfUrl: string | null } | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!clientId) return;
     (async () => {
       try {
-        const res = await fetch(`/api/bba/${clientId}`, { cache: "no-store" });
+        const qs = templateOverride ? `?template=${templateOverride}` : "";
+        const res = await fetch(`/api/bba/${clientId}${qs}`, {
+          cache: "no-store",
+        });
         const json = (await res.json()) as Loaded | { error: string };
         if (!res.ok || "error" in json) {
           setError(("error" in json && json.error) || "Not found");
@@ -73,9 +112,20 @@ export default function SignBbaPage() {
         setLoading(false);
       }
     })();
-  }, [clientId]);
+  }, [clientId, templateOverride]);
 
-  // Keep canvas sized to its wrapper so it works on mobile.
+  // Track container width for PDF rendering.
+  useEffect(() => {
+    function measure() {
+      const el = document.getElementById("bba-pdf-wrap");
+      if (el) setPdfWidth(Math.min(el.clientWidth, 720));
+    }
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
+  }, [data]);
+
+  // Keep signature canvas sized to its wrapper (mobile-friendly).
   useEffect(() => {
     function resize() {
       const el = wrapRef.current;
@@ -125,13 +175,14 @@ export default function SignBbaPage() {
           termEnd: form.termEnd,
           searchArea: form.searchArea,
           signatureData,
+          templateId: data?.template?.id ?? null,
         }),
       });
       const json = await res.json();
       if (!res.ok) {
         setError(String(json.error ?? "Could not save"));
       } else {
-        setDone(true);
+        setDone({ signedPdfUrl: json.signed_pdf_url ?? null });
       }
     } catch {
       setError("Network error");
@@ -176,6 +227,16 @@ export default function SignBbaPage() {
             Agreement has been sent to {form.agentName}. A copy is saved on
             file.
           </p>
+          {done.signedPdfUrl ? (
+            <a
+              href={done.signedPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white"
+            >
+              <Download size={14} /> Download signed PDF
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={() => router.push(`/clients/${clientId}`)}
@@ -189,6 +250,8 @@ export default function SignBbaPage() {
   }
 
   const already = data?.bba;
+  const templateUrl = data?.template?.url ?? null;
+  const templateName = data?.template?.name ?? null;
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-10">
@@ -227,41 +290,79 @@ export default function SignBbaPage() {
               · {already.commission_pct}% · term {already.term_start} →{" "}
               {already.term_end}
             </p>
+            {data?.signed_pdf_url ? (
+              <a
+                href={data.signed_pdf_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-[8px] border border-[#50dc78]/30 px-2.5 py-1 text-[11px] text-[#50dc78]"
+              >
+                <Download size={12} /> Download signed copy
+              </a>
+            ) : null}
             <p className="mt-3 text-[11px] text-[#9090a8]">
               Re-signing below will replace the current agreement.
             </p>
           </div>
         ) : null}
 
-        {/* Agreement text — compact NJ-style summary */}
-        <div className="mt-5 rounded-[18px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] p-4 text-[12.5px] leading-[1.55] text-[#b6b6c8]">
-          <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
-            Agreement summary
-          </p>
-          <p>
-            <span className="text-[#f0eee8]">{form.clientName || "Client"}</span>{" "}
-            (“Buyer”) engages{" "}
-            <span className="text-[#f0eee8]">{form.agentName || "Agent"}</span>{" "}
-            as exclusive buyer-representative for the purchase of residential
-            real property in{" "}
-            <span className="text-[#f0eee8]">
-              {form.searchArea || "New Jersey"}
-            </span>
-            . Buyer agrees to a broker compensation of{" "}
-            <span className="text-[#f0eee8]">{form.commissionPct}%</span> of the
-            gross purchase price, payable at closing, for the term{" "}
-            <span className="text-[#f0eee8]">{form.termStart}</span> through{" "}
-            <span className="text-[#f0eee8]">{form.termEnd}</span>. Agent agrees
-            to represent Buyer&apos;s interests with undivided loyalty, full
-            disclosure, and confidentiality as required by New Jersey real
-            estate law and the REALTOR® Code of Ethics.
-          </p>
-          <p className="mt-2 text-[11px] text-[#666680]">
-            This is a simplified electronic representation for demo purposes —
-            the full NJ Buyer Broker Agreement will accompany the fully executed
-            copy on file.
-          </p>
-        </div>
+        {/* Template PDF preview, if the agent has uploaded one. */}
+        {templateUrl ? (
+          <div className="mt-5">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+                {templateName ?? "Your agent's BBA"}
+              </p>
+              <a
+                href={templateUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] text-[#9090a8]"
+              >
+                <Download size={11} /> Open full-screen
+              </a>
+            </div>
+            <div
+              id="bba-pdf-wrap"
+              className="rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] p-2"
+            >
+              <BbaPdfViewer url={templateUrl} width={pdfWidth - 16} />
+            </div>
+          </div>
+        ) : (
+          <div className="mt-5 rounded-[18px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] p-4 text-[12.5px] leading-[1.55] text-[#b6b6c8]">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+              Agreement summary
+            </p>
+            <p>
+              <span className="text-[#f0eee8]">
+                {form.clientName || "Client"}
+              </span>{" "}
+              (&ldquo;Buyer&rdquo;) engages{" "}
+              <span className="text-[#f0eee8]">
+                {form.agentName || "Agent"}
+              </span>{" "}
+              as exclusive buyer-representative for the purchase of residential
+              real property in{" "}
+              <span className="text-[#f0eee8]">
+                {form.searchArea || "New Jersey"}
+              </span>
+              . Buyer agrees to a broker compensation of{" "}
+              <span className="text-[#f0eee8]">{form.commissionPct}%</span> of
+              the gross purchase price, payable at closing, for the term{" "}
+              <span className="text-[#f0eee8]">{form.termStart}</span> through{" "}
+              <span className="text-[#f0eee8]">{form.termEnd}</span>. Agent
+              agrees to represent Buyer&apos;s interests with undivided loyalty,
+              full disclosure, and confidentiality as required by New Jersey
+              real estate law and the REALTOR® Code of Ethics.
+            </p>
+            <p className="mt-2 text-[11px] text-[#666680]">
+              This is Aria&apos;s generic agreement summary. Your agent can
+              upload their brokerage&apos;s custom PDF in Settings — it will
+              appear here on the next signing link.
+            </p>
+          </div>
+        )}
 
         {/* Editable fields */}
         <div className="mt-5 space-y-3">
@@ -348,7 +449,8 @@ export default function SignBbaPage() {
           </div>
           <p className="mt-2 text-[11px] text-[#444460]">
             By signing above, you acknowledge you&apos;ve read and agree to the
-            Buyer Broker Agreement summary above.
+            Buyer Broker Agreement shown above. Your signature will be embedded
+            onto the last page of the PDF.
           </p>
         </div>
 

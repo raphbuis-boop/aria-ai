@@ -1,5 +1,6 @@
 "use client";
 
+import { MatchScoreBadge, type MatchSummary } from "@/components/MatchScoreBadge";
 import { fmtMoney } from "@/lib/utils";
 
 export function PropertyCard({
@@ -12,6 +13,7 @@ export function PropertyCard({
   sqft,
   status,
   matchCount,
+  topMatches,
   photoUrl,
   onFindMatches,
   onNotifyAll,
@@ -25,6 +27,7 @@ export function PropertyCard({
   sqft: number | null;
   status: string | null;
   matchCount: number;
+  topMatches?: MatchSummary[];
   photoUrl?: string | null;
   onFindMatches: () => void;
   onNotifyAll: () => void;
@@ -54,8 +57,14 @@ export function PropertyCard({
         {beds ?? "—"} bd · {baths ?? "—"} ba · {sqft != null ? `${sqft.toLocaleString()} sqft` : "—"}{" "}
         · {fmtMoney(price)}
       </div>
-      <div className="mt-2 inline-flex rounded-full bg-[rgba(59,130,246,0.15)] px-2 py-1 text-[11px] font-medium text-accent-blue">
-        {matchCount} buyers match
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {topMatches && topMatches.length ? (
+          <MatchScoreBadge matches={topMatches} />
+        ) : (
+          <div className="inline-flex rounded-full bg-[rgba(59,130,246,0.15)] px-2 py-1 text-[11px] font-medium text-accent-blue">
+            {matchCount} buyers match
+          </div>
+        )}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <button

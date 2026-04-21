@@ -5,7 +5,13 @@ import { useToast } from "@/components/ToastProvider";
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { BackButton } from "@/components/BackButton";
 import { BbaSection } from "@/components/BbaSection";
+import { ClientEmailHistory } from "@/components/ClientEmailHistory";
+import {
+  EmailComposerModal,
+  type EmailComposerInitial,
+} from "@/components/EmailComposerModal";
 import { EditClientModal } from "@/components/EditClientModal";
+import { MatchingPreferencesSection } from "@/components/MatchingPreferencesSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import { Pencil } from "lucide-react";
@@ -61,7 +67,10 @@ function parseTownList(raw: unknown): string {
 export function ClientDetail({
   client,
   activities,
+  matches,
   bba,
+  hasSignedBba = false,
+  agentFullName = null,
 }: {
   client: Record<string, unknown>;
   activities: Record<string, unknown>[];
@@ -71,12 +80,32 @@ export function ClientDetail({
   matches?: Record<string, unknown>[];
   mlsLive?: MlsListingPayload[];
   bba?: BbaRow;
+  hasSignedBba?: boolean;
+  agentFullName?: string | null;
 }) {
   const router = useRouter();
   const toast = useToast();
   const supabase = createClient();
   const [draftOpen, setDraftOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [emailInitial, setEmailInitial] = useState<EmailComposerInitial | null>(
+    null,
+  );
+
+  const composerProperties = (matches ?? [])
+    .map((m) => {
+      const row = m as Record<string, unknown>;
+      const p = (row.properties ?? null) as Record<string, unknown> | null;
+      if (!p || !p.id) return null;
+      return {
+        id: String(p.id),
+        address: (p.address as string | null) ?? null,
+        price: (p.price as number | null) ?? null,
+      };
+    })
+    .filter((p): p is { id: string; address: string | null; price: number | null } => p !== null)
+    .slice(0, 10);
 
   const id = String(client.id ?? "");
   const name = String(client.name ?? "Client");
@@ -192,7 +221,7 @@ export function ClientDetail({
           </div>
         ) : null}
 
-        <div className="flex gap-2 mb-5">
+        <div className="flex gap-2 mb-3">
           <button
             type="button"
             onClick={() => setDraftOpen(true)}
@@ -202,14 +231,26 @@ export function ClientDetail({
           </button>
           <button
             type="button"
+            onClick={() => {
+              setEmailInitial(null);
+              setEmailOpen(true);
+            }}
+            className="flex-1 text-center bg-purple-500/12 text-purple-300 border border-purple-500/20 rounded-xl py-2.5 text-sm font-semibold"
+          >
+            Email
+          </button>
+          <button
+            type="button"
             onClick={logCall}
             className="flex-1 bg-green-500/12 text-green-400 border border-green-500/20 rounded-xl py-2.5 text-sm font-semibold"
           >
-            Log Call
+            Call
           </button>
+        </div>
+        <div className="mb-5">
           <Link
             href={`/showings?new=1&client=${id}`}
-            className="flex-1 text-center bg-[#12121e] border border-[#1e1e2e] text-[#888898] rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center"
+            className="block w-full text-center bg-[#12121e] border border-[#1e1e2e] text-[#888898] rounded-xl py-2 text-xs font-semibold"
           >
             Log Showing
           </Link>
@@ -220,6 +261,12 @@ export function ClientDetail({
           clientName={name}
           clientPhone={phone}
           initialBba={bba ?? null}
+        />
+
+        <MatchingPreferencesSection
+          clientId={id}
+          initial={client}
+          primaryTown={(client.town as string | null) ?? null}
         />
 
         {notes ? (
@@ -234,6 +281,21 @@ export function ClientDetail({
             </div>
           </>
         ) : null}
+
+        <ClientEmailHistory
+          clientEmail={email}
+          onReply={(opts) => {
+            setEmailInitial({
+              to: opts.to,
+              subject: opts.subject,
+              body: opts.body,
+              threadId: opts.threadId,
+              inReplyTo: opts.inReplyTo,
+              references: opts.references,
+            });
+            setEmailOpen(true);
+          }}
+        />
 
         <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mb-3">
           Activity
@@ -283,6 +345,26 @@ export function ClientDetail({
           </div>
         )}
       </div>
+
+      {emailOpen ? (
+        <EmailComposerModal
+          context={{
+            clientId: id,
+            clientName: name,
+            clientFirstName: name.split(/\s+/)[0] ?? null,
+            clientEmail: email,
+            clientTown: town === "—" ? null : town,
+            clientBudgetMax: budgetMax,
+            clientStatus: status,
+            agentName: agentFullName,
+            properties: composerProperties,
+            hasBba: hasSignedBba,
+          }}
+          initial={emailInitial ?? undefined}
+          onClose={() => setEmailOpen(false)}
+          onSent={() => router.refresh()}
+        />
+      ) : null}
 
       {draftOpen ? (
         <AIDraftModal
