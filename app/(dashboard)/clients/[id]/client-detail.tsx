@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
+import { AIDraftModal } from "@/components/AIDraftModal";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import Link from "next/link";
@@ -51,7 +52,7 @@ export function ClientDetail({
   const router = useRouter();
   const toast = useToast();
   const supabase = createClient();
-  const [busy, setBusy] = useState(false);
+  const [draftOpen, setDraftOpen] = useState(false);
 
   const id = String(client.id ?? "");
   const name = String(client.name ?? "Client");
@@ -70,28 +71,6 @@ export function ClientDetail({
     budgetMin != null || budgetMax != null
       ? `${fmtMoney(budgetMin)} – ${fmtMoney(budgetMax)}`
       : "—";
-
-  async function aiText() {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fetch("/api/ai/draft-text", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: id,
-          clientName: name,
-          scenario: "Friendly check-in",
-        }),
-      });
-      toast.toast("Draft in Inbox", "success");
-      router.push("/inbox");
-    } catch {
-      toast.toast("Could not draft message", "warn");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   async function logCall() {
     const {
@@ -192,9 +171,8 @@ export function ClientDetail({
         <div className="flex gap-2 mb-5">
           <button
             type="button"
-            onClick={aiText}
-            disabled={busy}
-            className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl py-2.5 text-sm font-semibold disabled:opacity-60"
+            onClick={() => setDraftOpen(true)}
+            className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl py-2.5 text-sm font-semibold"
           >
             AI Text
           </button>
@@ -274,6 +252,20 @@ export function ClientDetail({
           </div>
         )}
       </div>
+
+      {draftOpen ? (
+        <AIDraftModal
+          client={{
+            id,
+            name,
+            phone,
+            town: town === "—" ? null : town,
+            budget_max: budgetMax,
+            status,
+          }}
+          onClose={() => setDraftOpen(false)}
+        />
+      ) : null}
     </div>
   );
 }
