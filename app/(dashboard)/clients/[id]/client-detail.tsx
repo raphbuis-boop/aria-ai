@@ -5,11 +5,14 @@ import { useToast } from "@/components/ToastProvider";
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { BackButton } from "@/components/BackButton";
 import { BbaSection } from "@/components/BbaSection";
+import { CollapsibleSection } from "@/components/CollapsibleSection";
+import { ContractsSection } from "@/components/ContractsSection";
+import { DealHistorySection } from "@/components/DealHistorySection";
 import { EditClientModal } from "@/components/EditClientModal";
 import { MatchingPreferencesSection } from "@/components/MatchingPreferencesSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
-import { Pencil } from "lucide-react";
+import { Home, Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -59,9 +62,26 @@ function parseTownList(raw: unknown): string {
   return parts.join(", ") || "—";
 }
 
+function bbaSummary(bba: BbaRow): string | null {
+  if (!bba) return "Not signed";
+  try {
+    const d = new Date(bba.signed_at);
+    return `Signed ${d.toLocaleDateString("en-US", { month: "short", day: "numeric" })} · ${bba.commission_pct}%`;
+  } catch {
+    return `Signed · ${bba.commission_pct}%`;
+  }
+}
+
+function matchesSummary(matches: Record<string, unknown>[]): string | null {
+  if (!matches.length) return null;
+  const top = Number((matches[0] as Record<string, unknown>).match_score ?? 0);
+  return `${matches.length} match${matches.length === 1 ? "" : "es"} · top ${top}%`;
+}
+
 export function ClientDetail({
   client,
   activities,
+  matches = [],
   bba,
 }: {
   client: Record<string, unknown>;
@@ -118,6 +138,7 @@ export function ClientDetail({
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
       <div className="px-5 pt-6">
+        {/* ─── Client Header ──────────────────────────────────────────── */}
         <div className="mb-4 flex items-center justify-between">
           <BackButton href="/clients" />
           <button
@@ -129,25 +150,25 @@ export function ClientDetail({
           </button>
         </div>
 
-        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border border-[#1e2a4e] rounded-2xl p-5 mb-4">
-          <div className="flex items-center gap-4 mb-4">
+        <div className="mb-4 rounded-2xl border border-[#1e2a4e] bg-gradient-to-br from-[#0e1428] to-[#111230] p-5">
+          <div className="mb-4 flex items-center gap-4">
             <div
-              className={`w-14 h-14 rounded-[18px] flex items-center justify-center text-lg font-bold flex-shrink-0 ${AVATAR_COLORS[0]}`}
+              className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] text-lg font-bold ${AVATAR_COLORS[0]}`}
             >
               {initialsOf(name)}
             </div>
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold text-white truncate">
+              <h1 className="truncate text-xl font-semibold text-white">
                 {name}
               </h1>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="mt-1 flex items-center gap-2">
                 {status ? (
-                  <span className="text-[10px] font-bold uppercase tracking-wide bg-blue-500/15 text-blue-400 px-2 py-0.5 rounded-md">
+                  <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-400">
                     {status.replace("_", " ")}
                   </span>
                 ) : null}
                 {leadScore >= 7 ? (
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
+                  <div className="h-2 w-2 rounded-full bg-green-400" />
                 ) : null}
               </div>
             </div>
@@ -157,13 +178,10 @@ export function ClientDetail({
               { label: "Budget", value: budgetDisplay },
               { label: "Town", value: town },
               { label: "Lead Score", value: `${leadScore} / 10` },
-              {
-                label: "Beds / Baths",
-                value: formatBedsBaths(beds, baths),
-              },
+              { label: "Beds / Baths", value: formatBedsBaths(beds, baths) },
             ].map(({ label, value }) => (
-              <div key={label} className="bg-black/30 rounded-xl p-3">
-                <p className="text-[10px] text-[#444460] uppercase tracking-wider mb-1">
+              <div key={label} className="rounded-xl bg-black/30 p-3">
+                <p className="mb-1 text-[10px] uppercase tracking-wider text-[#444460]">
                   {label}
                 </p>
                 <p className="text-sm font-semibold text-[#d0d0e0]">{value}</p>
@@ -173,11 +191,11 @@ export function ClientDetail({
         </div>
 
         {phone || email ? (
-          <div className="flex gap-2 mb-4">
+          <div className="mb-4 flex gap-2">
             {phone ? (
               <a
                 href={`tel:${phone}`}
-                className="flex-1 text-center bg-[#12121e] border border-[#1e1e2e] rounded-xl py-2.5 text-sm font-medium text-[#d0d0e0] truncate"
+                className="flex-1 truncate rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#d0d0e0]"
               >
                 {phone}
               </a>
@@ -185,7 +203,7 @@ export function ClientDetail({
             {email ? (
               <a
                 href={`mailto:${email}`}
-                className="flex-1 text-center bg-[#12121e] border border-[#1e1e2e] rounded-xl py-2.5 text-sm font-medium text-[#d0d0e0] truncate"
+                className="flex-1 truncate rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#d0d0e0]"
               >
                 {email}
               </a>
@@ -193,102 +211,179 @@ export function ClientDetail({
           </div>
         ) : null}
 
-        <div className="flex gap-2 mb-5">
+        {/* ─── Quick Actions ──────────────────────────────────────────── */}
+        <div className="mb-5 flex gap-2">
           <button
             type="button"
             onClick={() => setDraftOpen(true)}
-            className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl py-2.5 text-sm font-semibold"
+            className="flex-1 rounded-xl border border-[#4f7bff]/20 bg-[#4f7bff]/12 py-2.5 text-center text-sm font-semibold text-[#6f9bff]"
           >
             AI Text
           </button>
           <button
             type="button"
             onClick={logCall}
-            className="flex-1 bg-green-500/12 text-green-400 border border-green-500/20 rounded-xl py-2.5 text-sm font-semibold"
+            className="flex-1 rounded-xl border border-green-500/20 bg-green-500/12 py-2.5 text-sm font-semibold text-green-400"
           >
             Log Call
           </button>
           <Link
             href={`/showings?new=1&client=${id}`}
-            className="flex-1 text-center bg-[#12121e] border border-[#1e1e2e] text-[#888898] rounded-xl py-2.5 text-xs font-semibold flex items-center justify-center"
+            className="flex flex-1 items-center justify-center rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-xs font-semibold text-[#888898]"
           >
             Log Showing
           </Link>
         </div>
 
-        <BbaSection
-          clientId={id}
-          clientName={name}
-          clientPhone={phone}
-          initialBba={bba ?? null}
-        />
+        {/* ─── BBA Status ─────────────────────────────────────────────── */}
+        <CollapsibleSection
+          title="Buyer Broker Agreement"
+          summary={bbaSummary(bba ?? null)}
+        >
+          <BbaSection
+            clientId={id}
+            clientName={name}
+            clientPhone={phone}
+            initialBba={bba ?? null}
+          />
+        </CollapsibleSection>
 
-        <MatchingPreferencesSection
-          clientId={id}
-          initial={client}
-          primaryTown={(client.town as string | null) ?? null}
-        />
+        {/* ─── Deal History ───────────────────────────────────────────── */}
+        <DealHistorySection clientId={id} />
 
+        {/* ─── Contracts & Documents ──────────────────────────────────── */}
+        <ContractsSection clientId={id} />
+
+        {/* ─── Property Matches ───────────────────────────────────────── */}
+        <CollapsibleSection
+          title="Property Matches"
+          summary={matchesSummary(matches)}
+          defaultOpen={matches.length > 0}
+        >
+          {matches.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#666680]">
+              No matches yet — sync MLS listings from the Properties page.
+            </div>
+          ) : (
+            <ul className="space-y-2">
+              {matches.slice(0, 12).map((mRaw) => {
+                const m = mRaw as Record<string, unknown>;
+                const p = (m.properties ?? {}) as Record<string, unknown>;
+                const score = Number(m.match_score ?? 0);
+                const propertyId = String(p.id ?? "");
+                return (
+                  <li
+                    key={String(m.id)}
+                    className="flex items-center gap-3 rounded-2xl border border-[#1e1e2e] bg-[#12121e] px-3 py-2.5"
+                  >
+                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                      <Home size={15} />
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-[#d0d0e0]">
+                        {String(p.address ?? "—")}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-[#555570]">
+                        {String(p.town ?? "—")}
+                        {p.price != null ? ` · ${fmtMoney(Number(p.price))}` : ""}
+                        {p.beds != null ? ` · ${p.beds}bd` : ""}
+                        {p.baths != null ? ` / ${p.baths}ba` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-shrink-0 items-center gap-2">
+                      <span className="rounded-md bg-[#4f7bff]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6f9bff]">
+                        {score}%
+                      </span>
+                      {propertyId ? (
+                        <Link
+                          href={`/properties/${propertyId}`}
+                          className="text-[11px] font-semibold text-[#6f9bff]"
+                        >
+                          View
+                        </Link>
+                      ) : null}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </CollapsibleSection>
+
+        {/* ─── Matching Preferences ───────────────────────────────────── */}
+        <CollapsibleSection title="Matching Preferences" defaultOpen={false}>
+          <MatchingPreferencesSection
+            clientId={id}
+            initial={client}
+            primaryTown={(client.town as string | null) ?? null}
+          />
+        </CollapsibleSection>
+
+        {/* ─── Notes (inline, only if present) ────────────────────────── */}
         {notes ? (
-          <>
-            <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mb-2">
-              Notes
-            </p>
-            <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4 mb-4">
-              <p className="text-sm text-[#a0a0c0] leading-relaxed whitespace-pre-wrap">
+          <CollapsibleSection title="Notes">
+            <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4">
+              <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#a0a0c0]">
                 {notes}
               </p>
             </div>
-          </>
+          </CollapsibleSection>
         ) : null}
 
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mb-3">
-          Activity
-        </p>
-        {activities.length === 0 ? (
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-6 text-center text-[#444460] text-sm">
-            No activity yet
-          </div>
-        ) : (
-          <div className="space-y-0">
-            {activities.slice(0, 20).map((itemRaw, i) => {
-              const item = itemRaw as Record<string, unknown>;
-              const createdAt = item.created_at
-                ? new Date(String(item.created_at))
-                : null;
-              const typeLabel = String(item.type ?? "").replace("_", " ");
-              return (
-                <div key={String(item.id)} className="flex gap-3 pb-4">
-                  <div className="flex flex-col items-center">
-                    <div className="w-2 h-2 rounded-full bg-[#4f7bff] mt-1 flex-shrink-0" />
-                    {i < activities.length - 1 ? (
-                      <div className="w-px flex-1 bg-[#1e1e2e] mt-1" />
-                    ) : null}
-                  </div>
-                  <div className="pb-2 min-w-0">
-                    <p className="text-sm font-semibold text-[#d0d0e0] capitalize">
-                      {typeLabel || "activity"}
-                    </p>
-                    <p className="text-xs text-[#555570] mt-0.5">
-                      {createdAt
-                        ? createdAt.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })
-                        : ""}
-                    </p>
-                    {item.body ? (
-                      <p className="text-xs text-[#888898] mt-1 leading-relaxed whitespace-pre-wrap">
-                        {String(item.body)}
+        {/* ─── Activity Timeline ──────────────────────────────────────── */}
+        <CollapsibleSection
+          title="Activity"
+          summary={
+            activities.length
+              ? `${activities.length} item${activities.length === 1 ? "" : "s"}`
+              : null
+          }
+        >
+          {activities.length === 0 ? (
+            <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-6 text-center text-sm text-[#444460]">
+              No activity yet
+            </div>
+          ) : (
+            <div className="space-y-0">
+              {activities.slice(0, 20).map((itemRaw, i) => {
+                const item = itemRaw as Record<string, unknown>;
+                const createdAt = item.created_at
+                  ? new Date(String(item.created_at))
+                  : null;
+                const typeLabel = String(item.type ?? "").replace("_", " ");
+                return (
+                  <div key={String(item.id)} className="flex gap-3 pb-4">
+                    <div className="flex flex-col items-center">
+                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-[#4f7bff]" />
+                      {i < activities.length - 1 ? (
+                        <div className="mt-1 w-px flex-1 bg-[#1e1e2e]" />
+                      ) : null}
+                    </div>
+                    <div className="min-w-0 pb-2">
+                      <p className="text-sm font-semibold capitalize text-[#d0d0e0]">
+                        {typeLabel || "activity"}
                       </p>
-                    ) : null}
+                      <p className="mt-0.5 text-xs text-[#555570]">
+                        {createdAt
+                          ? createdAt.toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                            })
+                          : ""}
+                      </p>
+                      {item.body ? (
+                        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#888898]">
+                          {String(item.body)}
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                );
+              })}
+            </div>
+          )}
+        </CollapsibleSection>
       </div>
 
       {draftOpen ? (

@@ -118,10 +118,7 @@ export function MatchingPreferencesSection({
   }
 
   return (
-    <div className="mb-5">
-      <p className="mb-2 text-[10px] font-bold tracking-widest uppercase text-[#444460]">
-        Matching Preferences
-      </p>
+    <div>
       <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4">
         <div className="mb-3 flex items-center gap-2 text-[12px] text-[#9090a8]">
           <SlidersHorizontal size={13} />

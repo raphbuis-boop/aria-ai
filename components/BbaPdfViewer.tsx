@@ -1,14 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Document, Page, pdfjs } from "react-pdf";
+import { Download, ExternalLink } from "lucide-react";
+import { useState } from "react";
 
-// Load the pdfjs worker from a CDN pinned to the bundled pdfjs version.
-// This avoids Next.js webpack having to bundle the worker.
-if (typeof window !== "undefined" && !pdfjs.GlobalWorkerOptions.workerSrc) {
-  pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
-}
-
+/**
+ * Renders a PDF inline via the browser's native PDF viewer (iframe /
+ * <object>). This avoids the Next.js + react-pdf + pdfjs-worker compatibility
+ * issues that previously made the signing page blank on mobile. Every modern
+ * desktop browser and iOS/Android Chrome handles this inline. If the browser
+ * can't render PDFs inline (Safari on iOS sometimes won't), we fall back to a
+ * prominent "Open PDF" link so the client can still read the agreement before
+ * signing below.
+ */
 export function BbaPdfViewer({
   url,
   width,
@@ -16,40 +19,56 @@ export function BbaPdfViewer({
   url: string;
   width: number;
 }) {
-  const [numPages, setNumPages] = useState(0);
-  const [error, setError] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  const height = Math.max(420, Math.min(640, Math.round(width * 1.3)));
 
-  useEffect(() => {
-    setNumPages(0);
-    setError(null);
-  }, [url]);
+  if (failed) {
+    return (
+      <PdfFallback url={url} />
+    );
+  }
 
   return (
-    <div className="flex flex-col items-center gap-3">
-      <Document
-        file={url}
-        onLoadSuccess={(info) => setNumPages(info.numPages)}
-        onLoadError={(err) => setError(err.message)}
-        loading={
-          <div className="py-8 text-[12px] text-[#888898]">Loading PDF…</div>
-        }
+    <div className="w-full">
+      <object
+        data={url}
+        type="application/pdf"
+        width="100%"
+        height={height}
+        onError={() => setFailed(true)}
+        className="block w-full rounded-[10px] bg-white"
       >
-        {Array.from({ length: numPages }).map((_, i) => (
-          <Page
-            key={i}
-            pageNumber={i + 1}
-            width={width}
-            renderAnnotationLayer={false}
-            renderTextLayer={false}
-            className="shadow-lg mb-3 rounded-[6px] overflow-hidden"
-          />
-        ))}
-      </Document>
-      {error ? (
-        <div className="rounded-[10px] border border-red-500/30 bg-red-500/5 px-3 py-2 text-[12px] text-red-400">
-          Could not load PDF: {error}. You can still sign using the form below.
-        </div>
-      ) : null}
+        {/* If the browser can't render PDFs inline, this inner content shows. */}
+        <PdfFallback url={url} />
+      </object>
+    </div>
+  );
+}
+
+function PdfFallback({ url }: { url: string }) {
+  return (
+    <div className="flex flex-col gap-2 rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] p-4 text-[12.5px] text-[#b6b6c8]">
+      <p>
+        Your browser can&apos;t display the PDF inline. Tap below to open the
+        agreement in a new tab, then come back here to sign.
+      </p>
+      <div className="flex flex-wrap gap-2">
+        <a
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] px-3 py-2 text-[12px] font-semibold text-white"
+        >
+          <ExternalLink size={12} /> Open agreement
+        </a>
+        <a
+          href={url}
+          download
+          className="inline-flex items-center gap-1.5 rounded-[10px] border-[0.5px] border-[#2a2a3e] px-3 py-2 text-[12px] font-semibold text-[#9090a8]"
+        >
+          <Download size={12} /> Download
+        </a>
+      </div>
     </div>
   );
 }

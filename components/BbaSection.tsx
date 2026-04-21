@@ -1,7 +1,14 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
-import { Check, Copy, FileSignature, FileText, ShieldAlert } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Download,
+  FileSignature,
+  FileText,
+  ShieldAlert,
+} from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
@@ -37,10 +44,34 @@ export function BbaSection({
   const [sending, setSending] = useState(false);
   const [templates, setTemplates] = useState<TemplateDto[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<string | "">("");
+  const [signedPdfUrl, setSignedPdfUrl] = useState<string | null>(null);
 
   useEffect(() => {
     setBba(initialBba);
   }, [initialBba]);
+
+  // Once signed, pull a fresh short-lived signed URL for the PDF so the agent
+  // can download their client's completed BBA straight from this page.
+  useEffect(() => {
+    if (!bba) {
+      setSignedPdfUrl(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/bba/${clientId}`, { cache: "no-store" });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setSignedPdfUrl(json.signed_pdf_url ?? null);
+      } catch {
+        /* non-critical */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [bba, clientId]);
 
   // Pull the agent's brokerage templates so they can pick which one to send.
   useEffect(() => {
@@ -134,11 +165,7 @@ export function BbaSection({
     ) : null;
 
   return (
-    <div className="mb-5">
-      <p className="mb-2 text-[10px] font-bold tracking-widest uppercase text-[#444460]">
-        Buyer Broker Agreement
-      </p>
-
+    <div>
       {signed ? (
         <div className="rounded-2xl border border-[#1a2a1a] bg-[#0f1a10] p-4">
           <div className="flex items-start gap-3">
@@ -183,6 +210,16 @@ export function BbaSection({
               <Copy size={12} /> Copy link
             </button>
           </div>
+          {signedPdfUrl ? (
+            <a
+              href={signedPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-[10px] border border-[#50dc78]/30 bg-[#50dc78]/5 py-2 text-[12px] font-semibold text-[#50dc78]"
+            >
+              <Download size={12} /> Download signed PDF
+            </a>
+          ) : null}
         </div>
       ) : (
         <div className="rounded-2xl border border-[#2a1a1a] bg-[#1a0f0f] p-4">
