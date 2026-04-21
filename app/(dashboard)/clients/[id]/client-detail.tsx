@@ -5,8 +5,10 @@ import { useToast } from "@/components/ToastProvider";
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { BackButton } from "@/components/BackButton";
 import { BbaSection } from "@/components/BbaSection";
+import { EditClientModal } from "@/components/EditClientModal";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
+import { Pencil } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -74,6 +76,7 @@ export function ClientDetail({
   const toast = useToast();
   const supabase = createClient();
   const [draftOpen, setDraftOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const id = String(client.id ?? "");
   const name = String(client.name ?? "Client");
@@ -114,7 +117,16 @@ export function ClientDetail({
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
       <div className="px-5 pt-6">
-        <BackButton href="/clients" className="mb-4" />
+        <div className="mb-4 flex items-center justify-between">
+          <BackButton href="/clients" />
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] px-3 py-1.5 text-[12px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
+          >
+            <Pencil size={13} /> Edit
+          </button>
+        </div>
 
         <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border border-[#1e2a4e] rounded-2xl p-5 mb-4">
           <div className="flex items-center gap-4 mb-4">
@@ -283,6 +295,27 @@ export function ClientDetail({
             status,
           }}
           onClose={() => setDraftOpen(false)}
+        />
+      ) : null}
+
+      {editOpen ? (
+        <EditClientModal
+          client={{
+            id,
+            name: (client.name as string | null) ?? null,
+            phone,
+            email,
+            status,
+            budget_min: budgetMin,
+            budget_max: budgetMax,
+            town: (client.town as string | null) ?? null,
+            beds_wanted: beds,
+            baths_wanted: baths,
+            lead_score: leadScore,
+            notes,
+            client_role: (client.client_role as string | null) ?? null,
+          }}
+          onClose={() => setEditOpen(false)}
         />
       ) : null}
     </div>

@@ -1,5 +1,8 @@
 "use client";
 
+import { CardMenu } from "@/components/CardMenu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EditClientModal } from "@/components/EditClientModal";
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
@@ -43,6 +46,12 @@ type Row = {
   lead_score: number | null;
   budget_min: number | null;
   budget_max: number | null;
+  phone?: string | null;
+  email?: string | null;
+  beds_wanted?: number | null;
+  baths_wanted?: number | null;
+  notes?: string | null;
+  client_role?: string | null;
 };
 
 function initialsOf(name: string | null | undefined) {
@@ -70,6 +79,8 @@ export function ClientsPageClient({
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
+  const [editClient, setEditClient] = useState<Row | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
 
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -121,6 +132,30 @@ export function ClientsPageClient({
         ? f.towns.filter((x) => x !== t)
         : [...f.towns, t],
     }));
+  }
+
+  async function archiveClient(c: Row) {
+    const { error } = await supabase
+      .from("clients")
+      .update({ status: "dead" })
+      .eq("id", c.id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`${c.name} archived`, "success");
+    router.refresh();
+  }
+
+  async function deleteClient(c: Row) {
+    const { error } = await supabase.from("clients").delete().eq("id", c.id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`${c.name} deleted`, "success");
+    setConfirmDelete(null);
+    router.refresh();
   }
 
   async function saveClient() {
@@ -242,52 +277,60 @@ export function ClientsPageClient({
         ) : null}
 
         {filtered.map((client, i) => (
-          <Link key={client.id} href={`/clients/${client.id}`}>
-            <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-3.5 flex items-center gap-3 active:border-[#4f7bff] transition-colors">
-              <div
-                className={`w-10 h-10 rounded-[13px] flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
-              >
-                {initialsOf(client.name)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold text-[#d0d0e0] truncate">
-                    {client.name}
-                  </span>
-                  {client.status ? (
-                    <span
-                      className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex-shrink-0 ${BADGE[client.status] ?? "bg-gray-500/15 text-gray-400"}`}
-                    >
-                      {client.status.replace("_", " ")}
+          <div key={client.id} className="relative">
+            <Link href={`/clients/${client.id}`}>
+              <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-3.5 pr-10 flex items-center gap-3 active:border-[#4f7bff] transition-colors">
+                <div
+                  className={`w-10 h-10 rounded-[13px] flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+                >
+                  {initialsOf(client.name)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-sm font-semibold text-[#d0d0e0] truncate">
+                      {client.name}
                     </span>
+                    {client.status ? (
+                      <span
+                        className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-md flex-shrink-0 ${BADGE[client.status] ?? "bg-gray-500/15 text-gray-400"}`}
+                      >
+                        {client.status.replace("_", " ")}
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="text-xs text-[#555570] truncate">
+                    {client.town ?? "—"}
+                    {client.budget_max
+                      ? ` · Up to ${fmtMoney(client.budget_max)}`
+                      : ""}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  {(client.lead_score ?? 0) >= 7 ? (
+                    <div className="w-2 h-2 rounded-full bg-green-400" />
                   ) : null}
-                </div>
-                <p className="text-xs text-[#555570] truncate">
-                  {client.town ?? "—"}
-                  {client.budget_max
-                    ? ` · Up to ${fmtMoney(client.budget_max)}`
-                    : ""}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                {(client.lead_score ?? 0) >= 7 ? (
-                  <div className="w-2 h-2 rounded-full bg-green-400" />
-                ) : null}
-                <div className="flex gap-0.5">
-                  {Array.from({ length: 10 }).map((_, j) => (
-                    <div
-                      key={j}
-                      className={`w-1.5 h-1.5 rounded-full ${
-                        j < (client.lead_score ?? 0)
-                          ? "bg-[#4f7bff]"
-                          : "bg-[#1e1e2e]"
-                      }`}
-                    />
-                  ))}
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 10 }).map((_, j) => (
+                      <div
+                        key={j}
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          j < (client.lead_score ?? 0)
+                            ? "bg-[#4f7bff]"
+                            : "bg-[#1e1e2e]"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-          </Link>
+            </Link>
+            <CardMenu
+              className="absolute right-2 top-2"
+              onEdit={() => setEditClient(client)}
+              onArchive={() => archiveClient(client)}
+              onDelete={() => setConfirmDelete(client)}
+            />
+          </div>
         ))}
       </div>
 
@@ -433,6 +476,42 @@ export function ClientsPageClient({
           </div>
         </div>
       ) : null}
+
+      {editClient ? (
+        <EditClientModal
+          client={{
+            id: editClient.id,
+            name: editClient.name,
+            phone: editClient.phone ?? null,
+            email: editClient.email ?? null,
+            status: editClient.status,
+            budget_min: editClient.budget_min,
+            budget_max: editClient.budget_max,
+            town: editClient.town,
+            beds_wanted: editClient.beds_wanted ?? null,
+            baths_wanted: editClient.baths_wanted ?? null,
+            lead_score: editClient.lead_score,
+            notes: editClient.notes ?? null,
+            client_role: editClient.client_role ?? null,
+          }}
+          onClose={() => setEditClient(null)}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete this client?"
+        message={
+          confirmDelete
+            ? `${confirmDelete.name} and their record will be permanently removed. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete client"
+        onConfirm={async () => {
+          if (confirmDelete) await deleteClient(confirmDelete);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

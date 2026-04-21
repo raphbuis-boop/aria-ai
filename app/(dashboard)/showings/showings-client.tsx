@@ -1,6 +1,12 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { CardMenu } from "@/components/CardMenu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  EditShowingModal,
+  type EditShowingRecord,
+} from "@/components/EditShowingModal";
 import { ShowingCard } from "@/components/ShowingCard";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
@@ -25,6 +31,8 @@ export function ShowingsClient({
   const toast = useToast();
   const [open, setOpen] = useState(false);
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
+  const [editShowing, setEditShowing] = useState<EditShowingRecord | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; address: string } | null>(null);
   const [form, setForm] = useState({
     client_id: "",
     address: "",
@@ -85,6 +93,30 @@ export function ShowingsClient({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
+
+  async function archiveShowing(id: string, label: string) {
+    const { error } = await supabase
+      .from("showings")
+      .update({ status: "cancelled" })
+      .eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`Showing at ${label} cancelled`, "success");
+    router.refresh();
+  }
+
+  async function deleteShowing(id: string, label: string) {
+    const { error } = await supabase.from("showings").delete().eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`Showing at ${label} deleted`, "success");
+    setConfirmDelete(null);
+    router.refresh();
+  }
 
   async function save() {
     const {
@@ -179,23 +211,45 @@ export function ShowingsClient({
         </div>
         <div className="mt-3 space-y-3">
           {upcoming.length ? (
-            upcoming.map((s) => (
-              <ShowingCard
-                key={String(s.id)}
-                clientId={(s.client_id as string) ?? null}
-                clientName={String(
-                  (s.clients as { name?: string })?.name ?? "Client",
-                )}
-                address={s.address as string | null}
-                showing_date={s.showing_date as string | null}
-                status={(s.status as string) ?? "scheduled"}
-                notes={s.notes as string | null}
-                ai_summary={s.ai_summary as string | null}
-                next_action={s.next_action as string | null}
-                upcoming
-                bbaSigned={signedSet.has(String(s.client_id ?? ""))}
-              />
-            ))
+            upcoming.map((s) => {
+              const id = String(s.id);
+              const addr = String(s.address ?? "showing");
+              return (
+                <div key={id} className="relative">
+                  <ShowingCard
+                    clientId={(s.client_id as string) ?? null}
+                    clientName={String(
+                      (s.clients as { name?: string })?.name ?? "Client",
+                    )}
+                    address={s.address as string | null}
+                    showing_date={s.showing_date as string | null}
+                    status={(s.status as string) ?? "scheduled"}
+                    notes={s.notes as string | null}
+                    ai_summary={s.ai_summary as string | null}
+                    next_action={s.next_action as string | null}
+                    upcoming
+                    bbaSigned={signedSet.has(String(s.client_id ?? ""))}
+                  />
+                  <CardMenu
+                    className="absolute right-2 top-2"
+                    onEdit={() =>
+                      setEditShowing({
+                        id,
+                        client_id: (s.client_id as string | null) ?? null,
+                        address: s.address as string | null,
+                        showing_date: s.showing_date as string | null,
+                        status: (s.status as string) ?? "scheduled",
+                        notes: (s.notes as string | null) ?? null,
+                      })
+                    }
+                    onArchive={() => archiveShowing(id, addr)}
+                    onDelete={() =>
+                      setConfirmDelete({ id, address: addr })
+                    }
+                  />
+                </div>
+              );
+            })
           ) : (
             <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
               No upcoming showings.
@@ -210,22 +264,44 @@ export function ShowingsClient({
         </div>
         <div className="mt-3 space-y-3">
           {past.length ? (
-            past.map((s) => (
-              <ShowingCard
-                key={String(s.id)}
-                clientId={(s.client_id as string) ?? null}
-                clientName={String(
-                  (s.clients as { name?: string })?.name ?? "Client",
-                )}
-                address={s.address as string | null}
-                showing_date={s.showing_date as string | null}
-                status={(s.status as string) ?? "scheduled"}
-                notes={s.notes as string | null}
-                ai_summary={s.ai_summary as string | null}
-                next_action={s.next_action as string | null}
-                bbaSigned={signedSet.has(String(s.client_id ?? ""))}
-              />
-            ))
+            past.map((s) => {
+              const id = String(s.id);
+              const addr = String(s.address ?? "showing");
+              return (
+                <div key={id} className="relative">
+                  <ShowingCard
+                    clientId={(s.client_id as string) ?? null}
+                    clientName={String(
+                      (s.clients as { name?: string })?.name ?? "Client",
+                    )}
+                    address={s.address as string | null}
+                    showing_date={s.showing_date as string | null}
+                    status={(s.status as string) ?? "scheduled"}
+                    notes={s.notes as string | null}
+                    ai_summary={s.ai_summary as string | null}
+                    next_action={s.next_action as string | null}
+                    bbaSigned={signedSet.has(String(s.client_id ?? ""))}
+                  />
+                  <CardMenu
+                    className="absolute right-2 top-2"
+                    onEdit={() =>
+                      setEditShowing({
+                        id,
+                        client_id: (s.client_id as string | null) ?? null,
+                        address: s.address as string | null,
+                        showing_date: s.showing_date as string | null,
+                        status: (s.status as string) ?? "scheduled",
+                        notes: (s.notes as string | null) ?? null,
+                      })
+                    }
+                    onArchive={() => archiveShowing(id, addr)}
+                    onDelete={() =>
+                      setConfirmDelete({ id, address: addr })
+                    }
+                  />
+                </div>
+              );
+            })
           ) : (
             <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
               No past showings yet.
@@ -311,6 +387,29 @@ export function ShowingsClient({
           </div>
         </div>
       ) : null}
+
+      {editShowing ? (
+        <EditShowingModal
+          showing={editShowing}
+          onClose={() => setEditShowing(null)}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete this showing?"
+        message={
+          confirmDelete
+            ? `The showing at ${confirmDelete.address} will be permanently removed. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete showing"
+        onConfirm={async () => {
+          if (confirmDelete)
+            await deleteShowing(confirmDelete.id, confirmDelete.address);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

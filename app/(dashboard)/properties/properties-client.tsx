@@ -1,6 +1,9 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { CardMenu } from "@/components/CardMenu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { EditPropertyModal, type EditPropertyRecord } from "@/components/EditPropertyModal";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { PropertyCard } from "@/components/PropertyCard";
 import { useToast } from "@/components/ToastProvider";
@@ -33,6 +36,8 @@ export function PropertiesClient({
   });
   const [matchesFor, setMatchesFor] = useState<Record<string, unknown>[]>([]);
   const [activePropertyId, setActivePropertyId] = useState<string | null>(null);
+  const [editProp, setEditProp] = useState<EditPropertyRecord | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; address: string } | null>(null);
 
   const filtered = useMemo(() => {
     if (filter === "All") return initial;
@@ -83,6 +88,31 @@ export function PropertiesClient({
       n += 1;
     }
     toast.toast(`${n} drafts created. Review in Inbox.`, "success");
+  }
+
+  async function archiveProperty(id: string, label: string) {
+    const { error } = await supabase
+      .from("properties")
+      .update({ status: "archived" })
+      .eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`${label} archived`, "success");
+    router.refresh();
+  }
+
+  async function deleteProperty(id: string, label: string) {
+    await supabase.from("property_matches").delete().eq("property_id", id);
+    const { error } = await supabase.from("properties").delete().eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    toast.toast(`${label} deleted`, "success");
+    setConfirmDelete(null);
+    router.refresh();
   }
 
   async function addProperty() {
@@ -182,22 +212,46 @@ export function PropertiesClient({
             Array.isArray(rawPhotos) && typeof rawPhotos[0] === "string"
               ? rawPhotos[0]
               : null;
+          const addressLabel = String(p.address ?? "Property");
           return (
             <div key={id}>
-              <PropertyCard
-                address={p.address as string | null}
-                town={p.town as string | null}
-                mls_number={p.mls_number as string | null}
-                price={p.price as number | null}
-                beds={p.beds as number | null}
-                baths={Number(p.baths)}
-                sqft={p.sqft as number | null}
-                status={p.status as string | null}
-                matchCount={matchCount}
-                photoUrl={photoUrl}
-                onFindMatches={() => findMatches(id)}
-                onNotifyAll={() => notifyAll(id)}
-              />
+              <div className="relative">
+                <PropertyCard
+                  address={p.address as string | null}
+                  town={p.town as string | null}
+                  mls_number={p.mls_number as string | null}
+                  price={p.price as number | null}
+                  beds={p.beds as number | null}
+                  baths={Number(p.baths)}
+                  sqft={p.sqft as number | null}
+                  status={p.status as string | null}
+                  matchCount={matchCount}
+                  photoUrl={photoUrl}
+                  onFindMatches={() => findMatches(id)}
+                  onNotifyAll={() => notifyAll(id)}
+                />
+                <CardMenu
+                  className="absolute right-2 top-2"
+                  onEdit={() =>
+                    setEditProp({
+                      id,
+                      address: p.address as string | null,
+                      town: p.town as string | null,
+                      price: p.price as number | null,
+                      beds: p.beds as number | null,
+                      baths:
+                        p.baths != null ? Number(p.baths) : null,
+                      sqft: p.sqft as number | null,
+                      status: p.status as string | null,
+                      description: p.description as string | null,
+                    })
+                  }
+                  onArchive={() => archiveProperty(id, addressLabel)}
+                  onDelete={() =>
+                    setConfirmDelete({ id, address: addressLabel })
+                  }
+                />
+              </div>
               {activePropertyId === id && matchesFor.length ? (
                 <div className="mt-2 space-y-2 rounded-[12px] border border-border-card bg-bg-deep p-3">
                   {matchesFor.map((m) => {
@@ -289,6 +343,29 @@ export function PropertiesClient({
           </div>
         </div>
       ) : null}
+
+      {editProp ? (
+        <EditPropertyModal
+          property={editProp}
+          onClose={() => setEditProp(null)}
+        />
+      ) : null}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete this property?"
+        message={
+          confirmDelete
+            ? `${confirmDelete.address} will be permanently removed along with its match records. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete property"
+        onConfirm={async () => {
+          if (confirmDelete)
+            await deleteProperty(confirmDelete.id, confirmDelete.address);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

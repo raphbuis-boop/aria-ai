@@ -1,6 +1,12 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { CardMenu } from "@/components/CardMenu";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import {
+  EditTransactionModal,
+  type EditTransactionRecord,
+} from "@/components/EditTransactionModal";
 import { TransactionMilestone } from "@/components/TransactionMilestone";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -50,6 +56,8 @@ export function TransactionsClient({
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<TxForm>(emptyForm);
   const [draft, setDraft] = useState<string | null>(null);
+  const [editTx, setEditTx] = useState<EditTransactionRecord | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<{ id: string; label: string } | null>(null);
 
   const atRisk = useMemo(() => {
     if (!selected) return false;
@@ -66,6 +74,32 @@ export function TransactionsClient({
       return days >= 0 && days <= 2;
     });
   }, [selected]);
+
+  async function archiveTx(id: string, label: string) {
+    const { error } = await supabase
+      .from("transactions")
+      .update({ status: "archived" })
+      .eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    if (selected?.id === id) setSelected(null);
+    toast.toast(`${label} archived`, "success");
+    router.refresh();
+  }
+
+  async function deleteTx(id: string, label: string) {
+    const { error } = await supabase.from("transactions").delete().eq("id", id);
+    if (error) {
+      toast.toast(error.message, "warn");
+      return;
+    }
+    if (selected?.id === id) setSelected(null);
+    toast.toast(`${label} deleted`, "success");
+    setConfirmDelete(null);
+    router.refresh();
+  }
 
   async function saveTx() {
     const {
@@ -164,6 +198,7 @@ export function TransactionsClient({
 
       <div className="mt-6 space-y-3">
         {initial.map((t) => {
+          const id = String(t.id);
           const name = (t.clients as { name?: string })?.name ?? "Client";
           const closing = t.closing_date
             ? new Date(String(t.closing_date))
@@ -171,24 +206,55 @@ export function TransactionsClient({
           const days = closing
             ? differenceInCalendarDays(closing, new Date())
             : null;
+          const label = `${name} · ${String(t.address ?? "Transaction")}`;
           return (
-            <button
-              key={String(t.id)}
-              type="button"
-              onClick={() => setSelected(t)}
-              className="w-full rounded-[14px] border border-border-card bg-bg-card p-4 text-left"
-            >
-              <div className="text-[14px] font-medium text-text-primary">
-                {name}
-              </div>
-              <div className="text-[12px] text-text-dim">{String(t.address)}</div>
-              <div className="mt-2 text-[13px] text-accent-blue">
-                ${Number(t.contract_price ?? 0).toLocaleString()}
-              </div>
-              <div className="text-[11px] text-text-dim">
-                {days != null ? `${days} days to closing` : "Closing TBD"}
-              </div>
-            </button>
+            <div key={id} className="relative">
+              <button
+                type="button"
+                onClick={() => setSelected(t)}
+                className="w-full rounded-[14px] border border-border-card bg-bg-card p-4 pr-10 text-left"
+              >
+                <div className="text-[14px] font-medium text-text-primary">
+                  {name}
+                </div>
+                <div className="text-[12px] text-text-dim">
+                  {String(t.address)}
+                </div>
+                <div className="mt-2 text-[13px] text-accent-blue">
+                  ${Number(t.contract_price ?? 0).toLocaleString()}
+                </div>
+                <div className="text-[11px] text-text-dim">
+                  {days != null ? `${days} days to closing` : "Closing TBD"}
+                </div>
+              </button>
+              <CardMenu
+                className="absolute right-2 top-2"
+                onEdit={() =>
+                  setEditTx({
+                    id,
+                    address: (t.address as string | null) ?? null,
+                    contract_price: (t.contract_price as number | null) ?? null,
+                    closing_date: (t.closing_date as string | null) ?? null,
+                    inspection_date:
+                      (t.inspection_date as string | null) ?? null,
+                    appraisal_date:
+                      (t.appraisal_date as string | null) ?? null,
+                    mortgage_commitment_date:
+                      (t.mortgage_commitment_date as string | null) ?? null,
+                    attorney_name:
+                      (t.attorney_name as string | null) ?? null,
+                    attorney_email:
+                      (t.attorney_email as string | null) ?? null,
+                    lender_name: (t.lender_name as string | null) ?? null,
+                    lender_email:
+                      (t.lender_email as string | null) ?? null,
+                    status: (t.status as string | null) ?? null,
+                  })
+                }
+                onArchive={() => archiveTx(id, label)}
+                onDelete={() => setConfirmDelete({ id, label })}
+              />
+            </div>
           );
         })}
       </div>
@@ -246,6 +312,25 @@ export function TransactionsClient({
           onSave={saveTx}
         />
       ) : null}
+
+      {editTx ? (
+        <EditTransactionModal tx={editTx} onClose={() => setEditTx(null)} />
+      ) : null}
+
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete this transaction?"
+        message={
+          confirmDelete
+            ? `${confirmDelete.label} will be permanently removed. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete transaction"
+        onConfirm={async () => {
+          if (confirmDelete) await deleteTx(confirmDelete.id, confirmDelete.label);
+        }}
+        onCancel={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }
