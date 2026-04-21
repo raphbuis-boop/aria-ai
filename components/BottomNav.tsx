@@ -155,7 +155,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const supabase = createClient();
   const [unread, setUnread] = useState(0);
-  const [moreOpen, setMoreOpen] = useState(false);
   const [quickOpen, setQuickOpen] = useState(false);
 
   useEffect(() => {
@@ -182,14 +181,14 @@ export function BottomNav() {
   }, [supabase]);
 
   useEffect(() => {
-    setMoreOpen(false);
     setQuickOpen(false);
   }, [pathname]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
-  const moreActive = moreLinks.some((m) => isActive(m.href)) || moreOpen;
+  const moreActive =
+    isActive("/more") || moreLinks.some((m) => isActive(m.href));
 
   return (
     <>
@@ -213,10 +212,7 @@ export function BottomNav() {
           <div className="flex flex-shrink-0 items-center justify-center px-1">
             <button
               type="button"
-              onClick={() => {
-                setQuickOpen((v) => !v);
-                setMoreOpen(false);
-              }}
+              onClick={() => setQuickOpen((v) => !v)}
               aria-label="Quick actions"
               aria-expanded={quickOpen}
               className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] text-white shadow-[0_0_16px_rgba(79,123,255,0.5),0_3px_8px_rgba(0,0,0,0.4)] transition-transform active:scale-95"
@@ -238,14 +234,10 @@ export function BottomNav() {
             active={isActive("/clients")}
           />
           <PillItem
-            href="#more"
+            href="/more"
             label="More"
             Icon={Grid3x3}
             active={moreActive}
-            onClick={() => {
-              setMoreOpen((v) => !v);
-              setQuickOpen(false);
-            }}
           />
         </div>
       </nav>
@@ -253,7 +245,6 @@ export function BottomNav() {
       {quickOpen ? (
         <QuickActionsSheet onClose={() => setQuickOpen(false)} />
       ) : null}
-      {moreOpen ? <MoreSheet onClose={() => setMoreOpen(false)} /> : null}
     </>
   );
 }
@@ -300,55 +291,3 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-function MoreSheet({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
-      <button
-        type="button"
-        aria-label="Close menu"
-        className="absolute inset-0"
-        onClick={onClose}
-      />
-      <div
-        role="menu"
-        className="relative z-10 mb-24 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4"
-      >
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
-          More
-        </div>
-        <div className="space-y-2">
-          {moreLinks.map(({ href, label, Icon, desc }) => (
-            <Link
-              key={href}
-              href={href}
-              onClick={onClose}
-              className="flex items-center gap-[14px] rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-4 py-4 transition active:border-[#4f7bff]"
-            >
-              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[13px] bg-[#4f7bff]/12 text-[#4f7bff]">
-                <Icon size={18} />
-              </span>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold text-[#d0d0e0]">
-                  {label}
-                </div>
-                <div className="truncate text-xs text-[#555570]">{desc}</div>
-              </div>
-              <svg
-                className="ml-auto flex-shrink-0 text-[#333350]"
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="9 18 15 12 9 6" />
-              </svg>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
