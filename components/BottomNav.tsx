@@ -192,8 +192,8 @@ export function BottomNav() {
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-[#06060c]/95 px-3 pt-2 pb-6 backdrop-blur-xl">
-        <div className="flex w-full max-w-lg items-center gap-0.5 rounded-[26px] border-[0.5px] border-[#1a1a2e] bg-[#0f0f1c] p-1">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-[#06060c]/95 px-5 pt-2 pb-6 backdrop-blur-xl">
+        <div className="mx-auto flex w-full max-w-[420px] items-center justify-around gap-1 rounded-[26px] border-[0.5px] border-[#1a1a2e] bg-[#0f0f1c] p-1">
           <PillItem
             href="/dashboard"
             label="Home"
