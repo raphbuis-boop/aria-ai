@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { ShowingCard } from "@/components/ShowingCard";
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
@@ -157,6 +158,7 @@ export function ShowingsClient({
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/dashboard" className="mb-4" />
       <div className="text-[20px] font-medium text-text-primary">
         Showings
       </div>

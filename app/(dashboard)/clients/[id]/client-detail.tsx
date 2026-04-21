@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
 import { AIDraftModal } from "@/components/AIDraftModal";
+import { BackButton } from "@/components/BackButton";
 import { BbaSection } from "@/components/BbaSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
@@ -37,6 +38,13 @@ function initialsOf(name: string | null | undefined) {
       .slice(0, 2)
       .toUpperCase() || "?"
   );
+}
+
+function formatBedsBaths(beds: number | null, baths: number | null): string {
+  if (beds == null && baths == null) return "—";
+  const b = beds != null ? `${beds}bd` : null;
+  const ba = baths != null ? `${baths}ba` : null;
+  return [b, ba].filter(Boolean).join(" / ");
 }
 
 function parseTownList(raw: unknown): string {
@@ -106,13 +114,7 @@ export function ClientDetail({
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
       <div className="px-5 pt-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex items-center gap-1.5 text-[#4f7bff] text-sm font-semibold mb-4"
-        >
-          ← Back
-        </button>
+        <BackButton href="/clients" className="mb-4" />
 
         <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border border-[#1e2a4e] rounded-2xl p-5 mb-4">
           <div className="flex items-center gap-4 mb-4">
@@ -144,10 +146,7 @@ export function ClientDetail({
               { label: "Lead Score", value: `${leadScore} / 10` },
               {
                 label: "Beds / Baths",
-                value:
-                  beds != null || baths != null
-                    ? `${beds ?? "?"}bd / ${baths ?? "?"}ba`
-                    : "—",
+                value: formatBedsBaths(beds, baths),
               },
             ].map(({ label, value }) => (
               <div key={label} className="bg-black/30 rounded-xl p-3">

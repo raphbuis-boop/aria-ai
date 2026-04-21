@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { ReferralCard } from "@/components/ReferralCard";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -115,6 +116,7 @@ export default function ReferralsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/more" className="mb-4" />
       <div className="text-[20px] font-medium text-text-primary">
         Referral Marketplace
       </div>

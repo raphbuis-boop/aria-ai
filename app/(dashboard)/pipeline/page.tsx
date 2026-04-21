@@ -1,3 +1,4 @@
+import { BackButton } from "@/components/BackButton";
 import { PipelineBoard } from "@/components/PipelineBoard";
 import { createClient } from "@/lib/supabase/server";
 import { fmtMoney } from "@/lib/utils";
@@ -20,6 +21,7 @@ export default async function PipelinePage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-28 pt-6">
+      <BackButton href="/dashboard" className="mb-4" />
       <header className="flex items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Pipeline</div>
         <div className="text-[16px] font-medium text-accent-blue">

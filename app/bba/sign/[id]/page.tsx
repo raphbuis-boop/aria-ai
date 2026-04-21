@@ -3,7 +3,7 @@
 import SignatureCanvas from "react-signature-canvas";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Check, Eraser, FileSignature, ShieldCheck } from "lucide-react";
+import { Check, ChevronLeft, Eraser, FileSignature, ShieldCheck } from "lucide-react";
 
 type Loaded = {
   client: { id: string; name: string };
@@ -192,7 +192,16 @@ export default function SignBbaPage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-10">
-      <div className="mx-auto w-full max-w-lg px-5 pt-8">
+      <div className="mx-auto w-full max-w-lg px-5 pt-6">
+        <button
+          type="button"
+          onClick={() => router.back()}
+          aria-label="Back"
+          className="mb-4 inline-flex items-center gap-1 text-[#4f7bff] text-sm font-semibold"
+        >
+          <ChevronLeft size={18} strokeWidth={2.5} className="-ml-1" />
+          <span>Back</span>
+        </button>
         <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
           <FileSignature size={14} /> NJ Buyer Broker Agreement
         </div>

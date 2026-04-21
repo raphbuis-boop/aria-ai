@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { useToast } from "@/components/ToastProvider";
 import type { MlsListingPayload } from "@/app/api/mls/listings/route";
 import { fmtMoney } from "@/lib/utils";
@@ -155,6 +156,7 @@ export default function MlsSearchPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/more" className="mb-4" />
       <header>
         <div className="text-[20px] font-medium text-text-primary">
           MLS Search

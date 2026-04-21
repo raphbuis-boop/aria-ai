@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { createClient } from "@/lib/supabase/client";
 import { Send } from "lucide-react";
@@ -88,6 +89,7 @@ export default function AIPage() {
   return (
     <div className="flex min-h-screen flex-col bg-bg-primary px-4 pb-28 pt-6">
       <header className="mx-auto w-full max-w-lg">
+        <BackButton href="/more" className="mb-4" />
         <div className="text-[20px] font-medium text-accent-blue">Aria</div>
         <div className="text-[13px] text-text-dim">
           Your AI real estate teammate

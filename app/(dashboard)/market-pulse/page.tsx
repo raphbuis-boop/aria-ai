@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { ArrowDown, ArrowUp } from "lucide-react";
 
 type TownRow = {
@@ -36,6 +37,7 @@ export default function MarketPulsePage() {
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
       <div className="px-5 pt-6">
+        <BackButton href="/more" className="mb-4" />
         <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#4f7bff]">
           {overall.monthLabel}
         </p>

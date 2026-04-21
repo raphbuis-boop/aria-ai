@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { PropertyCard } from "@/components/PropertyCard";
 import { useToast } from "@/components/ToastProvider";
@@ -133,6 +134,7 @@ export function PropertiesClient({
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/more" className="mb-4" />
       <header className="flex items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Properties</div>
         <span className="rounded-full bg-[rgba(59,130,246,0.15)] px-2 py-0.5 text-[11px] font-medium text-accent-blue">

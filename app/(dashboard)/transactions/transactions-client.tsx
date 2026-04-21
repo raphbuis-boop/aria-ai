@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { TransactionMilestone } from "@/components/TransactionMilestone";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
@@ -143,6 +144,7 @@ export function TransactionsClient({
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/dashboard" className="mb-4" />
       <div className="text-[20px] font-medium text-text-primary">
         Transaction Copilot
       </div>

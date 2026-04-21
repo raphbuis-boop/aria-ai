@@ -1,5 +1,6 @@
 "use client";
 
+import { BackButton } from "@/components/BackButton";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
@@ -103,6 +104,7 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <BackButton href="/more" className="mb-4" />
       <div className="text-[20px] font-medium text-text-primary">
         Mirror My Voice
       </div>
