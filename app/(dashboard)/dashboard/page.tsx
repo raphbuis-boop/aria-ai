@@ -1,378 +1,111 @@
-'use client'
+import { createClient } from "@/lib/supabase/server";
+import { DashboardClient } from "./dashboard-client";
 
-import { useEffect, useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
-import Link from 'next/link'
-import { AIDraftModal } from '@/components/AIDraftModal'
-import { useToast } from '@/components/ToastProvider'
-import { ShieldAlert } from 'lucide-react'
+export const dynamic = "force-dynamic";
 
 type ClientRow = {
-  id: string
-  name: string
-  town: string | null
-  status: string | null
-  lead_score: number | null
-  budget_min: number | null
-  budget_max: number | null
-  phone: string | null
-  client_role: string | null
-}
+  id: string;
+  name: string;
+  town: string | null;
+  status: string | null;
+  lead_score: number | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  phone: string | null;
+  client_role: string | null;
+};
 
-function pipelineTotal(clients: { budget_max: number | null }[]) {
-  const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0)
-  if (total >= 1_000_000) return `$${(total / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
-  if (total >= 1_000) return `$${Math.round(total / 1_000)}k`
-  return `$${total}`
-}
+type ShowingRow = {
+  id: string;
+  client_id: string;
+  address: string | null;
+  showing_date: string | null;
+  clients: { name: string | null } | null;
+};
 
-export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [clients, setClients] = useState<ClientRow[]>([])
-  const [loading, setLoading] = useState(true)
-  const [snoozed, setSnoozed] = useState<Set<string>>(new Set())
-  const [dismissed, setDismissed] = useState<Set<string>>(new Set())
-  const [seeding, setSeeding] = useState(false)
-  const [draftFor, setDraftFor] = useState<ClientRow | null>(null)
-  const [bbaAlerts, setBbaAlerts] = useState<
-    { clientId: string; clientName: string; address: string | null; showingDate: string | null }[]
-  >([])
-  const supabase = createClient()
-  const toast = useToast()
+type TxRow = {
+  id: string;
+  client_id: string;
+  address: string | null;
+  closing_date: string | null;
+  status: string | null;
+};
 
-  async function reload() {
-    const { data } = await supabase
-      .from('clients')
-      .select('id, name, town, status, lead_score, budget_min, budget_max, phone, client_role')
-      .order('lead_score', { ascending: false })
-      .limit(20)
-    setClients(data || [])
+export default async function DashboardPage() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-    // BBA compliance check: upcoming showings without a signed agreement.
-    const nowIso = new Date().toISOString()
-    const { data: upcomingShowings } = await supabase
-      .from('showings')
-      .select('client_id, address, showing_date, clients(name)')
-      .gte('showing_date', nowIso)
-      .order('showing_date', { ascending: true })
-    const { data: bbaRows } = await supabase
-      .from('buyer_broker_agreements')
-      .select('client_id')
-    const signedSet = new Set((bbaRows ?? []).map((r) => String(r.client_id)))
-    const alerts = (upcomingShowings ?? [])
-      .filter((s) => !signedSet.has(String(s.client_id ?? '')))
-      .map((s) => ({
-        clientId: String(s.client_id ?? ''),
-        clientName: String(
-          (s.clients as { name?: string } | null)?.name ?? 'Client',
-        ),
-        address: (s.address as string | null) ?? null,
-        showingDate: (s.showing_date as string | null) ?? null,
-      }))
-    setBbaAlerts(alerts)
+  if (!user) {
+    return <DashboardClient user={null} initial={empty()} />;
   }
 
-  useEffect(() => {
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser()
-      setUser(user)
-      if (!user) { setLoading(false); return }
-      await reload()
-      setLoading(false)
-    }
-    load()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const [
+    { data: clients },
+    { data: transactions },
+    { count: newMatchesCount },
+    { data: upcomingShowings },
+    { data: bbaRows },
+  ] = await Promise.all([
+    supabase
+      .from("clients")
+      .select(
+        "id, name, town, status, lead_score, budget_min, budget_max, phone, client_role",
+      )
+      .eq("agent_id", user.id)
+      .order("lead_score", { ascending: false }),
+    supabase
+      .from("transactions")
+      .select("id, client_id, address, closing_date, status")
+      .eq("agent_id", user.id),
+    supabase
+      .from("property_matches")
+      .select("*", { count: "exact", head: true })
+      .eq("agent_id", user.id)
+      .eq("notified", false),
+    supabase
+      .from("showings")
+      .select("id, client_id, address, showing_date, clients(name)")
+      .eq("agent_id", user.id)
+      .gte("showing_date", new Date().toISOString())
+      .order("showing_date", { ascending: true }),
+    supabase
+      .from("buyer_broker_agreements")
+      .select("client_id")
+      .eq("agent_id", user.id),
+  ]);
 
-  async function loadDemo() {
-    if (seeding) return
-    setSeeding(true)
-    try {
-      const res = await fetch('/api/seed', { method: 'POST' })
-      const data = await res.json()
-      if (!res.ok) {
-        toast.toast(String(data.error ?? 'Seed failed'), 'warn')
-      } else if (data.skipped) {
-        toast.toast('Demo data already loaded', 'default')
-      } else {
-        toast.toast(`Loaded ${data.clients ?? 5} demo clients`, 'success')
-      }
-      await reload()
-    } catch {
-      toast.toast('Could not reach seed endpoint', 'warn')
-    } finally {
-      setSeeding(false)
-    }
-  }
+  const signedClientIds = new Set(
+    (bbaRows ?? []).map((r) => String(r.client_id)),
+  );
 
-  function snooze(id: string) {
-    setSnoozed((s) => new Set(s).add(id))
-    toast.toast('Snoozed 1h', 'success')
-  }
-
-  function dismiss(id: string) {
-    setDismissed((s) => new Set(s).add(id))
-    toast.toast('Dismissed', 'default')
-  }
-
-  const visible = clients.filter(c => !dismissed.has(c.id))
-  const hotLeads = visible.filter(c => (c.lead_score ?? 0) >= 7 && !snoozed.has(c.id))
-  const underContract = visible.filter(c => c.status === 'under_contract')
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-  const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
-  const initial = firstName[0]?.toUpperCase() || 'A'
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
-  const topLead = hotLeads[0]
-  const closingLead = underContract[0]
+  const bbaAlerts = ((upcomingShowings as ShowingRow[] | null) ?? [])
+    .filter((s) => !signedClientIds.has(String(s.client_id ?? "")))
+    .map((s) => ({
+      clientId: String(s.client_id ?? ""),
+      clientName: s.clients?.name ?? "Client",
+      address: s.address,
+      showingDate: s.showing_date,
+    }));
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
-      <div className="px-5 pt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#4f7bff] mb-1">{today}</p>
-        <div className="flex items-center justify-between">
-          <h1 className="text-[26px] font-semibold leading-tight text-[#f0eee8]">{greeting}, {firstName}</h1>
-          <div className="w-9 h-9 rounded-full bg-[#4f7bff]/20 flex items-center justify-center text-[13px] font-bold text-[#6f9bff] flex-shrink-0">
-            {initial}
-          </div>
-        </div>
-      </div>
+    <DashboardClient
+      user={{
+        email: user.email ?? null,
+        fullName:
+          (user.user_metadata?.full_name as string | undefined) ?? null,
+      }}
+      initial={{
+        clients: (clients as ClientRow[] | null) ?? [],
+        transactions: (transactions as TxRow[] | null) ?? [],
+        newMatches: newMatchesCount ?? 0,
+        bbaAlerts,
+      }}
+    />
+  );
+}
 
-      <div className="px-5 mt-[18px]">
-        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border-[0.5px] border-[#1e2a4e] rounded-[20px] p-[18px]">
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4f7bff] animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[1px] text-[#4f7bff]">While you were away</span>
-          </div>
-          <p className="text-sm text-[#a0a0c0] leading-[1.6]">
-            {loading ? (
-              'Loading your briefing...'
-            ) : visible.length === 0 ? (
-              'No clients yet. Load demo data or add your first client to get started.'
-            ) : (
-              <>
-                {hotLeads.length} hot lead{hotLeads.length !== 1 ? 's' : ''} need attention.{' '}
-                Top lead: <span className="text-[#d0d0e8] font-medium">{topLead?.name ?? '—'}</span>
-                {topLead?.status ? <> ({topLead.status.replace(/_/g, ' ')})</> : null}.
-                {' '}<span className="text-[#d0d0e8] font-medium">{visible.length} active clients</span>.
-              </>
-            )}
-          </p>
-        </div>
-
-        <div className="flex items-center justify-between mt-5 mb-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">Action Stack</p>
-          <button
-            type="button"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] rounded-[20px] px-3 py-1 text-[11px] font-semibold text-[#444460]"
-          >
-            Focus mode
-          </button>
-        </div>
-
-        {bbaAlerts.length > 0 && (
-          <Link
-            href={`/clients/${bbaAlerts[0].clientId}`}
-            className="block bg-gradient-to-br from-[#1a0f0f] to-[#1e1014] border-[0.5px] border-[#3a1a1a] rounded-[20px] p-[18px] mb-2.5"
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">
-                <ShieldAlert size={11} /> BBA required
-              </span>
-              <span className="text-[11px] text-[#ff8a8a]">
-                {bbaAlerts.length} showing{bbaAlerts.length > 1 ? 's' : ''}
-              </span>
-            </div>
-            <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
-              {bbaAlerts[0].clientName} has no signed BBA
-            </p>
-            <p className="text-xs text-[#a08890] mb-3 leading-relaxed">
-              {bbaAlerts[0].address ?? 'Upcoming showing'}
-              {bbaAlerts[0].showingDate
-                ? ' · ' +
-                  new Date(bbaAlerts[0].showingDate).toLocaleDateString(
-                    'en-US',
-                    { month: 'short', day: 'numeric' },
-                  )
-                : ''}
-              . NJ / NAR rules require a signed Buyer Broker Agreement before the tour.
-            </p>
-            <span className="inline-block bg-gradient-to-br from-[#ff6060] to-[#ff4848] text-white rounded-[9px] px-3 py-[7px] text-xs font-semibold">
-              Send signing link →
-            </span>
-          </Link>
-        )}
-
-        {topLead && (
-          <div className="bg-[#0f0f1e] border-[0.5px] border-[#2a1a1a] rounded-[20px] p-[18px] mb-2.5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">Hot Lead</span>
-              <span className="text-[11px] text-[#444460]">now</span>
-            </div>
-            <Link href={`/clients/${topLead.id}`}>
-              <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
-                {topLead.name}{topLead.town ? ` · ${topLead.town}` : ''}
-              </p>
-            </Link>
-            <p className="text-xs text-[#666680] mb-1">{topLead.status?.replace(/_/g, ' ') ?? '—'}</p>
-            <div className="flex items-center gap-2 mb-[14px]">
-              <div className="flex gap-[3px]">
-                {Array.from({ length: 10 }).map((_, j) => (
-                  <div
-                    key={j}
-                    className={`w-1.5 h-1.5 rounded-full ${j < (topLead.lead_score ?? 0) ? 'bg-[#4f7bff]' : 'bg-[#1e1e2e]'}`}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-[#666680]">Lead score {topLead.lead_score ?? 0}</span>
-            </div>
-            <div className="flex gap-2">
-              <a
-                href={topLead.phone ? `tel:${topLead.phone}` : '#'}
-                className="flex-1 text-center bg-[#50dc78]/12 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
-              >
-                Call now
-              </a>
-              <button
-                type="button"
-                onClick={() => setDraftFor(topLead)}
-                className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border-[0.5px] border-[#4f7bff]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
-              >
-                AI text
-              </button>
-              <button
-                type="button"
-                onClick={() => snooze(topLead.id)}
-                className="flex-1 bg-[#ffb832]/10 text-[#ffb832] border-[0.5px] border-[#ffb832]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
-              >
-                Snooze 1h
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => dismiss(topLead.id)}
-              className="mt-2 w-full text-center text-[11px] text-[#555570]"
-            >
-              Dismiss
-            </button>
-          </div>
-        )}
-
-        {closingLead && (
-          <div className="bg-[#0f0f1e] border-[0.5px] border-[#1a2a1a] rounded-[20px] p-[18px] mb-2.5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center rounded-md bg-[#50dc78]/10 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.8px]">Closing</span>
-            </div>
-            <p className="text-[15px] font-semibold text-[#f0eee8] mb-0.5">
-              {closingLead.name} — under contract
-            </p>
-            {closingLead.town ? (
-              <p className="text-xs text-[#666680] mb-0.5">{closingLead.town}</p>
-            ) : null}
-            <p className="text-xs text-[#50dc78] mb-3">Milestone check-ins due</p>
-            <Link
-              href="/transactions"
-              className="inline-block bg-transparent border-[0.5px] border-[#2a2a3e] text-[#888] rounded-[12px] px-4 py-2.5 text-[13px] font-semibold"
-            >
-              View deal →
-            </Link>
-          </div>
-        )}
-
-        {!loading && clients.length === 0 && (
-          <div className="bg-[#0f0f1e] border-[0.5px] border-[#1c1c2e] rounded-[20px] p-6 text-center mb-2.5">
-            <p className="text-3xl mb-3">👥</p>
-            <p className="text-[#888898] text-sm mb-4">No clients yet — load a demo set or add your own.</p>
-            <div className="flex flex-col gap-2">
-              <button
-                type="button"
-                onClick={loadDemo}
-                disabled={seeding}
-                className="w-full rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
-              >
-                {seeding ? 'Loading demo data…' : 'Load demo data'}
-              </button>
-              <Link
-                href="/clients?new=1"
-                className="w-full rounded-[12px] border-[0.5px] border-[#2a2a3e] py-2.5 text-sm font-semibold text-[#9090a8]"
-              >
-                + Add your first client
-              </Link>
-            </div>
-          </div>
-        )}
-
-        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">Stats</p>
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Pipeline</p>
-            <p className="text-2xl font-semibold text-[#4f7bff] leading-none">{pipelineTotal(visible)}</p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Hot leads</p>
-            <p className="text-2xl font-semibold text-[#ffb832] leading-none">{hotLeads.length}</p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Active clients</p>
-            <p className="text-2xl font-semibold text-[#f0eee8] leading-none">{visible.length}</p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Closings</p>
-            <p className="text-2xl font-semibold text-[#50dc78] leading-none">{underContract.length}</p>
-          </div>
-        </div>
-
-        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">Ask Aria</p>
-        <Link
-          href="/ai"
-          className="flex items-center gap-2.5 bg-[#12121e] border-[0.5px] border-[#2a2a3e] rounded-[14px] px-4 py-[13px]"
-        >
-          <span className="w-2 h-2 rounded-full bg-[#4f7bff] flex-shrink-0" />
-          <span className="text-sm text-[#555570]">Ask Aria anything...</span>
-        </Link>
-
-        <div className="flex flex-wrap gap-[7px] mt-4 pb-2">
-          <Link
-            href="/clients?new=1"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            + New Client
-          </Link>
-          <Link
-            href="/showings?new=1"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Log Showing
-          </Link>
-          <Link
-            href="/mls"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Properties
-          </Link>
-          <Link
-            href="/pipeline"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Pipeline
-          </Link>
-        </div>
-      </div>
-
-      {draftFor ? (
-        <AIDraftModal
-          client={{
-            id: draftFor.id,
-            name: draftFor.name,
-            phone: draftFor.phone,
-            town: draftFor.town,
-            budget_max: draftFor.budget_max,
-            status: draftFor.status,
-          }}
-          onClose={() => setDraftFor(null)}
-        />
-      ) : null}
-    </div>
-  )
+function empty() {
+  return { clients: [], transactions: [], newMatches: 0, bbaAlerts: [] };
 }
