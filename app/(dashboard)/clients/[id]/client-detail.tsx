@@ -3,11 +3,22 @@
 import { createClient } from "@/lib/supabase/client";
 import { useToast } from "@/components/ToastProvider";
 import { AIDraftModal } from "@/components/AIDraftModal";
+import { BbaSection } from "@/components/BbaSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+type BbaRow = {
+  signed_at: string;
+  commission_pct: number;
+  term_start: string;
+  term_end: string;
+  search_area: string | null;
+  agent_name: string;
+  client_name: string;
+} | null;
 
 const AVATAR_COLORS = [
   "bg-red-500/20 text-red-400",
@@ -40,6 +51,7 @@ function parseTownList(raw: unknown): string {
 export function ClientDetail({
   client,
   activities,
+  bba,
 }: {
   client: Record<string, unknown>;
   activities: Record<string, unknown>[];
@@ -48,6 +60,7 @@ export function ClientDetail({
   showings?: Record<string, unknown>[];
   matches?: Record<string, unknown>[];
   mlsLive?: MlsListingPayload[];
+  bba?: BbaRow;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -190,6 +203,13 @@ export function ClientDetail({
             Log Showing
           </Link>
         </div>
+
+        <BbaSection
+          clientId={id}
+          clientName={name}
+          clientPhone={phone}
+          initialBba={bba ?? null}
+        />
 
         {notes ? (
           <>

@@ -9,9 +9,15 @@ import { isFuture, parseISO } from "date-fns";
 
 export function ShowingsClient({
   initial,
+  signedClientIds,
 }: {
   initial: Record<string, unknown>[];
+  signedClientIds: string[];
 }) {
+  const signedSet = useMemo(
+    () => new Set(signedClientIds),
+    [signedClientIds],
+  );
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -174,6 +180,7 @@ export function ShowingsClient({
             upcoming.map((s) => (
               <ShowingCard
                 key={String(s.id)}
+                clientId={(s.client_id as string) ?? null}
                 clientName={String(
                   (s.clients as { name?: string })?.name ?? "Client",
                 )}
@@ -183,6 +190,8 @@ export function ShowingsClient({
                 notes={s.notes as string | null}
                 ai_summary={s.ai_summary as string | null}
                 next_action={s.next_action as string | null}
+                upcoming
+                bbaSigned={signedSet.has(String(s.client_id ?? ""))}
               />
             ))
           ) : (
@@ -202,6 +211,7 @@ export function ShowingsClient({
             past.map((s) => (
               <ShowingCard
                 key={String(s.id)}
+                clientId={(s.client_id as string) ?? null}
                 clientName={String(
                   (s.clients as { name?: string })?.name ?? "Client",
                 )}
@@ -211,6 +221,7 @@ export function ShowingsClient({
                 notes={s.notes as string | null}
                 ai_summary={s.ai_summary as string | null}
                 next_action={s.next_action as string | null}
+                bbaSigned={signedSet.has(String(s.client_id ?? ""))}
               />
             ))
           ) : (

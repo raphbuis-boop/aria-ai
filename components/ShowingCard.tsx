@@ -1,4 +1,6 @@
 import { fmtDateTime } from "@/lib/utils";
+import Link from "next/link";
+import { ShieldAlert, ShieldCheck } from "lucide-react";
 
 const statusStyle: Record<string, string> = {
   scheduled: "bg-accent-blue/15 text-accent-blue",
@@ -7,6 +9,7 @@ const statusStyle: Record<string, string> = {
 };
 
 export function ShowingCard({
+  clientId,
   clientName,
   address,
   showing_date,
@@ -14,7 +17,10 @@ export function ShowingCard({
   notes,
   ai_summary,
   next_action,
+  bbaSigned,
+  upcoming,
 }: {
+  clientId?: string | null;
   clientName: string;
   address: string | null;
   showing_date: string | null;
@@ -22,8 +28,12 @@ export function ShowingCard({
   notes?: string | null;
   ai_summary: string | null;
   next_action: string | null;
+  bbaSigned?: boolean;
+  upcoming?: boolean;
 }) {
   const st = status ?? "scheduled";
+  const showBbaBlock =
+    bbaSigned !== undefined && (upcoming || st === "scheduled");
   return (
     <div className="rounded-[14px] border border-border-card bg-bg-card p-4">
       <div className="flex flex-wrap items-center gap-2">
@@ -50,6 +60,24 @@ export function ShowingCard({
       ) : null}
       {next_action ? (
         <p className="mt-2 text-[12px] text-accent-blue">Next: {next_action}</p>
+      ) : null}
+      {showBbaBlock ? (
+        bbaSigned ? (
+          <div className="mt-3 flex items-center gap-1.5 rounded-[10px] border border-[#1a2a1a] bg-[#0f1a10] px-2.5 py-1.5 text-[11px] text-[#50dc78]">
+            <ShieldCheck size={12} /> BBA signed
+          </div>
+        ) : (
+          <Link
+            href={clientId ? `/clients/${clientId}` : "#"}
+            className="mt-3 flex items-center justify-between gap-2 rounded-[10px] border border-[#3a1a1a] bg-[#1a0f0f] px-2.5 py-1.5 text-[11px] text-[#ff6060]"
+          >
+            <span className="flex items-center gap-1.5">
+              <ShieldAlert size={12} />
+              BBA required before showing
+            </span>
+            <span className="text-[#ff8a8a]">Send link →</span>
+          </Link>
+        )
       ) : null}
     </div>
   );

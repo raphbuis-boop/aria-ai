@@ -52,6 +52,14 @@ export default async function ClientDetailPage({
     .eq("client_id", params.id)
     .order("match_score", { ascending: false });
 
+  const { data: bba } = await supabase
+    .from("buyer_broker_agreements")
+    .select("signed_at, commission_pct, term_start, term_end, search_area, agent_name, client_name")
+    .eq("client_id", params.id)
+    .order("signed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
   const mlsLive = await fetchMlsListingsForClient({
     city: client.town as string | null,
     minPrice: client.budget_min as number | null,
@@ -69,6 +77,7 @@ export default async function ClientDetailPage({
       showings={showings ?? []}
       matches={matches ?? []}
       mlsLive={mlsLive}
+      bba={bba ?? null}
     />
   );
 }

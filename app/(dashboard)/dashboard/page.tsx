@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { AIDraftModal } from '@/components/AIDraftModal'
 import { useToast } from '@/components/ToastProvider'
+import { ShieldAlert } from 'lucide-react'
 
 type ClientRow = {
   id: string
@@ -34,6 +35,9 @@ export default function DashboardPage() {
   const [dismissed, setDismissed] = useState<Set<string>>(new Set())
   const [seeding, setSeeding] = useState(false)
   const [draftFor, setDraftFor] = useState<ClientRow | null>(null)
+  const [bbaAlerts, setBbaAlerts] = useState<
+    { clientId: string; clientName: string; address: string | null; showingDate: string | null }[]
+  >([])
   const supabase = createClient()
   const toast = useToast()
 
@@ -44,6 +48,29 @@ export default function DashboardPage() {
       .order('lead_score', { ascending: false })
       .limit(20)
     setClients(data || [])
+
+    // BBA compliance check: upcoming showings without a signed agreement.
+    const nowIso = new Date().toISOString()
+    const { data: upcomingShowings } = await supabase
+      .from('showings')
+      .select('client_id, address, showing_date, clients(name)')
+      .gte('showing_date', nowIso)
+      .order('showing_date', { ascending: true })
+    const { data: bbaRows } = await supabase
+      .from('buyer_broker_agreements')
+      .select('client_id')
+    const signedSet = new Set((bbaRows ?? []).map((r) => String(r.client_id)))
+    const alerts = (upcomingShowings ?? [])
+      .filter((s) => !signedSet.has(String(s.client_id ?? '')))
+      .map((s) => ({
+        clientId: String(s.client_id ?? ''),
+        clientName: String(
+          (s.clients as { name?: string } | null)?.name ?? 'Client',
+        ),
+        address: (s.address as string | null) ?? null,
+        showingDate: (s.showing_date as string | null) ?? null,
+      }))
+    setBbaAlerts(alerts)
   }
 
   useEffect(() => {
@@ -143,6 +170,39 @@ export default function DashboardPage() {
             Focus mode
           </button>
         </div>
+
+        {bbaAlerts.length > 0 && (
+          <Link
+            href={`/clients/${bbaAlerts[0].clientId}`}
+            className="block bg-gradient-to-br from-[#1a0f0f] to-[#1e1014] border-[0.5px] border-[#3a1a1a] rounded-[20px] p-[18px] mb-2.5"
+          >
+            <div className="flex items-center justify-between mb-3">
+              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">
+                <ShieldAlert size={11} /> BBA required
+              </span>
+              <span className="text-[11px] text-[#ff8a8a]">
+                {bbaAlerts.length} showing{bbaAlerts.length > 1 ? 's' : ''}
+              </span>
+            </div>
+            <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
+              {bbaAlerts[0].clientName} has no signed BBA
+            </p>
+            <p className="text-xs text-[#a08890] mb-3 leading-relaxed">
+              {bbaAlerts[0].address ?? 'Upcoming showing'}
+              {bbaAlerts[0].showingDate
+                ? ' · ' +
+                  new Date(bbaAlerts[0].showingDate).toLocaleDateString(
+                    'en-US',
+                    { month: 'short', day: 'numeric' },
+                  )
+                : ''}
+              . NJ / NAR rules require a signed Buyer Broker Agreement before the tour.
+            </p>
+            <span className="inline-block bg-gradient-to-br from-[#ff6060] to-[#ff4848] text-white rounded-[9px] px-3 py-[7px] text-xs font-semibold">
+              Send signing link →
+            </span>
+          </Link>
+        )}
 
         {topLead && (
           <div className="bg-[#0f0f1e] border-[0.5px] border-[#2a1a1a] rounded-[20px] p-[18px] mb-2.5">

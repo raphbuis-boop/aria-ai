@@ -381,6 +381,26 @@ export async function POST() {
       "Under contract. Milestones complete: offer accepted Apr 5, inspection Apr 10, mortgage commitment Apr 15. Final walkthrough Apr 28, closing Apr 30.",
   });
 
+  // Buyer Broker Agreement — Lisa is signed (she's under contract),
+  // Mike and Emily intentionally unsigned so the demo shows BBA alerts on
+  // their upcoming showings.
+  if (lisa) {
+    const lisaSignatureSvg =
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNDAnIGhlaWdodD0nNjAnPjx0ZXh0IHg9JzEwJyB5PSc0MicgZm9udC1mYW1pbHk9J2N1cnNpdmUnIGZvbnQtc2l6ZT0nMzQnIGZpbGw9J2JsYWNrJz5MaXNhIFRob21wc29uPC90ZXh0Pjwvc3ZnPg==";
+    await supabase.from("buyer_broker_agreements").insert({
+      client_id: lisa,
+      agent_id: agentId,
+      agent_name: "Aria Agent",
+      client_name: "Lisa Thompson",
+      commission_pct: 2.5,
+      term_start: "2026-04-01",
+      term_end: "2026-10-01",
+      search_area: "Westfield, Cranford, Summit (Union County)",
+      signature_data: lisaSignatureSvg,
+      signed_at: ISO(2026, 4, 3, 15, 0),
+    });
+  }
+
   // Showings — 3 past + 2 upcoming
   await supabase.from("showings").insert([
     // Upcoming
