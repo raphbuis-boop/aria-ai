@@ -1,6 +1,7 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
@@ -218,6 +219,8 @@ export default function SettingsPage() {
           Save profile
         </button>
       </div>
+
+      <BbaTemplatesSection />
     </div>
   );
 }

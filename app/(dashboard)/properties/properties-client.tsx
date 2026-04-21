@@ -6,18 +6,23 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditPropertyModal, type EditPropertyRecord } from "@/components/EditPropertyModal";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { PropertyCard } from "@/components/PropertyCard";
+import type { MatchSummary } from "@/components/MatchScoreBadge";
 import { useToast } from "@/components/ToastProvider";
 import { createClient } from "@/lib/supabase/client";
 import { runPropertyMatching } from "@/lib/matchProperties";
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
+export type PropertyMatchMap = Record<string, MatchSummary[]>;
+
 export function PropertiesClient({
   initial,
   availableCount,
+  matchMap,
 }: {
   initial: Record<string, unknown>[];
   availableCount: number;
+  matchMap: PropertyMatchMap;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -205,8 +210,11 @@ export function PropertiesClient({
         ) : null}
         {filtered.map((p) => {
           const id = String(p.id);
+          const topMatches = matchMap[id] ?? [];
           const matchCount =
-            activePropertyId === id ? matchesFor.length : 1;
+            activePropertyId === id && matchesFor.length
+              ? matchesFor.length
+              : topMatches.length;
           const rawPhotos = p.photos as unknown;
           const photoUrl =
             Array.isArray(rawPhotos) && typeof rawPhotos[0] === "string"
@@ -226,6 +234,7 @@ export function PropertiesClient({
                   sqft={p.sqft as number | null}
                   status={p.status as string | null}
                   matchCount={matchCount}
+                  topMatches={topMatches}
                   photoUrl={photoUrl}
                   onFindMatches={() => findMatches(id)}
                   onNotifyAll={() => notifyAll(id)}

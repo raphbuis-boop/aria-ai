@@ -6,6 +6,7 @@ import { AIDraftModal } from "@/components/AIDraftModal";
 import { BackButton } from "@/components/BackButton";
 import { BbaSection } from "@/components/BbaSection";
 import { EditClientModal } from "@/components/EditClientModal";
+import { MatchingPreferencesSection } from "@/components/MatchingPreferencesSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import { Pencil } from "lucide-react";
@@ -220,6 +221,12 @@ export function ClientDetail({
           clientName={name}
           clientPhone={phone}
           initialBba={bba ?? null}
+        />
+
+        <MatchingPreferencesSection
+          clientId={id}
+          initial={client}
+          primaryTown={(client.town as string | null) ?? null}
         />
 
         {notes ? (
