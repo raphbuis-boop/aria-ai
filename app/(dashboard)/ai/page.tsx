@@ -27,20 +27,27 @@ export default function AIPage() {
         .maybeSingle();
       const { data: clients } = await supabase
         .from("clients")
-        .select("id, lead_score, budget_max")
-        .eq("agent_id", user.id);
+        .select("name, town, status, lead_score, budget_min, budget_max")
+        .eq("agent_id", user.id)
+        .order("lead_score", { ascending: false });
       const { data: tasks } = await supabase
         .from("tasks")
         .select("id")
         .eq("agent_id", user.id)
         .eq("done", false);
-      const hot = (clients ?? []).filter((c) => (c.lead_score ?? 0) >= 8).length;
+      const hot = (clients ?? []).filter((c) => (c.lead_score ?? 0) >= 7).length;
       const pipeline = (clients ?? []).reduce(
         (s, c) => s + (c.budget_max ?? 0),
         0,
       );
+      const clientLines = (clients ?? [])
+        .map(
+          (c) =>
+            `- ${c.name} — ${c.town ?? "?"}, ${c.status ?? "?"}, budget $${c.budget_min ?? "?"}–$${c.budget_max ?? "?"}, score ${c.lead_score ?? 0}/10`,
+        )
+        .join("\n");
       setCtx(
-        `Agent: ${profile?.full_name ?? "Agent"}. Clients: ${clients?.length ?? 0}. Hot leads: ${hot}. Pipeline value: ${pipeline}. Tasks open: ${tasks?.length ?? 0}.`,
+        `Agent: ${profile?.full_name ?? "Agent"}. ${clients?.length ?? 0} active clients. Hot leads: ${hot}. Pipeline: $${pipeline}. Open tasks: ${tasks?.length ?? 0}.\n\nRoster:\n${clientLines}`,
       );
     })();
   }, [supabase]);
