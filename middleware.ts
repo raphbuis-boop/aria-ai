@@ -54,6 +54,7 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/api") ||
     path.startsWith("/portal") ||
     path.startsWith("/demo") ||
+    path.startsWith("/bba/sign") ||
     path === "/login" ||
     path === "/setup" ||
     path === "/privacy" ||
