@@ -292,118 +292,140 @@ export function ClientsPageClient({
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[14px] border border-[#1e1e2e] bg-[#12121e] p-4">
-            <div className="text-[16px] font-medium text-white">New client</div>
-            <div className="mt-3 space-y-2">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0"
+            onClick={() => setOpen(false)}
+          />
+          <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-9 pt-4">
+            <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+            <div className="mb-1 text-[15px] font-semibold text-[#f0eee8]">
+              New client
+            </div>
+            <p className="mb-4 text-xs text-[#555570]">
+              Saved to your Supabase clients table.
+            </p>
+
+            <div className="space-y-2.5">
               <input
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Name *"
-                className="w-full rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
-              />
-              <input
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="Phone"
-                className="w-full rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
-              />
-              <input
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="Email"
-                className="w-full rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
+                placeholder="Full name *"
+                className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
               />
               <div className="flex gap-2">
                 <input
-                  value={form.budget_min}
-                  onChange={(e) =>
-                    setForm({ ...form, budget_min: e.target.value })
-                  }
-                  placeholder="Budget min"
-                  inputMode="numeric"
-                  className="w-1/2 rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="Phone"
+                  inputMode="tel"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
                 />
                 <input
-                  value={form.budget_max}
-                  onChange={(e) =>
-                    setForm({ ...form, budget_max: e.target.value })
-                  }
-                  placeholder="Budget max"
-                  inputMode="numeric"
-                  className="w-1/2 rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="Email"
+                  inputMode="email"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
                 />
               </div>
-              <div className="text-[11px] text-[#666680]">
-                Preferred towns (NJ)
-              </div>
-              <div className="flex max-h-32 flex-wrap gap-1.5 overflow-y-auto">
-                {NJ_TOWN_OPTIONS.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => toggleTown(t)}
-                    className={`rounded-full border px-2 py-1 text-[10px] font-medium ${
-                      form.towns.includes(t)
-                        ? "border-[#4f7bff] bg-[#4f7bff]/15 text-[#6f9bff]"
-                        : "border-[#1e1e2e] text-[#666680]"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-              <div className="flex gap-2">
-                <input
-                  value={form.beds}
-                  onChange={(e) => setForm({ ...form, beds: e.target.value })}
-                  placeholder="Beds"
-                  inputMode="numeric"
-                  className="w-1/2 rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
-                />
-                <input
-                  value={form.baths}
-                  onChange={(e) => setForm({ ...form, baths: e.target.value })}
-                  placeholder="Baths"
-                  inputMode="decimal"
-                  className="w-1/2 rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] px-3 py-2 text-[13px] text-white outline-none"
-                />
-              </div>
+
               <div className="flex gap-2">
                 {(["buyer", "seller"] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => setForm({ ...form, client_role: r })}
-                    className={`flex-1 rounded-[8px] border py-2 text-[12px] font-medium capitalize ${
+                    className={`flex-1 rounded-[12px] border-[0.5px] py-2.5 text-xs font-semibold uppercase tracking-wider transition ${
                       form.client_role === r
-                        ? "border-[#4f7bff] text-[#6f9bff]"
-                        : "border-[#1e1e2e] text-[#666680]"
+                        ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
+                        : "border-[#1e1e2e] bg-[#0a0a14] text-[#555570]"
                     }`}
                   >
                     {r}
                   </button>
                 ))}
               </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={form.budget_min}
+                  onChange={(e) => setForm({ ...form, budget_min: e.target.value })}
+                  placeholder="Budget min"
+                  inputMode="numeric"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+                />
+                <input
+                  value={form.budget_max}
+                  onChange={(e) => setForm({ ...form, budget_max: e.target.value })}
+                  placeholder="Budget max"
+                  inputMode="numeric"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <input
+                  value={form.beds}
+                  onChange={(e) => setForm({ ...form, beds: e.target.value })}
+                  placeholder="Beds"
+                  inputMode="numeric"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+                />
+                <input
+                  value={form.baths}
+                  onChange={(e) => setForm({ ...form, baths: e.target.value })}
+                  placeholder="Baths"
+                  inputMode="decimal"
+                  className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+                />
+              </div>
+
+              <div className="pt-1">
+                <p className="mb-2 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
+                  Preferred towns
+                </p>
+                <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2e] bg-[#0a0a14] p-3">
+                  {NJ_TOWN_OPTIONS.map((t) => (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => toggleTown(t)}
+                      className={`rounded-full border-[0.5px] px-2.5 py-1 text-[11px] font-medium transition ${
+                        form.towns.includes(t)
+                          ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
+                          : "border-[#1e1e2e] bg-[#12121e] text-[#666680]"
+                      }`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Notes"
-                className="min-h-[72px] w-full rounded-[8px] border border-[#1e1e2e] bg-[#0a0a0f] p-3 text-[13px] text-white outline-none"
+                placeholder="Notes (timeline, motivations, anything useful)"
+                rows={4}
+                className="mt-1 w-full resize-none rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] p-4 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
               />
             </div>
-            <div className="mt-3 flex gap-2">
+
+            <div className="mt-5 flex gap-2">
               <button
                 type="button"
                 onClick={saveClient}
-                className="flex-1 rounded-[8px] bg-[#4f7bff] py-2 text-[13px] font-medium text-white"
+                className="flex-1 rounded-[12px] bg-[#4f7bff] py-3 text-sm font-semibold text-white transition active:bg-[#4369de]"
               >
-                Save
+                Save client
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-[8px] border border-[#1e1e2e] px-3 py-2 text-[13px] text-[#666680]"
+                className="rounded-[12px] border-[0.5px] border-[#2a2a3e] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
               >
                 Cancel
               </button>

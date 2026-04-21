@@ -1,17 +1,9 @@
 import { fmtDateTime } from "@/lib/utils";
 
-const badgeBase =
-  "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase whitespace-nowrap";
-
 const statusStyle: Record<string, string> = {
-  scheduled: `${badgeBase} bg-blue-500/10 text-blue-400`,
-  completed: `${badgeBase} bg-green-500/10 text-green-400`,
-  cancelled: `${badgeBase} bg-red-500/10 text-red-400`,
-  considering: `${badgeBase} bg-amber-500/10 text-amber-400`,
-  "strong interest": `${badgeBase} bg-green-500/10 text-green-400`,
-  strong_interest: `${badgeBase} bg-green-500/10 text-green-400`,
-  "not a fit": `${badgeBase} bg-red-500/10 text-red-400`,
-  not_a_fit: `${badgeBase} bg-red-500/10 text-red-400`,
+  scheduled: "bg-accent-blue/15 text-accent-blue",
+  completed: "bg-accent-green/15 text-accent-green",
+  cancelled: "bg-text-dim/20 text-text-dim",
 };
 
 export function ShowingCard({
@@ -32,28 +24,32 @@ export function ShowingCard({
   next_action: string | null;
 }) {
   const st = status ?? "scheduled";
-  const badgeClass = statusStyle[st] ?? statusStyle.scheduled;
   return (
-    <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0 flex-1">
-          <div className="text-sm font-semibold text-[#d0d0e0] mb-1">
-            {address ?? "—"}
-          </div>
-          <div className="text-xs text-[#555570]">
-            {clientName} · {fmtDateTime(showing_date)}
-          </div>
-        </div>
-        <span className={badgeClass}>{st.replace(/_/g, " ")}</span>
+    <div className="rounded-[14px] border border-border-card bg-bg-card p-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="rounded-full border border-border-card bg-bg-deep px-2 py-0.5 text-[11px] text-text-secondary">
+          {clientName}
+        </span>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-medium capitalize ${statusStyle[st] ?? statusStyle.scheduled}`}
+        >
+          {st}
+        </span>
+        <span className="text-[11px] text-text-dim">
+          {fmtDateTime(showing_date)}
+        </span>
+      </div>
+      <div className="mt-2 text-[14px] font-medium text-text-primary">
+        {address}
       </div>
       {notes ? (
-        <p className="text-xs text-[#888898] mt-1">{notes}</p>
+        <p className="mt-2 text-[12px] text-text-muted">{notes}</p>
       ) : null}
       {ai_summary ? (
-        <p className="text-xs text-[#888898] mt-1">{ai_summary}</p>
+        <p className="mt-2 text-[13px] text-text-secondary">{ai_summary}</p>
       ) : null}
       {next_action ? (
-        <p className="text-xs text-[#4f7bff] mt-1">Next: {next_action}</p>
+        <p className="mt-2 text-[12px] text-accent-blue">Next: {next_action}</p>
       ) : null}
     </div>
   );

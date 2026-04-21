@@ -142,25 +142,25 @@ export function TransactionsClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <div className="text-[26px] font-semibold mb-1">Transactions</div>
-        <button
-          type="button"
-          onClick={() => setOpen(true)}
-          className="bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl px-4 py-2 text-sm font-semibold"
-        >
-          + Add
-        </button>
+    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <div className="text-[20px] font-medium text-text-primary">
+        Transaction Copilot
       </div>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="mt-4 w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white"
+      >
+        Add Transaction
+      </button>
 
       {atRisk && selected ? (
-        <div className="mx-5 mb-3 rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-400">
+        <div className="mt-4 rounded-[10px] border border-red-500 bg-bg-deep px-3 py-2 text-[12px] text-red-400">
           At-risk: milestone within 48 hours — confirm status now.
         </div>
       ) : null}
 
-      <div>
+      <div className="mt-6 space-y-3">
         {initial.map((t) => {
           const name = (t.clients as { name?: string })?.name ?? "Client";
           const closing = t.closing_date
@@ -169,34 +169,22 @@ export function TransactionsClient({
           const days = closing
             ? differenceInCalendarDays(closing, new Date())
             : null;
-          const status = String(t.status ?? "active");
           return (
             <button
               key={String(t.id)}
               type="button"
               onClick={() => setSelected(t)}
-              className="mx-5 bg-[#12121e] border border-[#1e2a1a] rounded-2xl p-4 mb-3 text-left w-[calc(100%-2.5rem)] block"
+              className="w-full rounded-[14px] border border-border-card bg-bg-card p-4 text-left"
             >
-              <div className="flex items-start justify-between gap-2 mb-1">
-                <div className="text-base font-semibold text-white">
-                  {name}
-                </div>
-                <span className="bg-green-500/10 text-green-400 border border-green-500/20 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase whitespace-nowrap">
-                  {status}
-                </span>
+              <div className="text-[14px] font-medium text-text-primary">
+                {name}
               </div>
-              <div className="text-xs text-[#666680] mb-1">
-                {String(t.address ?? "")}
-              </div>
-              <div className="text-xl font-bold text-[#4f7bff] mb-3">
+              <div className="text-[12px] text-text-dim">{String(t.address)}</div>
+              <div className="mt-2 text-[13px] text-accent-blue">
                 ${Number(t.contract_price ?? 0).toLocaleString()}
               </div>
-              <div className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mb-2">
-                {days != null
-                  ? days >= 0
-                    ? `${days} days to closing`
-                    : `Closed ${Math.abs(days)}d ago`
-                  : "Closing TBD"}
+              <div className="text-[11px] text-text-dim">
+                {days != null ? `${days} days to closing` : "Closing TBD"}
               </div>
             </button>
           );
@@ -204,10 +192,8 @@ export function TransactionsClient({
       </div>
 
       {selected ? (
-        <div className="px-5 mt-6 space-y-3">
-          <div className="text-[10px] font-bold tracking-widest uppercase text-[#444460] mb-2">
-            Timeline
-          </div>
+        <div className="mt-8 space-y-3">
+          <div className="text-[16px] font-medium text-text-primary">Timeline</div>
           <TransactionMilestone
             label="Inspection"
             dateIso={selected.inspection_date as string | null}
@@ -227,12 +213,12 @@ export function TransactionsClient({
           <button
             type="button"
             onClick={draftEmail}
-            className="rounded-xl bg-[#4f7bff] px-3 py-2 text-xs font-semibold text-white"
+            className="rounded-[8px] bg-accent-blue px-3 py-2 text-[12px] font-medium text-white"
           >
             Draft check-in email
           </button>
           {draft ? (
-            <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-3 text-sm text-[#d0d0e0]">
+            <div className="rounded-[12px] border border-border-card bg-bg-card p-3 text-[13px] text-text-secondary">
               {draft}
               <button
                 type="button"
@@ -241,7 +227,7 @@ export function TransactionsClient({
                     toast.toast("Copied", "success"),
                   )
                 }
-                className="mt-2 rounded-xl border border-[#1e1e2e] px-2 py-1 text-[11px] text-[#4f7bff]"
+                className="mt-2 rounded-[8px] border border-border-card px-2 py-1 text-[11px] text-accent-blue"
               >
                 Copy
               </button>
@@ -292,12 +278,12 @@ function AddTxModal({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4">
-      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-5 text-white">
-        <div className="text-base font-semibold">Add transaction</div>
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[14px] border border-border-card bg-bg-card p-4">
+        <div className="text-[16px] font-medium">Add transaction</div>
         <select
           value={form.client_id}
           onChange={(e) => setForm({ ...form, client_id: e.target.value })}
-          className="mt-3 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-3 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         >
           <option value="">Client</option>
           {clients.map((c) => (
@@ -310,13 +296,13 @@ function AddTxModal({
           value={form.address}
           onChange={(e) => setForm({ ...form, address: e.target.value })}
           placeholder="Address"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         <input
           value={form.contract_price}
           onChange={(e) => setForm({ ...form, contract_price: e.target.value })}
           placeholder="Contract price"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         {(
           [
@@ -334,45 +320,45 @@ function AddTxModal({
               setForm({ ...form, [key]: e.target.value } as TxForm)
             }
             placeholder={label}
-            className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+            className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
           />
         ))}
         <input
           value={form.attorney_name}
           onChange={(e) => setForm({ ...form, attorney_name: e.target.value })}
           placeholder="Attorney name"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         <input
           value={form.attorney_email}
           onChange={(e) => setForm({ ...form, attorney_email: e.target.value })}
           placeholder="Attorney email"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         <input
           value={form.lender_name}
           onChange={(e) => setForm({ ...form, lender_name: e.target.value })}
           placeholder="Lender name"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         <input
           value={form.lender_email}
           onChange={(e) => setForm({ ...form, lender_email: e.target.value })}
           placeholder="Lender email"
-          className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
         <div className="mt-3 flex gap-2">
           <button
             type="button"
             onClick={onSave}
-            className="flex-1 rounded-xl bg-[#4f7bff] py-2 text-sm font-semibold text-white"
+            className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
           >
             Save
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-xl border border-[#1e1e2e] px-3 py-2 text-sm text-[#666680]"
+            className="rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-text-dim"
           >
             Cancel
           </button>

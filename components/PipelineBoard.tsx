@@ -20,12 +20,12 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const COLS = [
-  { id: "new", label: "New", color: "#ffb832" },
-  { id: "contacted", label: "Contacted", color: "#4f7bff" },
-  { id: "showing", label: "Showing", color: "#4f7bff" },
-  { id: "offer", label: "Offer", color: "#50dc78" },
-  { id: "under_contract", label: "Under Contract", color: "#b87aff" },
-  { id: "closed", label: "Closed", color: "#666680" },
+  { id: "new", label: "New" },
+  { id: "contacted", label: "Contacted" },
+  { id: "showing", label: "Showing" },
+  { id: "offer", label: "Offer" },
+  { id: "under_contract", label: "Under Contract" },
+  { id: "closed", label: "Closed" },
 ] as const;
 
 type Client = {
@@ -97,40 +97,40 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="bg-[#12121e] border border-[#1e1e2e] rounded-xl p-3 mb-2 cursor-pointer active:border-[#4f7bff] transition-colors"
+      className="rounded-[10px] border border-border-card bg-bg-card"
     >
-      <div className="flex gap-2">
+      <div className="flex gap-2 px-2 pt-2">
         <button
           type="button"
           {...listeners}
           {...attributes}
-          className="shrink-0 cursor-grab touch-none rounded-md p-1 -ml-1 text-[#444460] hover:bg-[#1a1a2e] active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none rounded-md p-1 text-text-dim hover:bg-bg-deep active:cursor-grabbing"
           aria-label="Drag to change stage"
         >
-          <GripVertical size={16} />
+          <GripVertical size={18} />
         </button>
         <button
           type="button"
           onClick={() => onOpen(c)}
-          className="min-w-0 flex-1 text-left"
+          className="min-w-0 flex-1 pb-2 text-left"
         >
-          <div className="mb-1.5">
+          <div className="mb-2">
             <LeadBadge score={score} />
           </div>
-          <div className="text-xs font-semibold text-[#d0d0e0] mb-1 leading-tight">
+          <div className="text-[13px] font-semibold leading-tight text-text-primary">
             {c.name}
           </div>
-          <div className="text-[10px] text-[#555570]">
-            <span>{fmtMoney(c.budget_max)}</span>
+          <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-text-dim">
+            <span className="font-medium text-text-muted">{fmtMoney(c.budget_max)}</span>
             {c.town && (
               <>
-                <span className="mx-1">·</span>
+                <span className="text-border-card">·</span>
                 <span>{c.town}</span>
               </>
             )}
           </div>
-          <div className="mt-2 pt-2 border-t border-[#1e1e2e] text-right">
-            <span className="text-[10px] text-[#444460]">
+          <div className="mt-2.5 border-t border-border-card pt-2 text-right">
+            <span className="text-[10px] text-text-dim">
               {relTime(c.last_engagement_at)}
             </span>
           </div>
@@ -152,32 +152,40 @@ function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0);
   return (
-    <div
-      className={`min-w-[180px] flex-shrink-0 bg-[#0e0e1a] border rounded-2xl p-3 transition-colors ${
-        isOver ? "border-[#4f7bff]" : "border-[#1a1a2e]"
-      }`}
-    >
-      <div
-        className="text-[11px] font-bold uppercase tracking-wider mb-3 pb-2 border-b border-[#1a1a2e] flex items-center justify-between"
-        style={{ color: col.color }}
-      >
-        <span>{col.label}</span>
-        <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/5 px-1.5 text-[9px] font-medium text-[#666680]">
-          {clients.length}
-        </span>
+    <div className="flex w-[85vw] shrink-0 snap-start flex-col sm:w-[228px]">
+      <div className="mb-2.5 flex items-center justify-between px-0.5">
+        <div className="text-[11px] font-semibold uppercase tracking-widest text-text-dim">
+          {col.label}
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-white/5 px-1.5 text-[9px] font-medium text-text-dim">
+            {clients.length}
+          </span>
+        </div>
       </div>
-      <div ref={setNodeRef} className="min-h-[200px]">
+      <div
+        ref={setNodeRef}
+        style={{
+          boxShadow: isOver
+            ? "0 0 0 1px #3B82F6, inset 0 0 0 1px #3B82F6"
+            : "0 2px 8px rgba(0,0,0,0.3)",
+          transition: "box-shadow 0.15s",
+        }}
+        className={`min-h-[260px] flex-1 space-y-2 rounded-[14px] border bg-bg-deep p-2.5 ${
+          isOver ? "border-accent-blue" : "border-border-card"
+        }`}
+      >
         {clients.map((c) => (
           <DraggableCard key={c.id} c={c} onOpen={onOpen} />
         ))}
         {clients.length === 0 && (
-          <div className="flex h-16 items-center justify-center rounded-lg border border-dashed border-[#1e1e2e]">
-            <span className="text-[10px] text-[#444460]">Drop here</span>
+          <div className="flex h-16 items-center justify-center rounded-[8px] border border-dashed border-border-card">
+            <span className="text-[10px] text-text-dim">Drop here</span>
           </div>
         )}
       </div>
       {total > 0 && (
-        <div className="mt-2 text-[10px] text-[#444460]">
+        <div className="mt-2 px-0.5 text-[10px] text-text-dim">
           {fmtMoney(total)} total
         </div>
       )}
@@ -264,7 +272,7 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
         collisionDetection={closestCorners}
         onDragEnd={onDragEnd}
       >
-        <div className="flex gap-3 overflow-x-auto px-5 pb-4 scrollbar-none">
+        <div className="-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-3 [scroll-padding-left:1rem] snap-x snap-mandatory sm:snap-none">
           {COLS.map((col) => (
             <DroppableColumn
               key={col.id}
@@ -284,26 +292,26 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
             className="absolute inset-0"
             onClick={() => setDrawer(null)}
           />
-          <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border border-[#1e1e2e] bg-[#12121e] p-5">
-            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#1e1e2e]" />
-            <div className="text-[18px] font-semibold text-white">
+          <div className="relative max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[16px] border border-border-card bg-bg-card p-4">
+            <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-border-card" />
+            <div className="text-[18px] font-semibold text-text-primary">
               {drawer.name}
             </div>
-            <div className="mt-3 space-y-2 text-[13px] text-[#d0d0e0]">
+            <div className="mt-3 space-y-2 text-[13px] text-text-secondary">
               <div>
                 Budget: {fmtMoney(drawer.budget_min)} – {fmtMoney(drawer.budget_max)}
               </div>
               <div>Town: {drawer.town ?? "—"}</div>
               <div>Lead score: {drawer.lead_score ?? "—"}</div>
               <div>Last contact: {relTime(drawer.last_engagement_at)}</div>
-              <div className="capitalize text-[#666680]">
+              <div className="capitalize text-text-muted">
                 Stage: {(drawer.status ?? "new").replace(/_/g, " ")}
               </div>
             </div>
             <div className="mt-4 flex flex-col gap-2">
               <button
                 type="button"
-                className="w-full rounded-xl bg-[#4f7bff] py-3 text-[14px] font-semibold text-white"
+                className="w-full rounded-[8px] bg-accent-blue py-3 text-[14px] font-medium text-white"
                 onClick={async () => {
                   await fetch("/api/ai/draft-text", {
                     method: "POST",
@@ -322,7 +330,7 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
               </button>
               <button
                 type="button"
-                className="w-full rounded-xl border border-[#1e1e2e] py-3 text-[14px] text-white"
+                className="w-full rounded-[8px] border border-border-card py-3 text-[14px] text-text-primary"
                 onClick={async () => {
                   const {
                     data: { user },
@@ -346,7 +354,7 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
               </button>
               <Link
                 href={`/clients/${drawer.id}`}
-                className="block w-full rounded-xl border border-[#1e1e2e] py-3 text-center text-[14px] text-[#4f7bff]"
+                className="block w-full rounded-[8px] border border-border-card py-3 text-center text-[14px] text-accent-blue"
                 onClick={() => setDrawer(null)}
               >
                 View Client

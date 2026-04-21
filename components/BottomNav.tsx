@@ -13,6 +13,7 @@ import {
   MessageSquare,
   Plus,
   Search,
+  Settings,
   Sparkles,
   UserPlus,
   Users,
@@ -28,15 +29,6 @@ type Item = {
   Icon: LucideIcon;
   badge?: boolean;
 };
-
-const primary: Item[] = [
-  { href: "/dashboard", label: "Home", Icon: House },
-  { href: "/inbox", label: "Inbox", Icon: MessageSquare, badge: true },
-];
-
-const tail: Item[] = [
-  { href: "/clients", label: "Clients", Icon: Users },
-];
 
 const moreLinks: { href: string; label: string; Icon: LucideIcon; desc: string }[] = [
   {
@@ -84,7 +76,7 @@ const moreLinks: { href: string; label: string; Icon: LucideIcon; desc: string }
   {
     href: "/settings",
     label: "Settings",
-    Icon: LineChart,
+    Icon: Settings,
     desc: "Voice samples, automation, account",
   },
 ];
@@ -109,6 +101,55 @@ const quickActions: { href: string; label: string; Icon: LucideIcon; hint: strin
     hint: "Log a property tour",
   },
 ];
+
+function PillItem({
+  href,
+  label,
+  Icon,
+  active,
+  unread,
+  onClick,
+}: Item & { active: boolean; unread?: number; onClick?: () => void }) {
+  const content = (
+    <>
+      <span className="relative flex items-center justify-center">
+        <Icon
+          size={active ? 18 : 20}
+          strokeWidth={2}
+          className="transition-all"
+        />
+        {unread && unread > 0 ? (
+          <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-md bg-[#ff4d4d] px-1 text-[9px] font-bold text-white">
+            {unread > 9 ? "9+" : unread}
+          </span>
+        ) : null}
+      </span>
+      {active ? (
+        <span className="text-[12px] font-semibold whitespace-nowrap">
+          {label}
+        </span>
+      ) : null}
+    </>
+  );
+
+  const classes = active
+    ? "flex items-center justify-center gap-[7px] h-10 rounded-[20px] bg-[#1e1e38] text-white pl-3 pr-4 flex-shrink-0 transition-all"
+    : "flex items-center justify-center h-10 w-11 rounded-[20px] text-[#3a3a52] flex-shrink-0 transition-all";
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={classes} aria-label={label}>
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={href} className={classes} aria-label={label}>
+      {content}
+    </Link>
+  );
+}
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -145,46 +186,31 @@ export function BottomNav() {
     setQuickOpen(false);
   }, [pathname]);
 
-  const moreActive = moreLinks.some(
-    (m) => pathname === m.href || pathname.startsWith(m.href + "/"),
-  );
+  const isActive = (href: string) =>
+    pathname === href || pathname.startsWith(href + "/");
+
+  const moreActive = moreLinks.some((m) => isActive(m.href)) || moreOpen;
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e1e2e] bg-[#0a0a0f]/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-lg items-end justify-between px-2 pb-2 pt-1">
-          {primary.map(({ href, label, Icon, badge }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
-              >
-                <span className="relative">
-                  <Icon
-                    className={active ? "text-[#4f7bff]" : "text-[#555566]"}
-                    size={22}
-                    strokeWidth={2}
-                  />
-                  {badge && unread > 0 ? (
-                    <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white px-1">
-                      {unread > 9 ? "9+" : unread}
-                    </span>
-                  ) : null}
-                </span>
-                <span
-                  className={`text-[10px] font-medium ${
-                    active ? "text-[#4f7bff]" : "text-[#555566]"
-                  }`}
-                >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center bg-[#06060c]/95 px-3 pt-2 pb-6 backdrop-blur-xl">
+        <div className="flex w-full max-w-lg items-center gap-0.5 rounded-[26px] border-[0.5px] border-[#1a1a2e] bg-[#0f0f1c] p-1">
+          <PillItem
+            href="/dashboard"
+            label="Home"
+            Icon={House}
+            active={isActive("/dashboard")}
+          />
+          <PillItem
+            href="/inbox"
+            label="Inbox"
+            Icon={MessageSquare}
+            active={isActive("/inbox")}
+            unread={unread}
+            badge
+          />
 
-          <div className="relative flex w-[72px] flex-col items-center">
+          <div className="flex flex-shrink-0 items-center justify-center px-1">
             <button
               type="button"
               onClick={() => {
@@ -193,10 +219,10 @@ export function BottomNav() {
               }}
               aria-label="Quick actions"
               aria-expanded={quickOpen}
-              className="-mt-5 flex h-[52px] w-[52px] items-center justify-center rounded-[18px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] text-white transition-transform active:scale-95"
+              className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] text-white shadow-[0_0_16px_rgba(79,123,255,0.5),0_3px_8px_rgba(0,0,0,0.4)] transition-transform active:scale-95"
             >
               <Plus
-                size={28}
+                size={18}
                 strokeWidth={2.5}
                 className={`transition-transform duration-150 ${
                   quickOpen ? "rotate-45" : ""
@@ -205,55 +231,22 @@ export function BottomNav() {
             </button>
           </div>
 
-          {tail.map(({ href, label, Icon }) => {
-            const active = pathname === href || pathname.startsWith(href + "/");
-            return (
-              <Link
-                key={href}
-                href={href}
-                className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
-              >
-                <Icon
-                  className={active ? "text-[#4f7bff]" : "text-[#555566]"}
-                  size={22}
-                  strokeWidth={2}
-                />
-                <span
-                  className={`text-[10px] font-medium ${
-                    active ? "text-[#4f7bff]" : "text-[#555566]"
-                  }`}
-                >
-                  {label}
-                </span>
-              </Link>
-            );
-          })}
-
-          <button
-            type="button"
+          <PillItem
+            href="/clients"
+            label="Clients"
+            Icon={Users}
+            active={isActive("/clients")}
+          />
+          <PillItem
+            href="#more"
+            label="More"
+            Icon={Grid3x3}
+            active={moreActive}
             onClick={() => {
               setMoreOpen((v) => !v);
               setQuickOpen(false);
             }}
-            aria-label="More"
-            aria-expanded={moreOpen}
-            className="flex w-[60px] flex-col items-center gap-[5px] pb-1"
-          >
-            <Grid3x3
-              className={
-                moreActive || moreOpen ? "text-[#4f7bff]" : "text-[#555566]"
-              }
-              size={22}
-              strokeWidth={2}
-            />
-            <span
-              className={`text-[10px] font-medium ${
-                moreActive || moreOpen ? "text-[#4f7bff]" : "text-[#555566]"
-              }`}
-            >
-              More
-            </span>
-          </button>
+          />
         </div>
       </nav>
 
@@ -267,7 +260,7 @@ export function BottomNav() {
 
 function QuickActionsSheet({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Close quick actions"
@@ -276,10 +269,10 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
       />
       <div
         role="menu"
-        className="relative z-10 mb-16 w-full max-w-lg rounded-t-[24px] border border-[#1e1e2e] border-b-0 bg-[#0f0f1a] px-5 pb-6 pt-4"
+        className="relative z-10 mb-24 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#555566]">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
           Quick actions
         </div>
         <div className="grid grid-cols-3 gap-2">
@@ -288,15 +281,15 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
               key={label}
               href={href}
               onClick={onClose}
-              className="flex flex-col items-center gap-2 rounded-[16px] border border-[#1e1e2e] bg-[#12121e] px-3 py-4 text-center active:border-[#4f7bff]"
+              className="flex flex-col items-center gap-2 rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-3 py-4 text-center transition active:border-[#4f7bff]"
             >
-              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#4f7bff]/15 text-[#6f9bff]">
-                <Icon size={20} />
+              <span className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                <Icon size={18} />
               </span>
-              <span className="text-[12px] font-medium text-white">
+              <span className="text-[12px] font-semibold text-[#d0d0e0]">
                 {label}
               </span>
-              <span className="text-[10px] leading-tight text-[#666680]">
+              <span className="text-[10px] leading-tight text-[#555570]">
                 {hint}
               </span>
             </Link>
@@ -309,7 +302,7 @@ function QuickActionsSheet({ onClose }: { onClose: () => void }) {
 
 function MoreSheet({ onClose }: { onClose: () => void }) {
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Close menu"
@@ -318,29 +311,40 @@ function MoreSheet({ onClose }: { onClose: () => void }) {
       />
       <div
         role="menu"
-        className="relative z-10 mb-16 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border border-[#1e1e2e] border-b-0 bg-[#0f0f1a] px-5 pb-8 pt-4"
+        className="relative z-10 mb-24 max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4"
       >
-        <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-[#555566]">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
           More
         </div>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {moreLinks.map(({ href, label, Icon, desc }) => (
             <Link
               key={href}
               href={href}
               onClick={onClose}
-              className="flex items-center gap-3 rounded-[14px] border border-[#1e1e2e] bg-[#12121e] px-4 py-3.5 transition hover:border-[#4f7bff] active:border-[#4f7bff]"
+              className="flex items-center gap-[14px] rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-4 py-4 transition active:border-[#4f7bff]"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#4f7bff]/15 text-[#6f9bff]">
+              <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[13px] bg-[#4f7bff]/12 text-[#4f7bff]">
                 <Icon size={18} />
               </span>
               <div className="min-w-0 flex-1">
-                <div className="text-[13px] font-medium text-white">
+                <div className="text-sm font-semibold text-[#d0d0e0]">
                   {label}
                 </div>
-                <div className="truncate text-[11px] text-[#666680]">{desc}</div>
+                <div className="truncate text-xs text-[#555570]">{desc}</div>
               </div>
+              <svg
+                className="ml-auto flex-shrink-0 text-[#333350]"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
             </Link>
           ))}
         </div>

@@ -150,80 +150,87 @@ export function ShowingsClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-28">
-      <div className="px-5 pt-6 pb-4 flex items-center justify-between">
-        <div className="text-[26px] font-semibold">Showings</div>
-        <button
-          type="button"
-          onClick={openModal}
-          className="bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl px-4 py-2 text-sm font-semibold"
-        >
-          + Add
-        </button>
+    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
+      <div className="text-[20px] font-medium text-text-primary">
+        Showings
+      </div>
+      <p className="mt-1 text-[13px] text-text-dim">
+        Upcoming and past property showings with your clients.
+      </p>
+      <button
+        type="button"
+        onClick={openModal}
+        className="mt-4 w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white"
+      >
+        Add Showing
+      </button>
+
+      <div className="mt-8">
+        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+          Upcoming
+        </div>
+        <div className="mt-3 space-y-3">
+          {upcoming.length ? (
+            upcoming.map((s) => (
+              <ShowingCard
+                key={String(s.id)}
+                clientName={String(
+                  (s.clients as { name?: string })?.name ?? "Client",
+                )}
+                address={s.address as string | null}
+                showing_date={s.showing_date as string | null}
+                status={(s.status as string) ?? "scheduled"}
+                notes={s.notes as string | null}
+                ai_summary={s.ai_summary as string | null}
+                next_action={s.next_action as string | null}
+              />
+            ))
+          ) : (
+            <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
+              No upcoming showings.
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="text-[10px] font-bold tracking-widest uppercase text-[#444460] px-5 mb-2 mt-4">
-        Upcoming
-      </div>
-      <div className="px-5 space-y-2">
-        {upcoming.length ? (
-          upcoming.map((s) => (
-            <ShowingCard
-              key={String(s.id)}
-              clientName={String(
-                (s.clients as { name?: string })?.name ?? "Client",
-              )}
-              address={s.address as string | null}
-              showing_date={s.showing_date as string | null}
-              status={(s.status as string) ?? "scheduled"}
-              notes={s.notes as string | null}
-              ai_summary={s.ai_summary as string | null}
-              next_action={s.next_action as string | null}
-            />
-          ))
-        ) : (
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4 text-[13px] text-[#666680]">
-            No upcoming showings.
-          </div>
-        )}
-      </div>
-
-      <div className="text-[10px] font-bold tracking-widest uppercase text-[#444460] px-5 mb-2 mt-6">
-        Past
-      </div>
-      <div className="px-5 space-y-2">
-        {past.length ? (
-          past.map((s) => (
-            <ShowingCard
-              key={String(s.id)}
-              clientName={String(
-                (s.clients as { name?: string })?.name ?? "Client",
-              )}
-              address={s.address as string | null}
-              showing_date={s.showing_date as string | null}
-              status={(s.status as string) ?? "scheduled"}
-              notes={s.notes as string | null}
-              ai_summary={s.ai_summary as string | null}
-              next_action={s.next_action as string | null}
-            />
-          ))
-        ) : (
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4 text-[13px] text-[#666680]">
-            No past showings yet.
-          </div>
-        )}
+      <div className="mt-8">
+        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+          Past
+        </div>
+        <div className="mt-3 space-y-3">
+          {past.length ? (
+            past.map((s) => (
+              <ShowingCard
+                key={String(s.id)}
+                clientName={String(
+                  (s.clients as { name?: string })?.name ?? "Client",
+                )}
+                address={s.address as string | null}
+                showing_date={s.showing_date as string | null}
+                status={(s.status as string) ?? "scheduled"}
+                notes={s.notes as string | null}
+                ai_summary={s.ai_summary as string | null}
+                next_action={s.next_action as string | null}
+              />
+            ))
+          ) : (
+            <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
+              No past showings yet.
+            </div>
+          )}
+        </div>
       </div>
 
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-5 text-white">
-            <div className="text-base font-semibold">Add showing</div>
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[14px] border border-border-card bg-bg-card p-4">
+            <div className="text-[16px] font-medium">Add showing</div>
             <select
               value={form.client_id}
               onChange={(e) =>
                 setForm({ ...form, client_id: e.target.value })
               }
-              className="mt-3 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+              className="mt-3 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
             >
               <option value="">Select client</option>
               {clients.map((c) => (
@@ -236,7 +243,7 @@ export function ShowingsClient({
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               placeholder="Property address"
-              className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
             />
             <input
               type="datetime-local"
@@ -244,7 +251,7 @@ export function ShowingsClient({
               onChange={(e) =>
                 setForm({ ...form, showing_date: e.target.value })
               }
-              className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
             />
             <select
               value={form.status}
@@ -254,7 +261,7 @@ export function ShowingsClient({
                   status: e.target.value as typeof form.status,
                 })
               }
-              className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
             >
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
@@ -264,26 +271,26 @@ export function ShowingsClient({
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Notes"
-              className="mt-2 min-h-[60px] w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] p-3 text-sm"
+              className="mt-2 min-h-[60px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
             />
             <textarea
               value={form.feedback}
               onChange={(e) => setForm({ ...form, feedback: e.target.value })}
               placeholder="Feedback (optional — used for AI summary)"
-              className="mt-2 min-h-[90px] w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] p-3 text-sm"
+              className="mt-2 min-h-[90px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
             />
             <div className="mt-3 flex gap-2">
               <button
                 type="button"
                 onClick={save}
-                className="flex-1 rounded-xl bg-[#4f7bff] py-2 text-sm font-semibold text-white"
+                className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-xl border border-[#1e1e2e] px-3 py-2 text-sm text-[#666680]"
+                className="rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-text-dim"
               >
                 Cancel
               </button>

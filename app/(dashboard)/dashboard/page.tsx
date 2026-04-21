@@ -10,6 +10,13 @@ function fmtBudget(min?: number | null, max?: number | null) {
   return '—'
 }
 
+function pipelineTotal(clients: { budget_max: number | null }[]) {
+  const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0)
+  if (total >= 1_000_000) return `$${(total / 1_000_000).toFixed(1).replace(/\.0$/, '')}M`
+  if (total >= 1_000) return `$${Math.round(total / 1_000)}k`
+  return `$${total}`
+}
+
 export default function DashboardPage() {
   const [user, setUser] = useState<any>(null)
   const [clients, setClients] = useState<any[]>([])
@@ -18,18 +25,14 @@ export default function DashboardPage() {
 
   useEffect(() => {
     async function load() {
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) { setLoading(false); return }
-      setUser(session.user)
-      const firstName = session.user?.user_metadata?.full_name?.split(' ')[0] || session.user?.email?.split('@')[0] || 'there'
-      
-      const { data, error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser()
+      setUser(user)
+      if (!user) { setLoading(false); return }
+      const { data } = await supabase
         .from('clients')
         .select('id, name, town, status, lead_score, budget_min, budget_max, phone, client_role')
         .order('lead_score', { ascending: false })
         .limit(20)
-      
-      console.log('clients data:', data, 'error:', error)
       setClients(data || [])
       setLoading(false)
     }
@@ -40,137 +43,188 @@ export default function DashboardPage() {
   const underContract = clients.filter(c => c.status === 'under_contract')
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
   const firstName = user?.user_metadata?.full_name?.split(' ')[0] || user?.email?.split('@')[0] || 'there'
+  const initial = firstName[0]?.toUpperCase() || 'A'
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
   const topLead = hotLeads[0]
+  const closingLead = underContract[0]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
-      <div className="px-5 pt-6 pb-2">
-        <p className="text-xs font-semibold text-[#4f7bff] uppercase tracking-widest mb-1">{today}</p>
+    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
+      <div className="px-5 pt-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#4f7bff] mb-1">{today}</p>
         <div className="flex items-center justify-between">
-          <h1 className="text-[26px] font-semibold leading-tight">{greeting}, {firstName}</h1>
-          <div className="w-9 h-9 rounded-full bg-[#4f7bff]/20 flex items-center justify-center text-[#6f9bff] font-bold text-sm flex-shrink-0">
-            {firstName[0]?.toUpperCase()}
+          <h1 className="text-[26px] font-semibold leading-tight text-[#f0eee8]">{greeting}, {firstName}</h1>
+          <div className="w-9 h-9 rounded-full bg-[#4f7bff]/20 flex items-center justify-center text-[13px] font-bold text-[#6f9bff] flex-shrink-0">
+            {initial}
           </div>
         </div>
       </div>
 
-      <div className="px-5 space-y-3 mt-4">
-
-        {/* Briefing card */}
-        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border border-[#1e2a4e] rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-2">
+      <div className="px-5 mt-[18px]">
+        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border-[0.5px] border-[#1e2a4e] rounded-[20px] p-[18px]">
+          <div className="flex items-center gap-1.5 mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-[#4f7bff] animate-pulse" />
-            <span className="text-[10px] font-bold text-[#4f7bff] uppercase tracking-widest">While you were away</span>
+            <span className="text-[10px] font-bold uppercase tracking-[1px] text-[#4f7bff]">While you were away</span>
           </div>
-          <p className="text-sm text-[#a0a0c0] leading-relaxed">
-            {loading
-              ? 'Loading your briefing...'
-              : clients.length === 0
-              ? 'No clients yet. Add your first client to get started.'
-              : `${hotLeads.length} hot lead${hotLeads.length !== 1 ? 's' : ''} need attention. ${clients.length} active clients in your pipeline.`}
+          <p className="text-sm text-[#a0a0c0] leading-[1.6]">
+            {loading ? (
+              'Loading your briefing...'
+            ) : clients.length === 0 ? (
+              'No clients yet. Add your first client to get started.'
+            ) : (
+              <>
+                {hotLeads.length} hot lead{hotLeads.length !== 1 ? 's' : ''} need attention.{' '}
+                Top lead: <span className="text-[#d0d0e8] font-medium">{topLead?.name ?? '—'}</span>
+                {topLead?.status ? <> ({topLead.status.replace(/_/g, ' ')})</> : null}.
+                {' '}<span className="text-[#d0d0e8] font-medium">{clients.length} active clients</span>.
+              </>
+            )}
           </p>
         </div>
 
-        {/* Action Stack label */}
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] pt-2">Action Stack</p>
+        <div className="flex items-center justify-between mt-5 mb-2.5">
+          <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">Action Stack</p>
+          <button
+            type="button"
+            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] rounded-[20px] px-3 py-1 text-[11px] font-semibold text-[#444460]"
+          >
+            Focus mode
+          </button>
+        </div>
 
-        {/* Hot lead card */}
         {topLead && (
-          <div className="bg-[#12121e] border border-[#2a1a1a] rounded-2xl p-4">
+          <div className="bg-[#0f0f1e] border-[0.5px] border-[#2a1a1a] rounded-[20px] p-[18px] mb-2.5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold tracking-widest uppercase bg-red-500/10 text-red-400 border border-red-500/20 rounded-md px-2 py-0.5">Hot Lead</span>
-              <span className="text-xs text-[#444460]">now</span>
+              <span className="inline-flex items-center rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">Hot Lead</span>
+              <span className="text-[11px] text-[#444460]">now</span>
             </div>
             <Link href={`/clients/${topLead.id}`}>
-              <p className="text-base font-semibold mb-1 hover:text-[#4f7bff] transition-colors">
-                {topLead.name} · {topLead.town || '—'}
+              <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
+                {topLead.name}{topLead.town ? ` · ${topLead.town}` : ''}
               </p>
             </Link>
-            <p className="text-xs text-[#666680] mb-2">{topLead.status?.replace(/_/g, ' ')} · {fmtBudget(topLead.budget_min, topLead.budget_max)}</p>
-            <div className="flex items-center gap-2 mb-3">
-              <div className="flex gap-0.5">
+            <p className="text-xs text-[#666680] mb-1">{topLead.status?.replace(/_/g, ' ') ?? '—'}</p>
+            <div className="flex items-center gap-2 mb-[14px]">
+              <div className="flex gap-[3px]">
                 {Array.from({ length: 10 }).map((_, j) => (
-                  <div key={j} className={`w-1.5 h-1.5 rounded-full ${j < (topLead.lead_score ?? 0) ? 'bg-[#4f7bff]' : 'bg-[#1e1e2e]'}`} />
+                  <div
+                    key={j}
+                    className={`w-1.5 h-1.5 rounded-full ${j < (topLead.lead_score ?? 0) ? 'bg-[#4f7bff]' : 'bg-[#1e1e2e]'}`}
+                  />
                 ))}
               </div>
-              <span className="text-[11px] text-[#444460]">Score {topLead.lead_score ?? 0}</span>
+              <span className="text-[11px] text-[#666680]">Lead score {topLead.lead_score ?? 0}</span>
             </div>
             <div className="flex gap-2">
-              <Link href={`/inbox?client=${topLead.id}`} className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border border-[#4f7bff]/20 rounded-xl py-2.5 text-xs font-semibold">
-                AI text
-              </Link>
-              <a href={topLead.phone ? `tel:${topLead.phone}` : '#'} className="flex-1 text-center bg-green-500/12 text-green-400 border border-green-500/20 rounded-xl py-2.5 text-xs font-semibold">
+              <a
+                href={topLead.phone ? `tel:${topLead.phone}` : '#'}
+                className="flex-1 text-center bg-[#50dc78]/12 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
+              >
                 Call now
               </a>
-              <button className="flex-1 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl py-2.5 text-xs font-semibold">
+              <Link
+                href={`/clients/${topLead.id}`}
+                className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border-[0.5px] border-[#4f7bff]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
+              >
+                AI text
+              </Link>
+              <button
+                type="button"
+                className="flex-1 bg-[#ffb832]/10 text-[#ffb832] border-[0.5px] border-[#ffb832]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
+              >
                 Snooze 1h
               </button>
             </div>
           </div>
         )}
 
-        {/* Closing card */}
-        {underContract[0] && (
-          <div className="bg-[#12121e] border border-[#1a2a1a] rounded-2xl p-4">
+        {closingLead && (
+          <div className="bg-[#0f0f1e] border-[0.5px] border-[#1a2a1a] rounded-[20px] p-[18px] mb-2.5">
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-bold tracking-widest uppercase bg-green-500/10 text-green-400 border border-green-500/20 rounded-md px-2 py-0.5">Closing</span>
+              <span className="inline-flex items-center rounded-md bg-[#50dc78]/10 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.8px]">Closing</span>
             </div>
-            <p className="text-sm font-semibold text-white mb-1">{underContract[0].name} — under contract</p>
-            <p className="text-xs text-[#666680] mb-1">{underContract[0].town || '—'}</p>
-            <p className="text-xs text-green-400 mb-3">Milestone check-ins due</p>
-            <Link href="/transactions" className="text-xs text-[#888898] border border-[#2a2a3e] rounded-xl px-4 py-2 inline-block font-medium">
+            <p className="text-[15px] font-semibold text-[#f0eee8] mb-0.5">
+              {closingLead.name} — under contract
+            </p>
+            {closingLead.town ? (
+              <p className="text-xs text-[#666680] mb-0.5">{closingLead.town}</p>
+            ) : null}
+            <p className="text-xs text-[#50dc78] mb-3">Milestone check-ins due</p>
+            <Link
+              href="/transactions"
+              className="inline-block bg-transparent border-[0.5px] border-[#2a2a3e] text-[#888] rounded-[12px] px-4 py-2.5 text-[13px] font-semibold"
+            >
               View deal →
             </Link>
           </div>
         )}
 
-        {/* Empty state */}
         {!loading && clients.length === 0 && (
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-6 text-center">
+          <div className="bg-[#0f0f1e] border-[0.5px] border-[#1c1c2e] rounded-[20px] p-6 text-center mb-2.5">
             <p className="text-3xl mb-3">👥</p>
             <p className="text-[#888898] text-sm mb-3">No clients yet</p>
-            <Link href="/clients?new=1" className="text-[#4f7bff] text-sm font-semibold">+ Add your first client</Link>
+            <Link href="/clients?new=1" className="text-[#4f7bff] text-sm font-semibold">
+              + Add your first client
+            </Link>
           </div>
         )}
 
-        {/* Stats */}
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] pt-2">Stats</p>
+        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">Stats</p>
         <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1.5">Hot leads</p>
-            <p className="text-2xl font-semibold text-amber-400">{hotLeads.length}</p>
+          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Pipeline</p>
+            <p className="text-2xl font-semibold text-[#4f7bff] leading-none">{pipelineTotal(clients)}</p>
           </div>
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1.5">Active clients</p>
-            <p className="text-2xl font-semibold text-white">{clients.length}</p>
+          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Hot leads</p>
+            <p className="text-2xl font-semibold text-[#ffb832] leading-none">{hotLeads.length}</p>
           </div>
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1.5">Under contract</p>
-            <p className="text-2xl font-semibold text-purple-400">{underContract.length}</p>
+          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Active clients</p>
+            <p className="text-2xl font-semibold text-[#f0eee8] leading-none">{clients.length}</p>
           </div>
-          <div className="bg-[#12121e] border border-[#1e1e2e] rounded-2xl p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-wider mb-1.5">Buyers</p>
-            <p className="text-2xl font-semibold text-[#4f7bff]">{clients.filter(c => c.client_role === 'buyer').length}</p>
+          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
+            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">Closings</p>
+            <p className="text-2xl font-semibold text-[#50dc78] leading-none">{underContract.length}</p>
           </div>
         </div>
 
-        {/* Ask Aria */}
-        <p className="text-[10px] font-bold tracking-widest uppercase text-[#444460] pt-2">Ask Aria</p>
-        <Link href="/ai" className="bg-[#12121e] border border-[#2a2a3e] rounded-2xl p-3.5 flex items-center gap-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">Ask Aria</p>
+        <Link
+          href="/ai"
+          className="flex items-center gap-2.5 bg-[#12121e] border-[0.5px] border-[#2a2a3e] rounded-[14px] px-4 py-[13px]"
+        >
           <span className="w-2 h-2 rounded-full bg-[#4f7bff] flex-shrink-0" />
           <span className="text-sm text-[#555570]">Ask Aria anything...</span>
         </Link>
 
-        {/* Quick actions */}
-        <div className="flex flex-wrap gap-2 pt-1 pb-4">
-          <Link href="/clients?new=1" className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium">+ New Client</Link>
-          <Link href="/showings?new=1" className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium">Log Showing</Link>
-          <Link href="/mls" className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium">Properties</Link>
-          <Link href="/pipeline" className="bg-[#12121e] border border-[#1e1e2e] text-[#666680] rounded-full px-3.5 py-1.5 text-xs font-medium">Pipeline</Link>
+        <div className="flex flex-wrap gap-[7px] mt-4 pb-2">
+          <Link
+            href="/clients?new=1"
+            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
+          >
+            + New Client
+          </Link>
+          <Link
+            href="/showings?new=1"
+            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
+          >
+            Log Showing
+          </Link>
+          <Link
+            href="/mls"
+            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
+          >
+            Properties
+          </Link>
+          <Link
+            href="/pipeline"
+            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
+          >
+            Pipeline
+          </Link>
         </div>
-
       </div>
     </div>
   )
