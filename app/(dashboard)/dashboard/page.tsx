@@ -2,12 +2,19 @@
 
 import { useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 import Link from 'next/link'
 
-function fmtBudget(min?: number | null, max?: number | null) {
-  if (max) return `Up to $${(max / 1000).toFixed(0)}k`
-  if (min) return `From $${(min / 1000).toFixed(0)}k`
-  return '—'
+type ClientRow = {
+  id: string
+  name: string
+  town: string | null
+  status: string | null
+  lead_score: number | null
+  budget_min: number | null
+  budget_max: number | null
+  phone: string | null
+  client_role: string | null
 }
 
 function pipelineTotal(clients: { budget_max: number | null }[]) {
@@ -18,8 +25,8 @@ function pipelineTotal(clients: { budget_max: number | null }[]) {
 }
 
 export default function DashboardPage() {
-  const [user, setUser] = useState<any>(null)
-  const [clients, setClients] = useState<any[]>([])
+  const [user, setUser] = useState<User | null>(null)
+  const [clients, setClients] = useState<ClientRow[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
