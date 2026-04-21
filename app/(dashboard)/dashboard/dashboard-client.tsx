@@ -17,7 +17,7 @@ export type ClientRow = {
   budget_min: number | null;
   budget_max: number | null;
   phone: string | null;
-  client_role: string | null;
+  client_role?: string | null;
 };
 
 type TxRow = {
@@ -70,7 +70,9 @@ export function DashboardClient({
   const visible = clients.filter((c) => !dismissed.has(c.id));
 
   const isHot = (c: ClientRow) =>
-    c.status === "showing" || (c.lead_score ?? 0) >= 8;
+    c.status === "showing" ||
+    c.status === "hot" ||
+    (c.lead_score ?? 0) >= 8;
 
   const hotLeads = visible.filter(
     (c) => isHot(c) && !snoozed.has(c.id) && c.status !== "closed",

@@ -12,7 +12,7 @@ type ClientRow = {
   budget_min: number | null;
   budget_max: number | null;
   phone: string | null;
-  client_role: string | null;
+  client_role?: string | null;
 };
 
 type ShowingRow = {
@@ -42,19 +42,17 @@ export default async function DashboardPage() {
   }
 
   const [
-    { data: clients },
-    { data: transactions },
-    { count: newMatchesCount },
-    { data: upcomingShowings },
-    { data: bbaRows },
+    clientsRes,
+    transactionsRes,
+    newMatchesRes,
+    upcomingShowingsRes,
+    bbaRes,
   ] = await Promise.all([
     supabase
       .from("clients")
-      .select(
-        "id, name, town, status, lead_score, budget_min, budget_max, phone, client_role",
-      )
+      .select("*")
       .eq("agent_id", user.id)
-      .order("lead_score", { ascending: false }),
+      .order("lead_score", { ascending: false, nullsFirst: false }),
     supabase
       .from("transactions")
       .select("id, client_id, address, closing_date, status")
@@ -75,6 +73,24 @@ export default async function DashboardPage() {
       .select("client_id")
       .eq("agent_id", user.id),
   ]);
+
+  // Surface schema/RLS errors in server logs so missing columns don't silently
+  // zero-out the dashboard the way `client_role` did.
+  if (clientsRes.error) console.error("[dashboard] clients:", clientsRes.error);
+  if (transactionsRes.error)
+    console.error("[dashboard] transactions:", transactionsRes.error);
+  if (newMatchesRes.error)
+    console.error("[dashboard] property_matches:", newMatchesRes.error);
+  if (upcomingShowingsRes.error)
+    console.error("[dashboard] showings:", upcomingShowingsRes.error);
+  if (bbaRes.error)
+    console.error("[dashboard] buyer_broker_agreements:", bbaRes.error);
+
+  const clients = clientsRes.data;
+  const transactions = transactionsRes.data;
+  const newMatchesCount = newMatchesRes.count;
+  const upcomingShowings = upcomingShowingsRes.data;
+  const bbaRows = bbaRes.data;
 
   const signedClientIds = new Set(
     (bbaRows ?? []).map((r) => String(r.client_id)),
