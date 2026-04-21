@@ -2,6 +2,8 @@
 
 import { BackButton } from "@/components/BackButton";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
+import { EmailTemplatesSection } from "@/components/EmailTemplatesSection";
+import { GmailConnectionSection } from "@/components/GmailConnectionSection";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
@@ -221,6 +223,8 @@ export default function SettingsPage() {
       </div>
 
       <BbaTemplatesSection />
+      <GmailConnectionSection />
+      <EmailTemplatesSection />
     </div>
   );
 }

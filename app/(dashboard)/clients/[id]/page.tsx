@@ -54,10 +54,16 @@ export default async function ClientDetailPage({
 
   const { data: bba } = await supabase
     .from("buyer_broker_agreements")
-    .select("signed_at, commission_pct, term_start, term_end, search_area, agent_name, client_name")
+    .select("signed_at, commission_pct, term_start, term_end, search_area, agent_name, client_name, signed_storage_path")
     .eq("client_id", params.id)
     .order("signed_at", { ascending: false })
     .limit(1)
+    .maybeSingle();
+
+  const { data: agentProfile } = await supabase
+    .from("agent_profiles")
+    .select("full_name")
+    .eq("id", user.id)
     .maybeSingle();
 
   const mlsLive = await fetchMlsListingsForClient({
@@ -78,6 +84,8 @@ export default async function ClientDetailPage({
       matches={matches ?? []}
       mlsLive={mlsLive}
       bba={bba ?? null}
+      hasSignedBba={Boolean(bba?.signed_storage_path)}
+      agentFullName={agentProfile?.full_name ?? null}
     />
   );
 }
