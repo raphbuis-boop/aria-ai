@@ -262,7 +262,13 @@ export function ClientDetail({
         >
           {matches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#666680]">
-              No matches yet — sync MLS listings from the Properties page.
+              No matches yet.{" "}
+              <Link
+                href="/mls"
+                className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+              >
+                Browse MLS →
+              </Link>
             </div>
           ) : (
             <ul className="space-y-2">
@@ -308,6 +314,16 @@ export function ClientDetail({
               })}
             </ul>
           )}
+          {matches.length > 0 ? (
+            <div className="mt-3 text-right">
+              <Link
+                href="/mls"
+                className="text-[11.5px] font-semibold text-[#6f9bff]"
+              >
+                Find more in MLS →
+              </Link>
+            </div>
+          ) : null}
         </CollapsibleSection>
 
         {/* ─── Matching Preferences ───────────────────────────────────── */}

@@ -3,7 +3,7 @@
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { useToast } from "@/components/ToastProvider";
 import { differenceInCalendarDays } from "date-fns";
-import { ShieldAlert } from "lucide-react";
+import { Building2, Search, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -212,6 +212,41 @@ export function DashboardClient({
                 ? "No clients yet. Load demo data or add your first client to get started."
                 : "No new updates overnight.")}
           </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-2 gap-2.5">
+          <Link
+            href="/mls"
+            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#2a3a6e] bg-gradient-to-br from-[#0e1428] to-[#111230] px-4 py-[14px] transition active:border-[#4f7bff]"
+          >
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#4f7bff]/15 text-[#6f9bff]">
+              <Search size={18} strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-[#f0eee8] leading-tight">
+                Browse MLS
+              </div>
+              <div className="mt-0.5 text-[11px] text-[#666680] leading-tight">
+                Live NJ listings
+              </div>
+            </div>
+          </Link>
+          <Link
+            href="/properties"
+            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1e1e2e] bg-[#0f0f1e] px-4 py-[14px] transition active:border-[#4f7bff]"
+          >
+            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#4f7bff]/12 text-[#6f9bff]">
+              <Building2 size={18} strokeWidth={2.25} />
+            </span>
+            <div className="min-w-0">
+              <div className="text-[13px] font-semibold text-[#f0eee8] leading-tight">
+                My Properties
+              </div>
+              <div className="mt-0.5 text-[11px] text-[#666680] leading-tight">
+                Saved + matches
+              </div>
+            </div>
+          </Link>
         </div>
 
         <div className="flex items-center justify-between mt-5 mb-2.5">

@@ -8,6 +8,7 @@ import {
   Gauge,
   LayoutGrid,
   LineChart,
+  Search,
   Settings,
   Sparkles,
   type LucideIcon,
@@ -22,6 +23,23 @@ type Entry = {
 
 const sections: { title: string; items: Entry[] }[] = [
   {
+    title: "Properties",
+    items: [
+      {
+        href: "/mls",
+        label: "MLS Search",
+        desc: "Live NJ MLS listings — search, match, share",
+        Icon: Search,
+      },
+      {
+        href: "/properties",
+        label: "My Properties",
+        desc: "Saved listings + auto client matches",
+        Icon: Building2,
+      },
+    ],
+  },
+  {
     title: "Workflow",
     items: [
       {
@@ -29,12 +47,6 @@ const sections: { title: string; items: Entry[] }[] = [
         label: "Pipeline",
         desc: "Kanban board — drag clients between stages",
         Icon: LayoutGrid,
-      },
-      {
-        href: "/properties",
-        label: "Properties",
-        desc: "Your saved property list + MLS matches",
-        Icon: Building2,
       },
       {
         href: "/showings",

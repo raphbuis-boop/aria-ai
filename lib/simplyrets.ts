@@ -1,7 +1,20 @@
 /**
  * SimplyRETS live MLS API — https://api.simplyrets.com/properties
- * Auth: Basic (SIMPLYRETS_API_KEY:SIMPLYRETS_API_SECRET)
- * or (SIMPLYRETS_USERNAME:SIMPLYRETS_PASSWORD) per env setup.
+ *
+ * SimplyRETS uses HTTP Basic Auth. In their dashboard they call the two
+ * credentials "API Key" (the username) and "API Secret" (the password).
+ *
+ * We accept several env var naming conventions so that agents can name
+ * their Vercel env vars using whichever pattern matches their mental
+ * model. Pairs are tried in priority order; the first one with both
+ * halves populated wins.
+ *
+ *   1. SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_PASSWORD  (most explicit)
+ *   2. SIMPLYRETS_USERNAME     + SIMPLYRETS_PASSWORD      (legacy explicit)
+ *   3. SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_KEY       (agent named the
+ *                                                          "secret" API_KEY)
+ *   4. SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_SECRET
+ *   5. SIMPLYRETS_API_KEY      + SIMPLYRETS_API_SECRET    (docs-spec pair)
  */
 
 export const SIMPLYRETS_API_BASE = "https://api.simplyrets.com";
@@ -21,25 +34,84 @@ export type MlsListingPayload = {
   mlsNumber: string;
 };
 
+type CredentialPair = {
+  username: string;
+  password: string;
+  /** Human-readable source, e.g. "SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_KEY" */
+  source: string;
+};
+
+const ENV_PAIRS: ReadonlyArray<[usernameVar: string, passwordVar: string]> = [
+  ["SIMPLYRETS_API_USERNAME", "SIMPLYRETS_API_PASSWORD"],
+  ["SIMPLYRETS_USERNAME", "SIMPLYRETS_PASSWORD"],
+  ["SIMPLYRETS_API_USERNAME", "SIMPLYRETS_API_KEY"],
+  ["SIMPLYRETS_API_USERNAME", "SIMPLYRETS_API_SECRET"],
+  ["SIMPLYRETS_API_KEY", "SIMPLYRETS_API_SECRET"],
+];
+
+export function resolveSimplyRetsCredentials(): CredentialPair | null {
+  for (const [uVar, pVar] of ENV_PAIRS) {
+    const u = process.env[uVar]?.trim();
+    const p = process.env[pVar]?.trim();
+    if (u && p) return { username: u, password: p, source: `${uVar} + ${pVar}` };
+  }
+  return null;
+}
+
 export function isSimplyRetsConfigured(): boolean {
-  const userPass =
-    process.env.SIMPLYRETS_USERNAME?.trim() &&
-    process.env.SIMPLYRETS_PASSWORD?.trim();
-  const keySecret =
-    process.env.SIMPLYRETS_API_KEY?.trim() &&
-      process.env.SIMPLYRETS_API_SECRET?.trim();
-  return Boolean(userPass || keySecret);
+  return resolveSimplyRetsCredentials() !== null;
 }
 
 export function getSimplyRetsAuthHeader(): string {
-  const u = process.env.SIMPLYRETS_USERNAME?.trim();
-  const p = process.env.SIMPLYRETS_PASSWORD?.trim();
-  if (u && p) {
-    return `Basic ${Buffer.from(`${u}:${p}`).toString("base64")}`;
+  const creds = resolveSimplyRetsCredentials();
+  if (!creds) {
+    return `Basic ${Buffer.from(":").toString("base64")}`;
   }
-  const key = process.env.SIMPLYRETS_API_KEY ?? "";
-  const secret = process.env.SIMPLYRETS_API_SECRET ?? "";
-  return `Basic ${Buffer.from(`${key}:${secret}`).toString("base64")}`;
+  return `Basic ${Buffer.from(`${creds.username}:${creds.password}`).toString("base64")}`;
+}
+
+/**
+ * Returns a sanitized summary of SimplyRETS-related env vars for log output.
+ * Never returns full secrets — only a "first 4 chars + length" fingerprint.
+ */
+export function describeSimplyRetsEnv(): {
+  apiUrl: string;
+  detectedPair: string | null;
+  vars: Record<string, { present: boolean; preview?: string; length?: number }>;
+} {
+  const fingerprints: Record<
+    string,
+    { present: boolean; preview?: string; length?: number }
+  > = {};
+  const known = [
+    "SIMPLYRETS_API_URL",
+    "SIMPLYRETS_API_USERNAME",
+    "SIMPLYRETS_API_PASSWORD",
+    "SIMPLYRETS_API_KEY",
+    "SIMPLYRETS_API_SECRET",
+    "SIMPLYRETS_USERNAME",
+    "SIMPLYRETS_PASSWORD",
+  ];
+  for (const name of known) {
+    const value = process.env[name]?.trim();
+    if (value) {
+      fingerprints[name] = {
+        present: true,
+        preview: value.slice(0, 4),
+        length: value.length,
+      };
+    } else {
+      fingerprints[name] = { present: false };
+    }
+  }
+  const creds = resolveSimplyRetsCredentials();
+  return {
+    apiUrl:
+      process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
+      SIMPLYRETS_API_BASE,
+    detectedPair: creds?.source ?? null,
+    vars: fingerprints,
+  };
 }
 
 function normalizePhotos(photos: unknown): string[] {

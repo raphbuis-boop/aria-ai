@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import {
+  describeSimplyRetsEnv,
   getSimplyRetsAuthHeader,
   isSimplyRetsConfigured,
   mapSimplyRetsListing,
+  resolveSimplyRetsCredentials,
   SIMPLYRETS_API_BASE,
 } from "@/lib/simplyrets";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export type { MlsListingPayload } from "@/lib/simplyrets";
 
@@ -28,11 +31,15 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const envSummary = describeSimplyRetsEnv();
+
   if (!isSimplyRetsConfigured()) {
+    console.error("[mls] SimplyRETS not configured", envSummary);
     return NextResponse.json(
       {
         error:
-          "SimplyRETS is not configured. Set SIMPLYRETS_API_KEY and SIMPLYRETS_API_SECRET.",
+          "SimplyRETS is not configured. Set one of the accepted credential pairs in your Vercel env vars (see /api/mls-test).",
+        env: envSummary,
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -53,7 +60,8 @@ export async function GET(req: Request) {
   );
 
   const base =
-    process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
+    process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
+    SIMPLYRETS_API_BASE;
 
   const params = new URLSearchParams({
     status,
@@ -67,19 +75,49 @@ export async function GET(req: Request) {
 
   const endpoint = `${base}/properties?${params}`;
 
-  const response = await fetch(endpoint, {
-    headers: {
-      Authorization: getSimplyRetsAuthHeader(),
-      Accept: "application/json",
-    },
+  console.log("[mls] calling SimplyRETS", {
+    endpoint,
+    credentialSource: resolveSimplyRetsCredentials()?.source,
   });
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      headers: {
+        Authorization: getSimplyRetsAuthHeader(),
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[mls] fetch threw", { endpoint, message });
+    return NextResponse.json(
+      {
+        error: `Network error calling SimplyRETS: ${message}`,
+        endpoint,
+        env: envSummary,
+        listings: [] as MlsListingPayload[],
+        total: 0,
+      },
+      { status: 502 },
+    );
+  }
 
   if (!response.ok) {
     const errText = await response.text();
+    console.error("[mls] SimplyRETS non-2xx", {
+      endpoint,
+      status: response.status,
+      body: errText.slice(0, 500),
+    });
     return NextResponse.json(
       {
         error:
           errText?.slice(0, 500) || `SimplyRETS error (${response.status})`,
+        status: response.status,
+        endpoint,
+        env: envSummary,
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -93,6 +131,12 @@ export async function GET(req: Request) {
   const listings: MlsListingPayload[] = rawListings.map((item) =>
     mapSimplyRetsListing(item as Record<string, unknown>),
   );
+
+  console.log("[mls] SimplyRETS ok", {
+    endpoint,
+    status: response.status,
+    count: listings.length,
+  });
 
   return NextResponse.json({
     listings,

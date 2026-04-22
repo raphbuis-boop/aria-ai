@@ -187,8 +187,10 @@ export function BottomNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
+  // "/mls" has its own pill now, so exclude it from the "More" active state.
   const moreActive =
-    isActive("/more") || moreLinks.some((m) => isActive(m.href));
+    isActive("/more") ||
+    moreLinks.some((m) => m.href !== "/mls" && isActive(m.href));
 
   return (
     <>
@@ -232,6 +234,12 @@ export function BottomNav() {
             label="Clients"
             Icon={Users}
             active={isActive("/clients")}
+          />
+          <PillItem
+            href="/mls"
+            label="MLS"
+            Icon={Building2}
+            active={isActive("/mls") || isActive("/properties")}
           />
           <PillItem
             href="/more"
