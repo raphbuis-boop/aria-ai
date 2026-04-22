@@ -5,7 +5,6 @@ import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useToast } from "@/components/ToastProvider";
 import type { MlsListingPayload } from "@/lib/simplyrets";
-import { getSimplyRetsListingApiUrl } from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
 import { Bookmark, CalendarPlus, Loader2, Sparkles } from "lucide-react";
 import Link from "next/link";
@@ -205,10 +204,6 @@ export function PropertyPageClient({
     if (!listing?.lat || !listing?.lng) return null;
     return `https://maps.google.com/maps?q=${listing.lat},${listing.lng}&z=16&output=embed`;
   }, [listing?.lat, listing?.lng]);
-
-  const simplyRetsUrl = listing
-    ? getSimplyRetsListingApiUrl(listing.mlsNumber || listing.id)
-    : "";
 
   if (loading) {
     return (
@@ -413,8 +408,8 @@ export function PropertyPageClient({
         </div>
       ) : null}
 
-      <div className="mt-4 flex flex-col gap-2">
-        {listing.externalUrl ? (
+      {listing.externalUrl ? (
+        <div className="mt-4">
           <a
             href={listing.externalUrl}
             target="_blank"
@@ -423,16 +418,8 @@ export function PropertyPageClient({
           >
             External listing link →
           </a>
-        ) : null}
-        <a
-          href={simplyRetsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[12px] font-medium text-text-dim"
-        >
-          Full MLS API record (SimplyRETS) →
-        </a>
-      </div>
+        </div>
+      ) : null}
 
       {draftPreview ? (
         <div className="mt-4 rounded-[12px] border border-border-card bg-bg-deep px-3 py-3">
