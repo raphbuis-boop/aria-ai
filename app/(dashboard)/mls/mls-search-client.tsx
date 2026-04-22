@@ -2,7 +2,10 @@
 
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { useToast } from "@/components/ToastProvider";
-import type { MlsListingPayload } from "@/lib/simplyrets";
+import {
+  summarizeListingCoverage,
+  type MlsListingPayload,
+} from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
 import { Bookmark, Loader2, Search } from "lucide-react";
 import Link from "next/link";
@@ -41,8 +44,9 @@ const SORT_OPTS: { value: string; label: string }[] = [
 
 function buildListingsQuery(sp: URLSearchParams): string {
   const q = new URLSearchParams();
-  q.set("state", sp.get("state") ?? "NJ");
   q.set("limit", String(PAGE_SIZE));
+  const state = sp.get("state")?.trim();
+  if (state) q.set("state", state);
   const city = sp.get("city")?.trim();
   if (city) q.set("city", city);
   const minPrice = sp.get("minPrice")?.trim();
@@ -107,7 +111,6 @@ export function MlsSearchClient() {
 
   const pushUrlFromForm = useCallback(() => {
     const q = new URLSearchParams();
-    q.set("state", "NJ");
     if (city.trim()) q.set("city", city.trim());
     if (minPrice.trim()) q.set("minPrice", minPrice.trim());
     if (maxPrice.trim()) q.set("maxPrice", maxPrice.trim());
@@ -281,6 +284,11 @@ export function MlsSearchClient() {
     return `Showing ${n} properties`;
   }, [loading, listings.length, total]);
 
+  const coverageLine = useMemo(
+    () => summarizeListingCoverage(listings),
+    [listings],
+  );
+
   const returnToParam = useMemo(() => {
     const q = searchParams.toString();
     return encodeURIComponent(q ? `/mls?${q}` : "/mls");
@@ -307,12 +315,20 @@ export function MlsSearchClient() {
           MLS Search
         </div>
         <div className="text-[13px] text-text-dim">
-          Live NJ listings (SimplyRETS)
+          Live MLS listings (SimplyRETS)
         </div>
         {showingLine ? (
           <p className="mt-2 text-[12px] text-text-muted">{showingLine}</p>
         ) : null}
       </header>
+
+      {listings.length > 0 ? (
+        <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[11px] leading-relaxed text-text-muted">
+          <span className="font-semibold text-text-primary">Coverage: </span>
+          {coverageLine ||
+            "Areas in this result set — add town or filters to narrow."}
+        </div>
+      ) : null}
 
       <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-center text-[12px] text-text-dim">
         <span className="font-medium text-accent-blue">NY &amp; CT MLS</span>{" "}

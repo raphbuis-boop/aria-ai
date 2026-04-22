@@ -49,17 +49,17 @@ export async function GET(req: Request) {
   }
 
   const url = new URL(req.url);
-  const city = url.searchParams.get("city") ?? undefined;
-  const state = url.searchParams.get("state") ?? "NJ";
-  const minPrice = url.searchParams.get("minPrice");
-  const maxPrice = url.searchParams.get("maxPrice");
-  const minBeds = url.searchParams.get("minBeds");
-  const minBaths = url.searchParams.get("minBaths");
-  const minSqft = url.searchParams.get("minSqft");
-  const propertyType = url.searchParams.get("propertyType"); // SimplyRETS: "type"
-  const status = url.searchParams.get("status") ?? "Active";
-  const sortRaw = url.searchParams.get("sort");
-  const sortKey = url.searchParams.get("sortKey") ?? "";
+  const city = url.searchParams.get("city")?.trim() || undefined;
+  const state = url.searchParams.get("state")?.trim() || undefined;
+  const minPrice = url.searchParams.get("minPrice")?.trim() || undefined;
+  const maxPrice = url.searchParams.get("maxPrice")?.trim() || undefined;
+  const minBeds = url.searchParams.get("minBeds")?.trim() || undefined;
+  const minBaths = url.searchParams.get("minBaths")?.trim() || undefined;
+  const minSqft = url.searchParams.get("minSqft")?.trim() || undefined;
+  const propertyType = url.searchParams.get("propertyType")?.trim() || undefined;
+  const status = url.searchParams.get("status")?.trim() || "Active";
+  const sortRaw = url.searchParams.get("sort")?.trim() || undefined;
+  const sortKey = url.searchParams.get("sortKey")?.trim() ?? "";
   const sortFromKey = MLS_SORT_PARAM[sortKey] ?? null;
   const sort = sortRaw || sortFromKey || undefined;
   const limit = Math.min(
@@ -72,24 +72,25 @@ export async function GET(req: Request) {
     process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
     SIMPLYRETS_API_BASE;
 
-  const params = new URLSearchParams({
-    status,
-    limit: limit.toString(),
-    offset: offset.toString(),
-    ...(state && { state }),
-    ...(city && { cities: city }),
-    ...(minPrice && { minprice: minPrice }),
-    ...(maxPrice && { maxprice: maxPrice }),
-    ...(minBeds && { minbeds: minBeds }),
-    ...(minBaths && { minbaths: minBaths }),
-    ...(minSqft && { minarea: minSqft }),
-    ...(propertyType && { type: propertyType }),
-    ...(sort ? { sort } : {}),
-  });
+  const params = new URLSearchParams();
+  params.set("status", status);
+  params.set("limit", String(limit));
+  params.set("offset", String(offset));
+  if (state) params.set("state", state);
+  if (city) params.set("cities", city);
+  if (minPrice) params.set("minprice", minPrice);
+  if (maxPrice) params.set("maxprice", maxPrice);
+  if (minBeds) params.set("minbeds", minBeds);
+  if (minBaths) params.set("minbaths", minBaths);
+  if (minSqft) params.set("minarea", minSqft);
+  if (propertyType) params.set("type", propertyType);
+  if (sort) params.set("sort", sort);
 
-  const endpoint = `${base}/properties?${params}`;
+  const paramSnapshot = Object.fromEntries(params.entries());
+  const endpoint = `${base}/properties?${params.toString()}`;
 
-  console.log("[mls] calling SimplyRETS", {
+  console.log("[mls] SimplyRETS request", {
+    params: paramSnapshot,
     endpoint,
     credentialSource: resolveSimplyRetsCredentials()?.source,
   });

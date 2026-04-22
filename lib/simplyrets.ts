@@ -198,22 +198,24 @@ function pickAddressLine(addr: Record<string, unknown>): string {
  */
 export async function fetchMlsListingsForClient(opts: {
   city: string | null | undefined;
+  /** When set, passed as SimplyRETS `state`. Omit for all states in the feed. */
+  state?: string | null;
   minPrice?: number | null;
   maxPrice?: number | null;
   minBeds?: number | null;
   limit?: number;
 }): Promise<MlsListingPayload[]> {
   if (!isSimplyRetsConfigured()) return [];
-  const { city, minPrice, maxPrice, minBeds, limit = 20 } = opts;
+  const { city, state, minPrice, maxPrice, minBeds, limit = 20 } = opts;
   if (!city?.trim()) return [];
 
   const base =
     process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
   const params = new URLSearchParams({
-    state: "NJ",
     cities: city.trim(),
     status: "Active",
     limit: String(Math.min(100, limit)),
+    ...(state?.trim() ? { state: state.trim() } : {}),
     ...(minPrice != null && minPrice > 0
       ? { minprice: String(minPrice) }
       : {}),
@@ -221,6 +223,11 @@ export async function fetchMlsListingsForClient(opts: {
       ? { maxprice: String(maxPrice) }
       : {}),
     ...(minBeds != null && minBeds > 0 ? { minbeds: String(minBeds) } : {}),
+  });
+
+  console.log("[simplyrets] fetchMlsListingsForClient params", {
+    ...Object.fromEntries(params.entries()),
+    base,
   });
 
   const res = await fetch(`${base}/properties?${params}`, {
@@ -240,6 +247,32 @@ export async function fetchMlsListingsForClient(opts: {
   return (rawListings as Record<string, unknown>[]).map((item) =>
     mapSimplyRetsListing(item),
   );
+}
+
+const COVERAGE_LABEL_MAX = 28;
+
+/** Human-readable city / state / zip list from loaded listings (result-set coverage). */
+export function summarizeListingCoverage(
+  listings: MlsListingPayload[],
+): string {
+  if (!listings.length) return "";
+  const seen = new Set<string>();
+  const parts: string[] = [];
+  for (const l of listings) {
+    const city = (l.city || "").trim() || "—";
+    const st = (l.state || "").trim();
+    const zip = (l.postalCode || "").trim();
+    const key = `${city}|${st}|${zip}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    let label = city;
+    if (st) label += `, ${st}`;
+    if (zip) label += ` ${zip}`;
+    parts.push(label);
+  }
+  parts.sort((a, b) => a.localeCompare(b));
+  if (parts.length <= COVERAGE_LABEL_MAX) return parts.join(" · ");
+  return `${parts.slice(0, COVERAGE_LABEL_MAX).join(" · ")} · +${parts.length - COVERAGE_LABEL_MAX} more`;
 }
 
 function asStringArray(value: unknown): string[] {
