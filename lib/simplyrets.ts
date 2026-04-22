@@ -436,3 +436,96 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
             : null,
   };
 }
+
+export type SimplyRetsSinglePropertyFailure =
+  | { kind: "not_configured" }
+  | { kind: "network"; endpoint: string; message: string }
+  | {
+      kind: "upstream";
+      status: number;
+      endpoint: string;
+      bodyPreview: string;
+    };
+
+export type SimplyRetsSinglePropertyResult =
+  | { ok: true; listing: MlsListingPayload; raw: Record<string, unknown> }
+  | { ok: false; failure: SimplyRetsSinglePropertyFailure };
+
+/**
+ * Server-only: fetches one listing from SimplyRETS with Basic auth.
+ * Never call from the browser — credentials stay on the server.
+ */
+export async function fetchSimplyRetsSingleProperty(
+  mlsId: string,
+): Promise<SimplyRetsSinglePropertyResult> {
+  const trimmed = mlsId?.trim();
+  if (!trimmed) {
+    return {
+      ok: false,
+      failure: {
+        kind: "upstream",
+        status: 400,
+        endpoint: "",
+        bodyPreview: "mlsId required",
+      },
+    };
+  }
+
+  if (!isSimplyRetsConfigured()) {
+    return { ok: false, failure: { kind: "not_configured" } };
+  }
+
+  const base =
+    process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
+    SIMPLYRETS_API_BASE;
+  const endpoint = `${base}/properties/${encodeURIComponent(trimmed)}`;
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      headers: {
+        Authorization: getSimplyRetsAuthHeader(),
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      ok: false,
+      failure: { kind: "network", endpoint, message },
+    };
+  }
+
+  if (response.status === 404) {
+    return {
+      ok: false,
+      failure: {
+        kind: "upstream",
+        status: 404,
+        endpoint,
+        bodyPreview: "",
+      },
+    };
+  }
+
+  if (!response.ok) {
+    const text = await response.text();
+    return {
+      ok: false,
+      failure: {
+        kind: "upstream",
+        status: response.status,
+        endpoint,
+        bodyPreview: text.slice(0, 500),
+      },
+    };
+  }
+
+  const raw = (await response.json()) as Record<string, unknown>;
+  return {
+    ok: true,
+    listing: mapSimplyRetsListing(raw),
+    raw,
+  };
+}

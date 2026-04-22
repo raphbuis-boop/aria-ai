@@ -42,6 +42,7 @@ export function PropertyPageClient({
   const [listing, setListing] = useState<MlsListingPayload | null>(null);
   const [loading, setLoading] = useState(mode === "mls");
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [matchOpen, setMatchOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [draftPreview, setDraftPreview] = useState<string | null>(null);
@@ -90,17 +91,29 @@ export function PropertyPageClient({
     let cancelled = false;
     void (async () => {
       setLoading(true);
+      setNotFound(false);
+      setLoadError(null);
       try {
         const res = await fetch(
-          `/api/mls/property/${encodeURIComponent(mlsId)}`,
+          `/api/properties/${encodeURIComponent(mlsId)}`,
+          { credentials: "include" },
         );
         const data = (await res.json()) as {
           listing?: MlsListingPayload;
           error?: string;
+          code?: string;
         };
         if (!res.ok) {
-          if (res.status === 404) setNotFound(true);
-          else toast.toast(data.error ?? "Could not load listing", "warn");
+          if (res.status === 404 || data.code === "LISTING_GONE") {
+            if (!cancelled) setNotFound(true);
+            return;
+          }
+          const msg =
+            data.error ??
+            (res.status === 401
+              ? "Please sign in again to view this listing."
+              : "Could not load this listing.");
+          if (!cancelled) setLoadError(msg);
           return;
         }
         if (!cancelled && data.listing) {
@@ -109,7 +122,11 @@ export function PropertyPageClient({
           void checkSaved(key);
         }
       } catch {
-        if (!cancelled) toast.toast("Network error", "warn");
+        if (!cancelled) {
+          setLoadError(
+            "Network error. Check your connection and try again.",
+          );
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -117,7 +134,7 @@ export function PropertyPageClient({
     return () => {
       cancelled = true;
     };
-  }, [mode, mlsId, internalProperty, toast, checkSaved]);
+  }, [mode, mlsId, internalProperty, checkSaved]);
 
   async function toggleWatchlist() {
     if (!listing) return;
@@ -201,11 +218,32 @@ export function PropertyPageClient({
     );
   }
 
+  if (loadError) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <BackButton href={backHref} label="Back" className="mb-6" />
+        <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-6 text-center">
+          <p className="text-[15px] font-medium text-text-primary">
+            Something went wrong
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-text-dim">
+            {loadError}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (notFound || !listing) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center text-text-dim">
-        Listing not found.
-        <div className="mt-4">
+        <p className="text-[15px] font-medium text-text-primary">
+          Listing no longer available
+        </p>
+        <p className="mt-2 text-[13px] text-text-muted">
+          This listing may have sold or been removed from the MLS feed.
+        </p>
+        <div className="mt-6">
           <BackButton href={backHref} label="Back to search" />
         </div>
       </div>

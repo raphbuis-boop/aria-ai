@@ -12,7 +12,6 @@ export const runtime = "nodejs";
 
 export type { MlsListingPayload } from "@/lib/simplyrets";
 
-/** @deprecated Prefer GET /api/properties/[mlsId] for listing detail (same behavior). */
 export async function GET(
   _req: Request,
   { params }: { params: { mlsId: string } },
@@ -28,6 +27,10 @@ export async function GET(
   }
 
   if (!isSimplyRetsConfigured()) {
+    console.error("[api/properties] SimplyRETS not configured", {
+      mlsId,
+      env: describeSimplyRetsEnv(),
+    });
     return NextResponse.json(
       {
         error: "SimplyRETS is not configured.",
@@ -37,7 +40,7 @@ export async function GET(
     );
   }
 
-  console.log("[mls/property] fetching listing", {
+  console.log("[api/properties] fetching listing", {
     mlsId,
     credentialSource: resolveSimplyRetsCredentials()?.source,
   });
@@ -48,49 +51,58 @@ export async function GET(
     const { failure } = result;
     if (failure.kind === "not_configured") {
       return NextResponse.json(
-        { error: "SimplyRETS is not configured.", env: describeSimplyRetsEnv() },
+        { error: "SimplyRETS is not configured." },
         { status: 503 },
       );
     }
     if (failure.kind === "network") {
-      console.error("[mls/property] fetch threw", {
+      console.error("[api/properties] network error", {
+        mlsId,
         endpoint: failure.endpoint,
         message: failure.message,
       });
       return NextResponse.json(
         {
-          error: `Network error calling SimplyRETS: ${failure.message}`,
-          endpoint: failure.endpoint,
+          error:
+            "Could not reach the MLS service. Check your connection and try again.",
         },
         { status: 502 },
       );
     }
     if (failure.status === 404) {
+      console.warn("[api/properties] SimplyRETS 404", {
+        mlsId,
+        endpoint: failure.endpoint,
+      });
       return NextResponse.json(
         {
           error: "Listing no longer available",
           code: "LISTING_GONE",
-          endpoint: failure.endpoint,
         },
         { status: 404 },
       );
     }
-    console.error("[mls/property] SimplyRETS non-2xx", {
+
+    console.error("[api/properties] SimplyRETS error", {
+      mlsId,
       endpoint: failure.endpoint,
       status: failure.status,
-      body: failure.bodyPreview,
+      bodyPreview: failure.bodyPreview,
     });
     return NextResponse.json(
       {
         error:
-          failure.bodyPreview?.slice(0, 500) ||
-          `SimplyRETS error (${failure.status})`,
-        endpoint: failure.endpoint,
-        status: failure.status,
+          "Unable to load this listing right now. Please try again in a moment.",
+        code: "UPSTREAM_ERROR",
       },
       { status: 502 },
     );
   }
 
-  return NextResponse.json({ listing: result.listing, raw: result.raw });
+  console.log("[api/properties] ok", { mlsId, mlsNumber: result.listing.mlsNumber });
+
+  return NextResponse.json({
+    listing: result.listing,
+    raw: result.raw,
+  });
 }
