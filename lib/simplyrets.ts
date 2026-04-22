@@ -19,10 +19,28 @@
 
 export const SIMPLYRETS_API_BASE = "https://api.simplyrets.com";
 
+/** Browser-openable API URL for a single listing (may 401 without Basic auth). */
+export function getSimplyRetsListingApiUrl(mlsId: string): string {
+  const base =
+    process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
+    SIMPLYRETS_API_BASE;
+  return `${base}/properties/${encodeURIComponent(mlsId)}`;
+}
+
+/** Map UI sort keys to SimplyRETS `sort` query values. */
+export const MLS_SORT_PARAM: Record<string, string> = {
+  newest: "-listdate",
+  price_asc: "listprice",
+  price_desc: "-listprice",
+  beds_desc: "-bedrooms",
+};
+
 export type MlsListingPayload = {
   id: string;
   address: string;
   city: string;
+  state?: string | null;
+  postalCode?: string | null;
   price: number;
   beds: number;
   baths: number;
@@ -32,6 +50,40 @@ export type MlsListingPayload = {
   status: string;
   daysOnMarket: number | null;
   mlsNumber: string;
+  // Extended fields (all optional) used by the detail view and filters.
+  lotSize?: number | null;
+  yearBuilt?: number | null;
+  propertyType?: string | null;
+  propertySubType?: string | null;
+  stories?: number | null;
+  garageSpaces?: number | null;
+  listDate?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  taxAnnualAmount?: number | null;
+  taxYear?: number | null;
+  hoaFee?: number | null;
+  hoaFrequency?: string | null;
+  listingAgent?: {
+    name: string | null;
+    email: string | null;
+    phone: string | null;
+  } | null;
+  listingOffice?: { name: string | null; phone: string | null } | null;
+  openHouses?: Array<{
+    startTime: string | null;
+    endTime: string | null;
+    appointmentOnly?: boolean;
+  }>;
+  schools?: { district: string | null; elementary: string | null; middle: string | null; high: string | null } | null;
+  interiorFeatures?: string[];
+  exteriorFeatures?: string[];
+  heating?: string | null;
+  cooling?: string | null;
+  parking?: string | null;
+  subdivision?: string | null;
+  /** Absolute URL on SimplyRETS (or agency site) for the raw listing, if known. */
+  externalUrl?: string | null;
 };
 
 type CredentialPair = {
@@ -190,10 +242,28 @@ export async function fetchMlsListingsForClient(opts: {
   );
 }
 
+function asStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((v): v is string => typeof v === "string" && v.trim() !== "");
+}
+
+function numOrNull(v: unknown): number | null {
+  if (v == null || v === "") return null;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : null;
+}
+
 export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPayload {
   const address = (raw.address as Record<string, unknown> | undefined) ?? {};
   const property = (raw.property as Record<string, unknown> | undefined) ?? {};
   const mls = (raw.mls as Record<string, unknown> | undefined) ?? {};
+  const geo = (raw.geo as Record<string, unknown> | undefined) ?? {};
+  const tax = (raw.tax as Record<string, unknown> | undefined) ?? {};
+  const agent = (raw.agent as Record<string, unknown> | undefined) ?? {};
+  const office = (raw.office as Record<string, unknown> | undefined) ?? {};
+  const association =
+    (raw.association as Record<string, unknown> | undefined) ?? {};
+  const school = (raw.school as Record<string, unknown> | undefined) ?? {};
 
   const photos = normalizePhotos(raw.photos);
 
@@ -219,10 +289,41 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
     property.area ?? property.livingArea ?? property.livingAreaSF ?? 0,
   );
 
+  const openHouses = Array.isArray(raw.openHouses)
+    ? (raw.openHouses as Record<string, unknown>[]).map((o) => ({
+        startTime:
+          typeof o.startTime === "string"
+            ? o.startTime
+            : typeof o.start === "string"
+              ? o.start
+              : null,
+        endTime:
+          typeof o.endTime === "string"
+            ? o.endTime
+            : typeof o.end === "string"
+              ? o.end
+              : null,
+        appointmentOnly: Boolean(o.appointmentOnly),
+      }))
+    : [];
+
+  const agentName =
+    [agent.firstName, agent.lastName]
+      .filter((s) => typeof s === "string" && String(s).trim())
+      .join(" ")
+      .trim() || (typeof agent.name === "string" ? agent.name : "");
+
   return {
     id,
     address: pickAddressLine(address),
     city: String(address.city ?? ""),
+    state: typeof address.state === "string" ? address.state : null,
+    postalCode:
+      typeof address.postalCode === "string"
+        ? address.postalCode
+        : typeof address.zip === "string"
+          ? (address.zip as string)
+          : null,
     price: Number(raw.listPrice ?? 0),
     beds: Number(property.bedrooms ?? property.beds ?? 0),
     baths: Number.isFinite(baths) ? baths : 0,
@@ -235,5 +336,103 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
     daysOnMarket:
       mls.daysOnMarket != null ? Number(mls.daysOnMarket) : null,
     mlsNumber: mlsNumber || id,
+    lotSize: numOrNull(property.lotSize ?? property.lotSizeArea),
+    yearBuilt: numOrNull(property.yearBuilt),
+    propertyType:
+      typeof property.type === "string"
+        ? property.type
+        : typeof raw.propertyType === "string"
+          ? (raw.propertyType as string)
+          : null,
+    propertySubType:
+      typeof property.subType === "string" ? property.subType : null,
+    stories: numOrNull(property.stories),
+    garageSpaces: numOrNull(property.garageSpaces),
+    listDate:
+      typeof raw.listDate === "string" ? (raw.listDate as string) : null,
+    lat: numOrNull(geo.lat ?? geo.latitude),
+    lng: numOrNull(geo.lng ?? geo.longitude),
+    taxAnnualAmount: numOrNull(tax.taxAnnualAmount),
+    taxYear: numOrNull(tax.taxYear),
+    hoaFee: numOrNull(association.fee),
+    hoaFrequency:
+      typeof association.feeFrequency === "string"
+        ? association.feeFrequency
+        : null,
+    listingAgent: agentName
+      ? {
+          name: agentName || null,
+          email:
+            typeof agent.contact === "object" && agent.contact
+              ? (() => {
+                  const c = agent.contact as Record<string, unknown>;
+                  return typeof c.email === "string" ? c.email : null;
+                })()
+              : typeof agent.email === "string"
+                ? (agent.email as string)
+                : null,
+          phone:
+            typeof agent.contact === "object" && agent.contact
+              ? (() => {
+                  const c = agent.contact as Record<string, unknown>;
+                  return typeof c.cell === "string"
+                    ? (c.cell as string)
+                    : typeof c.office === "string"
+                      ? (c.office as string)
+                      : null;
+                })()
+              : typeof agent.phone === "string"
+                ? (agent.phone as string)
+                : null,
+        }
+      : null,
+    listingOffice: office.name
+      ? {
+          name: typeof office.name === "string" ? office.name : null,
+          phone:
+            typeof office.contact === "object" && office.contact
+              ? (() => {
+                  const c = office.contact as Record<string, unknown>;
+                  return typeof c.office === "string"
+                    ? (c.office as string)
+                    : null;
+                })()
+              : typeof office.phone === "string"
+                ? (office.phone as string)
+                : null,
+        }
+      : null,
+    openHouses: openHouses.length ? openHouses : undefined,
+    schools: school
+      ? {
+          district:
+            typeof school.district === "string" ? school.district : null,
+          elementary:
+            typeof school.elementarySchool === "string"
+              ? school.elementarySchool
+              : null,
+          middle:
+            typeof school.middleSchool === "string"
+              ? school.middleSchool
+              : null,
+          high:
+            typeof school.highSchool === "string" ? school.highSchool : null,
+        }
+      : null,
+    interiorFeatures: asStringArray(property.interiorFeatures),
+    exteriorFeatures: asStringArray(property.exteriorFeatures),
+    heating: typeof property.heating === "string" ? property.heating : null,
+    cooling: typeof property.cooling === "string" ? property.cooling : null,
+    parking: typeof property.parking === "string" ? property.parking : null,
+    subdivision:
+      typeof property.subdivision === "string" ? property.subdivision : null,
+    externalUrl:
+      typeof raw.virtualTourUrl === "string"
+        ? (raw.virtualTourUrl as string)
+        : typeof raw.url === "string"
+          ? (raw.url as string)
+          : typeof raw.listingUrl === "string"
+            ? (raw.listingUrl as string)
+            : null,
   };
 }

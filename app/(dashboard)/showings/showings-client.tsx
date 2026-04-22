@@ -85,12 +85,23 @@ export function ShowingsClient({
   }
 
   useEffect(() => {
-    if (searchParams.get("new") === "1") {
-      void openModal();
-      const url = new URL(window.location.href);
-      url.searchParams.delete("new");
-      window.history.replaceState({}, "", url.toString());
+    if (searchParams.get("new") !== "1") return;
+    const addr = searchParams.get("address");
+    if (addr) {
+      try {
+        setForm((f) => ({
+          ...f,
+          address: decodeURIComponent(addr),
+        }));
+      } catch {
+        setForm((f) => ({ ...f, address: addr }));
+      }
     }
+    void openModal();
+    const url = new URL(window.location.href);
+    url.searchParams.delete("new");
+    url.searchParams.delete("address");
+    window.history.replaceState({}, "", url.toString());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 

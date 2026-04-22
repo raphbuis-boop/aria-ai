@@ -5,6 +5,7 @@ import {
   getSimplyRetsAuthHeader,
   isSimplyRetsConfigured,
   mapSimplyRetsListing,
+  MLS_SORT_PARAM,
   resolveSimplyRetsCredentials,
   SIMPLYRETS_API_BASE,
 } from "@/lib/simplyrets";
@@ -53,11 +54,19 @@ export async function GET(req: Request) {
   const minPrice = url.searchParams.get("minPrice");
   const maxPrice = url.searchParams.get("maxPrice");
   const minBeds = url.searchParams.get("minBeds");
+  const minBaths = url.searchParams.get("minBaths");
+  const minSqft = url.searchParams.get("minSqft");
+  const propertyType = url.searchParams.get("propertyType"); // SimplyRETS: "type"
   const status = url.searchParams.get("status") ?? "Active";
+  const sortRaw = url.searchParams.get("sort");
+  const sortKey = url.searchParams.get("sortKey") ?? "";
+  const sortFromKey = MLS_SORT_PARAM[sortKey] ?? null;
+  const sort = sortRaw || sortFromKey || undefined;
   const limit = Math.min(
-    100,
+    50,
     Math.max(1, Number(url.searchParams.get("limit") ?? 20)),
   );
+  const offset = Math.max(0, Number(url.searchParams.get("offset") ?? 0));
 
   const base =
     process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ??
@@ -66,11 +75,16 @@ export async function GET(req: Request) {
   const params = new URLSearchParams({
     status,
     limit: limit.toString(),
+    offset: offset.toString(),
     ...(state && { state }),
     ...(city && { cities: city }),
     ...(minPrice && { minprice: minPrice }),
     ...(maxPrice && { maxprice: maxPrice }),
     ...(minBeds && { minbeds: minBeds }),
+    ...(minBaths && { minbaths: minBaths }),
+    ...(minSqft && { minarea: minSqft }),
+    ...(propertyType && { type: propertyType }),
+    ...(sort ? { sort } : {}),
   });
 
   const endpoint = `${base}/properties?${params}`;
@@ -132,14 +146,29 @@ export async function GET(req: Request) {
     mapSimplyRetsListing(item as Record<string, unknown>),
   );
 
+  // SimplyRETS returns total results in the X-Total-Count header.
+  const totalHeader = response.headers.get("x-total-count");
+  const total = totalHeader != null ? Number(totalHeader) : null;
+  const hasMore =
+    total != null
+      ? offset + listings.length < total
+      : listings.length === limit;
+
   console.log("[mls] SimplyRETS ok", {
     endpoint,
     status: response.status,
     count: listings.length,
+    total,
+    offset,
+    hasMore,
   });
 
   return NextResponse.json({
     listings,
-    total: listings.length,
+    /** Total count when SimplyRETS sends X-Total-Count; omit otherwise. */
+    total,
+    offset,
+    limit,
+    hasMore,
   });
 }

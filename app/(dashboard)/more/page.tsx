@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Bookmark,
   Building2,
   CalendarClock,
   FileSignature,
@@ -36,6 +37,12 @@ const sections: { title: string; items: Entry[] }[] = [
         label: "My Properties",
         desc: "Saved listings + auto client matches",
         Icon: Building2,
+      },
+      {
+        href: "/properties/saved",
+        label: "Watchlist",
+        desc: "Bookmarked MLS listings",
+        Icon: Bookmark,
       },
     ],
   },

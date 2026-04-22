@@ -172,10 +172,17 @@ export function PropertiesClient({
       <BackButton href="/more" className="mb-4" />
       <header className="flex items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Properties</div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-full bg-[rgba(59,130,246,0.15)] px-2 py-0.5 text-[11px] font-medium text-accent-blue">
             {availableCount} available
           </span>
+          <button
+            type="button"
+            onClick={() => router.push("/properties/saved")}
+            className="rounded-full border border-border-card bg-bg-card px-3 py-[5px] text-[11px] font-semibold text-text-dim"
+          >
+            Watchlist
+          </button>
           <button
             type="button"
             onClick={() => router.push("/mls")}
