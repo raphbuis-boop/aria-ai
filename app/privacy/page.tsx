@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | Aria",
-  description: "How Aria collects and uses your information.",
+  description: "How Aria handles personal data for real estate services.",
 };
 
 export default function PrivacyPage() {
@@ -22,7 +22,7 @@ export default function PrivacyPage() {
             Privacy Policy
           </h1>
           <p className="mt-2 text-[13px] text-text-dim">
-            Aria by Get Aria AI
+            Effective date: {new Date().toLocaleDateString("en-US")}
           </p>
         </header>
 
@@ -32,11 +32,9 @@ export default function PrivacyPage() {
               Information we collect
             </h2>
             <p className="mt-2">
-              We may collect your <strong className="text-text-primary">name</strong>,{" "}
-              <strong className="text-text-primary">email address</strong>, and{" "}
-              <strong className="text-text-primary">phone number</strong> when you or
-              your agent use Aria—for example when you are added as a client, sign up
-              for communications, or interact with our services.
+              Aria may collect contact information (name, email, phone), account
+              data, listing preferences, communication history, and activity logs
+              needed to operate our real estate CRM and communication tools.
             </p>
           </section>
 
@@ -45,36 +43,77 @@ export default function PrivacyPage() {
               How we use your information
             </h2>
             <p className="mt-2">
-              We use this information to operate Aria and to help your real estate
-              agent stay in touch with you—{" "}
-              <strong className="text-text-primary">
-                including sending SMS follow-ups on behalf of your agent
-              </strong>{" "}
-              when they choose to use that feature, and to power related tools
-              (such as reminders, drafts, and scheduling) inside the product.
+              We use your data to provide CRM features, surface property matches,
+              generate draft communications, support SMS messaging workflows, and
+              maintain account security and platform performance.
             </p>
           </section>
 
           <section>
             <h2 className="text-[15px] font-semibold text-text-primary">
-              We don&apos;t sell your data
+              Service providers and infrastructure
             </h2>
             <p className="mt-2">
-              We do not sell your personal information. We use it only as described
-              in this policy and as needed to provide and improve Aria for agents
-              and their clients.
+              Aria uses third-party providers to operate the platform:
+            </p>
+            <ul className="mt-2 list-disc space-y-1 pl-5">
+              <li>Supabase for authentication, database, and secure storage.</li>
+              <li>Anthropic API for AI-generated drafting and analysis features.</li>
+              <li>Twilio for SMS message delivery and related metadata.</li>
+              <li>Vercel for application hosting, delivery, and runtime logs.</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-[15px] font-semibold text-text-primary">
+              Data sharing and sale of data
+            </h2>
+            <p className="mt-2">
+              We do not sell personal information. We share data only with service
+              providers that help us run Aria, and only to the extent needed to
+              deliver the service.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-[15px] font-semibold text-text-primary">
+              Account deletion and retention
+            </h2>
+            <p className="mt-2">
+              To request account deletion, email{" "}
+              <a
+                href="mailto:support@getariaai.com"
+                className="font-medium text-accent-blue hover:underline"
+              >
+                support@getariaai.com
+              </a>
+              . We will process deletion requests within a commercially reasonable
+              timeframe, subject to legal, fraud-prevention, and recordkeeping
+              obligations.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-[15px] font-semibold text-text-primary">
+              New Jersey jurisdiction
+            </h2>
+            <p className="mt-2">
+              This Privacy Policy is governed by the laws of the State of New
+              Jersey, without regard to conflict-of-law rules. Any disputes
+              relating to this policy are subject to applicable New Jersey venue
+              and jurisdiction requirements.
             </p>
           </section>
 
           <section>
             <h2 className="text-[15px] font-semibold text-text-primary">Contact</h2>
             <p className="mt-2">
-              Questions about this policy or your data? Reach us at{" "}
+              Questions about this policy or your data? Contact{" "}
               <a
-                href="mailto:team@getariaai.com"
+                href="mailto:support@getariaai.com"
                 className="font-medium text-accent-blue hover:underline"
               >
-                team@getariaai.com
+                support@getariaai.com
               </a>
               .
             </p>

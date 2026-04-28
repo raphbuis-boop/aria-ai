@@ -40,7 +40,6 @@ export async function GET(req: Request) {
       {
         error:
           "SimplyRETS is not configured. Set one of the accepted credential pairs in your Vercel env vars (see /api/mls-test).",
-        env: envSummary,
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -111,7 +110,6 @@ export async function GET(req: Request) {
       {
         error: `Network error calling SimplyRETS: ${message}`,
         endpoint,
-        env: envSummary,
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -132,7 +130,6 @@ export async function GET(req: Request) {
           errText?.slice(0, 500) || `SimplyRETS error (${response.status})`,
         status: response.status,
         endpoint,
-        env: envSummary,
         listings: [] as MlsListingPayload[],
         total: 0,
       },

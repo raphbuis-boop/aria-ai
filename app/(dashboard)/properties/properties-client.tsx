@@ -4,6 +4,7 @@ import { BackButton } from "@/components/BackButton";
 import { CardMenu } from "@/components/CardMenu";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { EditPropertyModal, type EditPropertyRecord } from "@/components/EditPropertyModal";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { PropertyCard } from "@/components/PropertyCard";
 import type { MatchSummary } from "@/components/MatchScoreBadge";
@@ -193,6 +194,9 @@ export function PropertiesClient({
         </div>
       </header>
       <MarketsComingSoonNote className="mt-2" />
+      <div className="mt-3">
+        <IdxComplianceNotice compact />
+      </div>
       <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
         {(["All", "Available", "Pending", "Sold"] as const).map((f) => (
           <button
@@ -236,6 +240,24 @@ export function PropertiesClient({
             Array.isArray(rawPhotos) && typeof rawPhotos[0] === "string"
               ? rawPhotos[0]
               : null;
+          const snapshot =
+            p.snapshot && typeof p.snapshot === "object"
+              ? (p.snapshot as Record<string, unknown>)
+              : null;
+          const snapshotOffice =
+            snapshot?.listingOffice &&
+            typeof snapshot.listingOffice === "object"
+              ? (snapshot.listingOffice as Record<string, unknown>)
+              : null;
+          const listingOfficeName =
+            (typeof p.listing_office_name === "string"
+              ? p.listing_office_name
+              : null) ??
+            (typeof snapshotOffice?.name === "string" ? snapshotOffice.name : null);
+          const listDate =
+            (typeof p.list_date === "string" ? p.list_date : null) ??
+            (typeof snapshot?.listDate === "string" ? snapshot.listDate : null) ??
+            (typeof p.updated_at === "string" ? p.updated_at : null);
           const addressLabel = String(p.address ?? "Property");
           return (
             <div key={id}>
@@ -252,6 +274,8 @@ export function PropertiesClient({
                   matchCount={matchCount}
                   topMatches={topMatches}
                   photoUrl={photoUrl}
+                  listingOfficeName={listingOfficeName}
+                  listDate={listDate}
                   onFindMatches={() => findMatches(id)}
                   onNotifyAll={() => notifyAll(id)}
                 />

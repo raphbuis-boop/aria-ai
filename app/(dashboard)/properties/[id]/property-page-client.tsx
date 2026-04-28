@@ -1,6 +1,7 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useToast } from "@/components/ToastProvider";
@@ -272,6 +273,12 @@ export function PropertyPageClient({
         {listing.postalCode ?? ""}
         {listing.mlsNumber ? ` · MLS ${listing.mlsNumber}` : ""}
       </p>
+      <div className="mt-3">
+        <IdxComplianceNotice
+          lastUpdated={listing.listDate ?? null}
+          brokerageName={listing.listingOffice?.name ?? null}
+        />
+      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-[13px]">
         <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">

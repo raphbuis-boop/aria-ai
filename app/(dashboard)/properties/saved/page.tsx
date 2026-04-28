@@ -1,6 +1,7 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { fmtMoney } from "@/lib/utils";
 import { Bookmark } from "lucide-react";
 import Link from "next/link";
@@ -13,6 +14,11 @@ type SavedRow = {
   price: number | null;
   photo_url: string | null;
   saved_at: string;
+  updated_at?: string | null;
+  snapshot?: {
+    listDate?: string | null;
+    listingOffice?: { name?: string | null } | null;
+  } | null;
 };
 
 export default function SavedPropertiesPage() {
@@ -43,6 +49,9 @@ export default function SavedPropertiesPage() {
       <p className="mt-1 text-[13px] text-text-dim">
         Saved MLS listings — tap to open full detail.
       </p>
+      <div className="mt-3">
+        <IdxComplianceNotice compact />
+      </div>
 
       {loading ? (
         <p className="mt-8 text-center text-[13px] text-text-dim">Loading…</p>
@@ -87,6 +96,18 @@ export default function SavedPropertiesPage() {
                       {fmtMoney(r.price)}
                     </p>
                   ) : null}
+                  <p className="mt-1 text-[11px] text-text-dim">
+                    Listing brokerage:{" "}
+                    {r.snapshot?.listingOffice?.name ?? "N/A"}
+                  </p>
+                  <p className="mt-1 text-[11px] text-text-dim">
+                    Last updated:{" "}
+                    {r.snapshot?.listDate
+                      ? new Date(r.snapshot.listDate).toLocaleString()
+                      : r.updated_at
+                        ? new Date(r.updated_at).toLocaleString()
+                        : "N/A"}
+                  </p>
                 </div>
               </Link>
             </li>

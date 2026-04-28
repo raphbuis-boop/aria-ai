@@ -1,6 +1,7 @@
 "use client";
 
 import { MatchClientsModal } from "@/components/MatchClientsModal";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { useToast } from "@/components/ToastProvider";
 import {
   summarizeListingCoverage,
@@ -322,6 +323,10 @@ export function MlsSearchClient() {
         ) : null}
       </header>
 
+      <div className="mt-3">
+        <IdxComplianceNotice />
+      </div>
+
       {listings.length > 0 ? (
         <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[11px] leading-relaxed text-text-muted">
           <span className="font-semibold text-text-primary">Coverage: </span>
@@ -542,6 +547,13 @@ export function MlsSearchClient() {
               <div className="mt-3 text-[12px] text-text-muted">
                 {l.beds} bd · {l.baths} ba ·{" "}
                 {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
+              </div>
+              <div className="mt-2 text-[11px] text-text-dim">
+                Listing brokerage: {l.listingOffice?.name ?? "N/A"}
+              </div>
+              <div className="mt-1 text-[11px] text-text-dim">
+                Last updated:{" "}
+                {l.listDate ? new Date(l.listDate).toLocaleString() : "N/A"}
               </div>
               {l.daysOnMarket != null ? (
                 <div className="mt-2 inline-block rounded-[8px] bg-bg-deep px-2 py-1 text-[11px] text-text-dim">

@@ -15,6 +15,8 @@ export function PropertyCard({
   matchCount,
   topMatches,
   photoUrl,
+  listingOfficeName,
+  listDate,
   onFindMatches,
   onNotifyAll,
 }: {
@@ -29,6 +31,8 @@ export function PropertyCard({
   matchCount: number;
   topMatches?: MatchSummary[];
   photoUrl?: string | null;
+  listingOfficeName?: string | null;
+  listDate?: string | null;
   onFindMatches: () => void;
   onNotifyAll: () => void;
 }) {
@@ -56,6 +60,12 @@ export function PropertyCard({
       <div className="mt-2 text-[13px] text-accent-blue">
         {beds ?? "—"} bd · {baths ?? "—"} ba · {sqft != null ? `${sqft.toLocaleString()} sqft` : "—"}{" "}
         · {fmtMoney(price)}
+      </div>
+      <div className="mt-1 text-[11px] text-text-dim">
+        Listing brokerage: {listingOfficeName ?? "N/A"}
+      </div>
+      <div className="mt-1 text-[11px] text-text-dim">
+        Last updated: {listDate ? new Date(listDate).toLocaleString() : "N/A"}
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         {topMatches && topMatches.length ? (
