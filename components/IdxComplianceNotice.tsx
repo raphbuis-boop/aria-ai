@@ -1,4 +1,3 @@
-import Image from "next/image";
 import {
   EQUAL_HOUSING_DISCLOSURE,
   IDX_DISCLAIMER_TEXT,
@@ -19,11 +18,10 @@ export function IdxComplianceNotice({
         compact ? "text-[10px]" : "text-[11px]"
       }`}
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src="/njmls-logo.png"
         alt="New Jersey Multiple Listing Service"
-        width={120}
-        height={32}
         className="mb-2 h-8 w-auto"
       />
       <p>{IDX_DISCLAIMER_TEXT}</p>

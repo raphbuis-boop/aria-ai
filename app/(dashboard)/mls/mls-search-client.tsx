@@ -336,7 +336,7 @@ export function MlsSearchClient() {
       ) : null}
 
       <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-center text-[12px] text-text-dim">
-        <span className="font-medium text-accent-blue">NY &amp; CT listings</span>{" "}
+        <span className="font-medium text-accent-blue">NY &amp; CT</span>{" "}
         coming soon
       </div>
 
