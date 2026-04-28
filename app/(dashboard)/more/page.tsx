@@ -27,9 +27,9 @@ const sections: { title: string; items: Entry[] }[] = [
     title: "Properties",
     items: [
       {
-        href: "/mls",
-        label: "MLS Search",
-        desc: "Live NJ MLS listings — search, match, share",
+        href: "/listings",
+        label: "Property Search",
+        desc: "Live NJ listings — search, match, share",
         Icon: Search,
       },
       {
@@ -41,7 +41,7 @@ const sections: { title: string; items: Entry[] }[] = [
       {
         href: "/properties/saved",
         label: "Watchlist",
-        desc: "Bookmarked MLS listings",
+        desc: "Bookmarked listings",
         Icon: Bookmark,
       },
     ],

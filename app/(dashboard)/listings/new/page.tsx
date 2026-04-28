@@ -187,7 +187,7 @@ export default function NewListingPage() {
           {suite ? (
             <div className="space-y-3">
               <div className="rounded-[14px] border border-border-card bg-bg-card p-3 text-[13px] text-text-secondary">
-                <div className="text-[11px] text-text-dim">MLS</div>
+                <div className="text-[11px] text-text-dim">Listing description</div>
                 {suite.mls_description}
                 <button
                   type="button"

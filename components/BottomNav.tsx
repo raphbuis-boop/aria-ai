@@ -38,10 +38,10 @@ const moreLinks: { href: string; label: string; Icon: LucideIcon; desc: string }
     desc: "Kanban board — drag clients between stages",
   },
   {
-    href: "/mls",
+    href: "/listings",
     label: "Properties",
     Icon: Building2,
-    desc: "Live NJ MLS search and matches",
+    desc: "Live NJ property search and matches",
   },
   {
     href: "/market-pulse",
@@ -89,8 +89,8 @@ const quickActions: { href: string; label: string; Icon: LucideIcon; hint: strin
     hint: "Capture a new lead",
   },
   {
-    href: "/mls",
-    label: "Search MLS",
+    href: "/listings",
+    label: "Property Search",
     Icon: Search,
     hint: "Live NJ listings",
   },
@@ -187,10 +187,10 @@ export function BottomNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
-  // "/mls" has its own pill now, so exclude it from the "More" active state.
+  // "/listings" has its own pill now, so exclude it from the "More" active state.
   const moreActive =
     isActive("/more") ||
-    moreLinks.some((m) => m.href !== "/mls" && isActive(m.href));
+    moreLinks.some((m) => m.href !== "/listings" && isActive(m.href));
 
   return (
     <>
@@ -236,10 +236,10 @@ export function BottomNav() {
             active={isActive("/clients")}
           />
           <PillItem
-            href="/mls"
-            label="MLS"
+            href="/listings"
+            label="Search"
             Icon={Building2}
-            active={isActive("/mls") || isActive("/properties")}
+            active={isActive("/listings") || isActive("/mls") || isActive("/properties")}
           />
           <PillItem
             href="/more"

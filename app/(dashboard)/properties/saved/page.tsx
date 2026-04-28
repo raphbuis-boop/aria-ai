@@ -39,7 +39,7 @@ export default function SavedPropertiesPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <BackButton href="/mls" label="MLS Search" className="mb-4" />
+      <BackButton href="/listings" label="Property Search" className="mb-4" />
       <div className="flex items-center gap-2">
         <Bookmark className="text-accent-blue" size={22} />
         <h1 className="text-[20px] font-semibold text-text-primary">
@@ -47,7 +47,7 @@ export default function SavedPropertiesPage() {
         </h1>
       </div>
       <p className="mt-1 text-[13px] text-text-dim">
-        Saved MLS listings — tap to open full detail.
+        Saved listings — tap to open full detail.
       </p>
       <div className="mt-3">
         <IdxComplianceNotice compact />
@@ -58,8 +58,8 @@ export default function SavedPropertiesPage() {
       ) : rows.length === 0 ? (
         <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
           No saved listings yet.{" "}
-          <Link href="/mls" className="font-medium text-accent-blue">
-            Browse MLS →
+          <Link href="/listings" className="font-medium text-accent-blue">
+            Browse listings →
           </Link>
         </div>
       ) : (
@@ -89,7 +89,7 @@ export default function SavedPropertiesPage() {
                     {r.address ?? "Listing"}
                   </p>
                   <p className="text-[11px] text-text-dim">
-                    {r.town ?? ""} · MLS {r.mls_number}
+                    {r.town ?? ""} · Listing #{r.mls_number}
                   </p>
                   {r.price != null ? (
                     <p className="mt-1 text-[13px] font-medium text-accent-blue">

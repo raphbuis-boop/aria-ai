@@ -121,7 +121,7 @@ export function MlsSearchClient() {
     if (propertyType.trim()) q.set("propertyType", propertyType.trim());
     if (status.trim()) q.set("status", status.trim());
     if (sortKey.trim()) q.set("sort", sortKey.trim());
-    router.replace(`/mls?${q.toString()}`, { scroll: false });
+    router.replace(`/listings?${q.toString()}`, { scroll: false });
   }, [
     city,
     minPrice,
@@ -292,7 +292,7 @@ export function MlsSearchClient() {
 
   const returnToParam = useMemo(() => {
     const q = searchParams.toString();
-    return encodeURIComponent(q ? `/mls?${q}` : "/mls");
+    return encodeURIComponent(q ? `/listings?${q}` : "/listings");
   }, [searchParams]);
 
   return (
@@ -313,10 +313,10 @@ export function MlsSearchClient() {
       </div>
       <header>
         <div className="text-[20px] font-medium text-text-primary">
-          MLS Search
+          Property Search
         </div>
         <div className="text-[13px] text-text-dim">
-          Live MLS listings (SimplyRETS)
+          Live property listings
         </div>
         {showingLine ? (
           <p className="mt-2 text-[12px] text-text-muted">{showingLine}</p>
@@ -336,7 +336,7 @@ export function MlsSearchClient() {
       ) : null}
 
       <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-center text-[12px] text-text-dim">
-        <span className="font-medium text-accent-blue">NY &amp; CT MLS</span>{" "}
+        <span className="font-medium text-accent-blue">NY &amp; CT listings</span>{" "}
         coming soon
       </div>
 
@@ -539,7 +539,7 @@ export function MlsSearchClient() {
                 {l.address || "—"}
               </div>
               <div className="text-[11px] text-text-dim">
-                {l.city} · MLS {l.mlsNumber}
+                {l.city} · Listing #{l.mlsNumber}
               </div>
               <div className="mt-1 text-[14px] font-medium text-accent-blue">
                 {fmtMoney(l.price)}

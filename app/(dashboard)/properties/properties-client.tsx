@@ -186,10 +186,10 @@ export function PropertiesClient({
           </button>
           <button
             type="button"
-            onClick={() => router.push("/mls")}
+            onClick={() => router.push("/listings")}
             className="rounded-full bg-accent-blue px-3 py-[5px] text-[11px] font-semibold text-white"
           >
-            Search MLS
+            Property Search
           </button>
         </div>
       </header>
@@ -220,10 +220,10 @@ export function PropertiesClient({
             No properties match this filter. Add listings from{" "}
             <button
               type="button"
-              onClick={() => router.push("/mls")}
+              onClick={() => router.push("/listings")}
               className="font-medium text-accent-blue"
             >
-              MLS Search
+              property search
             </button>{" "}
             or use + to add manually.
           </div>

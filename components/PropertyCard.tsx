@@ -55,7 +55,7 @@ export function PropertyCard({
         </span>
       </div>
       <div className="mt-1 text-[12px] text-text-dim">
-        {town} · MLS {mls_number ?? "—"}
+        {town} · Listing #{mls_number ?? "—"}
       </div>
       <div className="mt-2 text-[13px] text-accent-blue">
         {beds ?? "—"} bd · {baths ?? "—"} ba · {sqft != null ? `${sqft.toLocaleString()} sqft` : "—"}{" "}

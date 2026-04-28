@@ -264,10 +264,10 @@ export function ClientDetail({
             <div className="rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#666680]">
               No matches yet.{" "}
               <Link
-                href="/mls"
+                href="/listings"
                 className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
               >
-                Browse MLS →
+                Browse listings →
               </Link>
             </div>
           ) : (
@@ -317,10 +317,10 @@ export function ClientDetail({
           {matches.length > 0 ? (
             <div className="mt-3 text-right">
               <Link
-                href="/mls"
+                href="/listings"
                 className="text-[11.5px] font-semibold text-[#6f9bff]"
               >
-                Find more in MLS →
+                Find more listings →
               </Link>
             </div>
           ) : null}

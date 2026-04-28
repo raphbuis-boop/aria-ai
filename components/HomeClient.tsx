@@ -346,7 +346,7 @@ export function HomeClient({
             ["Log Showing", "/showings"],
             ["New Listing", "/listings/new"],
             ["Properties", "/properties"],
-            ["MLS Search", "/mls"],
+            ["Property Search", "/listings"],
             ["Market Pulse", "/market-pulse"],
             ["New Referral", "/referrals"],
           ].map(([label, href]) => (

@@ -270,7 +270,7 @@ export function MobileAppClient({
 
             <div className="mt-4 grid grid-cols-2 gap-2.5">
               <Link
-                href="/mls"
+                href="/listings"
                 className="flex touch-manipulation items-center gap-3 rounded-[16px] border-[0.5px] border-[#2a3a6e] bg-gradient-to-br from-[#0e1428] to-[#111230] px-4 py-[14px] active:border-[#4f7bff]"
               >
                 <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[12px] bg-[#4f7bff]/15 text-[#6f9bff]">
@@ -278,7 +278,7 @@ export function MobileAppClient({
                 </span>
                 <div className="min-w-0">
                   <div className="text-[13px] font-semibold leading-tight text-[#f0eee8]">
-                    Browse MLS
+                    Browse listings
                   </div>
                   <div className="mt-0.5 text-[11px] leading-tight text-[#666680]">
                     Live NJ listings
@@ -395,7 +395,7 @@ export function MobileAppClient({
                 Log showing
               </Link>
               <Link
-                href="/mls"
+                href="/listings"
                 className="touch-manipulation rounded-[20px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] px-[14px] py-[7px] text-xs font-medium text-[#666680] active:border-[#4f7bff]/40"
               >
                 Properties

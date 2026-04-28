@@ -48,7 +48,8 @@ export function PropertyPageClient({
   const [draftPreview, setDraftPreview] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
 
-  const backHref = returnTo && returnTo.startsWith("/") ? returnTo : "/mls";
+  const backHref =
+    returnTo && returnTo.startsWith("/") ? returnTo : "/listings";
 
   const checkSaved = useCallback(async (key: string) => {
     try {
@@ -237,7 +238,7 @@ export function PropertyPageClient({
           Listing no longer available
         </p>
         <p className="mt-2 text-[13px] text-text-muted">
-          This listing may have sold or been removed from the MLS feed.
+          This listing may have sold or been removed from the listing feed.
         </p>
         <div className="mt-6">
           <BackButton href={backHref} label="Back to search" />
@@ -255,7 +256,7 @@ export function PropertyPageClient({
           href={`/properties/${encodeURIComponent(listing.mlsNumber)}`}
           className="mb-3 block rounded-[10px] border border-accent-blue/30 bg-accent-blue/10 px-3 py-2 text-center text-[12px] font-semibold text-accent-blue"
         >
-          Open live MLS detail (refresh from feed) →
+          Open live listing detail (refresh from feed) →
         </Link>
       ) : null}
 
@@ -271,7 +272,7 @@ export function PropertyPageClient({
         {listing.city}
         {listing.state ? `, ${listing.state}` : ""}{" "}
         {listing.postalCode ?? ""}
-        {listing.mlsNumber ? ` · MLS ${listing.mlsNumber}` : ""}
+        {listing.mlsNumber ? ` · Listing #${listing.mlsNumber}` : ""}
       </p>
       <div className="mt-3">
         <IdxComplianceNotice

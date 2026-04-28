@@ -64,7 +64,7 @@ export async function GET(
       return NextResponse.json(
         {
           error:
-            "Could not reach the MLS service. Check your connection and try again.",
+            "Could not reach the listing service. Check your connection and try again.",
         },
         { status: 502 },
       );
