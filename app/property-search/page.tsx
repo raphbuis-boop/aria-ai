@@ -1,4 +1,5 @@
 import { MlsSearchClient } from "@/app/(dashboard)/mls/mls-search-client";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { BROKERAGE_NAME } from "@/lib/compliance";
 import type { Metadata } from "next";
 import { Suspense } from "react";
@@ -20,6 +21,12 @@ export default function PropertySearchPage() {
         <p className="mt-1 text-[13px] text-text-dim md:text-[14px]">
           Property Search · powered by Aria
         </p>
+      </div>
+      <div className="mx-auto max-w-lg px-4 pt-4">
+        <IdxComplianceNotice
+          logoSize="prominent"
+          includeAgentAttribution={false}
+        />
       </div>
       <Suspense
         fallback={

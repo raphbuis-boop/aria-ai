@@ -130,7 +130,7 @@ export function BbaTemplatesSection() {
   }
 
   return (
-    <div className="mt-8">
+    <div id="bba-templates" className="mt-8 scroll-mt-6">
       <div className="flex items-center justify-between">
         <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
           BBA Templates

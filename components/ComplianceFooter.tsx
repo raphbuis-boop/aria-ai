@@ -9,7 +9,12 @@ import {
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import Link from "next/link";
 
-export function ComplianceFooter() {
+export function ComplianceFooter({
+  includeIdxNotice = true,
+}: {
+  /** When false, brokerage + policies only (IDX block already on page). */
+  includeIdxNotice?: boolean;
+} = {}) {
   const policyLinks = [
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
@@ -39,9 +44,11 @@ export function ComplianceFooter() {
           <p className="text-[12px] text-text-dim">
             {BROKERAGE_ADDRESS} · {BROKERAGE_PHONE}
           </p>
-          <div className="pt-2">
-            <IdxComplianceNotice compact />
-          </div>
+          {includeIdxNotice ? (
+            <div className="pt-2">
+              <IdxComplianceNotice compact />
+            </div>
+          ) : null}
         </div>
 
         <div>

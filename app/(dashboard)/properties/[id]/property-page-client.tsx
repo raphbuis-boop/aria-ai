@@ -2,6 +2,7 @@
 
 import { BackButton } from "@/components/BackButton";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
+import { ListingInquiryForm } from "@/components/ListingInquiryForm";
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useToast } from "@/components/ToastProvider";
@@ -108,11 +109,19 @@ export function PropertyPageClient({
           credentials: "include",
           cache: "no-store",
         });
-        const data = (await res.json()) as {
+        let data: {
           listing?: MlsListingPayload;
           error?: string;
           code?: string;
         };
+        try {
+          data = (await res.json()) as typeof data;
+        } catch {
+          if (!cancelled) {
+            setLoadError("Invalid response from listing service.");
+          }
+          return;
+        }
         if (!res.ok) {
           if (res.status === 404 || data.code === "LISTING_GONE") {
             if (!cancelled) setNotFound(true);
@@ -123,7 +132,15 @@ export function PropertyPageClient({
           if (!cancelled) setLoadError(msg);
           return;
         }
-        if (!cancelled && data.listing) {
+        if (!data.listing) {
+          if (!cancelled) {
+            setLoadError(
+              data.error ?? "Listing data was unavailable. Please try again.",
+            );
+          }
+          return;
+        }
+        if (!cancelled) {
           setListing(data.listing);
           if (viewerContext !== "public") {
             const key = data.listing.mlsNumber || data.listing.id;
@@ -220,7 +237,10 @@ export function PropertyPageClient({
       return (
         <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
           <BackButton href={backHref} label="Back" className="mb-4" />
-          <IdxComplianceNotice />
+          <IdxComplianceNotice
+            logoSize="prominent"
+            includeAgentAttribution={false}
+          />
           <div className="mt-10 flex justify-center text-text-dim">
             <Loader2 className="animate-spin" size={28} />
           </div>
@@ -240,7 +260,10 @@ export function PropertyPageClient({
         <BackButton href={backHref} label="Back" className="mb-6" />
         {viewerContext === "public" ? (
           <div className="mb-4">
-            <IdxComplianceNotice />
+            <IdxComplianceNotice
+              logoSize="prominent"
+              includeAgentAttribution={false}
+            />
           </div>
         ) : null}
         <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-6 text-center">
@@ -261,7 +284,10 @@ export function PropertyPageClient({
         <BackButton href={backHref} label="Back to search" className="mb-6 inline-block" />
         {viewerContext === "public" ? (
           <div className="mb-4 text-left">
-            <IdxComplianceNotice />
+            <IdxComplianceNotice
+              logoSize="prominent"
+              includeAgentAttribution={false}
+            />
           </div>
         ) : null}
         <p className="text-[15px] font-medium text-text-primary">
@@ -277,7 +303,7 @@ export function PropertyPageClient({
   return (
     <div
       className={`mx-auto max-w-lg px-4 pt-6 ${
-        viewerContext === "agent" ? "pb-32" : "pb-8"
+        viewerContext === "agent" ? "pb-32" : "pb-14"
       }`}
     >
       <BackButton href={backHref} label="Back" className="mb-4" />
@@ -286,6 +312,8 @@ export function PropertyPageClient({
         <IdxComplianceNotice
           lastUpdated={listing.listDate ?? null}
           brokerageName={listing.listingFirm?.name ?? null}
+          logoSize={viewerContext === "public" ? "prominent" : "default"}
+          includeAgentAttribution={viewerContext !== "public"}
         />
       </div>
 
@@ -528,12 +556,11 @@ export function PropertyPageClient({
           </div>
         </div>
       ) : (
-        <div className="mx-auto mt-8 max-w-lg px-4 pb-10 text-center text-[13px] text-text-dim">
-          <Link href="/login" className="font-medium text-accent-blue">
-            Sign in
-          </Link>{" "}
-          to save listings, match clients, and use agent tools in Aria.
-        </div>
+        <ListingInquiryForm
+          listingId={listing.mlsNumber || listing.id}
+          listingAddress={fullAddress}
+          mlsNumber={listing.mlsNumber ?? null}
+        />
       )}
 
       {viewerContext === "agent" ? (

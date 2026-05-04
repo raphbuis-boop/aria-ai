@@ -24,7 +24,6 @@ export const NJ_TOWN_OPTIONS = [
   "Chatham",
   "Millburn",
   "South Orange",
-  "Fort Lee",
   "Edgewater",
   "Englewood",
   "Tenafly",
@@ -82,13 +81,12 @@ const RAW_ADJACENCY: Record<string, string[]> = {
   "Fair Lawn": ["Glen Rock", "Ridgewood", "Paramus", "Clifton"],
   Paramus: ["Ridgewood", "Fair Lawn", "Glen Rock", "Hackensack", "River Edge"],
   Tenafly: ["Englewood", "Cresskill", "Demarest", "Alpine"],
-  Englewood: ["Tenafly", "Cresskill", "Fort Lee", "Edgewater"],
+  Englewood: ["Tenafly", "Cresskill", "Edgewater"],
   Cresskill: ["Tenafly", "Demarest", "Englewood"],
   Demarest: ["Cresskill", "Haworth", "Tenafly"],
   Haworth: ["Demarest", "Cresskill"],
   Alpine: ["Tenafly", "Cresskill"],
-  "Fort Lee": ["Edgewater", "Englewood"],
-  Edgewater: ["Fort Lee", "Cliffside Park"],
+  Edgewater: ["Englewood", "Cliffside Park"],
 
   // Hudson County
   Hoboken: ["Jersey City", "Weehawken"],

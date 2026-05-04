@@ -13,6 +13,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
 export type DocumentRow = {
@@ -132,6 +133,17 @@ export function ContractsSection({ clientId }: { clientId: string }) {
           </button>
         }
       >
+        <p className="mb-3 text-[11px] leading-relaxed text-[#666680]">
+          Per-client PDFs (including a signed or draft BBA) live here. Your
+          default PDF for BBA signing links is managed in{" "}
+          <Link
+            href="/settings#bba-templates"
+            className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+          >
+            Settings → BBA Templates
+          </Link>
+          .
+        </p>
         {loading ? (
           <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4 text-center text-[12px] text-[#555570]">
             Loading documents…

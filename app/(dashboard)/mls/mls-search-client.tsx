@@ -321,9 +321,11 @@ export function MlsSearchClient({
           </Link>
         </div>
       ) : null}
-      <div className="mt-3">
-        <IdxComplianceNotice />
-      </div>
+      {variant === "member" ? (
+        <div className="mt-3">
+          <IdxComplianceNotice />
+        </div>
+      ) : null}
       <header className="mt-3">
         <div className="text-[20px] font-medium text-text-primary">
           Property Search

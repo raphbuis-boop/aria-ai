@@ -240,6 +240,16 @@ export function BbaSection({
                 NJ / NAR settlement rule. Text the signing link to{" "}
                 {clientName.split(" ")[0]} so they can sign on their phone.
               </p>
+              <p className="mt-2 text-[11px] text-[#666680]">
+                Default PDF for links:{" "}
+                <Link
+                  href="/settings#bba-templates"
+                  className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+                >
+                  BBA Templates
+                </Link>{" "}
+                in Settings.
+              </p>
             </div>
           </div>
           {templateSelector}
