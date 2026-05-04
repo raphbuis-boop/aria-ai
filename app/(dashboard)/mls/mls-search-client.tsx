@@ -2,6 +2,7 @@
 
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
+import { NJMLS_IDX_LOGO_PATH } from "@/lib/compliance";
 import { useToast } from "@/components/ToastProvider";
 import {
   summarizeListingCoverage,
@@ -70,10 +71,10 @@ function buildListingsQuery(sp: URLSearchParams): string {
 }
 
 export function MlsSearchClient({
-  variant = "agent",
+  variant = "member",
 }: {
   /** Public IDX: no CRM actions; listing detail under /property-search/[id]. */
-  variant?: "agent" | "public";
+  variant?: "member" | "public";
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -313,7 +314,7 @@ export function MlsSearchClient({
         variant === "public" ? "pb-16" : "pb-28"
       }`}
     >
-      {variant === "agent" ? (
+      {variant === "member" ? (
         <div className="mb-4 flex items-center justify-between gap-2">
           <Link
             href="/more"
@@ -347,16 +348,10 @@ export function MlsSearchClient({
 
       {listings.length > 0 ? (
         <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[11px] leading-relaxed text-text-muted">
-          <span className="font-semibold text-text-primary">Coverage: </span>
           {coverageLine ||
             "Areas in this result set — add town or filters to narrow."}
         </div>
       ) : null}
-
-      <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-center text-[12px] text-text-dim">
-        <span className="font-medium text-accent-blue">NY &amp; CT</span>{" "}
-        coming soon
-      </div>
 
       <div className="mt-5 flex flex-wrap gap-2">
         <input
@@ -509,6 +504,24 @@ export function MlsSearchClient({
         </div>
       ) : null}
 
+      {variant === "public" && listings.length > 0 ? (
+        <div
+          aria-hidden={false}
+          className="mt-5 flex items-center gap-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={NJMLS_IDX_LOGO_PATH}
+            alt=""
+            className="h-10 w-auto shrink-0"
+          />
+          <p className="text-[10px] leading-snug text-text-muted">
+            NJMLS Internet Data Exchange listings below. Legal disclaimer and fair
+            housing notice appear above and in the site footer.
+          </p>
+        </div>
+      ) : null}
+
       <div className="mt-6 grid gap-3">
         {listings.map((l) => {
           const photo = l.photos?.[0];
@@ -547,7 +560,7 @@ export function MlsSearchClient({
                     No photo
                   </div>
                 )}
-                {variant === "agent" && saved ? (
+                {variant === "member" && saved ? (
                   <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-accent-blue">
                     <Bookmark size={16} fill="currentColor" />
                   </span>
@@ -567,7 +580,7 @@ export function MlsSearchClient({
                 {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
               </div>
               <div className="mt-2 text-[11px] text-text-dim">
-                Listing brokerage: {l.listingOffice?.name ?? "N/A"}
+                Listing brokerage: {l.listingFirm?.name ?? "N/A"}
               </div>
               <div className="mt-1 text-[11px] text-text-dim">
                 Last updated:{" "}
@@ -578,7 +591,7 @@ export function MlsSearchClient({
                   {l.daysOnMarket} days on market
                 </div>
               ) : null}
-              {variant === "agent" ? (
+              {variant === "member" ? (
                 <div
                   className="mt-3 flex flex-wrap gap-2"
                   onClick={(e) => e.stopPropagation()}
@@ -616,7 +629,7 @@ export function MlsSearchClient({
         </div>
       ) : null}
 
-      {variant === "agent" ? (
+      {variant === "member" ? (
         <Link
           href="/properties"
           className="mt-6 inline-block text-[12px] font-medium text-accent-blue"
@@ -625,7 +638,7 @@ export function MlsSearchClient({
         </Link>
       ) : (
         <p className="mt-6 text-center text-[12px] text-text-dim">
-          Agents:{" "}
+          Have an account?{" "}
           <Link href="/login" className="font-medium text-accent-blue">
             Sign in
           </Link>{" "}
@@ -633,7 +646,7 @@ export function MlsSearchClient({
         </p>
       )}
 
-      {variant === "agent" ? (
+      {variant === "member" ? (
         <MatchClientsModal
           open={matchListing !== null}
           onClose={() => setMatchListing(null)}

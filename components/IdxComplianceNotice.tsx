@@ -1,6 +1,7 @@
 import {
   EQUAL_HOUSING_DISCLOSURE,
   getIdxDisclaimerText,
+  NJMLS_IDX_LOGO_PATH,
 } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
@@ -20,7 +21,7 @@ export function IdxComplianceNotice({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/IDX_logo.JPG"
+        src={NJMLS_IDX_LOGO_PATH}
         alt="New Jersey Multiple Listing Service"
         className="h-10 w-auto mb-2"
       />

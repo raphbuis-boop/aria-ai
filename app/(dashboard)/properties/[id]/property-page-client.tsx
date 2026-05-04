@@ -288,7 +288,7 @@ export function PropertyPageClient({
       <div className="mt-3">
         <IdxComplianceNotice
           lastUpdated={listing.listDate ?? null}
-          brokerageName={listing.listingOffice?.name ?? null}
+          brokerageName={listing.listingFirm?.name ?? null}
         />
       </div>
 
@@ -377,35 +377,35 @@ export function PropertyPageClient({
         </div>
       ) : null}
 
-      {listing.listingAgent?.name || listing.listingOffice?.name ? (
+      {listing.listingRepresentative?.name || listing.listingFirm?.name ? (
         <div className="mt-5 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
           <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
-            Listing agent
+            Listed with
           </p>
           <p className="mt-1 text-[13px] font-medium text-text-primary">
-            {listing.listingAgent?.name ?? "—"}
+            {listing.listingRepresentative?.name ?? "—"}
           </p>
-          {listing.listingAgent?.phone ? (
+          {listing.listingRepresentative?.phone ? (
             <a
-              href={`tel:${listing.listingAgent.phone}`}
+              href={`tel:${listing.listingRepresentative.phone}`}
               className="mt-1 block text-[13px] text-accent-blue"
             >
-              {listing.listingAgent.phone}
+              {listing.listingRepresentative.phone}
             </a>
           ) : null}
-          {listing.listingAgent?.email ? (
+          {listing.listingRepresentative?.email ? (
             <a
-              href={`mailto:${listing.listingAgent.email}`}
+              href={`mailto:${listing.listingRepresentative.email}`}
               className="mt-1 block text-[13px] text-accent-blue"
             >
-              {listing.listingAgent.email}
+              {listing.listingRepresentative.email}
             </a>
           ) : null}
-          {listing.listingOffice?.name ? (
+          {listing.listingFirm?.name ? (
             <p className="mt-2 text-[12px] text-text-dim">
-              {listing.listingOffice.name}
-              {listing.listingOffice.phone
-                ? ` · ${listing.listingOffice.phone}`
+              {listing.listingFirm.name}
+              {listing.listingFirm.phone
+                ? ` · ${listing.listingFirm.phone}`
                 : ""}
             </p>
           ) : null}

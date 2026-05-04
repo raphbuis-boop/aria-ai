@@ -1,5 +1,10 @@
 import { MlsSearchClient } from "@/app/(dashboard)/mls/mls-search-client";
-import { BROKERAGE_NAME } from "@/lib/compliance";
+import {
+  AGENT_LICENSE,
+  AGENT_NAME,
+  BROKERAGE_LICENSE,
+  BROKERAGE_NAME,
+} from "@/lib/compliance";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -15,8 +20,12 @@ export default function PropertySearchPage() {
         <p className="text-[22px] font-semibold leading-tight text-text-primary md:text-[26px]">
           {BROKERAGE_NAME}
         </p>
-        <p className="mt-1 text-[13px] text-text-dim">
-          Property Search · powered by Aria
+        <p className="mt-2 text-[12px] text-text-primary md:text-[13px]">
+          {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE} · {AGENT_NAME}, NJ License #
+          {AGENT_LICENSE}
+        </p>
+        <p className="mt-1 text-[11px] text-text-muted">
+          Property listing search (technology partner: Aria)
         </p>
       </div>
       <Suspense

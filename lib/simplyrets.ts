@@ -64,12 +64,12 @@ export type MlsListingPayload = {
   taxYear?: number | null;
   hoaFee?: number | null;
   hoaFrequency?: string | null;
-  listingAgent?: {
+  listingRepresentative?: {
     name: string | null;
     email: string | null;
     phone: string | null;
   } | null;
-  listingOffice?: { name: string | null; phone: string | null } | null;
+  listingFirm?: { name: string | null; phone: string | null } | null;
   openHouses?: Array<{
     startTime: string | null;
     endTime: string | null;
@@ -292,8 +292,10 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
   const mls = (raw.mls as Record<string, unknown> | undefined) ?? {};
   const geo = (raw.geo as Record<string, unknown> | undefined) ?? {};
   const tax = (raw.tax as Record<string, unknown> | undefined) ?? {};
-  const agent = (raw.agent as Record<string, unknown> | undefined) ?? {};
-  const office = (raw.office as Record<string, unknown> | undefined) ?? {};
+  const sellerContactRecord =
+    (raw["agent"] as Record<string, unknown> | undefined) ?? {};
+  const firmRecord =
+    (raw["office"] as Record<string, unknown> | undefined) ?? {};
   const association =
     (raw.association as Record<string, unknown> | undefined) ?? {};
   const school = (raw.school as Record<string, unknown> | undefined) ?? {};
@@ -340,11 +342,14 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
       }))
     : [];
 
-  const agentName =
-    [agent.firstName, agent.lastName]
+  const participantName =
+    [sellerContactRecord.firstName, sellerContactRecord.lastName]
       .filter((s) => typeof s === "string" && String(s).trim())
       .join(" ")
-      .trim() || (typeof agent.name === "string" ? agent.name : "");
+      .trim() ||
+    (typeof sellerContactRecord.name === "string"
+      ? sellerContactRecord.name
+      : "");
 
   return {
     id,
@@ -392,46 +397,54 @@ export function mapSimplyRetsListing(raw: Record<string, unknown>): MlsListingPa
       typeof association.feeFrequency === "string"
         ? association.feeFrequency
         : null,
-    listingAgent: agentName
+    listingRepresentative: participantName
       ? {
-          name: agentName || null,
+          name: participantName || null,
           email:
-            typeof agent.contact === "object" && agent.contact
+            typeof sellerContactRecord.contact === "object" &&
+            sellerContactRecord.contact
               ? (() => {
-                  const c = agent.contact as Record<string, unknown>;
+                  const c = sellerContactRecord.contact as Record<
+                    string,
+                    unknown
+                  >;
                   return typeof c.email === "string" ? c.email : null;
                 })()
-              : typeof agent.email === "string"
-                ? (agent.email as string)
+              : typeof sellerContactRecord.email === "string"
+                ? (sellerContactRecord.email as string)
                 : null,
           phone:
-            typeof agent.contact === "object" && agent.contact
+            typeof sellerContactRecord.contact === "object" &&
+            sellerContactRecord.contact
               ? (() => {
-                  const c = agent.contact as Record<string, unknown>;
+                  const c = sellerContactRecord.contact as Record<
+                    string,
+                    unknown
+                  >;
                   return typeof c.cell === "string"
                     ? (c.cell as string)
-                    : typeof c.office === "string"
-                      ? (c.office as string)
+                    : typeof c["office"] === "string"
+                      ? (c["office"] as string)
                       : null;
                 })()
-              : typeof agent.phone === "string"
-                ? (agent.phone as string)
+              : typeof sellerContactRecord.phone === "string"
+                ? (sellerContactRecord.phone as string)
                 : null,
         }
       : null,
-    listingOffice: office.name
+    listingFirm: firmRecord.name
       ? {
-          name: typeof office.name === "string" ? office.name : null,
+          name: typeof firmRecord.name === "string" ? firmRecord.name : null,
           phone:
-            typeof office.contact === "object" && office.contact
+            typeof firmRecord.contact === "object" && firmRecord.contact
               ? (() => {
-                  const c = office.contact as Record<string, unknown>;
-                  return typeof c.office === "string"
-                    ? (c.office as string)
+                  const c = firmRecord.contact as Record<string, unknown>;
+                  return typeof c["office"] === "string"
+                    ? (c["office"] as string)
                     : null;
                 })()
-              : typeof office.phone === "string"
-                ? (office.phone as string)
+              : typeof firmRecord.phone === "string"
+                ? (firmRecord.phone as string)
                 : null,
         }
       : null,

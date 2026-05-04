@@ -5,8 +5,8 @@ import {
   BROKERAGE_LICENSE,
   BROKERAGE_NAME,
   BROKERAGE_PHONE,
-  EQUAL_HOUSING_DISCLOSURE,
 } from "@/lib/compliance";
+import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import Link from "next/link";
 
 export function ComplianceFooter() {
@@ -23,21 +23,25 @@ export function ComplianceFooter() {
   return (
     <footer className="border-t border-border-card bg-bg-card/80 px-4 py-5 text-[12px] text-text-dim">
       <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
-        <div className="space-y-1">
-          <p className="text-[16px] font-semibold text-text-primary md:text-[17px]">
+        <div className="space-y-2">
+          <p className="text-[18px] font-semibold leading-tight text-text-primary md:text-[22px]">
             {BROKERAGE_NAME}
           </p>
-          <p className="text-[12px] text-text-muted">Offered through Aria</p>
-          <p>
-            {AGENT_NAME} · License {AGENT_LICENSE}
+          <p className="text-[11px] text-text-muted">
+            Property search tools offered through Aria
           </p>
-          <p>
-            Brokerage license {BROKERAGE_LICENSE}
+          <p className="text-[13px] text-text-primary">
+            {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE}
           </p>
-          <p>
+          <p className="text-[13px] text-text-primary">
+            {AGENT_NAME}, NJ License #{AGENT_LICENSE}
+          </p>
+          <p className="text-[12px] text-text-dim">
             {BROKERAGE_ADDRESS} · {BROKERAGE_PHONE}
           </p>
-          <p className="pt-1 text-[11px]">{EQUAL_HOUSING_DISCLOSURE}</p>
+          <div className="pt-2">
+            <IdxComplianceNotice compact />
+          </div>
         </div>
 
         <div>

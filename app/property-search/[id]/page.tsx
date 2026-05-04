@@ -1,5 +1,10 @@
 import { PropertyPageClient } from "@/app/(dashboard)/properties/[id]/property-page-client";
-import { BROKERAGE_NAME } from "@/lib/compliance";
+import {
+  AGENT_LICENSE,
+  AGENT_NAME,
+  BROKERAGE_LICENSE,
+  BROKERAGE_NAME,
+} from "@/lib/compliance";
 import { notFound } from "next/navigation";
 
 const UUID_RE =
@@ -24,7 +29,13 @@ export default function PublicPropertyDetailPage({
         <p className="text-[18px] font-semibold text-text-primary md:text-[22px]">
           {BROKERAGE_NAME}
         </p>
-        <p className="mt-0.5 text-[12px] text-text-dim">Listing details</p>
+        <p className="mt-1 text-[11px] text-text-primary md:text-[12px]">
+          {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE} · {AGENT_NAME}, NJ License #
+          {AGENT_LICENSE}
+        </p>
+        <p className="mt-1 text-[11px] text-text-muted">
+          Listing details (technology partner: Aria)
+        </p>
       </div>
       <PropertyPageClient
         mode="mls"
