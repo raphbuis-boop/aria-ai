@@ -31,11 +31,14 @@ export function PropertyPageClient({
   mlsId,
   internalProperty,
   returnTo,
+  viewerContext = "agent",
 }: {
   mode: "mls" | "internal";
   mlsId?: string;
   internalProperty?: Record<string, unknown>;
   returnTo: string | null;
+  /** Public IDX viewers: no CRM tools or watchlist. */
+  viewerContext?: "agent" | "public";
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -49,9 +52,14 @@ export function PropertyPageClient({
   const [drafting, setDrafting] = useState(false);
 
   const backHref =
-    returnTo && returnTo.startsWith("/") ? returnTo : "/listings";
+    returnTo && returnTo.startsWith("/")
+      ? returnTo
+      : viewerContext === "public"
+        ? "/property-search"
+        : "/listings";
 
   const checkSaved = useCallback(async (key: string) => {
+    if (viewerContext === "public") return;
     try {
       const res = await fetch("/api/saved-properties?idsOnly=1");
       if (!res.ok) return;
@@ -60,7 +68,7 @@ export function PropertyPageClient({
     } catch {
       /* ignore */
     }
-  }, []);
+  }, [viewerContext]);
 
   useEffect(() => {
     if (mode === "internal" && internalProperty) {
@@ -110,17 +118,16 @@ export function PropertyPageClient({
             return;
           }
           const msg =
-            data.error ??
-            (res.status === 401
-              ? "Please sign in again to view this listing."
-              : "Could not load this listing.");
+            data.error ?? "Could not load this listing.";
           if (!cancelled) setLoadError(msg);
           return;
         }
         if (!cancelled && data.listing) {
           setListing(data.listing);
-          const key = data.listing.mlsNumber || data.listing.id;
-          void checkSaved(key);
+          if (viewerContext !== "public") {
+            const key = data.listing.mlsNumber || data.listing.id;
+            void checkSaved(key);
+          }
         }
       } catch {
         if (!cancelled) {
@@ -135,7 +142,7 @@ export function PropertyPageClient({
     return () => {
       cancelled = true;
     };
-  }, [mode, mlsId, internalProperty, checkSaved]);
+  }, [mode, mlsId, internalProperty, checkSaved, viewerContext]);
 
   async function toggleWatchlist() {
     if (!listing) return;
@@ -248,7 +255,11 @@ export function PropertyPageClient({
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-32 pt-6">
+    <div
+      className={`mx-auto max-w-lg px-4 pt-6 ${
+        viewerContext === "agent" ? "pb-32" : "pb-8"
+      }`}
+    >
       <BackButton href={backHref} label="Back" className="mb-4" />
 
       {mode === "internal" && listing.mlsNumber ? (
@@ -438,68 +449,79 @@ export function PropertyPageClient({
         </div>
       ) : null}
 
-      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
-        <div className="mx-auto flex max-w-lg flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setMatchOpen(true)}
-            className="flex-1 min-w-[120px] rounded-[10px] bg-accent-blue px-3 py-2.5 text-[12px] font-semibold text-white"
-          >
-            Match to Clients
-          </button>
-          <button
-            type="button"
-            onClick={() => void toggleWatchlist()}
-            className={`flex-1 min-w-[100px] rounded-[10px] px-3 py-2.5 text-[12px] font-semibold ${
-              saved
-                ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
-                : "border border-border-card bg-bg-card text-text-primary"
-            }`}
-          >
-            <Bookmark
-              size={14}
-              className="mr-1 inline-block align-text-bottom"
-              fill={saved ? "currentColor" : "none"}
-            />
-            Watchlist
-          </button>
-          <button
-            type="button"
-            disabled={drafting}
-            onClick={() => void draftPropertyBlurb()}
-            className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary disabled:opacity-50"
-          >
-            <Sparkles size={14} className="mr-1 inline-block align-text-bottom" />
-            {drafting ? "…" : "AI draft"}
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              router.push(
-                `/showings?new=1&address=${encodeURIComponent(fullAddress)}`,
-              )
-            }
-            className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary"
-          >
-            <CalendarPlus size={14} className="mr-1 inline-block align-text-bottom" />
-            Showing
-          </button>
+      {viewerContext === "agent" ? (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
+          <div className="mx-auto flex max-w-lg flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setMatchOpen(true)}
+              className="flex-1 min-w-[120px] rounded-[10px] bg-accent-blue px-3 py-2.5 text-[12px] font-semibold text-white"
+            >
+              Match to Clients
+            </button>
+            <button
+              type="button"
+              onClick={() => void toggleWatchlist()}
+              className={`flex-1 min-w-[100px] rounded-[10px] px-3 py-2.5 text-[12px] font-semibold ${
+                saved
+                  ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
+                  : "border border-border-card bg-bg-card text-text-primary"
+              }`}
+            >
+              <Bookmark
+                size={14}
+                className="mr-1 inline-block align-text-bottom"
+                fill={saved ? "currentColor" : "none"}
+              />
+              Watchlist
+            </button>
+            <button
+              type="button"
+              disabled={drafting}
+              onClick={() => void draftPropertyBlurb()}
+              className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary disabled:opacity-50"
+            >
+              <Sparkles size={14} className="mr-1 inline-block align-text-bottom" />
+              {drafting ? "…" : "AI draft"}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                router.push(
+                  `/showings?new=1&address=${encodeURIComponent(fullAddress)}`,
+                )
+              }
+              className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary"
+            >
+              <CalendarPlus size={14} className="mr-1 inline-block align-text-bottom" />
+              Showing
+            </button>
+          </div>
+          <div className="mx-auto mt-2 max-w-lg text-center">
+            <Link
+              href="/properties/saved"
+              className="text-[11px] text-text-dim"
+            >
+              View watchlist
+            </Link>
+          </div>
         </div>
-        <div className="mx-auto mt-2 max-w-lg text-center">
-          <Link
-            href="/properties/saved"
-            className="text-[11px] text-text-dim"
-          >
-            View watchlist
-          </Link>
+      ) : (
+        <div className="mx-auto mt-8 max-w-lg px-4 pb-10 text-center text-[13px] text-text-dim">
+          <Link href="/login" className="font-medium text-accent-blue">
+            Sign in
+          </Link>{" "}
+          to save listings, match clients, and use agent tools in Aria.
         </div>
-      </div>
+      )}
 
-      <MatchClientsModal
-        open={matchOpen}
-        onClose={() => setMatchOpen(false)}
-        listing={listing}
-      />
+      {viewerContext === "agent" ? (
+        <MatchClientsModal
+          open={matchOpen}
+          onClose={() => setMatchOpen(false)}
+          listing={listing}
+        />
+      ) : null}
     </div>
   );
 }

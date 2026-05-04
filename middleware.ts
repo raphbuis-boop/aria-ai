@@ -55,9 +55,16 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/portal") ||
     path.startsWith("/demo") ||
     path.startsWith("/bba/sign") ||
+    path.startsWith("/property-search") ||
     path === "/login" ||
     path === "/setup" ||
     path === "/privacy" ||
+    path === "/terms" ||
+    path === "/about" ||
+    path === "/contact" ||
+    path === "/dmca" ||
+    path === "/accessibility" ||
+    path === "/fair-housing" ||
     path === "/" ||
     path === "/landing.html";
 
@@ -81,6 +88,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|JPG|gif|webp)$).*)",
   ],
 };

@@ -24,11 +24,15 @@ export function ComplianceFooter() {
     <footer className="border-t border-border-card bg-bg-card/80 px-4 py-5 text-[12px] text-text-dim">
       <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
         <div className="space-y-1">
+          <p className="text-[16px] font-semibold text-text-primary md:text-[17px]">
+            {BROKERAGE_NAME}
+          </p>
+          <p className="text-[12px] text-text-muted">Offered through Aria</p>
           <p>
             {AGENT_NAME} · License {AGENT_LICENSE}
           </p>
           <p>
-            {BROKERAGE_NAME} · Brokerage License {BROKERAGE_LICENSE}
+            Brokerage license {BROKERAGE_LICENSE}
           </p>
           <p>
             {BROKERAGE_ADDRESS} · {BROKERAGE_PHONE}

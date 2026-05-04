@@ -69,7 +69,12 @@ function buildListingsQuery(sp: URLSearchParams): string {
   return q.toString();
 }
 
-export function MlsSearchClient() {
+export function MlsSearchClient({
+  variant = "agent",
+}: {
+  /** Public IDX: no CRM actions; listing detail under /property-search/[id]. */
+  variant?: "agent" | "public";
+}) {
   const toast = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -121,7 +126,8 @@ export function MlsSearchClient() {
     if (propertyType.trim()) q.set("propertyType", propertyType.trim());
     if (status.trim()) q.set("status", status.trim());
     if (sortKey.trim()) q.set("sort", sortKey.trim());
-    router.replace(`/listings?${q.toString()}`, { scroll: false });
+    const basePath = variant === "public" ? "/property-search" : "/listings";
+    router.replace(`${basePath}?${q.toString()}`, { scroll: false });
   }, [
     city,
     minPrice,
@@ -133,6 +139,7 @@ export function MlsSearchClient() {
     status,
     sortKey,
     router,
+    variant,
   ]);
 
   const fetchPage = useCallback(
@@ -195,6 +202,7 @@ export function MlsSearchClient() {
   }, [searchParams, fetchPage]);
 
   useEffect(() => {
+    if (variant === "public") return;
     void (async () => {
       try {
         const res = await fetch("/api/saved-properties?idsOnly=1");
@@ -205,7 +213,7 @@ export function MlsSearchClient() {
         /* ignore */
       }
     })();
-  }, []);
+  }, [variant]);
 
   const loadMore = useCallback(async () => {
     if (loading || loadingMore || !hasMore || listings.length === 0) return;
@@ -292,25 +300,35 @@ export function MlsSearchClient() {
 
   const returnToParam = useMemo(() => {
     const q = searchParams.toString();
-    return encodeURIComponent(q ? `/listings?${q}` : "/listings");
-  }, [searchParams]);
+    const base = variant === "public" ? "/property-search" : "/listings";
+    return encodeURIComponent(q ? `${base}?${q}` : base);
+  }, [searchParams, variant]);
+
+  const listingDetailBase =
+    variant === "public" ? "/property-search" : "/properties";
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <div className="mb-4 flex items-center justify-between gap-2">
-        <Link
-          href="/more"
-          className="text-[12px] font-medium text-accent-blue"
-        >
-          ← More
-        </Link>
-        <Link
-          href="/properties/saved"
-          className="flex items-center gap-1 text-[12px] font-medium text-text-dim"
-        >
-          <Bookmark size={14} /> Watchlist
-        </Link>
-      </div>
+    <div
+      className={`mx-auto max-w-lg px-4 pt-6 ${
+        variant === "public" ? "pb-16" : "pb-28"
+      }`}
+    >
+      {variant === "agent" ? (
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <Link
+            href="/more"
+            className="text-[12px] font-medium text-accent-blue"
+          >
+            ← More
+          </Link>
+          <Link
+            href="/properties/saved"
+            className="flex items-center gap-1 text-[12px] font-medium text-text-dim"
+          >
+            <Bookmark size={14} /> Watchlist
+          </Link>
+        </div>
+      ) : null}
       <header>
         <div className="text-[20px] font-medium text-text-primary">
           Property Search
@@ -503,14 +521,14 @@ export function MlsSearchClient() {
               tabIndex={0}
               onClick={() =>
                 router.push(
-                  `/properties/${encodeURIComponent(l.id)}?return=${returnToParam}`,
+                  `${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`,
                 )
               }
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   router.push(
-                    `/properties/${encodeURIComponent(l.id)}?return=${returnToParam}`,
+                    `${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`,
                   );
                 }
               }}
@@ -529,7 +547,7 @@ export function MlsSearchClient() {
                     No photo
                   </div>
                 )}
-                {saved ? (
+                {variant === "agent" && saved ? (
                   <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-accent-blue">
                     <Bookmark size={16} fill="currentColor" />
                   </span>
@@ -560,30 +578,32 @@ export function MlsSearchClient() {
                   {l.daysOnMarket} days on market
                 </div>
               ) : null}
-              <div
-                className="mt-3 flex flex-wrap gap-2"
-                onClick={(e) => e.stopPropagation()}
-                onKeyDown={(e) => e.stopPropagation()}
-              >
-                <button
-                  type="button"
-                  onClick={() => setMatchListing(l)}
-                  className="rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[12px] font-medium text-accent-blue"
+              {variant === "agent" ? (
+                <div
+                  className="mt-3 flex flex-wrap gap-2"
+                  onClick={(e) => e.stopPropagation()}
+                  onKeyDown={(e) => e.stopPropagation()}
                 >
-                  Match to Clients
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void toggleWatchlist(l)}
-                  className={`rounded-[8px] px-3 py-2 text-[12px] font-medium ${
-                    saved
-                      ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
-                      : "bg-accent-blue text-white"
-                  }`}
-                >
-                  {saved ? "Saved" : "Watchlist"}
-                </button>
-              </div>
+                  <button
+                    type="button"
+                    onClick={() => setMatchListing(l)}
+                    className="rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[12px] font-medium text-accent-blue"
+                  >
+                    Match to Clients
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void toggleWatchlist(l)}
+                    className={`rounded-[8px] px-3 py-2 text-[12px] font-medium ${
+                      saved
+                        ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
+                        : "bg-accent-blue text-white"
+                    }`}
+                  >
+                    {saved ? "Saved" : "Watchlist"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           );
         })}
@@ -596,18 +616,30 @@ export function MlsSearchClient() {
         </div>
       ) : null}
 
-      <Link
-        href="/properties"
-        className="mt-6 inline-block text-[12px] font-medium text-accent-blue"
-      >
-        My tracked properties →
-      </Link>
+      {variant === "agent" ? (
+        <Link
+          href="/properties"
+          className="mt-6 inline-block text-[12px] font-medium text-accent-blue"
+        >
+          My tracked properties →
+        </Link>
+      ) : (
+        <p className="mt-6 text-center text-[12px] text-text-dim">
+          Agents:{" "}
+          <Link href="/login" className="font-medium text-accent-blue">
+            Sign in
+          </Link>{" "}
+          for client matching and your watchlist.
+        </p>
+      )}
 
-      <MatchClientsModal
-        open={matchListing !== null}
-        onClose={() => setMatchListing(null)}
-        listing={matchListing}
-      />
+      {variant === "agent" ? (
+        <MatchClientsModal
+          open={matchListing !== null}
+          onClose={() => setMatchListing(null)}
+          listing={matchListing}
+        />
+      ) : null}
     </div>
   );
 }

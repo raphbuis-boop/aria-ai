@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runPropertyMatching } from "@/lib/matchProperties";
 import { getRouteSupabase } from "@/lib/api-auth";
+import { allowDemoSeed } from "@/lib/runtime-env";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,10 @@ const ISO = (y: number, m: number, d: number, h = 12, mm = 0) =>
   new Date(Date.UTC(y, m - 1, d, h, mm)).toISOString();
 
 export async function POST() {
+  if (!allowDemoSeed()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

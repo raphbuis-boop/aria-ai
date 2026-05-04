@@ -28,7 +28,8 @@ export async function GET(req: Request) {
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      console.error("[waitlist/referral-stats]", error.message);
+      return NextResponse.json({ error: "Could not load stats." }, { status: 400 });
     }
     if (!data) {
       return NextResponse.json({ referral_count: 0 });

@@ -29,16 +29,20 @@ export async function GET() {
       .select("*", { count: "exact", head: true });
 
     if (error) {
+      console.error("[waitlist/public-stats]", error.message);
       return NextResponse.json(
-        { error: error.message, count: 0, spotsRemaining: WAITLIST_CAP, cap: WAITLIST_CAP },
+        {
+          error: "Could not load waitlist stats.",
+          count: 0,
+          spotsRemaining: WAITLIST_CAP,
+          cap: WAITLIST_CAP,
+        },
         { status: 500 },
       );
     }
 
     const c = count ?? 0;
     return NextResponse.json({
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       count: c,
       spotsRemaining: Math.max(0, WAITLIST_CAP - c),
       cap: WAITLIST_CAP,

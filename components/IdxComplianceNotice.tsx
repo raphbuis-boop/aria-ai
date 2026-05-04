@@ -1,6 +1,6 @@
 import {
   EQUAL_HOUSING_DISCLOSURE,
-  IDX_DISCLAIMER_TEXT,
+  getIdxDisclaimerText,
 } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
@@ -20,11 +20,11 @@ export function IdxComplianceNotice({
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/njmls-logo.png"
+        src="/IDX_logo.JPG"
         alt="New Jersey Multiple Listing Service"
-        className="mb-2 h-8 w-auto"
+        className="h-10 w-auto mb-2"
       />
-      <p>{IDX_DISCLAIMER_TEXT}</p>
+      <p>{getIdxDisclaimerText()}</p>
       {lastUpdated ? (
         <p className="mt-1">
           Last updated: {new Date(lastUpdated).toLocaleString()}

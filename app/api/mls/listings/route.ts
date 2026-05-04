@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRouteSupabase } from "@/lib/api-auth";
+import { isProduction } from "@/lib/runtime-env";
 import {
   describeSimplyRetsEnv,
   getSimplyRetsAuthHeader,
@@ -26,20 +26,17 @@ function parseListingsPayload(data: unknown): unknown[] {
   return [];
 }
 
+/** Public read access allowed for NJMLS IDX; no user secrets in response. */
 export async function GET(req: Request) {
-  const { user } = await getRouteSupabase();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const envSummary = describeSimplyRetsEnv();
 
   if (!isSimplyRetsConfigured()) {
     console.error("[mls] SimplyRETS not configured", envSummary);
     return NextResponse.json(
       {
-        error:
-          "SimplyRETS is not configured. Set one of the accepted credential pairs in your Vercel env vars (see /api/mls-test).",
+        error: isProduction()
+          ? "Listing search is temporarily unavailable."
+          : "SimplyRETS is not configured. Set credential env vars (see /api/mls-test when diagnostics are enabled).",
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -88,11 +85,13 @@ export async function GET(req: Request) {
   const paramSnapshot = Object.fromEntries(params.entries());
   const endpoint = `${base}/properties?${params.toString()}`;
 
-  console.log("[mls] SimplyRETS request", {
-    params: paramSnapshot,
-    endpoint,
-    credentialSource: resolveSimplyRetsCredentials()?.source,
-  });
+  if (!isProduction()) {
+    console.log("[mls] SimplyRETS request", {
+      params: paramSnapshot,
+      endpoint,
+      credentialSource: resolveSimplyRetsCredentials()?.source,
+    });
+  }
 
   let response: Response;
   try {
@@ -108,8 +107,7 @@ export async function GET(req: Request) {
     console.error("[mls] fetch threw", { endpoint, message });
     return NextResponse.json(
       {
-        error: `Network error calling SimplyRETS: ${message}`,
-        endpoint,
+        error: "Could not load listings. Please try again shortly.",
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -126,10 +124,7 @@ export async function GET(req: Request) {
     });
     return NextResponse.json(
       {
-        error:
-          errText?.slice(0, 500) || `SimplyRETS error (${response.status})`,
-        status: response.status,
-        endpoint,
+        error: "Could not load listings. Please try again shortly.",
         listings: [] as MlsListingPayload[],
         total: 0,
       },
@@ -152,14 +147,16 @@ export async function GET(req: Request) {
       ? offset + listings.length < total
       : listings.length === limit;
 
-  console.log("[mls] SimplyRETS ok", {
-    endpoint,
-    status: response.status,
-    count: listings.length,
-    total,
-    offset,
-    hasMore,
-  });
+  if (!isProduction()) {
+    console.log("[mls] SimplyRETS ok", {
+      endpoint,
+      status: response.status,
+      count: listings.length,
+      total,
+      offset,
+      hasMore,
+    });
+  }
 
   return NextResponse.json({
     listings,

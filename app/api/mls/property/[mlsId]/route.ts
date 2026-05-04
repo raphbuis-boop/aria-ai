@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import {
-  describeSimplyRetsEnv,
   fetchSimplyRetsSingleProperty,
   isSimplyRetsConfigured,
   resolveSimplyRetsCredentials,
@@ -29,18 +28,17 @@ export async function GET(
 
   if (!isSimplyRetsConfigured()) {
     return NextResponse.json(
-      {
-        error: "SimplyRETS is not configured.",
-        env: describeSimplyRetsEnv(),
-      },
+      { error: "Listing service is not configured." },
       { status: 503 },
     );
   }
 
-  console.log("[mls/property] fetching listing", {
-    mlsId,
-    credentialSource: resolveSimplyRetsCredentials()?.source,
-  });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[mls/property] fetching listing", {
+      mlsId,
+      credentialSource: resolveSimplyRetsCredentials()?.source,
+    });
+  }
 
   const result = await fetchSimplyRetsSingleProperty(mlsId);
 
@@ -48,7 +46,7 @@ export async function GET(
     const { failure } = result;
     if (failure.kind === "not_configured") {
       return NextResponse.json(
-        { error: "SimplyRETS is not configured.", env: describeSimplyRetsEnv() },
+        { error: "Listing service is not configured." },
         { status: 503 },
       );
     }
@@ -59,8 +57,8 @@ export async function GET(
       });
       return NextResponse.json(
         {
-          error: `Network error calling SimplyRETS: ${failure.message}`,
-          endpoint: failure.endpoint,
+          error:
+            "Could not reach the listing service. Try again in a moment.",
         },
         { status: 502 },
       );
@@ -70,7 +68,6 @@ export async function GET(
         {
           error: "Listing no longer available",
           code: "LISTING_GONE",
-          endpoint: failure.endpoint,
         },
         { status: 404 },
       );
@@ -83,14 +80,12 @@ export async function GET(
     return NextResponse.json(
       {
         error:
-          failure.bodyPreview?.slice(0, 500) ||
-          `SimplyRETS error (${failure.status})`,
-        endpoint: failure.endpoint,
-        status: failure.status,
+          "Unable to load this listing right now. Please try again in a moment.",
+        code: "UPSTREAM_ERROR",
       },
       { status: 502 },
     );
   }
 
-  return NextResponse.json({ listing: result.listing, raw: result.raw });
+  return NextResponse.json({ listing: result.listing });
 }

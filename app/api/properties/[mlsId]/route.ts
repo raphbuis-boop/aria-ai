@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
-import { getRouteSupabase } from "@/lib/api-auth";
 import {
-  describeSimplyRetsEnv,
   fetchSimplyRetsSingleProperty,
   isSimplyRetsConfigured,
   resolveSimplyRetsCredentials,
@@ -16,34 +14,25 @@ export async function GET(
   _req: Request,
   { params }: { params: { mlsId: string } },
 ) {
-  const { user } = await getRouteSupabase();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const mlsId = params.mlsId?.trim();
   if (!mlsId) {
     return NextResponse.json({ error: "mlsId required" }, { status: 400 });
   }
 
   if (!isSimplyRetsConfigured()) {
-    console.error("[api/properties] SimplyRETS not configured", {
-      mlsId,
-      env: describeSimplyRetsEnv(),
-    });
+    console.error("[api/properties] SimplyRETS not configured", { mlsId });
     return NextResponse.json(
-      {
-        error: "SimplyRETS is not configured.",
-        env: describeSimplyRetsEnv(),
-      },
+      { error: "Listing service is not configured." },
       { status: 503 },
     );
   }
 
-  console.log("[api/properties] fetching listing", {
-    mlsId,
-    credentialSource: resolveSimplyRetsCredentials()?.source,
-  });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[api/properties] fetching listing", {
+      mlsId,
+      credentialSource: resolveSimplyRetsCredentials()?.source,
+    });
+  }
 
   const result = await fetchSimplyRetsSingleProperty(mlsId);
 
@@ -99,10 +88,14 @@ export async function GET(
     );
   }
 
-  console.log("[api/properties] ok", { mlsId, mlsNumber: result.listing.mlsNumber });
+  if (process.env.NODE_ENV !== "production") {
+    console.log("[api/properties] ok", {
+      mlsId,
+      mlsNumber: result.listing.mlsNumber,
+    });
+  }
 
   return NextResponse.json({
     listing: result.listing,
-    raw: result.raw,
   });
 }

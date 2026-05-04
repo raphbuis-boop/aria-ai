@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { allowMlsDiagnostics } from "@/lib/runtime-env";
 import {
   describeSimplyRetsEnv,
   getSimplyRetsAuthHeader,
@@ -11,14 +12,15 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
- * Debug endpoint for SimplyRETS integration. Intentionally unauthenticated
- * so operators can hit it with `curl` directly. Response never includes
- * full credential values — only previews (first 4 chars + length).
- *
- * Example:
- *   curl https://<your-app>/api/mls-test | jq
+ * Debug endpoint for SimplyRETS integration. Unauthenticated; disabled in
+ * production unless ENABLE_MLS_DIAGNOSTICS=true. Previews only —
+ * not full credential values.
  */
 export async function GET() {
+  if (!allowMlsDiagnostics()) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
   const env = describeSimplyRetsEnv();
 
   if (!isSimplyRetsConfigured()) {
