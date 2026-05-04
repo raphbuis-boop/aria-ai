@@ -5,8 +5,12 @@ export const BROKERAGE_LICENSE = "1008658";
 export const BROKERAGE_ADDRESS = "28 Valley Road, Montclair, NJ";
 export const BROKERAGE_PHONE = "(866) 201-6210";
 
-/** NJMLS Internet Data Exchange mark — must match filename in `public/`. */
+/** NJMLS Internet Data Exchange mark — must match filename in `public/` (case-sensitive). */
 export const NJMLS_IDX_LOGO_PATH = "/IDX_logo.JPG";
+
+/** Intrinsic pixels of `IDX_logo.JPG` (reserved layout / aspect ratio). */
+export const NJMLS_IDX_LOGO_WIDTH = 200;
+export const NJMLS_IDX_LOGO_HEIGHT = 25;
 
 /**
  * NJMLS IDX agreement — official wording (page 7). `[DATE]` = MM/DD/YYYY for `date`;

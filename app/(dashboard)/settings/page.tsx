@@ -183,12 +183,6 @@ export default function SettingsPage() {
             className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
           >
             <option value="NJ">New Jersey (NJ)</option>
-            <option value="NY" disabled>
-              NY — Coming soon
-            </option>
-            <option value="CT" disabled>
-              CT — Coming soon
-            </option>
           </select>
         </div>
         <input

@@ -2,12 +2,8 @@
 
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
-import { NJMLS_IDX_LOGO_PATH } from "@/lib/compliance";
 import { useToast } from "@/components/ToastProvider";
-import {
-  summarizeListingCoverage,
-  type MlsListingPayload,
-} from "@/lib/simplyrets";
+import type { MlsListingPayload } from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
 import { Bookmark, Loader2, Search } from "lucide-react";
 import Link from "next/link";
@@ -294,11 +290,6 @@ export function MlsSearchClient({
     return `Showing ${n} properties`;
   }, [loading, listings.length, total]);
 
-  const coverageLine = useMemo(
-    () => summarizeListingCoverage(listings),
-    [listings],
-  );
-
   const returnToParam = useMemo(() => {
     const q = searchParams.toString();
     const base = variant === "public" ? "/property-search" : "/listings";
@@ -330,7 +321,10 @@ export function MlsSearchClient({
           </Link>
         </div>
       ) : null}
-      <header>
+      <div className="mt-3">
+        <IdxComplianceNotice />
+      </div>
+      <header className="mt-3">
         <div className="text-[20px] font-medium text-text-primary">
           Property Search
         </div>
@@ -341,17 +335,6 @@ export function MlsSearchClient({
           <p className="mt-2 text-[12px] text-text-muted">{showingLine}</p>
         ) : null}
       </header>
-
-      <div className="mt-3">
-        <IdxComplianceNotice />
-      </div>
-
-      {listings.length > 0 ? (
-        <div className="mt-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[11px] leading-relaxed text-text-muted">
-          {coverageLine ||
-            "Areas in this result set — add town or filters to narrow."}
-        </div>
-      ) : null}
 
       <div className="mt-5 flex flex-wrap gap-2">
         <input
@@ -501,24 +484,6 @@ export function MlsSearchClient({
       !errorMessage ? (
         <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
           No listings match your filters.
-        </div>
-      ) : null}
-
-      {variant === "public" && listings.length > 0 ? (
-        <div
-          aria-hidden={false}
-          className="mt-5 flex items-center gap-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2"
-        >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={NJMLS_IDX_LOGO_PATH}
-            alt=""
-            className="h-10 w-auto shrink-0"
-          />
-          <p className="text-[10px] leading-snug text-text-muted">
-            NJMLS Internet Data Exchange listings below. Legal disclaimer and fair
-            housing notice appear above and in the site footer.
-          </p>
         </div>
       ) : null}
 

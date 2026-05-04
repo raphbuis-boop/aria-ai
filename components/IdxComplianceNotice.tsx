@@ -1,7 +1,8 @@
 import {
+  AGENT_LICENSE,
+  AGENT_NAME,
   EQUAL_HOUSING_DISCLOSURE,
   getIdxDisclaimerText,
-  NJMLS_IDX_LOGO_PATH,
 } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
@@ -19,13 +20,22 @@ export function IdxComplianceNotice({
         compact ? "text-[10px]" : "text-[11px]"
       }`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={NJMLS_IDX_LOGO_PATH}
-        alt="New Jersey Multiple Listing Service"
-        className="h-10 w-auto mb-2"
-      />
+      <div className="mb-3 inline-block rounded-[8px] bg-white p-3">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/IDX_logo.JPG"
+          width={200}
+          alt="New Jersey Multiple Listing Service"
+          className="h-auto max-w-full object-contain"
+          style={{ width: 200, height: "auto" }}
+        />
+      </div>
       <p>{getIdxDisclaimerText()}</p>
+      {!compact ? (
+        <p className="mt-2 text-[11px] font-medium text-text-primary">
+          {AGENT_NAME}, NJ License #{AGENT_LICENSE}
+        </p>
+      ) : null}
       {lastUpdated ? (
         <p className="mt-1">
           Last updated: {new Date(lastUpdated).toLocaleString()}

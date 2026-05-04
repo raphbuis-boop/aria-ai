@@ -96,17 +96,18 @@ export function PropertyPageClient({
       return;
     }
 
-    if (mode !== "mls" || !mlsId) return;
+    if (mode !== "mls" || !mlsId?.trim()) return;
     let cancelled = false;
+    const idForApi = encodeURIComponent(mlsId.trim());
     void (async () => {
       setLoading(true);
       setNotFound(false);
       setLoadError(null);
       try {
-        const res = await fetch(
-          `/api/properties/${encodeURIComponent(mlsId)}`,
-          { credentials: "include" },
-        );
+        const res = await fetch(`/api/properties/${idForApi}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
         const data = (await res.json()) as {
           listing?: MlsListingPayload;
           error?: string;
@@ -215,6 +216,17 @@ export function PropertyPageClient({
   }, [listing?.lat, listing?.lng]);
 
   if (loading) {
+    if (viewerContext === "public") {
+      return (
+        <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
+          <BackButton href={backHref} label="Back" className="mb-4" />
+          <IdxComplianceNotice />
+          <div className="mt-10 flex justify-center text-text-dim">
+            <Loader2 className="animate-spin" size={28} />
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-text-dim">
         <Loader2 className="animate-spin" size={28} />
@@ -226,6 +238,11 @@ export function PropertyPageClient({
     return (
       <div className="mx-auto max-w-lg px-4 py-16">
         <BackButton href={backHref} label="Back" className="mb-6" />
+        {viewerContext === "public" ? (
+          <div className="mb-4">
+            <IdxComplianceNotice />
+          </div>
+        ) : null}
         <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-6 text-center">
           <p className="text-[15px] font-medium text-text-primary">
             Something went wrong
@@ -241,15 +258,18 @@ export function PropertyPageClient({
   if (notFound || !listing) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center text-text-dim">
+        <BackButton href={backHref} label="Back to search" className="mb-6 inline-block" />
+        {viewerContext === "public" ? (
+          <div className="mb-4 text-left">
+            <IdxComplianceNotice />
+          </div>
+        ) : null}
         <p className="text-[15px] font-medium text-text-primary">
           Listing no longer available
         </p>
         <p className="mt-2 text-[13px] text-text-muted">
           This listing may have sold or been removed from the listing feed.
         </p>
-        <div className="mt-6">
-          <BackButton href={backHref} label="Back to search" />
-        </div>
       </div>
     );
   }
@@ -261,6 +281,13 @@ export function PropertyPageClient({
       }`}
     >
       <BackButton href={backHref} label="Back" className="mb-4" />
+
+      <div className="mb-4">
+        <IdxComplianceNotice
+          lastUpdated={listing.listDate ?? null}
+          brokerageName={listing.listingFirm?.name ?? null}
+        />
+      </div>
 
       {mode === "internal" && listing.mlsNumber ? (
         <Link
@@ -285,12 +312,6 @@ export function PropertyPageClient({
         {listing.postalCode ?? ""}
         {listing.mlsNumber ? ` · Listing #${listing.mlsNumber}` : ""}
       </p>
-      <div className="mt-3">
-        <IdxComplianceNotice
-          lastUpdated={listing.listDate ?? null}
-          brokerageName={listing.listingFirm?.name ?? null}
-        />
-      </div>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-[13px]">
         <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
