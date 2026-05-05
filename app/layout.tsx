@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { ComplianceFooter } from "@/components/ComplianceFooter";
+import { ConditionalComplianceFooter } from "@/components/ConditionalComplianceFooter";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className={`${dmSans.className} min-h-screen bg-[#0a0a0f] text-[#f0eee8]`}>
         <ToastProvider>
           {children}
-          <ComplianceFooter />
+          <ConditionalComplianceFooter />
         </ToastProvider>
       </body>
     </html>

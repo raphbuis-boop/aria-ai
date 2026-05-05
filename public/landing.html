@@ -1,4 +1,4 @@
-+<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -237,6 +237,7 @@
 
   /* FOOTER */
   footer { padding: 40px; border-top: 0.5px solid #111; display: flex; justify-content: space-between; align-items: center; }
+  .footer-brandline { display: flex; align-items: baseline; justify-content: center; flex-wrap: wrap; gap: 0 4px; margin-bottom: 14px; }
   .footer-logo { font-size: 18px; font-weight: 700; color: #3B82F6; }
   .footer-text { font-size: 13px; color: #4B5563; }
   .footer-links { display: flex; gap: 24px; }
@@ -784,10 +785,13 @@
   <p style="margin-top:20px;font-size:14px;color:#4B5563;">Want to see it first? <a href="/demo" style="color:#6B7280;text-decoration:underline;text-underline-offset:3px;transition:color 0.2s;" onmouseover="this.style.color='#9CA3AF'" onmouseout="this.style.color='#6B7280'">Open the live demo →</a></p>
 </div>
 
-<!-- FOOTER -->
+<!-- FOOTER (single strip — brokerage + product on one line) -->
 <footer>
-  <div style="font-size:22px;font-weight:700;color:#e5e7eb;letter-spacing:-0.02em;">eXp Realty</div>
-  <div class="footer-logo" style="font-size:14px;font-weight:600;color:#6B7280;margin-top:8px;">Aria</div>
+  <div class="footer-brandline">
+    <span style="font-size:17px;font-weight:700;color:#e5e7eb;">eXp Realty</span>
+    <span style="margin:0 10px;color:#374151;font-weight:400;">·</span>
+    <span class="footer-logo">Aria</span>
+  </div>
   <div class="footer-text">Powered by Aria AI for New Jersey real estate professionals.</div>
   <div class="footer-text">© 2026 Aria AI.</div>
   <div class="footer-text">Questions? Email us at <a href="mailto:team@getariaai.com" style="color:#2563eb;">team@getariaai.com</a></div>
