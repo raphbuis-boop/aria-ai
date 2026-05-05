@@ -1,3 +1,7 @@
+/**
+ * Public MLS listing inquiries → `idx_listing_inquiries` (service-role insert).
+ * There is no separate leads API; import rows into your CRM or extend this route later.
+ */
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 

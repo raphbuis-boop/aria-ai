@@ -14,6 +14,7 @@ export function ListingInquiryForm({
   mlsNumber: string | null;
 }) {
   const toast = useToast();
+  const [step, setStep] = useState<"choose" | "form">("choose");
   const [intent, setIntent] = useState<"info" | "showing">("info");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -21,6 +22,11 @@ export function ListingInquiryForm({
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
+
+  function openForm(next: "info" | "showing") {
+    setIntent(next);
+    setStep("form");
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -52,7 +58,11 @@ export function ListingInquiryForm({
           : "Request sent. An agent will follow up.",
         "success",
       );
+      setName("");
+      setEmail("");
+      setPhone("");
       setMessage("");
+      setStep("choose");
     } catch {
       toast.toast("Network error", "warn");
     } finally {
@@ -61,39 +71,51 @@ export function ListingInquiryForm({
   }
 
   return (
-    <div className="mt-8 rounded-[12px] border border-border-card bg-bg-card px-4 py-4">
+    <div
+      id="listing-inquiry"
+      className="mt-8 rounded-[12px] border border-border-card bg-bg-card px-4 py-4"
+    >
       <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
         Contact
       </p>
-      <p className="mt-1 text-[13px] text-text-primary">
-        Request more information or schedule a showing. We will respond using the
-        details you provide.
-      </p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={() => setIntent("info")}
-          className={`rounded-[8px] px-3 py-2 text-[12px] font-semibold ${
-            intent === "info"
-              ? "bg-accent-blue text-white"
-              : "border border-border-card bg-bg-deep text-text-primary"
-          }`}
-        >
-          Request info
-        </button>
-        <button
-          type="button"
-          onClick={() => setIntent("showing")}
-          className={`rounded-[8px] px-3 py-2 text-[12px] font-semibold ${
-            intent === "showing"
-              ? "bg-accent-blue text-white"
-              : "border border-border-card bg-bg-deep text-text-primary"
-          }`}
-        >
-          Schedule showing
-        </button>
-      </div>
-      <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
+      {step === "choose" ? (
+        <>
+          <p className="mt-1 text-[13px] text-text-primary">
+            Interested in this listing? Choose an option to send a message to the
+            listing office.
+          </p>
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => openForm("info")}
+              className="flex-1 rounded-[10px] bg-accent-blue px-4 py-3 text-[13px] font-semibold text-white"
+            >
+              Request Info
+            </button>
+            <button
+              type="button"
+              onClick={() => openForm("showing")}
+              className="flex-1 rounded-[10px] border border-border-card bg-bg-deep px-4 py-3 text-[13px] font-semibold text-text-primary"
+            >
+              Schedule Showing
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => setStep("choose")}
+            className="mt-2 text-[12px] font-medium text-accent-blue"
+          >
+            ← Back
+          </button>
+          <p className="mt-2 text-[13px] text-text-primary">
+            {intent === "showing"
+              ? "Schedule a showing — we will follow up with available times."
+              : "Request more information about this listing."}
+          </p>
+          <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
         <input
           type="text"
           name="website"
@@ -161,15 +183,21 @@ export function ListingInquiryForm({
           Listing: {listingAddress || "—"}
           {mlsNumber ? ` · #${mlsNumber}` : ""}
         </p>
-        <button
-          type="submit"
-          disabled={sending}
-          className="flex w-full items-center justify-center gap-2 rounded-[8px] bg-accent-blue py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
-        >
-          {sending ? <Loader2 className="animate-spin" size={18} /> : null}
-          {sending ? "Sending…" : intent === "showing" ? "Submit showing request" : "Submit request"}
-        </button>
-      </form>
+            <button
+              type="submit"
+              disabled={sending}
+              className="flex w-full items-center justify-center gap-2 rounded-[8px] bg-accent-blue py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            >
+              {sending ? <Loader2 className="animate-spin" size={18} /> : null}
+              {sending
+                ? "Sending…"
+                : intent === "showing"
+                  ? "Submit Schedule Showing"
+                  : "Submit Request Info"}
+            </button>
+          </form>
+        </>
+      )}
       <p className="mt-4 text-center text-[12px] text-text-dim">
         Agents:{" "}
         <a href="/login" className="font-medium text-accent-blue">

@@ -3,7 +3,6 @@ import {
   AGENT_NAME,
   EQUAL_HOUSING_DISCLOSURE,
   getIdxDisclaimerText,
-  NJMLS_IDX_LOGO_PATH,
 } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
@@ -11,8 +10,8 @@ export function IdxComplianceNotice({
   brokerageName,
   compact = false,
   logoSize = "default",
-  /** Agent + license line; omit on public IDX (shown in site footer instead). */
-  includeAgentAttribution = true,
+  /** Agent + license line (prefer ComplianceFooter sitewide). */
+  includeAgentAttribution = false,
 }: {
   lastUpdated?: string | null;
   brokerageName?: string | null;
@@ -37,16 +36,19 @@ export function IdxComplianceNotice({
             : "inline-block p-3"
         }`}
       >
+        {/* NJMLS mark: public file must match path case on Linux (`/IDX_logo.JPG`). */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={NJMLS_IDX_LOGO_PATH}
+          src="/IDX_logo.JPG"
           width={effectiveLogo === "prominent" ? 360 : 200}
           height={effectiveLogo === "prominent" ? 45 : 25}
           alt="New Jersey Multiple Listing Service"
-          className={`h-auto max-w-full object-contain ${
+          loading="eager"
+          decoding="async"
+          className={`block h-auto max-w-full object-contain ${
             effectiveLogo === "prominent"
-              ? "w-[min(100%,360px)] min-w-[220px]"
-              : ""
+              ? "w-[min(100%,360px)] min-h-[32px] min-w-[220px]"
+              : "min-h-[24px]"
           }`}
           style={
             effectiveLogo === "prominent"

@@ -342,7 +342,7 @@ export function MlsSearchClient({
         <input
           value={city}
           onChange={(e) => setCity(e.target.value)}
-          placeholder="Town..."
+          placeholder="Town or city"
           className="min-w-[140px] flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
         <input
@@ -366,6 +366,25 @@ export function MlsSearchClient({
           placeholder="Min beds"
           className="w-[88px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
+        <input
+          type="number"
+          value={minBaths}
+          onChange={(e) => setMinBaths(e.target.value)}
+          placeholder="Min baths"
+          className="w-[92px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+        />
+        <select
+          value={propertyType}
+          onChange={(e) => setPropertyType(e.target.value)}
+          aria-label="Property type"
+          className="min-w-[120px] flex-1 rounded-[8px] border border-border-card bg-bg-card px-2 py-2 text-[13px] text-text-primary"
+        >
+          {PROPERTY_TYPES.map((o) => (
+            <option key={o.label} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           onClick={() => void applySearch()}
@@ -387,45 +406,16 @@ export function MlsSearchClient({
 
       {filtersOpen ? (
         <div className="mt-3 space-y-2 rounded-[12px] border border-border-card bg-bg-card p-3">
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-                Min baths
-              </label>
-              <input
-                type="number"
-                value={minBaths}
-                onChange={(e) => setMinBaths(e.target.value)}
-                className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-1.5 text-[13px] text-text-primary"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-                Min sqft
-              </label>
-              <input
-                type="number"
-                value={minSqft}
-                onChange={(e) => setMinSqft(e.target.value)}
-                className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-1.5 text-[13px] text-text-primary"
-              />
-            </div>
-          </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-              Property type
+              Min sqft
             </label>
-            <select
-              value={propertyType}
-              onChange={(e) => setPropertyType(e.target.value)}
-              className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-2 text-[13px] text-text-primary"
-            >
-              {PROPERTY_TYPES.map((o) => (
-                <option key={o.label} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <input
+              type="number"
+              value={minSqft}
+              onChange={(e) => setMinSqft(e.target.value)}
+              className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-1.5 text-[13px] text-text-primary"
+            />
           </div>
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">

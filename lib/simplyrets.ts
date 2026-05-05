@@ -249,32 +249,6 @@ export async function fetchMlsListingsForClient(opts: {
   );
 }
 
-const COVERAGE_LABEL_MAX = 28;
-
-/** Human-readable city / state / zip list from loaded listings (result-set coverage). */
-export function summarizeListingCoverage(
-  listings: MlsListingPayload[],
-): string {
-  if (!listings.length) return "";
-  const seen = new Set<string>();
-  const parts: string[] = [];
-  for (const l of listings) {
-    const city = (l.city || "").trim() || "—";
-    const st = (l.state || "").trim();
-    const zip = (l.postalCode || "").trim();
-    const key = `${city}|${st}|${zip}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    let label = city;
-    if (st) label += `, ${st}`;
-    if (zip) label += ` ${zip}`;
-    parts.push(label);
-  }
-  parts.sort((a, b) => a.localeCompare(b));
-  if (parts.length <= COVERAGE_LABEL_MAX) return parts.join(" · ");
-  return `${parts.slice(0, COVERAGE_LABEL_MAX).join(" · ")} · +${parts.length - COVERAGE_LABEL_MAX} more`;
-}
-
 function asStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value.filter((v): v is string => typeof v === "string" && v.trim() !== "");

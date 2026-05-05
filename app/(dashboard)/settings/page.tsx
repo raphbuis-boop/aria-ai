@@ -3,6 +3,7 @@
 import { BackButton } from "@/components/BackButton";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/ToastProvider";
 
@@ -106,6 +107,16 @@ export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
       <BackButton href="/more" className="mb-4" />
+      <p className="mb-6 text-[12px] text-text-dim">
+        <Link
+          href="#bba-templates"
+          className="font-medium text-accent-blue hover:underline"
+        >
+          BBA PDF templates
+        </Link>
+        <span className="text-text-muted"> · </span>
+        Upload your brokerage Buyer Broker Agreement for client signing links.
+      </p>
       <div className="text-[20px] font-medium text-text-primary">
         Mirror My Voice
       </div>

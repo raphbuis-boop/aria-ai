@@ -23,10 +23,7 @@ export default function PropertySearchPage() {
         </p>
       </div>
       <div className="mx-auto max-w-lg px-4 pt-4">
-        <IdxComplianceNotice
-          logoSize="prominent"
-          includeAgentAttribution={false}
-        />
+        <IdxComplianceNotice logoSize="prominent" />
       </div>
       <Suspense
         fallback={

@@ -237,10 +237,7 @@ export function PropertyPageClient({
       return (
         <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
           <BackButton href={backHref} label="Back" className="mb-4" />
-          <IdxComplianceNotice
-            logoSize="prominent"
-            includeAgentAttribution={false}
-          />
+          <IdxComplianceNotice logoSize="prominent" />
           <div className="mt-10 flex justify-center text-text-dim">
             <Loader2 className="animate-spin" size={28} />
           </div>
@@ -260,10 +257,7 @@ export function PropertyPageClient({
         <BackButton href={backHref} label="Back" className="mb-6" />
         {viewerContext === "public" ? (
           <div className="mb-4">
-            <IdxComplianceNotice
-              logoSize="prominent"
-              includeAgentAttribution={false}
-            />
+            <IdxComplianceNotice logoSize="prominent" />
           </div>
         ) : null}
         <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-6 text-center">
@@ -284,10 +278,7 @@ export function PropertyPageClient({
         <BackButton href={backHref} label="Back to search" className="mb-6 inline-block" />
         {viewerContext === "public" ? (
           <div className="mb-4 text-left">
-            <IdxComplianceNotice
-              logoSize="prominent"
-              includeAgentAttribution={false}
-            />
+            <IdxComplianceNotice logoSize="prominent" />
           </div>
         ) : null}
         <p className="text-[15px] font-medium text-text-primary">
@@ -313,7 +304,6 @@ export function PropertyPageClient({
           lastUpdated={listing.listDate ?? null}
           brokerageName={listing.listingFirm?.name ?? null}
           logoSize={viewerContext === "public" ? "prominent" : "default"}
-          includeAgentAttribution={viewerContext !== "public"}
         />
       </div>
 
