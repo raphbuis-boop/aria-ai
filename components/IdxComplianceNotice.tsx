@@ -36,10 +36,10 @@ export function IdxComplianceNotice({
             : "inline-block p-3"
         }`}
       >
-        {/* NJMLS mark: public file must match path case on Linux (`/IDX_logo.JPG`). */}
+        {/* NJMLS mark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/IDX_logo.JPG"
+          src="/njmls-logo.jpg"
           width={effectiveLogo === "prominent" ? 360 : 200}
           height={effectiveLogo === "prominent" ? 45 : 25}
           alt="New Jersey Multiple Listing Service"

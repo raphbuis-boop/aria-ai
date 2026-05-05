@@ -23,6 +23,11 @@ export default function PropertySearchPage() {
         </p>
       </div>
       <div className="mx-auto max-w-lg px-4 pt-4">
+        <img
+          src="/njmls-logo.jpg"
+          alt="NJMLS IDX Logo"
+          style={{ display: "block", height: "40px", width: "auto", background: "white", padding: "4px" }}
+        />
         <IdxComplianceNotice logoSize="prominent" />
       </div>
       <Suspense
