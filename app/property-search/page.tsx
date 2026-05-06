@@ -22,15 +22,6 @@ export default function PropertySearchPage() {
           Property Search · powered by Aria
         </p>
       </div>
-      <div className="mx-auto max-w-lg px-4 pt-4">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/IDX_logo.JPG"
-          alt="NJMLS IDX Logo"
-          style={{ display: "block", height: "40px", width: "auto", background: "white", padding: "4px" }}
-        />
-        <IdxComplianceNotice logoSize="prominent" />
-      </div>
       <Suspense
         fallback={
           <div className="flex min-h-[40vh] items-center justify-center text-[13px] text-text-dim">
@@ -40,6 +31,9 @@ export default function PropertySearchPage() {
       >
         <MlsSearchClient variant="public" />
       </Suspense>
+      <div className="mx-auto max-w-lg px-4 pb-8 pt-6">
+        <IdxComplianceNotice logoSize="prominent" />
+      </div>
     </>
   );
 }
