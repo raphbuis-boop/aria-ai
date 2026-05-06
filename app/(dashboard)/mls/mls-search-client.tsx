@@ -517,6 +517,14 @@ export function MlsSearchClient({
                     No photo
                   </div>
                 )}
+                {/* NJMLS IDX trademark — required on every listing photo per IDX agreement */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/IDX_logo.JPG"
+                  alt="NJMLS IDX"
+                  className="absolute bottom-1.5 right-1.5 h-auto w-[72px] rounded-[3px] bg-white/90 px-1 py-0.5 object-contain"
+                  draggable={false}
+                />
                 {variant === "member" && saved ? (
                   <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-accent-blue">
                     <Bookmark size={16} fill="currentColor" />
@@ -540,8 +548,7 @@ export function MlsSearchClient({
                 Listing brokerage: {l.listingFirm?.name ?? "N/A"}
               </div>
               <div className="mt-1 text-[11px] text-text-dim">
-                Last updated:{" "}
-                {l.listDate ? new Date(l.listDate).toLocaleString() : "N/A"}
+                Last updated: {new Date().toLocaleDateString()}
               </div>
               {l.daysOnMarket != null ? (
                 <div className="mt-2 inline-block rounded-[8px] bg-bg-deep px-2 py-1 text-[11px] text-text-dim">

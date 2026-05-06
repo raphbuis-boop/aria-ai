@@ -55,13 +55,21 @@ export function PhotoCarousel({
         {photos.map((src, i) => (
           <div
             key={`${src}-${i}`}
-            className="h-full w-full flex-shrink-0 snap-center snap-always"
+            className="relative h-full w-full flex-shrink-0 snap-center snap-always"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={src}
               alt=""
               className="h-full w-full object-cover"
+              draggable={false}
+            />
+            {/* NJMLS IDX trademark — required on every photo per IDX agreement */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/IDX_logo.JPG"
+              alt="NJMLS IDX"
+              className="absolute bottom-2 right-2 h-auto w-[90px] rounded-[3px] bg-white/90 px-1.5 py-1 object-contain"
               draggable={false}
             />
           </div>

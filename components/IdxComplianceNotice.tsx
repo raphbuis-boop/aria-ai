@@ -63,11 +63,9 @@ export function IdxComplianceNotice({
           {AGENT_NAME}, NJ License #{AGENT_LICENSE}
         </p>
       ) : null}
-      {lastUpdated ? (
-        <p className="mt-1">
-          Last updated: {new Date(lastUpdated).toLocaleString()}
-        </p>
-      ) : null}
+      <p className="mt-1">
+        Last updated: {new Date().toLocaleDateString()}
+      </p>
       {brokerageName ? <p className="mt-1">Listing brokerage: {brokerageName}</p> : null}
       <p className="mt-1">{EQUAL_HOUSING_DISCLOSURE}</p>
     </div>
