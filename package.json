@@ -31,6 +31,7 @@
     "react-dom": "^18",
     "react-pdf": "^10.4.1",
     "react-signature-canvas": "^1.1.0-alpha.2",
+    "resend": "^6.12.3",
     "twilio": "^5.13.0"
   },
   "devDependencies": {

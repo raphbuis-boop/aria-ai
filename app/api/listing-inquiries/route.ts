@@ -5,6 +5,7 @@
  */
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { insertNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
@@ -107,6 +108,24 @@ export async function POST(req: Request) {
         { error: "Could not save your request. Please try again later." },
         { status: 500 },
       );
+    }
+
+    // Notify all agents about the new inquiry (fire-and-forget)
+    try {
+      const { data: agentList } = await admin.auth.admin.listUsers({ perPage: 10 });
+      for (const agent of agentList?.users ?? []) {
+        await insertNotification(admin, {
+          agent_id: agent.id,
+          kind: "inquiry_received",
+          title: `New inquiry: ${visitor_name}`,
+          body: listing_address
+            ? `${intent === "showing" ? "Showing request" : "Info request"} · ${listing_address}`
+            : `${intent === "showing" ? "Showing request" : "Info request"}`,
+          related_listing_id: listing_id,
+        });
+      }
+    } catch (e) {
+      console.error("[listing-inquiries] notification failed", e);
     }
   } catch (e) {
     console.error("[listing-inquiries] insert failed", e);

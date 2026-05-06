@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import { NotificationBell } from "@/components/NotificationPanel";
 import {
   Building2,
   CalendarClock,
@@ -161,7 +162,8 @@ function PillItem({
 export function BottomNav() {
   const pathname = usePathname();
   const supabase = createClient();
-  const [unread, setUnread] = useState(0);
+  const [inboxUnread, setInboxUnread] = useState(0);
+  const [notifUnread, setNotifUnread] = useState(0);
   const [quickOpen, setQuickOpen] = useState(false);
 
   useEffect(() => {
@@ -171,13 +173,20 @@ export function BottomNav() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
+      // Inbox: unapproved AI drafts
       const { count } = await supabase
         .from("activities")
         .select("*", { count: "exact", head: true })
         .eq("agent_id", user.id)
         .eq("ai_draft", true)
         .eq("approved", false);
-      if (!cancelled) setUnread(count ?? 0);
+      if (!cancelled) setInboxUnread(count ?? 0);
+      // Notifications: unread count
+      const res = await fetch("/api/notifications");
+      if (!cancelled && res.ok) {
+        const data = (await res.json()) as { unread?: number };
+        setNotifUnread(data.unread ?? 0);
+      }
     }
     load();
     const id = setInterval(load, 15000);
@@ -194,10 +203,9 @@ export function BottomNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
-  // "/listings" has its own pill now, so exclude it from the "More" active state.
   const moreActive =
     isActive("/more") ||
-    moreLinks.some((m) => m.href !== "/listings" && isActive(m.href));
+    moreLinks.some((m) => isActive(m.href));
 
   return (
     <>
@@ -214,7 +222,7 @@ export function BottomNav() {
             label="Inbox"
             Icon={MessageSquare}
             active={isActive("/inbox")}
-            unread={unread}
+            unread={inboxUnread}
             badge
           />
 
@@ -242,11 +250,9 @@ export function BottomNav() {
             Icon={Users}
             active={isActive("/clients")}
           />
-          <PillItem
-            href="/listings"
-            label="Search"
-            Icon={Building2}
-            active={isActive("/listings") || isActive("/mls") || isActive("/properties")}
+          <NotificationBell
+            unread={notifUnread}
+            onUnreadChange={setNotifUnread}
           />
           <PillItem
             href="/more"
