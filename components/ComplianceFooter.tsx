@@ -29,12 +29,6 @@ export function ComplianceFooter({
     <footer className="border-t border-border-card bg-bg-card/80 px-4 py-5 text-[12px] text-text-dim">
       <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-[18px] font-semibold leading-tight text-text-primary md:text-[22px]">
-            {BROKERAGE_NAME}
-          </p>
-          <p className="text-[11px] text-text-muted">
-            Property search tools offered through Aria
-          </p>
           <p className="text-[13px] text-text-primary">
             {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE}
           </p>

@@ -51,6 +51,8 @@ export function PropertyPageClient({
   const [saved, setSaved] = useState(false);
   const [draftPreview, setDraftPreview] = useState<string | null>(null);
   const [drafting, setDrafting] = useState(false);
+  const [inquiryOpen, setInquiryOpen] = useState(false);
+  const [inquiryIntent, setInquiryIntent] = useState<"info" | "showing">("info");
 
   const backHref =
     returnTo && returnTo.startsWith("/")
@@ -293,9 +295,7 @@ export function PropertyPageClient({
 
   return (
     <div
-      className={`mx-auto max-w-lg px-4 pt-6 ${
-        viewerContext === "agent" ? "pb-32" : "pb-14"
-      }`}
+      className="mx-auto max-w-lg px-4 pt-6 pb-32"
     >
       <BackButton href={backHref} label="Back" className="mb-4" />
 
@@ -546,11 +546,24 @@ export function PropertyPageClient({
           </div>
         </div>
       ) : (
-        <ListingInquiryForm
-          listingId={listing.mlsNumber || listing.id}
-          listingAddress={fullAddress}
-          mlsNumber={listing.mlsNumber ?? null}
-        />
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
+          <div className="mx-auto flex max-w-lg gap-2">
+            <button
+              type="button"
+              onClick={() => { setInquiryIntent("showing"); setInquiryOpen(true); }}
+              className="flex-1 rounded-[10px] bg-accent-blue px-3 py-2.5 text-[13px] font-semibold text-white"
+            >
+              Request Showing
+            </button>
+            <button
+              type="button"
+              onClick={() => { setInquiryIntent("info"); setInquiryOpen(true); }}
+              className="flex-1 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[13px] font-semibold text-text-primary"
+            >
+              Contact Agent
+            </button>
+          </div>
+        </div>
       )}
 
       {viewerContext === "agent" ? (
@@ -558,6 +571,18 @@ export function PropertyPageClient({
           open={matchOpen}
           onClose={() => setMatchOpen(false)}
           listing={listing}
+        />
+      ) : null}
+
+      {viewerContext === "public" && inquiryOpen ? (
+        <ListingInquiryForm
+          modal
+          initialIntent={inquiryIntent}
+          listingId={listing.mlsNumber || listing.id}
+          listingAddress={fullAddress}
+          mlsNumber={listing.mlsNumber ?? null}
+          listingPrice={listing.price}
+          onClose={() => setInquiryOpen(false)}
         />
       ) : null}
     </div>

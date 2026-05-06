@@ -1,7 +1,9 @@
 /**
- * Public MLS listing inquiries → `idx_listing_inquiries` (service-role insert).
- * There is no separate leads API; import rows into your CRM or extend this route later.
+ * Public MLS listing inquiries → `idx_listing_inquiries`.
+ * POST: public (service-role insert, honeypot-protected).
+ * GET:  authenticated agents only — returns inquiries for the dashboard.
  */
+import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { NextResponse } from "next/server";
 
@@ -18,6 +20,33 @@ const MAX_ADDRESS = 500;
 function trimStr(v: unknown, max: number): string {
   const s = typeof v === "string" ? v.trim() : "";
   return s.length > max ? s.slice(0, max) : s;
+}
+
+export async function GET(req: Request) {
+  const { supabase, user } = await getRouteSupabase();
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const status = searchParams.get("status");
+
+  let query = supabase
+    .from("idx_listing_inquiries")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (status && ["new", "contacted", "converted", "archived"].includes(status)) {
+    query = query.eq("status", status);
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    console.error("[listing-inquiries GET]", error);
+    return NextResponse.json({ error: "Failed to load inquiries." }, { status: 500 });
+  }
+
+  return NextResponse.json({ inquiries: data ?? [] });
 }
 
 export async function POST(req: Request) {
@@ -44,6 +73,10 @@ export async function POST(req: Request) {
   const listing_id = trimStr(body.listing_id, MAX_LISTING_ID);
   const listing_address = trimStr(body.listing_address, MAX_ADDRESS);
   const mls_number = trimStr(body.mls_number, 80);
+  const listing_price =
+    typeof body.listing_price === "number" && body.listing_price > 0
+      ? Math.round(body.listing_price)
+      : null;
 
   if (!visitor_name || visitor_name.length < 2) {
     return NextResponse.json({ error: "Please enter your name." }, { status: 400 });
@@ -66,6 +99,7 @@ export async function POST(req: Request) {
       listing_id,
       listing_address: listing_address || null,
       mls_number: mls_number || null,
+      listing_price,
     });
     if (error) {
       console.error("[listing-inquiries]", error);

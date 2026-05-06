@@ -24,7 +24,7 @@ export default function PropertySearchPage() {
       </div>
       <div className="mx-auto max-w-lg px-4 pt-4">
         <img
-          src="/njmls-logo.jpg"
+          src="/IDX_logo.JPG"
           alt="NJMLS IDX Logo"
           style={{ display: "block", height: "40px", width: "auto", background: "white", padding: "4px" }}
         />

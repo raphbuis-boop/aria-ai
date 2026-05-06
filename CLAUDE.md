@@ -19,11 +19,11 @@ No test suite is configured.
 
 ## Architecture
 
-**Stack:** Next.js 14 App Router · TypeScript · Supabase (auth + DB) · Anthropic Claude · Twilio · Tailwind CSS (dark theme)
+**Stack:** Next.js 14 App Router · TypeScript · Supabase (auth + DB) · Anthropic Claude · Twilio · Tailwind CSS (dark theme) · Capacitor (iOS wrapper)
 
 ### Route Groups
 
-- `app/(dashboard)/` — All protected pages (clients, properties, pipeline, inbox, MLS, showings, transactions, etc.)
+- `app/(dashboard)/` — All protected pages (clients, properties, pipeline, inbox, MLS, showings, transactions, CMA, files, referrals, listings, market, market-pulse, settings, etc.)
 - `app/api/` — Backend API routes
 - `app/login/`, `app/setup/`, `app/portal/` — Public pages
 
@@ -33,7 +33,12 @@ No test suite is configured.
 |------|---------|
 | `lib/ai.ts` | Claude SDK wrapper — `callClaude(system, user, maxTokens)` and `safeJsonParse<T>()` |
 | `lib/api-auth.ts` | `getRouteSupabase()` — used in every API route to get `{ supabase, user }` or return 401 |
-| `lib/matchProperties.ts` | Scores clients against properties (budget 40pts, town 30pts, beds 20pts, baths 10pts; min 40 to match) |
+| `lib/matching.ts` | `scoreFuzzyMatch(client, property)` — weighted score 0–100 (town 35, budget 35, beds 20, baths 10); `MATCH_MIN_SCORE = 60`; handles flex budgets, adjacent towns, bed/bath flex |
+| `lib/nj-towns.ts` | NJ town adjacency graph — `normalizeTown()`, `isTownAdjacentOrEqual()`, `getAdjacentTowns()` |
+| `lib/compliance.ts` | NJMLS IDX constants and `getIdxDisclaimerText()` — required on all pages displaying MLS data |
+| `lib/simplyrets.ts` | SimplyRETS API client helpers |
+| `lib/inbox-drafts.ts` | Draft persistence for inbox AI messages |
+| `lib/mobile-briefing.ts` | Morning briefing data for the mobile home screen |
 | `lib/supabase/server.ts` | SSR Supabase client (cookie-based) |
 | `lib/supabase/client.ts` | Browser Supabase client |
 | `lib/supabase/admin.ts` | Service-role admin client (no auto-refresh) |
@@ -43,21 +48,30 @@ No test suite is configured.
 
 `middleware.ts` guards all routes except `/api/*`, `/portal/*`, `/login`, `/setup`, `/`, `/landing.html`. Authenticated users hitting `/` or `/login` are redirected to `/dashboard`. Unauthenticated users on protected routes go to `/login`.
 
-### AI API Routes (`app/api/ai/`)
+### API Routes (`app/api/`)
 
-All routes use `callClaude()` from `lib/ai.ts`. Current model: `claude-sonnet-4-6`.
+- **`/api/ai/`** — All routes use `callClaude()` from `lib/ai.ts`. Model: `claude-sonnet-4-6`.
+  - `POST /api/ai` — General Aria Q&A (max 500 tokens, last 6 message history)
+  - `POST /api/ai/draft-text` — Ghost-write SMS (max 150 tokens, saves to `activities` as unapproved AI draft)
+  - `analyze-tone`, `cma`, `listing-narrative`, `showing-summary`, `extract-dates`, `market-insight`
+- **`/api/mls/`** — SimplyRETS (Basic Auth). `GET listings` fetches/normalizes; `POST apply-matches` runs matching against active clients.
+- **`/api/sms/send/`** — Twilio. Validates via `formatPhoneE164()`, sends SMS, writes to `activities` (`sent: true`, `approved: true`).
+- **`/api/automation/`** — Scheduled/triggered automation flows.
+- **`/api/bba/`**, **`/api/bba-templates/`** — Buyer Broker Agreement generation and template management.
+- **`/api/inbox/`** — Inbox message handling.
+- **`/api/listing-inquiries/`** — IDX listing inquiry form submissions.
+- **`/api/market-pulse/`** — Market trend data.
+- **`/api/client-deals/`**, **`/api/client-documents/`** — Deal and document management per client.
+- **`/api/enrich/`** — Client data enrichment.
+- **`/api/saved-properties/`** — Client saved property lists.
 
-- `POST /api/ai` — General Aria Q&A (max 500 tokens, last 6 message history)
-- `POST /api/ai/draft-text` — Ghost-write SMS from voice samples (max 150 tokens, saves to `activities` table as unapproved AI draft)
-- `/api/ai/analyze-tone`, `/api/ai/cma`, `/api/ai/listing-narrative`, `/api/ai/showing-summary`, `/api/ai/extract-dates`, `/api/ai/market-insight`
+### iOS / Mobile
 
-### MLS Integration (`app/api/mls/`)
+Capacitor wraps the production web app (`capacitor.config.ts` points to `https://getariaai.com/crm`). The `ios/` directory contains the Xcode project. `next.config.mobile.mjs` is a separate Next.js config for mobile builds. The mobile app is a shell; all logic stays in the web codebase.
 
-Uses SimplyRETS API (Basic Auth). `GET /api/mls/listings` fetches and normalizes listings. `POST /api/mls/apply-matches` runs the property-matching algorithm against the current agent's active clients.
+### Database
 
-### SMS (`app/api/sms/send/`)
-
-Twilio integration. Validates phone via `formatPhoneE164()`, sends SMS, and writes to the `activities` table (marks `sent: true`, `approved: true`).
+Migrations live in `supabase/migrations/`. Key schema additions (newest first): IDX listing inquiries, contracts & deals, saved properties, buyer broker agreements, showings status/client role, brokerage/matching tables, waitlist/referrals.
 
 ## Environment Variables
 
@@ -81,3 +95,4 @@ SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
 - **Styling** — Tailwind only, no CSS modules. Dark theme: black (`#000000`) background, `#111111` cards, `#222222` borders.
 - **Path alias** — `@/*` maps to the project root.
 - **Phone numbers** — always pass through `formatPhoneE164()` before storing or sending via Twilio.
+- **NJMLS IDX compliance** — any page or component that displays MLS listing data must render `<IdxComplianceNotice />` (or equivalent) using the text from `lib/compliance.ts`. This is a legal requirement of the NJMLS IDX agreement.

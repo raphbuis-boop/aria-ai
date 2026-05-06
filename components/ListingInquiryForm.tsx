@@ -1,21 +1,36 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
-import { Loader2 } from "lucide-react";
+import { X, Loader2 } from "lucide-react";
 import { useState } from "react";
+
+interface ListingInquiryFormProps {
+  listingId: string;
+  listingAddress: string;
+  mlsNumber: string | null;
+  listingPrice?: number;
+  /** Render as a fixed bottom-sheet overlay instead of an inline card. */
+  modal?: boolean;
+  /** Called after a successful submit or when the user dismisses the modal. */
+  onClose?: () => void;
+  /** Pre-select intent when opened from a specific CTA. */
+  initialIntent?: "info" | "showing";
+}
 
 export function ListingInquiryForm({
   listingId,
   listingAddress,
   mlsNumber,
-}: {
-  listingId: string;
-  listingAddress: string;
-  mlsNumber: string | null;
-}) {
+  listingPrice,
+  modal = false,
+  onClose,
+  initialIntent = "info",
+}: ListingInquiryFormProps) {
   const toast = useToast();
-  const [step, setStep] = useState<"choose" | "form">("choose");
-  const [intent, setIntent] = useState<"info" | "showing">("info");
+  const [step, setStep] = useState<"choose" | "form">(
+    modal ? "form" : "choose",
+  );
+  const [intent, setIntent] = useState<"info" | "showing">(initialIntent);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -45,6 +60,7 @@ export function ListingInquiryForm({
           listing_id: listingId,
           listing_address: listingAddress,
           mls_number: mlsNumber ?? "",
+          listing_price: listingPrice ?? null,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -63,6 +79,7 @@ export function ListingInquiryForm({
       setPhone("");
       setMessage("");
       setStep("choose");
+      onClose?.();
     } catch {
       toast.toast("Network error", "warn");
     } finally {
@@ -70,19 +87,19 @@ export function ListingInquiryForm({
     }
   }
 
-  return (
-    <div
-      id="listing-inquiry"
-      className="mt-8 rounded-[12px] border border-border-card bg-bg-card px-4 py-4"
-    >
-      <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
-        Contact
-      </p>
+  const formContent = (
+    <>
+      {!modal && (
+        <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
+          Contact
+        </p>
+      )}
+
       {step === "choose" ? (
         <>
           <p className="mt-1 text-[13px] text-text-primary">
-            Interested in this listing? Choose an option to send a message to the
-            listing office.
+            Interested in this listing? Choose an option to send a message to
+            the listing office.
           </p>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">
             <button
@@ -103,108 +120,149 @@ export function ListingInquiryForm({
         </>
       ) : (
         <>
-          <button
-            type="button"
-            onClick={() => setStep("choose")}
-            className="mt-2 text-[12px] font-medium text-accent-blue"
-          >
-            ← Back
-          </button>
-          <p className="mt-2 text-[13px] text-text-primary">
+          {!modal && (
+            <button
+              type="button"
+              onClick={() => setStep("choose")}
+              className="mt-2 text-[12px] font-medium text-accent-blue"
+            >
+              ← Back
+            </button>
+          )}
+          <p className={`text-[13px] text-text-primary ${modal ? "" : "mt-2"}`}>
             {intent === "showing"
               ? "Schedule a showing — we will follow up with available times."
               : "Request more information about this listing."}
           </p>
           <form onSubmit={(e) => void submit(e)} className="mt-4 space-y-3">
-        <input
-          type="text"
-          name="website"
-          value={honeypot}
-          onChange={(e) => setHoneypot(e.target.value)}
-          autoComplete="off"
-          tabIndex={-1}
-          className="absolute left-[-9999px] h-0 w-0 opacity-0"
-          aria-hidden
-        />
-        <div>
-          <label className="text-[10px] font-bold uppercase text-text-dim">
-            Name
-          </label>
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
-            autoComplete="name"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold uppercase text-text-dim">
-            Email
-          </label>
-          <input
-            required
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
-            autoComplete="email"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold uppercase text-text-dim">
-            Phone
-          </label>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
-            autoComplete="tel"
-          />
-        </div>
-        <div>
-          <label className="text-[10px] font-bold uppercase text-text-dim">
-            Message
-          </label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={4}
-            placeholder={
-              intent === "showing"
-                ? "Preferred days/times for a tour…"
-                : "What would you like to know about this listing?"
-            }
-            className="mt-1 w-full resize-y rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
-          />
-        </div>
-        <p className="text-[11px] text-text-muted">
-          Listing: {listingAddress || "—"}
-          {mlsNumber ? ` · #${mlsNumber}` : ""}
-        </p>
+            <input
+              type="text"
+              name="website"
+              value={honeypot}
+              onChange={(e) => setHoneypot(e.target.value)}
+              autoComplete="off"
+              tabIndex={-1}
+              className="absolute left-[-9999px] h-0 w-0 opacity-0"
+              aria-hidden
+            />
+            <div>
+              <label className="text-[10px] font-bold uppercase text-text-dim">
+                Name <span className="text-red-400">*</span>
+              </label>
+              <input
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary focus:border-accent-blue/60 focus:outline-none"
+                autoComplete="name"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-text-dim">
+                Email <span className="text-red-400">*</span>
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary focus:border-accent-blue/60 focus:outline-none"
+                autoComplete="email"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-text-dim">
+                Phone
+              </label>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary focus:border-accent-blue/60 focus:outline-none"
+                autoComplete="tel"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold uppercase text-text-dim">
+                Message
+              </label>
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+                placeholder="When would you like to see it? Any questions?"
+                className="mt-1 w-full resize-none rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim focus:border-accent-blue/60 focus:outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Listing: {listingAddress || "—"}
+              {mlsNumber ? ` · #${mlsNumber}` : ""}
+            </p>
             <button
               type="submit"
               disabled={sending}
-              className="flex w-full items-center justify-center gap-2 rounded-[8px] bg-accent-blue py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-accent-blue py-3 text-[13px] font-semibold text-white disabled:opacity-60"
             >
-              {sending ? <Loader2 className="animate-spin" size={18} /> : null}
+              {sending ? <Loader2 className="animate-spin" size={16} /> : null}
               {sending
                 ? "Sending…"
                 : intent === "showing"
-                  ? "Submit Schedule Showing"
-                  : "Submit Request Info"}
+                  ? "Request Showing"
+                  : "Request Info"}
             </button>
           </form>
         </>
       )}
-      <p className="mt-4 text-center text-[12px] text-text-dim">
-        Agents:{" "}
-        <a href="/login" className="font-medium text-accent-blue">
-          Sign in
-        </a>{" "}
-        for watchlist and CRM tools.
-      </p>
+
+      {!modal && (
+        <p className="mt-4 text-center text-[12px] text-text-dim">
+          Agents:{" "}
+          <a href="/login" className="font-medium text-accent-blue">
+            Sign in
+          </a>{" "}
+          for watchlist and CRM tools.
+        </p>
+      )}
+    </>
+  );
+
+  if (modal) {
+    return (
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[2px]">
+        {/* backdrop dismiss */}
+        <button
+          type="button"
+          aria-label="Close"
+          className="absolute inset-0"
+          onClick={onClose}
+        />
+        <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-10 pt-4">
+          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+          <div className="mb-4 flex items-center justify-between">
+            <p className="text-[15px] font-semibold text-text-primary">
+              {intent === "showing" ? "Schedule a Showing" : "Contact Agent"}
+            </p>
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a2e] text-text-dim"
+              aria-label="Close"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          {formContent}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      id="listing-inquiry"
+      className="mt-8 rounded-[12px] border border-border-card bg-bg-card px-4 py-4"
+    >
+      {formContent}
     </div>
   );
 }

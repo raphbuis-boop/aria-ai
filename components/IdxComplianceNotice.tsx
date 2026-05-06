@@ -39,7 +39,7 @@ export function IdxComplianceNotice({
         {/* NJMLS mark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/njmls-logo.jpg"
+          src="/IDX_logo.JPG"
           width={effectiveLogo === "prominent" ? 360 : 200}
           height={effectiveLogo === "prominent" ? 45 : 25}
           alt="New Jersey Multiple Listing Service"
