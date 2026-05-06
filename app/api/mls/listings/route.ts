@@ -135,9 +135,14 @@ export async function GET(req: Request) {
   const data = (await response.json()) as unknown;
   const rawListings = parseListingsPayload(data);
 
-  const listings: MlsListingPayload[] = rawListings.map((item) =>
-    mapSimplyRetsListing(item as Record<string, unknown>),
-  );
+  const listings: MlsListingPayload[] = rawListings
+    .map((item) => mapSimplyRetsListing(item as Record<string, unknown>))
+    .filter((l) => {
+      // Exclude rental listings — SimplyRETS mixes rentals into the same feed.
+      // Rental listPrice is monthly rent (e.g. $7,500), not a sale price.
+      const t = (l.propertyType ?? "").toLowerCase();
+      return t !== "rental" && !t.includes("rental");
+    });
 
   // SimplyRETS returns total results in the X-Total-Count header.
   const totalHeader = response.headers.get("x-total-count");
