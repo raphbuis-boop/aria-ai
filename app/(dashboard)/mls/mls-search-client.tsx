@@ -522,7 +522,7 @@ export function MlsSearchClient({
                 <img
                   src="/IDX_logo.JPG"
                   alt="NJMLS IDX"
-                  className="absolute bottom-1.5 right-1.5 h-auto w-[72px] rounded-[3px] bg-white/90 px-1 py-0.5 object-contain"
+                  className="absolute bottom-2 right-2 h-auto w-[96px] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
                   draggable={false}
                 />
                 {variant === "member" && saved ? (
