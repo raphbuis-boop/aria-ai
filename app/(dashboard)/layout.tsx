@@ -25,7 +25,7 @@ export default async function DashboardLayout({
       {children}
       <BottomNav />
       <VoiceAssistantRoot />
-      <div className="fixed right-4 top-4 z-[60]">
+      <div className="fixed right-16 top-5 z-[60]">
         <NotificationBell />
       </div>
     </div>
