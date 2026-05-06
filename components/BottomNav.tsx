@@ -8,6 +8,7 @@ import {
   Gauge,
   Grid3x3,
   House,
+  Inbox,
   LayoutGrid,
   LineChart,
   MessageSquare,
@@ -66,6 +67,12 @@ const moreLinks: { href: string; label: string; Icon: LucideIcon; desc: string }
     label: "Ask Aria",
     Icon: Sparkles,
     desc: "Open the Aria AI chat",
+  },
+  {
+    href: "/inquiries",
+    label: "Inquiries",
+    Icon: Inbox,
+    desc: "Property inquiry leads from public search",
   },
   {
     href: "/referrals",
