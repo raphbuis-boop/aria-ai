@@ -9,10 +9,12 @@ import { CollapsibleSection } from "@/components/CollapsibleSection";
 import { ContractsSection } from "@/components/ContractsSection";
 import { DealHistorySection } from "@/components/DealHistorySection";
 import { EditClientModal } from "@/components/EditClientModal";
+import { EngagementPulse } from "@/components/EngagementPulse";
 import { MatchingPreferencesSection } from "@/components/MatchingPreferencesSection";
+import { NextActionsSection } from "@/components/NextActionsSection";
 import { fmtMoney } from "@/lib/utils";
 import type { MlsListingPayload } from "@/lib/simplyrets";
-import { Home, Pencil } from "lucide-react";
+import { CalendarPlus, Home, Pencil, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -81,6 +83,8 @@ function matchesSummary(matches: Record<string, unknown>[]): string | null {
 export function ClientDetail({
   client,
   activities,
+  tasks = [],
+  showings = [],
   matches = [],
   bba,
 }: {
@@ -97,7 +101,9 @@ export function ClientDetail({
   const toast = useToast();
   const supabase = createClient();
   const [draftOpen, setDraftOpen] = useState(false);
+  const [draftPrefill, setDraftPrefill] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [matchesExpanded, setMatchesExpanded] = useState(false);
 
   const id = String(client.id ?? "");
   const name = String(client.name ?? "Client");
@@ -190,6 +196,17 @@ export function ClientDetail({
           </div>
         </div>
 
+        {/* ─── Engagement Pulse ───────────────────────────────────────── */}
+        <EngagementPulse activities={activities} />
+
+        {/* ─── Next Actions ───────────────────────────────────────────── */}
+        <NextActionsSection
+          clientId={id}
+          initialTasks={tasks}
+          activities={activities}
+          showings={showings}
+        />
+
         {phone || email ? (
           <div className="mb-4 flex gap-2">
             {phone ? (
@@ -255,78 +272,149 @@ export function ClientDetail({
         <ContractsSection clientId={id} />
 
         {/* ─── Property Matches ───────────────────────────────────────── */}
-        <CollapsibleSection
-          title="Property Matches"
-          summary={matchesSummary(matches)}
-          defaultOpen={matches.length > 0}
-        >
+        <div className="mb-4">
+          <div className="mb-2 flex items-center justify-between px-0.5">
+            <div className="flex items-center gap-2">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#444460]">
+                Property Matches
+              </p>
+              {matches.length > 0 && (
+                <span className="rounded-full bg-[#4f7bff]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6f9bff]">
+                  {matches.length}
+                </span>
+              )}
+            </div>
+            {matches.length > 0 && (
+              <p className="text-[11px] text-[#555570]">
+                {matchesSummary(matches)}
+              </p>
+            )}
+          </div>
+
           {matches.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#666680]">
               No matches yet.{" "}
-              <Link
-                href="/listings"
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("matching-prefs");
+                  el?.scrollIntoView({ behavior: "smooth" });
+                }}
                 className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
               >
-                Browse listings →
-              </Link>
+                Update Matching Preferences →
+              </button>
             </div>
           ) : (
-            <ul className="space-y-2">
-              {matches.slice(0, 12).map((mRaw) => {
-                const m = mRaw as Record<string, unknown>;
-                const p = (m.properties ?? {}) as Record<string, unknown>;
-                const score = Number(m.match_score ?? 0);
-                const propertyId = String(p.id ?? "");
-                return (
-                  <li
-                    key={String(m.id)}
-                    className="flex items-center gap-3 rounded-2xl border border-[#1e1e2e] bg-[#12121e] px-3 py-2.5"
-                  >
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#6f9bff]">
-                      <Home size={15} />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[13px] font-semibold text-[#d0d0e0]">
-                        {String(p.address ?? "—")}
-                      </p>
-                      <p className="mt-0.5 text-[11px] text-[#555570]">
-                        {String(p.town ?? "—")}
-                        {p.price != null ? ` · ${fmtMoney(Number(p.price))}` : ""}
-                        {p.beds != null ? ` · ${p.beds}bd` : ""}
-                        {p.baths != null ? ` / ${p.baths}ba` : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-2">
-                      <span className="rounded-md bg-[#4f7bff]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6f9bff]">
-                        {score}%
-                      </span>
-                      {propertyId ? (
-                        <Link
-                          href={`/properties/${propertyId}`}
-                          className="text-[11px] font-semibold text-[#6f9bff]"
-                        >
-                          View
-                        </Link>
-                      ) : null}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <ul className="space-y-2">
+                {matches
+                  .slice(0, matchesExpanded ? matches.length : 3)
+                  .map((mRaw) => {
+                    const m = mRaw as Record<string, unknown>;
+                    const p = (m.properties ?? {}) as Record<string, unknown>;
+                    const score = Number(m.match_score ?? 0);
+                    const propertyId = String(p.id ?? "");
+                    const address = String(p.address ?? "—");
+
+                    // "New" badge — within 7 days
+                    const listedDate = p.listed_date
+                      ? new Date(String(p.listed_date))
+                      : null;
+                    const isNew =
+                      listedDate != null &&
+                      Date.now() - listedDate.getTime() <= 7 * 24 * 60 * 60 * 1000;
+
+                    return (
+                      <li
+                        key={String(m.id)}
+                        className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] px-3 py-2.5"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                            <Home size={15} />
+                          </span>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="truncate text-[13px] font-semibold text-[#d0d0e0]">
+                                {address}
+                              </p>
+                              {isNew && (
+                                <span className="flex-shrink-0 rounded-md bg-green-500/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-green-400">
+                                  New
+                                </span>
+                              )}
+                            </div>
+                            <p className="mt-0.5 text-[11px] text-[#555570]">
+                              {String(p.town ?? "—")}
+                              {p.price != null
+                                ? ` · ${fmtMoney(Number(p.price))}`
+                                : ""}
+                              {p.beds != null ? ` · ${p.beds}bd` : ""}
+                              {p.baths != null ? ` / ${p.baths}ba` : ""}
+                            </p>
+                          </div>
+                          <div className="flex flex-shrink-0 items-center gap-1.5">
+                            <span className="rounded-md bg-[#4f7bff]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6f9bff]">
+                              {score}%
+                            </span>
+                            {propertyId ? (
+                              <Link
+                                href={`/properties/${propertyId}`}
+                                className="text-[11px] font-semibold text-[#6f9bff]"
+                              >
+                                View
+                              </Link>
+                            ) : null}
+                          </div>
+                        </div>
+
+                        {/* Action buttons */}
+                        <div className="mt-2.5 flex gap-2 pl-12">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setDraftPrefill(address);
+                              setDraftOpen(true);
+                            }}
+                            className="flex items-center gap-1 rounded-lg border border-[#4f7bff]/20 bg-[#4f7bff]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#6f9bff]"
+                          >
+                            <Send size={10} />
+                            Send to client
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toast.toast("Schedule showing — coming soon", "default")
+                            }
+                            className="flex items-center gap-1 rounded-lg border border-[#1e1e2e] bg-[#0e0e1a] px-2.5 py-1.5 text-[11px] font-semibold text-[#888898]"
+                          >
+                            <CalendarPlus size={10} />
+                            Schedule showing
+                          </button>
+                        </div>
+                      </li>
+                    );
+                  })}
+              </ul>
+
+              {matches.length > 3 && (
+                <button
+                  type="button"
+                  onClick={() => setMatchesExpanded((p) => !p)}
+                  className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] py-2 text-center text-[12px] font-semibold text-[#6f9bff]"
+                >
+                  {matchesExpanded
+                    ? "Show less"
+                    : `+ ${matches.length - 3} more match${matches.length - 3 === 1 ? "" : "es"}`}
+                </button>
+              )}
+            </>
           )}
-          {matches.length > 0 ? (
-            <div className="mt-3 text-right">
-              <Link
-                href="/listings"
-                className="text-[11.5px] font-semibold text-[#6f9bff]"
-              >
-                Find more listings →
-              </Link>
-            </div>
-          ) : null}
-        </CollapsibleSection>
+        </div>
 
         {/* ─── Matching Preferences ───────────────────────────────────── */}
+        <div id="matching-prefs">
         <CollapsibleSection title="Matching Preferences" defaultOpen={false}>
           <MatchingPreferencesSection
             clientId={id}
@@ -334,6 +422,7 @@ export function ClientDetail({
             primaryTown={(client.town as string | null) ?? null}
           />
         </CollapsibleSection>
+        </div>
 
         {/* ─── Notes (inline, only if present) ────────────────────────── */}
         {notes ? (
@@ -412,7 +501,11 @@ export function ClientDetail({
             budget_max: budgetMax,
             status,
           }}
-          onClose={() => setDraftOpen(false)}
+          propertyContext={draftPrefill ?? undefined}
+          onClose={() => {
+            setDraftOpen(false);
+            setDraftPrefill(null);
+          }}
         />
       ) : null}
 
