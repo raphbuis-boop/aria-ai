@@ -61,13 +61,9 @@ function relTime(iso: string): string {
   return `${Math.floor(h / 24)}d ago`;
 }
 
-type Props = {
-  unread: number;
-  onUnreadChange: (count: number) => void;
-};
-
-export function NotificationBell({ unread, onUnreadChange }: Props) {
+export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -81,9 +77,24 @@ export function NotificationBell({ unread, onUnreadChange }: Props) {
       unread?: number;
     };
     setNotifications(data.notifications ?? []);
-    onUnreadChange(data.unread ?? 0);
+    setUnread(data.unread ?? 0);
     setLoading(false);
-  }, [onUnreadChange]);
+  }, []);
+
+  // Poll unread count every 15s
+  useEffect(() => {
+    async function pollUnread() {
+      const res = await fetch("/api/notifications");
+      if (res.ok) {
+        const data = (await res.json()) as { unread?: number; notifications?: Notification[] };
+        setUnread(data.unread ?? 0);
+        if (!open) setNotifications(data.notifications ?? []);
+      }
+    }
+    pollUnread();
+    const id = setInterval(pollUnread, 15000);
+    return () => clearInterval(id);
+  }, [open]);
 
   // Open → fetch fresh list
   useEffect(() => {
@@ -106,15 +117,15 @@ export function NotificationBell({ unread, onUnreadChange }: Props) {
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
     );
-    onUnreadChange(Math.max(0, unread - 1));
+    setUnread((c) => Math.max(0, c - 1));
     await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-  }, [unread, onUnreadChange]);
+  }, []);
 
   const markAllRead = useCallback(async () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-    onUnreadChange(0);
+    setUnread(0);
     await fetch("/api/notifications/mark-all-read", { method: "POST" });
-  }, [onUnreadChange]);
+  }, []);
 
   const handleNotificationClick = useCallback(
     async (n: Notification) => {
@@ -145,7 +156,7 @@ export function NotificationBell({ unread, onUnreadChange }: Props) {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute bottom-12 right-0 z-[95] w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#1e1e2e] bg-[#0f0f1a] shadow-2xl">
+        <div className="absolute right-0 top-12 z-[95] w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#1e1e2e] bg-[#0f0f1a] shadow-2xl">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-[#1e1e2e] px-4 py-3">
             <p className="text-[12px] font-bold uppercase tracking-widest text-[#444460]">

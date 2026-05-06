@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { NotificationBell } from "@/components/NotificationPanel";
 import {
   Building2,
   CalendarClock,
@@ -163,7 +162,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const supabase = createClient();
   const [inboxUnread, setInboxUnread] = useState(0);
-  const [notifUnread, setNotifUnread] = useState(0);
   const [quickOpen, setQuickOpen] = useState(false);
 
   useEffect(() => {
@@ -173,7 +171,6 @@ export function BottomNav() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      // Inbox: unapproved AI drafts
       const { count } = await supabase
         .from("activities")
         .select("*", { count: "exact", head: true })
@@ -181,12 +178,6 @@ export function BottomNav() {
         .eq("ai_draft", true)
         .eq("approved", false);
       if (!cancelled) setInboxUnread(count ?? 0);
-      // Notifications: unread count
-      const res = await fetch("/api/notifications");
-      if (!cancelled && res.ok) {
-        const data = (await res.json()) as { unread?: number };
-        setNotifUnread(data.unread ?? 0);
-      }
     }
     load();
     const id = setInterval(load, 15000);
@@ -203,9 +194,10 @@ export function BottomNav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
+  // Exclude /listings from moreActive since it has its own pill
   const moreActive =
     isActive("/more") ||
-    moreLinks.some((m) => isActive(m.href));
+    moreLinks.some((m) => m.href !== "/listings" && isActive(m.href));
 
   return (
     <>
@@ -250,9 +242,11 @@ export function BottomNav() {
             Icon={Users}
             active={isActive("/clients")}
           />
-          <NotificationBell
-            unread={notifUnread}
-            onUnreadChange={setNotifUnread}
+          <PillItem
+            href="/listings"
+            label="Search"
+            Icon={Building2}
+            active={isActive("/listings") || isActive("/mls") || isActive("/properties")}
           />
           <PillItem
             href="/more"
