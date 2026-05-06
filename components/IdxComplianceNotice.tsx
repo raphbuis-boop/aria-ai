@@ -6,14 +6,12 @@ import {
 } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
-  lastUpdated,
   brokerageName,
   compact = false,
   logoSize = "default",
   /** Agent + license line (prefer ComplianceFooter sitewide). */
   includeAgentAttribution = false,
 }: {
-  lastUpdated?: string | null;
   brokerageName?: string | null;
   compact?: boolean;
   /** Larger mark + disclaimer block for public IDX pages (NJMLS visibility). */

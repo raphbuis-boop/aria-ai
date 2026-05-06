@@ -23,6 +23,7 @@ export default function PropertySearchPage() {
         </p>
       </div>
       <div className="mx-auto max-w-lg px-4 pt-4">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/IDX_logo.JPG"
           alt="NJMLS IDX Logo"

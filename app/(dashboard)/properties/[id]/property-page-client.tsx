@@ -301,7 +301,6 @@ export function PropertyPageClient({
 
       <div className="mb-4">
         <IdxComplianceNotice
-          lastUpdated={listing.listDate ?? null}
           brokerageName={listing.listingFirm?.name ?? null}
           logoSize={viewerContext === "public" ? "prominent" : "default"}
         />
