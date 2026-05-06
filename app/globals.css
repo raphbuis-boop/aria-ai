@@ -38,3 +38,28 @@ body {
 .animate-aria-pulse {
   animation: aria-pulse 1.5s ease-in-out infinite;
 }
+
+/* Voice Orb animations */
+@keyframes orb-pulse-blue {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(59, 130, 246, 0); }
+}
+@keyframes orb-pulse-purple {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(168, 85, 247, 0); }
+}
+@keyframes orb-pulse-green {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+@keyframes orb-glow {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.45; }
+}
+
+.orb-pulse-blue { animation: orb-pulse-blue 1.4s ease-in-out infinite; }
+.orb-pulse-purple { animation: orb-pulse-purple 1.2s ease-in-out infinite; }
+.orb-pulse-green { animation: orb-pulse-green 1.6s ease-in-out infinite; }
+.orb-glow-blue { animation: orb-glow 1.4s ease-in-out infinite; }
+.orb-glow-purple { animation: orb-glow 1.2s ease-in-out infinite; }
+.orb-glow-green { animation: orb-glow 1.6s ease-in-out infinite; }
