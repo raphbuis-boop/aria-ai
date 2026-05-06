@@ -322,7 +322,7 @@ export default function InquiriesPage() {
                   ) : null}
                   {inq.message ? (
                     <p className="mt-1 line-clamp-1 text-[12px] text-text-dim">
-                      "{inq.message}"
+                      &quot;{inq.message}&quot;
                     </p>
                   ) : null}
                 </div>
