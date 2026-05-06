@@ -1,6 +1,6 @@
+import { AppHeader } from "@/components/AppHeader";
 import { AutomationRunner } from "@/components/AutomationRunner";
 import { BottomNav } from "@/components/BottomNav";
-import { NotificationBell } from "@/components/NotificationPanel";
 import { VoiceAssistantRoot } from "@/components/VoiceAssistantRoot";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -22,12 +22,10 @@ export default async function DashboardLayout({
   return (
     <div className="min-h-screen bg-bg-primary pb-20">
       <AutomationRunner />
+      <AppHeader />
       {children}
       <BottomNav />
       <VoiceAssistantRoot />
-      <div className="fixed right-16 top-5 z-[60]">
-        <NotificationBell />
-      </div>
     </div>
   );
 }
