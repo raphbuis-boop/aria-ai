@@ -3,6 +3,7 @@
 import { BackButton } from "@/components/BackButton";
 import { ReferralCard } from "@/components/ReferralCard";
 import { useToast } from "@/components/ToastProvider";
+import { track } from "@/lib/analytics";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -103,6 +104,7 @@ export default function ReferralsPage() {
       source: "referral",
       status: "new",
     });
+    track("client_created", { source: "automation" });
     toast.toast("Client created", "success");
     void load();
     router.refresh();

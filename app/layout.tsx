@@ -3,6 +3,7 @@ import { ConditionalComplianceFooter } from "@/components/ConditionalComplianceF
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
+import { PostHogProvider } from "./providers";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,10 +23,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.className} min-h-screen bg-[#0a0a0f] text-[#f0eee8]`}>
-        <ToastProvider>
-          {children}
-          <ConditionalComplianceFooter />
-        </ToastProvider>
+        <PostHogProvider>
+          <ToastProvider>
+            {children}
+            <ConditionalComplianceFooter />
+          </ToastProvider>
+        </PostHogProvider>
       </body>
     </html>
   );

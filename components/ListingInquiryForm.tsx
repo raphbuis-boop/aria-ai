@@ -1,6 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
+import { track } from "@/lib/analytics";
 import { X, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -68,6 +69,12 @@ export function ListingInquiryForm({
         toast.toast(data.error ?? "Could not send", "warn");
         return;
       }
+      track("inquiry_submitted", {
+        source: "website",
+        listing_id: listingId,
+        has_phone: Boolean(phone.trim()),
+        has_email: Boolean(email.trim()),
+      });
       toast.toast(
         intent === "showing"
           ? "Showing request sent. An agent will follow up."

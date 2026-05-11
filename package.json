@@ -27,6 +27,7 @@
     "lucide-react": "^0.577.0",
     "next": "14.2.35",
     "pdf-lib": "^1.17.1",
+    "posthog-js": "^1.372.10",
     "react": "^18",
     "react-dom": "^18",
     "react-pdf": "^10.4.1",

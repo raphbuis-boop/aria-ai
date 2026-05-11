@@ -5,6 +5,7 @@ import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { usePageContext } from "@/hooks/usePageContext";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
+import { track } from "@/lib/analytics";
 
 type OrbState = "idle" | "listening" | "thinking" | "speaking";
 
@@ -140,6 +141,7 @@ export function VoiceAssistantPanel({ open, onOrbStateChange }: Props) {
     } else {
       stopSpeaking();
       lastTranscriptRef.current = "";
+      track("voice_ai_used", { feature: "command" });
       startListening();
     }
   }, [listening, startListening, stopListening, stopSpeaking]);
