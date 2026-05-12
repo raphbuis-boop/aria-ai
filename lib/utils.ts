@@ -1,7 +1,17 @@
 import { format, formatDistanceToNow } from "date-fns";
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
 
-export function cn(...classes: (string | false | undefined | null)[]) {
-  return classes.filter(Boolean).join(" ");
+/**
+ * Class-name helper. Backwards-compatible with the previous signature
+ * `(string | false | undefined | null)[]` but now also accepts arrays,
+ * objects, and intelligently merges conflicting Tailwind classes
+ * (so `cn("p-2", "p-4")` returns `"p-4"`, not `"p-2 p-4"`).
+ *
+ * Used by shadcn/ui components and any code that composes Tailwind classes.
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
 }
 
 export function formatPhoneE164(input: string): string | null {

@@ -1,4 +1,5 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
 
 const config: Config = {
   content: [
@@ -26,6 +27,8 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  // tailwindcss-animate provides the data-[state=open]:animate-in / fade-in /
+  // zoom-in utility classes used by shadcn Dialog/Sheet/Tooltip primitives.
+  plugins: [animate],
 };
 export default config;

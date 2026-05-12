@@ -1,0 +1,40 @@
+meta {
+  name: Listing Inquiries - Submit (POST)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/listing-inquiries
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "intent": "info",
+    "name": "Test Buyer",
+    "email": "test+bruno@example.com",
+    "phone": "+15555550100",
+    "message": "Sent from Bruno smoke-test. Interested in pricing details.",
+    "listing_id": "TEST-LISTING-001",
+    "listing_address": "123 Sample St, Ridgewood NJ 07450",
+    "mls_number": "23456789",
+    "listing_price": 750000,
+    "website": ""
+  }
+}
+
+docs {
+  Public endpoint. Creates an `idx_listing_inquiries` row via the
+  service-role client. The empty `website` field is a honeypot — leave
+  it empty for real submissions.
+
+  Returns `{ ok: true }` on success.
+
+  Validation rules: name >= 2 chars, valid email, listing_id required.
+}

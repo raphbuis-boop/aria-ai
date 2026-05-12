@@ -1,0 +1,42 @@
+meta {
+  name: AI - Ask Aria (POST)
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/ai
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Cookie: {{supabaseAccessToken}}
+}
+
+body:json {
+  {
+    "question": "Which of my buyers should I follow up with today?",
+    "context": "I have 12 active buyers, 3 toured this week, 2 have offers out.",
+    "history": [
+      { "role": "user", "content": "Morning!" },
+      { "role": "assistant", "content": "Morning Raph — ready to plan your day?" }
+    ]
+  }
+}
+
+docs {
+  Auth required. Calls Claude via `lib/ai.ts` with a system prompt that
+  instructs Aria to be concise, warm, and end with one suggested next action.
+
+  Body shape:
+    - `question` (string, required): the user's prompt
+    - `context`  (string, optional): situational context appended to the prompt
+    - `history`  (array, optional): last few turns. Only the last 6 messages
+                                    are used (see route handler).
+
+  Returns `{ reply: string }`.
+
+  Max tokens: 500. Model: claude-sonnet-4-6 (configured in `lib/ai.ts`).
+}

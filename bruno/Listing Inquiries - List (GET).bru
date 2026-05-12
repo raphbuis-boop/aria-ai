@@ -1,0 +1,31 @@
+meta {
+  name: Listing Inquiries - List (GET)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/listing-inquiries?status=new
+  body: none
+  auth: none
+}
+
+params:query {
+  status: new
+}
+
+headers {
+  Cookie: {{supabaseAccessToken}}
+}
+
+docs {
+  Auth required. Returns inquiries newest-first.
+
+  Optional `?status=` filter: `new` | `contacted` | `converted` | `archived`.
+  Remove the query param to get all inquiries regardless of status.
+
+  Returns `{ inquiries: [...] }`.
+
+  The `Cookie` header must contain your Supabase session cookie —
+  see bruno/README.md for how to grab it from the browser.
+}

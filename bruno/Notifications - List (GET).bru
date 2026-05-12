@@ -1,0 +1,25 @@
+meta {
+  name: Notifications - List (GET)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/notifications
+  body: none
+  auth: none
+}
+
+headers {
+  Cookie: {{supabaseAccessToken}}
+}
+
+docs {
+  Auth required. Returns the latest 20 notifications for the current agent
+  (filtered by `agent_id = user.id`), plus an `unread` count.
+
+  Returns `{ notifications: [...], unread: number }`.
+
+  Set the `Cookie` env var with your Supabase session token first
+  (see bruno/README.md).
+}
