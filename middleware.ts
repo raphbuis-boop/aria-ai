@@ -56,6 +56,10 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/demo") ||
     path.startsWith("/bba/sign") ||
     path.startsWith("/property-search") ||
+    // Sentry tunnel route — bypasses ad blockers by routing
+    // Sentry SDK traffic through our own domain. Must be public so
+    // unauthenticated client errors can still be captured.
+    path.startsWith("/monitoring") ||
     path === "/login" ||
     path === "/setup" ||
     path === "/privacy" ||
