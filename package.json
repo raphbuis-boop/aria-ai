@@ -12,7 +12,7 @@
     "ios:open": "npx cap open ios"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.80.0",
+    "@anthropic-ai/sdk": "^0.95.2",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1",
     "@capacitor/ios": "^8.3.1",
@@ -26,7 +26,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
-    "next": "14.2.35",
+    "next": "^16.2.6",
     "pdf-lib": "^1.17.1",
     "posthog-js": "^1.372.10",
     "react": "^18",
@@ -42,7 +42,7 @@
     "@types/react-dom": "^18",
     "@types/react-signature-canvas": "^1.0.7",
     "eslint": "^8",
-    "eslint-config-next": "14.2.35",
+    "eslint-config-next": "^16.2.6",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "typescript": "^5"

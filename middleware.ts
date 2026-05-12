@@ -66,7 +66,8 @@ export async function middleware(request: NextRequest) {
     path === "/accessibility" ||
     path === "/fair-housing" ||
     path === "/" ||
-    path === "/landing.html";
+    path === "/landing.html" ||
+    path === "/sentry-example-page";
 
   if (isPublic) {
     if (user && path === "/login") {
