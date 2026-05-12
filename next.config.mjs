@@ -25,9 +25,10 @@ export default withSentryConfig(nextConfig, {
   // readable stack traces from third-party deps too.
   widenClientFileUpload: true,
 
-  // Route Sentry SDK traffic through this path so ad blockers
-  // (which often block "sentry.io") don't drop client error reports.
-  tunnelRoute: "/monitoring",
+  // NOTE: tunnelRoute removed — was causing 403s on /monitoring in prod.
+  // Sentry events go directly to ingest.sentry.io now. The downside is
+  // that strict ad blockers may drop a small % of client error reports,
+  // but reliability across the board is better this way.
 
   // Skip the upload step entirely if no auth token is set
   // (keeps local builds and PRs from contributors clean).
