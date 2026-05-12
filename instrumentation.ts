@@ -14,4 +14,7 @@ export async function register() {
   }
 }
 
-export { onRequestError } from "@sentry/nextjs";
+// Sentry renamed this export from `onRequestError` to `captureRequestError`
+// in @sentry/nextjs v10. Next.js's hook is still called `onRequestError`,
+// so we re-export the new name under the old name.
+export { captureRequestError as onRequestError } from "@sentry/nextjs";
