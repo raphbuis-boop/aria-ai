@@ -16,7 +16,7 @@ const nextConfig = {};
  */
 export default withSentryConfig(nextConfig, {
   org: "aria-ec",
-  project: "javascript-nextjs",
+  project: "aria-operator",
 
   // Hide source map upload logs unless you're debugging the upload itself.
   silent: !process.env.CI,
