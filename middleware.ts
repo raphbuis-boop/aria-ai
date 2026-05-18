@@ -50,6 +50,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (!user && path === "/") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/landing.html";
+    return NextResponse.rewrite(url);
+  }
+
   const isPublic =
     path.startsWith("/api") ||
     path.startsWith("/portal") ||
@@ -60,7 +66,10 @@ export async function middleware(request: NextRequest) {
     // Sentry SDK traffic through our own domain. Must be public so
     // unauthenticated client errors can still be captured.
     path.startsWith("/monitoring") ||
+    path.startsWith("/auth/") ||
     path === "/login" ||
+    path === "/login/email" ||
+    path === "/signup" ||
     path === "/setup" ||
     path === "/privacy" ||
     path === "/terms" ||
@@ -69,12 +78,14 @@ export async function middleware(request: NextRequest) {
     path === "/dmca" ||
     path === "/accessibility" ||
     path === "/fair-housing" ||
-    path === "/" ||
     path === "/landing.html" ||
     path === "/sentry-example-page";
 
   if (isPublic) {
-    if (user && path === "/login") {
+    if (
+      user &&
+      (path === "/login" || path === "/login/email" || path === "/signup")
+    ) {
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard";
       return NextResponse.redirect(url);
@@ -93,6 +104,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|JPG|gif|webp)$).*)",
   ],
 };
