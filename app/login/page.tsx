@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -33,6 +34,14 @@ export default function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-bg-primary px-4">
       <div className="w-full max-w-[380px] rounded-[16px] border border-border-card bg-bg-card p-8">
         <div className="text-center">
+          <Image
+            src="/aria-logo.png"
+            alt="Aria"
+            width={96}
+            height={96}
+            priority
+            className="mx-auto mb-4"
+          />
           <div className="text-[28px] font-medium text-accent-blue">Aria</div>
           <p className="mt-2 text-[13px] text-text-dim">
             Your AI real estate teammate
