@@ -43,6 +43,15 @@ No test suite is configured.
 | `lib/supabase/client.ts` | Browser Supabase client |
 | `lib/supabase/admin.ts` | Service-role admin client (no auto-refresh) |
 | `lib/utils.ts` | `cn()`, `formatPhoneE164()`, `initials()`, `relTime()`, `fmtMoney()`, `fmtDate()` |
+| `lib/operator-intent-mappings.ts` | Founder/operator semantic intent → investigative workflows (`expandOperatorPrompt`, `SEMANTIC_DECOMPOSITION_TEMPLATES`). Use for broad prompts (“engineering risks”, “demo prep”, “what should I work on today”) instead of refusing for scope. |
+
+### Operator / planner behavior
+
+Broad founder or product language should be **decomposed into investigations**, not rejected as “too vague”. Before concluding a plan cannot be assembled:
+
+1. Run `expandOperatorPrompt(userRequest)` mentally or import helpers from `lib/operator-intent-mappings.ts` and follow the checklist (git truth, lint/build/typecheck, TODO/FIXME, issues, demo-critical paths).
+2. Apply **OPERATIONAL_HEURISTICS** in that module — union matching templates when several apply (e.g. engineering risks + named demo).
+3. Do **not** relax safety: auth, secrets, destructive git, or explicit user scope limits stay unchanged.
 
 ### Auth Flow
 
