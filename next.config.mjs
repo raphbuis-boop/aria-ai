@@ -3,6 +3,8 @@ import { withSentryConfig } from "@sentry/nextjs";
 /** @type {import('next').NextConfig} */
 const nextConfig = {};
 
+const sentryAuthOk = Boolean(process.env.SENTRY_AUTH_TOKEN);
+
 /**
  * Sentry build-time configuration.
  *
@@ -13,6 +15,10 @@ const nextConfig = {};
  *
  * The org/project are committed; the SENTRY_AUTH_TOKEN is set in Vercel
  * (and locally in .env.sentry-build-plugin if you want to upload from dev).
+ *
+ * When the token is missing, release + sourcemap upload are skipped. When the
+ * token is set but invalid (401), errorHandler keeps the Next.js build going;
+ * replace the token in Vercel → Settings → Environment Variables to restore uploads.
  */
 export default withSentryConfig(nextConfig, {
   org: "aria-ec",
@@ -36,4 +42,15 @@ export default withSentryConfig(nextConfig, {
 
   // Automatically wrap server actions / RSCs so errors get captured.
   automaticVercelMonitors: true,
+
+  sourcemaps: {
+    disable: !sentryAuthOk,
+  },
+  release: {
+    create: sentryAuthOk,
+    finalize: sentryAuthOk,
+  },
+  errorHandler: (err) => {
+    console.warn("[Sentry]", err.message);
+  },
 });

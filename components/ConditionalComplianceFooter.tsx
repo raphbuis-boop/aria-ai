@@ -7,9 +7,17 @@ import { usePathname } from "next/navigation";
 export function ConditionalComplianceFooter() {
   const pathname = usePathname();
 
+  /** Full-screen auth + marketing HTML — avoid IDX/chrome/stacking clashes. */
+  const hideComplianceFooter =
+    pathname === "/" ||
+    pathname === "/landing" ||
+    pathname === "/signup" ||
+    pathname.startsWith("/login");
+
+  if (hideComplianceFooter) return null;
+
   const publicPrefixes = [
     "/property-search",
-    "/login",
     "/setup",
     "/privacy",
     "/terms",
@@ -23,10 +31,7 @@ export function ConditionalComplianceFooter() {
     "/bba/sign",
   ] as const;
 
-  const isPublic =
-    pathname === "/" ||
-    pathname === "/landing" ||
-    publicPrefixes.some((p) => pathname.startsWith(p));
+  const isPublic = publicPrefixes.some((p) => pathname.startsWith(p));
 
   if (!isPublic) return null;
 
