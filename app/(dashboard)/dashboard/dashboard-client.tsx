@@ -3,7 +3,7 @@
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { useToast } from "@/components/ToastProvider";
 import { differenceInCalendarDays } from "date-fns";
-import { Building2, Search, ShieldAlert } from "lucide-react";
+import { Building2, Search, ShieldAlert, Zap, TrendingUp, Users, CircleDot } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
@@ -50,6 +50,79 @@ function pipelineTotal(clients: { budget_max: number | null }[]) {
   return `$${total}`;
 }
 
+// ─── Stat card ───────────────────────────────────────────────────────────────
+function StatCard({
+  label,
+  value,
+  color,
+  icon: Icon,
+}: {
+  label: string;
+  value: string | number;
+  color: "blue" | "amber" | "green" | "white";
+  icon: React.ElementType;
+}) {
+  const val = {
+    blue: "text-[#4f7bff]",
+    amber: "text-[#ffb832]",
+    green: "text-[#50dc78]",
+    white: "text-[#f0eee8]",
+  }[color];
+  const bg = {
+    blue: "bg-[#4f7bff]/10",
+    amber: "bg-[#ffb832]/10",
+    green: "bg-[#50dc78]/10",
+    white: "bg-white/6",
+  }[color];
+
+  return (
+    <div className="rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4">
+      <div className={`mb-3 flex h-8 w-8 items-center justify-center rounded-[10px] ${bg} ${val}`}>
+        <Icon size={15} strokeWidth={2.2} />
+      </div>
+      <p className={`text-[24px] font-semibold leading-none tracking-tight ${val}`}>
+        {value}
+      </p>
+      <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.9px] text-[#44445a]">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+// ─── Badge ────────────────────────────────────────────────────────────────────
+function Badge({ children, tone }: { children: React.ReactNode; tone: "red" | "amber" | "green" | "blue" }) {
+  const styles = {
+    red: "bg-[#ff5050]/12 text-[#ff6060] border-[#ff5050]/20",
+    amber: "bg-[#ffb832]/12 text-[#ffb832] border-[#ffb832]/20",
+    green: "bg-[#50dc78]/12 text-[#50dc78] border-[#50dc78]/20",
+    blue: "bg-[#4f7bff]/12 text-[#6f9bff] border-[#4f7bff]/20",
+  }[tone];
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-md border-[0.5px] px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.6px] ${styles}`}>
+      {children}
+    </span>
+  );
+}
+
+// ─── Action button ────────────────────────────────────────────────────────────
+function ActionBtn({ children, tone, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone: "green" | "blue" | "amber" }) {
+  const styles = {
+    green: "bg-[#50dc78]/10 text-[#50dc78] border-[#50dc78]/18 hover:bg-[#50dc78]/16",
+    blue: "bg-[#4f7bff]/10 text-[#6f9bff] border-[#4f7bff]/18 hover:bg-[#4f7bff]/16",
+    amber: "bg-[#ffb832]/10 text-[#ffb832] border-[#ffb832]/18 hover:bg-[#ffb832]/16",
+  }[tone];
+  return (
+    <button
+      type="button"
+      className={`flex-1 rounded-[9px] border-[0.5px] px-3 py-[7px] text-center text-[12px] font-semibold transition ${styles}`}
+      {...props}
+    >
+      {children}
+    </button>
+  );
+}
+
 export function DashboardClient({
   user,
   initial,
@@ -66,87 +139,50 @@ export function DashboardClient({
 
   const clients = initial.clients;
   const transactions = initial.transactions;
-
   const visible = clients.filter((c) => !dismissed.has(c.id));
 
   const isHot = (c: ClientRow) =>
-    c.status === "showing" ||
-    c.status === "hot" ||
-    (c.lead_score ?? 0) >= 8;
+    c.status === "showing" || c.status === "hot" || (c.lead_score ?? 0) >= 8;
 
-  const hotLeads = visible.filter(
-    (c) => isHot(c) && !snoozed.has(c.id) && c.status !== "closed",
-  );
+  const hotLeads = visible.filter((c) => isHot(c) && !snoozed.has(c.id) && c.status !== "closed");
   const followUp = visible.filter(
-    (c) =>
-      !snoozed.has(c.id) &&
-      c.status !== "closed" &&
-      !isHot(c) &&
-      (c.lead_score ?? 0) >= 5,
+    (c) => !snoozed.has(c.id) && c.status !== "closed" && !isHot(c) && (c.lead_score ?? 0) >= 5,
   );
   const activeClients = visible.filter((c) => c.status !== "closed");
-  const underContractClients = visible.filter(
-    (c) => c.status === "under_contract",
-  );
+  const underContractClients = visible.filter((c) => c.status === "under_contract");
   const underContractCount = Math.max(
     underContractClients.length,
-    transactions.filter((t) =>
-      ["under_contract", "active"].includes(String(t.status ?? "active")),
-    ).length,
+    transactions.filter((t) => ["under_contract", "active"].includes(String(t.status ?? "active"))).length,
   );
 
   const nearestClosing = useMemo(() => {
     const now = Date.now();
     const withDates = transactions
       .filter((t) => t.closing_date)
-      .map((t) => ({
-        t,
-        days: differenceInCalendarDays(new Date(String(t.closing_date)), now),
-      }))
+      .map((t) => ({ t, days: differenceInCalendarDays(new Date(String(t.closing_date)), now) }))
       .filter((x) => x.days >= 0 && x.days <= 30)
       .sort((a, b) => a.days - b.days);
     return withDates[0] ?? null;
   }, [transactions]);
 
-  // Briefing line assembled from real data.
   const briefingParts: string[] = [];
-  if (initial.newMatches > 0) {
-    briefingParts.push(
-      `${initial.newMatches} new property match${initial.newMatches === 1 ? "" : "es"} overnight`,
-    );
-  }
-  if (hotLeads.length > 0) {
-    briefingParts.push(
-      `${hotLeads.length} hot lead${hotLeads.length === 1 ? "" : "s"} need follow-up`,
-    );
-  }
-  if (nearestClosing) {
-    briefingParts.push(
-      nearestClosing.days === 0
-        ? "closing today"
-        : `1 closing in ${nearestClosing.days} day${nearestClosing.days === 1 ? "" : "s"}`,
-    );
-  }
+  if (initial.newMatches > 0)
+    briefingParts.push(`${initial.newMatches} new match${initial.newMatches === 1 ? "" : "es"}`);
+  if (hotLeads.length > 0)
+    briefingParts.push(`${hotLeads.length} hot lead${hotLeads.length === 1 ? "" : "s"}`);
+  if (nearestClosing)
+    briefingParts.push(nearestClosing.days === 0 ? "closing today" : `closing in ${nearestClosing.days}d`);
   const briefing = briefingParts.length ? briefingParts.join(" · ") : null;
 
-  const today = new Date().toLocaleDateString("en-US", {
-    weekday: "long",
-    month: "long",
-    day: "numeric",
-  });
-  const firstName =
-    user?.fullName?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there";
+  const today = new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" });
+  const firstName = user?.fullName?.split(" ")[0] ?? user?.email?.split("@")[0] ?? "there";
   const initial0 = firstName[0]?.toUpperCase() || "A";
   const hour = new Date().getHours();
-  const greeting =
-    hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  // Top three priorities for the Action Stack.
   const topHot = hotLeads[0];
   const closingClient =
-    underContractClients.find((c) =>
-      transactions.some((t) => t.client_id === c.id && t.closing_date),
-    ) ??
+    underContractClients.find((c) => transactions.some((t) => t.client_id === c.id && t.closing_date)) ??
     underContractClients[0] ??
     null;
   const followUpClient = followUp[0] ?? null;
@@ -157,13 +193,9 @@ export function DashboardClient({
     try {
       const res = await fetch("/api/seed", { method: "POST" });
       const data = await res.json();
-      if (!res.ok) {
-        toast.toast(String(data.error ?? "Seed failed"), "warn");
-      } else if (data.skipped) {
-        toast.toast("Demo data already loaded", "default");
-      } else {
-        toast.toast(`Loaded ${data.clients ?? 5} demo clients`, "success");
-      }
+      if (!res.ok) toast.toast(String(data.error ?? "Seed failed"), "warn");
+      else if (data.skipped) toast.toast("Demo data already loaded", "default");
+      else toast.toast(`Loaded ${data.clients ?? 5} demo clients`, "success");
       router.refresh();
     } catch {
       toast.toast("Could not reach seed endpoint", "warn");
@@ -183,339 +215,266 @@ export function DashboardClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
-      <div className="px-5 pt-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#4f7bff] mb-1">
-          {today}
-        </p>
-        <div className="flex items-center justify-between">
-          <h1 className="text-[26px] font-semibold leading-tight text-[#f0eee8]">
-            {greeting}, {firstName}
-          </h1>
-          <div className="w-9 h-9 rounded-full bg-[#4f7bff]/20 flex items-center justify-center text-[13px] font-bold text-[#6f9bff] flex-shrink-0">
+    <div className="min-h-screen bg-[#080810] text-[#f0eee8] pb-28">
+      <div className="px-5 pt-5">
+
+        {/* ── Header row ── */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[#4f7bff] mb-1">
+              {today}
+            </p>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">
+              {greeting}, {firstName}.
+            </h1>
+          </div>
+          <div className="mt-1 h-[38px] w-[38px] flex-shrink-0 rounded-full bg-[#4f7bff]/15 flex items-center justify-center text-[14px] font-bold text-[#6f9bff] border-[0.5px] border-[#4f7bff]/25">
             {initial0}
           </div>
         </div>
-      </div>
 
-      <div className="px-5 mt-[18px]">
-        <div className="bg-gradient-to-br from-[#0e1428] to-[#111230] border-[0.5px] border-[#1e2a4e] rounded-[20px] p-[18px]">
-          <div className="flex items-center gap-1.5 mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4f7bff] animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[1px] text-[#4f7bff]">
-              While you were away
+        {/* ── Briefing ── */}
+        <div className="mb-4 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-4">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="h-[6px] w-[6px] rounded-full bg-[#4f7bff] animate-pulse flex-shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[1.1px] text-[#4f7bff]">
+              Overnight update
             </span>
           </div>
-          <p className="text-sm text-[#a0a0c0] leading-[1.6]">
-            {briefing ??
-              (clients.length === 0
-                ? "No clients yet. Load demo data or add your first client to get started."
-                : "No new updates overnight.")}
+          <p className="text-[13.5px] leading-[1.6] text-[#8888a0]">
+            {briefing ?? (
+              clients.length === 0
+                ? "No clients yet. Load demo data or add your first client."
+                : "You're all caught up."
+            )}
           </p>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-2.5">
+        {/* ── Quick actions ── */}
+        <div className="mb-5 grid grid-cols-2 gap-2">
           <Link
             href="/listings"
-            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#2a3a6e] bg-gradient-to-br from-[#0e1428] to-[#111230] px-4 py-[14px] transition active:border-[#4f7bff]"
+            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-3.5 transition active:border-[#4f7bff]/40"
           >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#4f7bff]/15 text-[#6f9bff]">
-              <Search size={18} strokeWidth={2.25} />
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#4f7bff]">
+              <Search size={16} strokeWidth={2.2} />
             </span>
-            <div className="min-w-0">
-              <div className="text-[13px] font-semibold text-[#f0eee8] leading-tight">
-                Browse Listings
-              </div>
-              <div className="mt-0.5 text-[11px] text-[#666680] leading-tight">
-                Live NJ listings
-              </div>
+            <div>
+              <p className="text-[13px] font-semibold leading-tight">Browse MLS</p>
+              <p className="mt-0.5 text-[11px] text-[#44445a]">Live NJ listings</p>
             </div>
           </Link>
           <Link
             href="/properties"
-            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1e1e2e] bg-[#0f0f1e] px-4 py-[14px] transition active:border-[#4f7bff]"
+            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-3.5 transition active:border-[#4f7bff]/40"
           >
-            <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#4f7bff]/12 text-[#6f9bff]">
-              <Building2 size={18} strokeWidth={2.25} />
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#4f7bff]">
+              <Building2 size={16} strokeWidth={2.2} />
             </span>
-            <div className="min-w-0">
-              <div className="text-[13px] font-semibold text-[#f0eee8] leading-tight">
-                My Properties
-              </div>
-              <div className="mt-0.5 text-[11px] text-[#666680] leading-tight">
-                Saved + matches
-              </div>
+            <div>
+              <p className="text-[13px] font-semibold leading-tight">Properties</p>
+              <p className="mt-0.5 text-[11px] text-[#44445a]">Saved + matches</p>
             </div>
           </Link>
         </div>
 
-        <div className="flex items-center justify-between mt-5 mb-2.5">
-          <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
-            Action Stack
-          </p>
-          <button
-            type="button"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] rounded-[20px] px-3 py-1 text-[11px] font-semibold text-[#444460]"
-          >
-            Focus mode
-          </button>
+        {/* ── Stats ── */}
+        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
+          Stats
+        </p>
+        <div className="mb-5 grid grid-cols-2 gap-2">
+          <StatCard label="Pipeline" value={pipelineTotal(visible)} color="blue" icon={TrendingUp} />
+          <StatCard label="Hot leads" value={hotLeads.length} color="amber" icon={Zap} />
+          <StatCard label="Active" value={activeClients.length} color="white" icon={Users} />
+          <StatCard label="Closing" value={underContractCount} color="green" icon={CircleDot} />
         </div>
 
+        {/* ── Action stack ── */}
+        <div className="flex items-center justify-between mb-2.5">
+          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
+            Action stack
+          </p>
+          {(topHot || closingClient || followUpClient || initial.bbaAlerts.length > 0) && (
+            <span className="rounded-full bg-[#4f7bff]/10 px-2.5 py-[3px] text-[10px] font-semibold text-[#6f9bff]">
+              {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length} item
+              {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length !== 1 ? "s" : ""}
+            </span>
+          )}
+        </div>
+
+        {/* BBA alert */}
         {initial.bbaAlerts.length > 0 && (
           <Link
             href={`/clients/${initial.bbaAlerts[0].clientId}`}
-            className="block bg-gradient-to-br from-[#1a0f0f] to-[#1e1014] border-[0.5px] border-[#3a1a1a] rounded-[20px] p-[18px] mb-2.5"
+            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#3a1a1a] bg-[#120a0a] p-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">
-                <ShieldAlert size={11} /> BBA required
-              </span>
+            <div className="mb-2.5 flex items-center justify-between">
+              <Badge tone="red"><ShieldAlert size={10} /> BBA required</Badge>
               <span className="text-[11px] text-[#ff8a8a]">
-                {initial.bbaAlerts.length} showing
-                {initial.bbaAlerts.length > 1 ? "s" : ""}
+                {initial.bbaAlerts.length} showing{initial.bbaAlerts.length > 1 ? "s" : ""}
               </span>
             </div>
-            <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
-              {initial.bbaAlerts[0].clientName} has no signed BBA
-            </p>
-            <p className="text-xs text-[#a08890] mb-3 leading-relaxed">
+            <p className="text-[15px] font-semibold mb-0.5">{initial.bbaAlerts[0].clientName}</p>
+            <p className="text-[12px] text-[#88607a] mb-3 leading-relaxed">
               {initial.bbaAlerts[0].address ?? "Upcoming showing"}
               {initial.bbaAlerts[0].showingDate
-                ? " · " +
-                  new Date(
-                    initial.bbaAlerts[0].showingDate,
-                  ).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                  })
+                ? " · " + new Date(initial.bbaAlerts[0].showingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                 : ""}
-              . NJ / NAR rules require a signed Buyer Broker Agreement before
-              the tour.
+              {" "}— NJ/NAR rules require a signed BBA before the tour.
             </p>
-            <span className="inline-block bg-gradient-to-br from-[#ff6060] to-[#ff4848] text-white rounded-[9px] px-3 py-[7px] text-xs font-semibold">
+            <span className="inline-block rounded-[9px] bg-[#ff5050]/90 px-3 py-[7px] text-[12px] font-semibold text-white">
               Send signing link →
             </span>
           </Link>
         )}
 
+        {/* Hot lead */}
         {topHot && (
-          <div className="bg-[#0f0f1e] border-[0.5px] border-[#2a1a1a] rounded-[20px] p-[18px] mb-2.5">
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.5px]">
-                Hot Lead
-              </span>
-              <span className="text-[11px] text-[#444460]">now</span>
+          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4">
+            <div className="mb-2.5 flex items-center justify-between">
+              <Badge tone="red">Hot lead</Badge>
+              <span className="text-[11px] text-[#44445a]">now</span>
             </div>
             <Link href={`/clients/${topHot.id}`}>
-              <p className="text-base font-semibold text-[#f0eee8] mb-0.5">
-                {topHot.name}
-                {topHot.town ? ` · ${topHot.town}` : ""}
+              <p className="text-[15px] font-semibold mb-0.5">
+                {topHot.name}{topHot.town ? ` · ${topHot.town}` : ""}
               </p>
             </Link>
-            <p className="text-xs text-[#666680] mb-1">
+            <p className="mb-2 text-[12px] text-[#44445a]">
               {topHot.status?.replace(/_/g, " ") ?? "—"}
             </p>
-            <div className="flex items-center gap-2 mb-[14px]">
+            <div className="mb-3 flex items-center gap-2">
               <div className="flex gap-[3px]">
                 {Array.from({ length: 10 }).map((_, j) => (
                   <div
                     key={j}
-                    className={`w-1.5 h-1.5 rounded-full ${j < (topHot.lead_score ?? 0) ? "bg-[#4f7bff]" : "bg-[#1e1e2e]"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${j < (topHot.lead_score ?? 0) ? "bg-[#4f7bff]" : "bg-[#1c1c2a]"}`}
                   />
                 ))}
               </div>
-              <span className="text-[11px] text-[#666680]">
-                Lead score {topHot.lead_score ?? 0}
-              </span>
+              <span className="text-[11px] text-[#44445a]">Score {topHot.lead_score ?? 0}/10</span>
             </div>
             <div className="flex gap-2">
               <a
                 href={topHot.phone ? `tel:${topHot.phone}` : "#"}
-                className="flex-1 text-center bg-[#50dc78]/12 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
+                className="flex-1 rounded-[9px] border-[0.5px] border-[#50dc78]/18 bg-[#50dc78]/10 px-3 py-[7px] text-center text-[12px] font-semibold text-[#50dc78] transition hover:bg-[#50dc78]/16"
               >
-                Call now
+                Call
               </a>
-              <button
-                type="button"
-                onClick={() => setDraftFor(topHot)}
-                className="flex-1 text-center bg-[#4f7bff]/12 text-[#6f9bff] border-[0.5px] border-[#4f7bff]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
-              >
-                AI text
-              </button>
-              <button
-                type="button"
-                onClick={() => snooze(topHot.id)}
-                className="flex-1 bg-[#ffb832]/10 text-[#ffb832] border-[0.5px] border-[#ffb832]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold"
-              >
-                Snooze 1h
-              </button>
+              <ActionBtn tone="blue" onClick={() => setDraftFor(topHot)}>AI text</ActionBtn>
+              <ActionBtn tone="amber" onClick={() => snooze(topHot.id)}>Snooze</ActionBtn>
             </div>
             <button
               type="button"
               onClick={() => dismiss(topHot.id)}
-              className="mt-2 w-full text-center text-[11px] text-[#555570]"
+              className="mt-2 w-full text-center text-[11px] text-[#44445a] transition hover:text-[#888898]"
             >
               Dismiss
             </button>
           </div>
         )}
 
+        {/* Closing */}
         {closingClient && (
           <Link
             href="/transactions"
-            className="block bg-[#0f0f1e] border-[0.5px] border-[#1a2a1a] rounded-[20px] p-[18px] mb-2.5"
+            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1a2a1c] bg-[#0a120c] p-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center rounded-md bg-[#50dc78]/10 text-[#50dc78] border-[0.5px] border-[#50dc78]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.8px]">
-                Closing
-              </span>
-              {nearestClosing ? (
+            <div className="mb-2.5 flex items-center justify-between">
+              <Badge tone="green">Closing</Badge>
+              {nearestClosing && (
                 <span className="text-[11px] text-[#50dc78]">
-                  {nearestClosing.days === 0
-                    ? "today"
-                    : `in ${nearestClosing.days} day${nearestClosing.days === 1 ? "" : "s"}`}
+                  {nearestClosing.days === 0 ? "today" : `in ${nearestClosing.days}d`}
                 </span>
-              ) : null}
+              )}
             </div>
-            <p className="text-[15px] font-semibold text-[#f0eee8] mb-0.5">
-              {closingClient.name} — under contract
-            </p>
-            {closingClient.town ? (
-              <p className="text-xs text-[#666680] mb-0.5">
-                {closingClient.town}
-              </p>
-            ) : null}
-            <p className="text-xs text-[#50dc78] mb-3">
-              Milestone check-ins due
-            </p>
-            <span className="inline-block bg-transparent border-[0.5px] border-[#2a2a3e] text-[#888] rounded-[12px] px-4 py-2.5 text-[13px] font-semibold">
+            <p className="text-[15px] font-semibold mb-0.5">{closingClient.name}</p>
+            {closingClient.town && (
+              <p className="mb-0.5 text-[12px] text-[#44445a]">{closingClient.town}</p>
+            )}
+            <p className="mb-3 text-[12px] text-[#50dc78]">Under contract · milestones due</p>
+            <span className="inline-block rounded-[9px] border-[0.5px] border-[#1c1c2a] px-3 py-[7px] text-[12px] font-semibold text-[#888898]">
               View deal →
             </span>
           </Link>
         )}
 
+        {/* Follow-up */}
         {followUpClient && (
           <Link
             href={`/clients/${followUpClient.id}`}
-            className="block bg-[#0f0f1e] border-[0.5px] border-[#1e1e2e] rounded-[20px] p-[18px] mb-2.5"
+            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4"
           >
-            <div className="flex items-center justify-between mb-3">
-              <span className="inline-flex items-center rounded-md bg-[#ffb832]/10 text-[#ffb832] border-[0.5px] border-[#ffb832]/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.8px]">
-                Follow-up
-              </span>
+            <div className="mb-2.5 flex items-center justify-between">
+              <Badge tone="amber">Follow-up</Badge>
             </div>
-            <p className="text-[15px] font-semibold text-[#f0eee8] mb-0.5">
-              {followUpClient.name}
-              {followUpClient.town ? ` · ${followUpClient.town}` : ""}
+            <p className="text-[15px] font-semibold mb-0.5">
+              {followUpClient.name}{followUpClient.town ? ` · ${followUpClient.town}` : ""}
             </p>
-            <p className="text-xs text-[#666680] mb-3">
+            <p className="mb-3 text-[12px] text-[#44445a]">
               {followUpClient.status?.replace(/_/g, " ") ?? "Check in"}
             </p>
-            <span className="inline-block bg-[#4f7bff]/12 text-[#6f9bff] border-[0.5px] border-[#4f7bff]/20 rounded-[9px] px-3 py-[7px] text-xs font-semibold">
+            <span className="inline-block rounded-[9px] border-[0.5px] border-[#4f7bff]/20 bg-[#4f7bff]/10 px-3 py-[7px] text-[12px] font-semibold text-[#6f9bff]">
               Open client →
             </span>
           </Link>
         )}
 
+        {/* Empty state */}
         {clients.length === 0 && (
-          <div className="bg-[#0f0f1e] border-[0.5px] border-[#1c1c2e] rounded-[20px] p-6 text-center mb-2.5">
-            <p className="text-3xl mb-3">👥</p>
-            <p className="text-[#888898] text-sm mb-4">
-              No clients yet — load a demo set or add your own.
-            </p>
+          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#4f7bff]/10">
+              <Users size={22} className="text-[#4f7bff]" />
+            </div>
+            <p className="mb-1 text-[14px] font-semibold">No clients yet</p>
+            <p className="mb-4 text-[12px] text-[#44445a]">Load demo data or add your first client.</p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={loadDemo}
                 disabled={seeding}
-                className="w-full rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-sm font-semibold text-white disabled:opacity-60"
+                className="w-full rounded-[12px] bg-[#4f7bff] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60 transition hover:bg-[#3d6ae8]"
               >
-                {seeding ? "Loading demo data…" : "Load demo data"}
+                {seeding ? "Loading…" : "Load demo data"}
               </button>
               <Link
                 href="/clients?new=1"
-                className="w-full rounded-[12px] border-[0.5px] border-[#2a2a3e] py-2.5 text-sm font-semibold text-[#9090a8]"
+                className="w-full rounded-[12px] border-[0.5px] border-[#1c1c2a] py-2.5 text-[13px] font-semibold text-[#888898] transition hover:text-[#f0eee8]"
               >
-                + Add your first client
+                + Add first client
               </Link>
             </div>
           </div>
         )}
 
-        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">
-          Stats
-        </p>
-        <div className="grid grid-cols-2 gap-2.5">
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">
-              Pipeline
-            </p>
-            <p className="text-2xl font-semibold text-[#4f7bff] leading-none">
-              {pipelineTotal(visible)}
-            </p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">
-              Hot leads
-            </p>
-            <p className="text-2xl font-semibold text-[#ffb832] leading-none">
-              {hotLeads.length}
-            </p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">
-              Active clients
-            </p>
-            <p className="text-2xl font-semibold text-[#f0eee8] leading-none">
-              {activeClients.length}
-            </p>
-          </div>
-          <div className="bg-[#0d0d1c] border-[0.5px] border-[#1a1a2c] rounded-[18px] p-4">
-            <p className="text-[11px] text-[#444460] uppercase tracking-[0.8px] mb-1.5 font-medium">
-              Closings
-            </p>
-            <p className="text-2xl font-semibold text-[#50dc78] leading-none">
-              {underContractCount}
-            </p>
-          </div>
-        </div>
-
-        <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460] mt-5 mb-2.5">
+        {/* ── Ask Aria ── */}
+        <p className="mb-2.5 mt-5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
           Ask Aria
         </p>
         <Link
           href="/ai"
-          className="flex items-center gap-2.5 bg-[#12121e] border-[0.5px] border-[#2a2a3e] rounded-[14px] px-4 py-[13px]"
+          className="mb-4 flex items-center gap-3 rounded-[14px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-[13px] transition hover:border-[#4f7bff]/30"
         >
-          <span className="w-2 h-2 rounded-full bg-[#4f7bff] flex-shrink-0" />
-          <span className="text-sm text-[#555570]">Ask Aria anything...</span>
+          <span className="h-2 w-2 flex-shrink-0 rounded-full bg-[#4f7bff]" />
+          <span className="text-[13px] text-[#44445a]">Ask anything about your pipeline…</span>
         </Link>
 
-        <div className="flex flex-wrap gap-[7px] mt-4 pb-2">
-          <Link
-            href="/clients?new=1"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            + New Client
-          </Link>
-          <Link
-            href="/showings?new=1"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Log Showing
-          </Link>
-          <Link
-            href="/listings"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Properties
-          </Link>
-          <Link
-            href="/pipeline"
-            className="bg-[#12121e] border-[0.5px] border-[#1e1e2e] text-[#666680] rounded-[20px] px-[14px] py-[7px] text-xs font-medium"
-          >
-            Pipeline
-          </Link>
+        {/* ── Quick links ── */}
+        <div className="flex flex-wrap gap-2 pb-2">
+          {[
+            { href: "/clients?new=1", label: "+ New Client" },
+            { href: "/showings?new=1", label: "Log Showing" },
+            { href: "/listings", label: "MLS Search" },
+            { href: "/pipeline", label: "Pipeline" },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="rounded-full border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3.5 py-[7px] text-[12px] font-medium text-[#555568] transition hover:border-[#4f7bff]/30 hover:text-[#8888a0]"
+            >
+              {l.label}
+            </Link>
+          ))}
         </div>
       </div>
 
