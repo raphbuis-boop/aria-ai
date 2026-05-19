@@ -122,6 +122,17 @@
   }
   .hero-cta { display: flex; gap: 12px; justify-content: center; margin-bottom: 14px; flex-wrap: wrap; }
   .hero-trust { font-size: 12.5px; color: var(--faint); letter-spacing: 0.02em; }
+  .hero-email-form {
+    display: flex; gap: 8px; max-width: 460px; margin: 0 auto 14px; flex-wrap: wrap; justify-content: center;
+  }
+  .hero-email-form input {
+    flex: 1; min-width: 200px; background: var(--surface); border: 0.5px solid var(--border-strong);
+    border-radius: 999px; color: var(--text); font: inherit; font-size: 14.5px;
+    padding: 13px 20px; outline: none;
+  }
+  .hero-email-form input:focus { border-color: var(--blue); }
+  .hero-email-form input::placeholder { color: var(--faint); }
+  .hero-email-form .btn { padding: 13px 22px; font-size: 14.5px; }
 
   /* DASHBOARD MOCKUP (above the fold) */
   .dashboard-frame {
@@ -366,13 +377,13 @@
   <div class="blob sage"></div>
   <div class="container">
     <div class="eyebrow-chip"><span class="dot"></span> Built in New Jersey, for New Jersey agents</div>
-    <h1 class="hero-h1">The all-in-one revenue optimization tool for NJ real estate agents.</h1>
-    <p class="hero-sub">One workspace for every lead, every listing, every dollar. No more tab-switching.</p>
-    <div class="hero-cta">
-      <a href="#waitlist" class="btn btn-lg btn-blue">Join the beta →</a>
-      <a href="#features" class="btn btn-lg btn-ghost">See how it works</a>
-    </div>
-    <p class="hero-trust">Free in beta. Beta members lock in lifetime pricing.</p>
+    <h1 class="hero-h1">Your entire real estate business. One app.</h1>
+    <p class="hero-sub">Leads, listings, texts, CMAs, pipeline — all in one place. Free in beta.</p>
+    <form class="hero-email-form" id="hero-form" novalidate>
+      <input type="email" name="email" placeholder="your@email.com" required>
+      <button type="submit" class="btn btn-blue">Get early access</button>
+    </form>
+    <p class="hero-trust">Free while in beta · No credit card · First 100 NJ agents only</p>
 
     <div class="dashboard-frame">
       <div class="dash-inner">
@@ -415,32 +426,19 @@
   </div>
 </section>
 
-<section class="intro">
-  <div class="blob sky"></div>
-  <div class="container narrow">
-    <div class="section-eyebrow">Intro</div>
-    <div class="intro-prose">
-      <p>Aria is the operating system for an NJ real estate business. Every lead, every listing, every conversation lives in one place — under one login, with one URL.</p>
-      <p>Built by an NJ agent for NJ agents. Aria knows your MLS, your towns, your commission structure. It's not a generic CRM you bend to your workflow — <em>it bends to yours.</em></p>
-      <p>You set it up in minutes. Aria handles the texting, the matching, the briefings, the follow-ups. What your clients experience is entirely you.</p>
-    </div>
-  </div>
-</section>
 
 <section class="spotlight" id="features">
   <div class="container">
     <div class="section-head">
-      <div class="section-eyebrow">Core features</div>
+      <div class="section-eyebrow">Features</div>
       <h2>Built for every part of your day.</h2>
-      <p>From the first lead to the closing table, Aria runs in the background while you stay in front of clients.</p>
     </div>
 
     <div class="spotlight-grid">
       <div>
         <div class="section-eyebrow" style="margin-bottom: 14px;">Inbox</div>
-        <h3>Reply like you. Even when you're at a showing.</h3>
-        <p>Aria learns from your past texts, your tone, your closing style. Every reply lands in under 60 seconds — and reads like you wrote it on the way to a closing.</p>
-        <p class="tagline">First-showing rates beat the agent who replies in two hours.</p>
+        <h3>Replies in your voice. In under 60 seconds.</h3>
+        <p>Aria reads your tone and drafts every text for you. Approve and send — or let it go automatically.</p>
       </div>
       <div class="preview-card">
         <div class="pcard-label">Inbox · 1 new from Zillow</div>
@@ -455,9 +453,8 @@
     <div class="spotlight-grid reverse">
       <div>
         <div class="section-eyebrow" style="margin-bottom: 14px;">Pipeline</div>
-        <h3>Every client. Every stage. What's next.</h3>
-        <p>A live pipeline that knows what each client needs and surfaces it for you. No more rebuilding a spreadsheet every Sunday night.</p>
-        <p class="tagline">Stop losing deals to forgotten follow-ups.</p>
+        <h3>Every client, every stage, always current.</h3>
+        <p>See exactly who needs attention, who's closing, and what's next — without rebuilding a spreadsheet every Sunday.</p>
       </div>
       <div class="preview-card">
         <div class="pcard-label">Pipeline · this week</div>
@@ -483,9 +480,8 @@
     <div class="spotlight-grid">
       <div>
         <div class="section-eyebrow" style="margin-bottom: 14px;">Listings</div>
-        <h3>NJMLS that knows your buyers.</h3>
-        <p>Aria watches NJMLS in real time and pings you the moment a new listing fits a buyer in your book. The right house finds the right buyer while you sleep.</p>
-        <p class="tagline">Be the first agent to call. Not the third.</p>
+        <h3>NJMLS matches your buyers automatically.</h3>
+        <p>New listing hits the MLS. Aria finds which buyers in your book it fits and tells you immediately.</p>
       </div>
       <div class="preview-card">
         <div class="pcard-label">New on market · 4 minutes ago</div>
@@ -503,17 +499,15 @@
 <section class="spotlight" id="what-you-get" style="background: var(--surface-2);">
   <div class="container">
     <div class="section-head">
-      <div class="section-eyebrow">What you get</div>
-      <h2>Set up once. Run it the way you want.</h2>
-      <p>Aria is built so you spend time with clients, not configuring software.</p>
+      <div class="section-eyebrow">More tools</div>
+      <h2>Everything else an NJ agent needs.</h2>
     </div>
 
     <div class="spotlight-grid">
       <div>
         <div class="section-eyebrow" style="margin-bottom: 14px;">CMAs</div>
-        <h3>Pitch decks in two minutes.</h3>
-        <p>Branded, exportable PDF decks for every listing appointment. Walk in overprepared, without burning two hours the night before.</p>
-        <p class="tagline">Listing appointments that look like Compass — without the brokerage cut.</p>
+        <h3>Branded pitch decks in two minutes.</h3>
+        <p>Walk into every listing appointment overprepared. PDF export, ready to send.</p>
       </div>
       <div class="preview-card" style="background: transparent; padding: 0; border: none; box-shadow: none;">
         <div class="cma-cover">
@@ -536,9 +530,8 @@
     <div class="spotlight-grid reverse" style="margin-top: 88px;">
       <div>
         <div class="section-eyebrow" style="margin-bottom: 14px;">Weekly recap</div>
-        <h3>Tuesday morning, a coach in your inbox.</h3>
-        <p>Every week, Aria pulls together what happened: who you called, who you missed, what's about to close, where last week's revenue came from. You read it with your coffee.</p>
-        <p class="tagline">A coach who only speaks when she has something to say.</p>
+        <h3>A weekly debrief. Every Tuesday morning.</h3>
+        <p>Closed deals, missed follow-ups, commission earned — summarized before you finish your coffee.</p>
       </div>
       <div class="preview-card">
         <div class="pcard-label">Tuesday recap · May 19</div>
@@ -565,8 +558,7 @@
       <span class="beta-badge">Beta · 100 spots</span>
       <h3>Free</h3>
       <div class="micro">No credit card. No trial timer.</div>
-      <p class="desc">Aria is in private beta for the first 100 New Jersey agents. Everyone who joins now locks in a lifetime discount when paid plans launch.</p>
-      <p class="tagline">Paid plans launch late 2026. Beta members keep their pricing forever.</p>
+      <p class="desc">Free for the first 100 NJ agents. Beta members lock in lifetime pricing when paid plans launch.</p>
 
       <ul class="feature-list">
         <li>Inbox with AI replies in your voice</li>
@@ -661,45 +653,55 @@
 </footer>
 
 <script>
-  var form = document.getElementById('waitlist-form');
-  if (form) {
-    form.addEventListener('submit', async function (e) {
-      e.preventDefault();
-      var btn = form.querySelector('button');
-      var input = form.querySelector('input[type="email"]');
-      var original = btn.textContent;
-      btn.disabled = true; btn.textContent = 'Adding you…';
-      try {
-        var res = await fetch('/api/waitlist', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: input.value })
-        });
-        var data = await res.json();
-        if (res.ok && data.success) {
-          input.disabled = true;
-          btn.style.display = 'none';
-          var wrap = form.parentElement;
-          var refLink = 'https://getariaai.com/?ref=' + data.referral_code;
-          wrap.innerHTML = [
-            '<div style="text-align:center;padding:12px 0;">',
-            '<p style="font-size:17px;font-weight:600;color:#1A1814;margin-bottom:6px;">You\'re in. 🎉</p>',
-            '<p style="font-size:14px;color:#6B6760;margin-bottom:18px;">You\'re <strong>#' + data.position + '</strong> on the list.</p>',
-            '<p style="font-size:13px;color:#6B6760;margin-bottom:8px;">Skip the line — share your link to move up:</p>',
-            '<div style="display:flex;gap:8px;max-width:480px;margin:0 auto;">',
-            '<input readonly value="' + refLink + '" style="flex:1;background:#fff;border:0.5px solid #D6CDB9;border-radius:999px;color:#1A1814;font-size:13px;padding:11px 16px;outline:none;" onclick="this.select()">',
-            '<button onclick="navigator.clipboard.writeText(\'' + refLink + '\');this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)" style="background:#3B82F6;color:#fff;border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:500;cursor:pointer;">Copy</button>',
-            '</div>',
-            '<p style="font-size:12px;color:#A39E94;margin-top:12px;">Each friend who joins moves you up ' + (data.referral_count !== undefined ? '' : '') + 'one spot.</p>',
-            '</div>'
-          ].join('');
-        } else {
-          btn.disabled = false; btn.textContent = original;
-          alert('Something went wrong. Try again?');
-        }
-      } catch (err) {
+  async function submitWaitlist(form, successCallback) {
+    var btn = form.querySelector('button');
+    var input = form.querySelector('input[type="email"]');
+    var original = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Adding you…';
+    try {
+      var res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: input.value })
+      });
+      var data = await res.json();
+      if (res.ok && data.success) {
+        successCallback(form, data);
+      } else {
         btn.disabled = false; btn.textContent = original;
+        alert('Something went wrong. Try again?');
       }
+    } catch (err) {
+      btn.disabled = false; btn.textContent = original;
+    }
+  }
+
+  function showSuccess(form, data) {
+    var refLink = 'https://getariaai.com/?ref=' + data.referral_code;
+    form.parentElement.innerHTML = [
+      '<div style="text-align:center;padding:12px 0;">',
+      '<p style="font-size:17px;font-weight:600;color:#1A1814;margin-bottom:6px;">You\'re in. 🎉</p>',
+      '<p style="font-size:14px;color:#6B6760;margin-bottom:18px;">You\'re <strong>#' + data.position + '</strong> on the list.</p>',
+      '<p style="font-size:13px;color:#6B6760;margin-bottom:8px;">Share your link to move up:</p>',
+      '<div style="display:flex;gap:8px;max-width:460px;margin:0 auto;">',
+      '<input readonly value="' + refLink + '" style="flex:1;background:#fff;border:0.5px solid #D6CDB9;border-radius:999px;color:#1A1814;font-size:13px;padding:11px 16px;outline:none;" onclick="this.select()">',
+      '<button onclick="navigator.clipboard.writeText(\'' + refLink + '\');this.textContent=\'Copied!\';setTimeout(()=>this.textContent=\'Copy\',2000)" style="background:#3B82F6;color:#fff;border-radius:999px;padding:11px 18px;font-size:13.5px;font-weight:500;cursor:pointer;border:none;">Copy</button>',
+      '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  var heroForm = document.getElementById('hero-form');
+  if (heroForm) {
+    heroForm.addEventListener('submit', function(e) {
+      e.preventDefault(); submitWaitlist(heroForm, showSuccess);
+    });
+  }
+
+  var bottomForm = document.getElementById('waitlist-form');
+  if (bottomForm) {
+    bottomForm.addEventListener('submit', function(e) {
+      e.preventDefault(); submitWaitlist(bottomForm, showSuccess);
     });
   }
 </script>
