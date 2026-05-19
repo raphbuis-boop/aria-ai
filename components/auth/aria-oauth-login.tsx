@@ -1,6 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -20,19 +21,14 @@ const item = {
 
 function AriaLogoMark() {
   return (
-    <svg width="80" height="80" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-label="Aria">
-      <defs>
-        <linearGradient id="ariaGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-          <stop offset="0%" stopColor="#5b9eff" />
-          <stop offset="100%" stopColor="#2563eb" />
-        </linearGradient>
-      </defs>
-      <path
-        fill="url(#ariaGrad)"
-        fillRule="evenodd"
-        d="M 52 6 L 6 94 L 28 94 L 36 74 L 64 74 L 72 94 L 94 94 Z M 42 62 L 58 62 L 50 38 Z"
-      />
-    </svg>
+    <Image
+      src="/aria-logo-mark.jpg"
+      alt="Aria"
+      width={96}
+      height={96}
+      priority
+      className="h-24 w-24 rounded-[20px]"
+    />
   );
 }
 
