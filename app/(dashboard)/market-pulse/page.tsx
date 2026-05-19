@@ -113,7 +113,7 @@ export default function MarketPulsePage() {
       </div>
 
       <p className="mt-5 px-5 text-[11px] text-[#444460]">
-        Data: SimplyRETS · compiled for {overall.monthLabel} · NJ Bergen/Essex/Union counties.
+        Market estimates compiled for {overall.monthLabel} · NJ Bergen, Essex &amp; Union counties. Not sourced from live MLS data. For actual listing data, see the MLS search.
       </p>
     </div>
   );
