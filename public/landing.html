@@ -252,21 +252,51 @@
   /* PRICING */
   .pricing { padding: 100px 0; position: relative; }
   .pricing .blob.sage { width: 480px; height: 480px; top: 80px; right: -120px; opacity: 0.25; }
-  .pricing-card {
-    max-width: 720px; margin: 0 auto;
+  .pricing-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; max-width: 960px; margin: 0 auto;
+  }
+  .p-card {
     background: var(--surface); border: 0.5px solid var(--border-strong);
-    border-radius: 24px; padding: 48px;
-    box-shadow: 0 14px 40px -16px rgba(20,15,5,0.08);
+    border-radius: 24px; padding: 32px 28px;
+    display: flex; flex-direction: column;
+  }
+  .p-card.featured {
+    background: var(--dark-bg); border-color: var(--dark-border); color: var(--dark-text);
+    box-shadow: 0 20px 60px -20px rgba(20,15,5,0.22);
+    position: relative; transform: scale(1.03);
+  }
+  .p-chip {
+    display: inline-block; padding: 4px 11px; border-radius: 999px;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase;
+    margin-bottom: 20px; width: fit-content;
+  }
+  .p-chip.active { background: var(--blue); color: white; }
+  .p-chip.soon { background: var(--border); color: var(--muted); }
+  .p-price { font-size: 46px; font-weight: 500; letter-spacing: -0.03em; line-height: 1; margin-bottom: 4px; }
+  .p-price sup { font-size: 22px; vertical-align: top; margin-top: 8px; display: inline-block; }
+  .p-period { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+  .p-card.featured .p-period { color: var(--dark-muted); }
+  .p-name { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 6px; }
+  .p-desc { font-size: 13.5px; color: var(--muted); line-height: 1.55; margin-bottom: 24px; }
+  .p-card.featured .p-desc { color: var(--dark-muted); }
+  .p-divider { height: 0.5px; background: var(--border); margin-bottom: 20px; }
+  .p-card.featured .p-divider { background: var(--dark-border); }
+  .p-features { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; flex: 1; }
+  .p-features li { font-size: 13.5px; display: flex; align-items: flex-start; gap: 9px; }
+  .p-features li::before {
+    content: ''; width: 15px; height: 15px; flex-shrink: 0; margin-top: 1px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233B82F6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
+    background-size: contain; background-repeat: no-repeat;
+  }
+  .p-card.soon-card { opacity: 0.65; }
+  .p-card.soon-card .p-features li::before {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A39E94' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='20 6 9 17 4 12'/></svg>");
   }
   .beta-badge {
     display: inline-block; background: var(--text); color: var(--surface);
     padding: 5px 12px; border-radius: 999px; font-size: 10.5px; font-weight: 600;
     letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 20px;
   }
-  .pricing-card h3 { font-size: 40px; font-weight: 500; letter-spacing: -0.025em; margin-bottom: 4px; }
-  .pricing-card .micro { color: var(--faint); font-size: 13px; margin-bottom: 22px; }
-  .pricing-card .desc { color: var(--muted); font-size: 15.5px; max-width: 540px; line-height: 1.6; }
-  .pricing-card .tagline { color: var(--text); font-weight: 500; margin: 18px 0 0; font-size: 14.5px; }
   .feature-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 28px; margin: 32px 0 30px; padding-top: 28px; border-top: 0.5px solid var(--border); }
   .feature-list li { list-style: none; font-size: 14.5px; display: flex; align-items: center; gap: 10px; color: var(--text); }
   .feature-list li::before {
@@ -341,8 +371,8 @@
     .spotlight h3 { font-size: 26px; }
     .preview-card { min-height: auto; }
     .pricing { padding: 60px 0; }
-    .pricing-card { padding: 32px 24px; border-radius: 18px; }
-    .pricing-card h3 { font-size: 30px; }
+    .pricing-grid { grid-template-columns: 1fr; max-width: 420px; }
+    .p-card.featured { transform: none; }
     .feature-list { grid-template-columns: 1fr; }
     .faq { padding: 60px 0; }
     .final-cta { padding: 80px 0; }
@@ -552,26 +582,68 @@
   <div class="container">
     <div class="section-head">
       <div class="section-eyebrow">Pricing</div>
-      <h2>Free while it's in beta. Lock it in for life.</h2>
+      <h2>Free now. Locked in forever.</h2>
+      <p>Join the beta free. Your pricing is locked for life when paid plans launch late 2026.</p>
     </div>
-    <div class="pricing-card">
-      <span class="beta-badge">Beta · 100 spots</span>
-      <h3>Free</h3>
-      <div class="micro">No credit card. No trial timer.</div>
-      <p class="desc">Free for the first 100 NJ agents. Beta members lock in lifetime pricing when paid plans launch.</p>
+    <div class="pricing-grid">
 
-      <ul class="feature-list">
-        <li>Inbox with AI replies in your voice</li>
-        <li>Pipeline kanban with next-action AI</li>
-        <li>NJMLS auto-matching to your buyers</li>
-        <li>CMA pitch deck generator (PDF export)</li>
-        <li>Showing assistant + scheduler</li>
-        <li>Transaction copilot</li>
-        <li>Weekly recap + market pulse</li>
-        <li>iOS, Android, and web</li>
-      </ul>
+      <!-- Starter (coming soon) -->
+      <div class="p-card soon-card">
+        <span class="p-chip soon">Coming 2026</span>
+        <div class="p-price"><sup>$</sup>49</div>
+        <div class="p-period">/ month</div>
+        <div class="p-name">Starter</div>
+        <p class="p-desc">For solo agents getting started with AI-assisted client management.</p>
+        <div class="p-divider"></div>
+        <ul class="p-features">
+          <li>Inbox with AI replies</li>
+          <li>Pipeline + next-action AI</li>
+          <li>NJMLS auto-matching</li>
+          <li>CMA generator</li>
+          <li>iOS &amp; web</li>
+        </ul>
+        <div class="btn btn-ghost" style="text-align:center;pointer-events:none;opacity:0.5;">Coming soon</div>
+      </div>
 
-      <a href="#waitlist" class="btn btn-lg btn-blue" style="width: 100%;">Join the beta →</a>
+      <!-- Beta (featured) -->
+      <div class="p-card featured">
+        <span class="p-chip active">Beta · 100 spots left</span>
+        <div class="p-price" style="color:#fff;">Free</div>
+        <div class="p-period">No credit card. No trial timer.</div>
+        <div class="p-name" style="color:#fff;">Beta Access</div>
+        <p class="p-desc">Everything in Pro, free while we're in beta. Lock in your price for life.</p>
+        <div class="p-divider"></div>
+        <ul class="p-features" style="color:#e8e5df;">
+          <li>Inbox with AI replies in your voice</li>
+          <li>Pipeline kanban + next-action AI</li>
+          <li>NJMLS auto-matching to your buyers</li>
+          <li>CMA pitch deck generator (PDF)</li>
+          <li>Showing assistant + scheduler</li>
+          <li>Transaction copilot</li>
+          <li>Weekly recap + market pulse</li>
+          <li>iOS, Android &amp; web</li>
+        </ul>
+        <a href="#hero-form" class="btn btn-blue" style="text-align:center;display:block;" onclick="document.querySelector('#hero-form input').focus();return false;">Get free access →</a>
+      </div>
+
+      <!-- Pro (coming soon) -->
+      <div class="p-card soon-card">
+        <span class="p-chip soon">Coming 2026</span>
+        <div class="p-price"><sup>$</sup>99</div>
+        <div class="p-period">/ month</div>
+        <div class="p-name">Pro</div>
+        <p class="p-desc">For full-time agents who want every edge: automation, teams, and priority support.</p>
+        <div class="p-divider"></div>
+        <ul class="p-features">
+          <li>Everything in Starter</li>
+          <li>Automated follow-up sequences</li>
+          <li>Multi-agent team access</li>
+          <li>BBA generation + e-sign</li>
+          <li>Priority support</li>
+        </ul>
+        <div class="btn btn-ghost" style="text-align:center;pointer-events:none;opacity:0.5;">Coming soon</div>
+      </div>
+
     </div>
   </div>
 </section>
