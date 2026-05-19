@@ -7,7 +7,7 @@ import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
-import { Search, UserPlus, Users } from "lucide-react";
+import { Mic, Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -55,26 +55,6 @@ function initialsOf(name: string | null | undefined) {
       .join("")
       .slice(0, 2)
       .toUpperCase() || "?"
-  );
-}
-
-// Score bar: 5 segments, filled proportionally
-function ScoreBar({ score }: { score: number }) {
-  const filled = Math.round((score / 10) * 5);
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex gap-[3px]">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <div
-            key={i}
-            className={`h-1 w-3.5 rounded-full transition-colors ${
-              i < filled ? "bg-[#4f7bff]" : "bg-[#1c1c2a]"
-            }`}
-          />
-        ))}
-      </div>
-      <span className="text-[10px] font-medium text-[#44445a]">{score}</span>
-    </div>
   );
 }
 
@@ -221,11 +201,11 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
           </div>
           <button
             type="button"
-            onClick={() => setOpen(true)}
-            className="flex items-center gap-2 rounded-full bg-[#4f7bff] px-4 py-2.5 text-[13px] font-semibold text-white transition hover:bg-[#3d6ae8] active:scale-95"
+            onClick={() => router.push("/voice")}
+            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#4f7bff] shadow-[0_0_20px_rgba(79,123,255,0.35)] transition hover:bg-[#3d6ae8] active:scale-95"
+            aria-label="Voice assistant"
           >
-            <UserPlus size={14} strokeWidth={2.5} />
-            Add
+            <Mic size={18} strokeWidth={2} className="text-white" />
           </button>
         </div>
 
@@ -319,7 +299,9 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                             {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
                           </p>
 
-                          <ScoreBar score={score} />
+                          {score > 0 && (
+                            <span className="text-[11px] font-medium text-[#44445a]">Score {score}/10</span>
+                          )}
                         </div>
                       </div>
                     </div>
