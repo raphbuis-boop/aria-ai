@@ -279,7 +279,7 @@
     font-size: 11px; font-weight: 600; letter-spacing: 0.18em;
     text-transform: uppercase; color: var(--blue); margin-bottom: 20px;
   }
-  .section-head { max-width: 680px; margin: 0 auto 64px; text-align: center; }
+  .section-head { max-width: 680px; margin: 0 auto 40px; text-align: center; }
   .section-head h2 {
     font-size: 44px; font-weight: 500; letter-spacing: -0.03em;
     line-height: 1.08; margin-bottom: 14px; color: var(--text);
@@ -288,40 +288,103 @@
 
   /* ── HOW IT WORKS ── */
   .how { padding: 80px 0; border-top: 0.5px solid var(--border); }
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
+  .how-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 48px; gap: 40px; flex-wrap: wrap;
+  }
+  .how-header-left { max-width: 520px; }
+  .how-header-left h2 {
+    font-size: 44px; font-weight: 500; letter-spacing: -0.03em;
+    line-height: 1.08; color: var(--text); margin-top: 14px; margin-bottom: 0;
+  }
+  .how-header-right {
+    font-size: 14px; color: var(--muted); max-width: 280px; line-height: 1.6; padding-bottom: 4px;
+  }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .step {
-    background: var(--surface); padding: 36px 32px;
-    position: relative;
+    background: var(--surface); border: 0.5px solid var(--border);
+    border-radius: 16px; padding: 32px 28px;
+    position: relative; overflow: hidden;
+    transition: border-color 200ms, transform 200ms;
   }
-  .step:first-child { border-radius: 20px 0 0 20px; }
-  .step:last-child { border-radius: 0 20px 20px 0; }
-  .step-border-right { border-right: 0.5px solid var(--border); }
+  .step:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .step-bg-num {
+    position: absolute; right: -8px; bottom: -24px;
+    font-size: 130px; font-weight: 700; letter-spacing: -0.06em;
+    color: rgba(255,255,255,0.025); line-height: 1; pointer-events: none;
+    user-select: none;
+  }
+  .step-top {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 24px;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  }
+  .step:nth-child(1) .step-dot { background: var(--blue); box-shadow: 0 0 8px rgba(79,123,255,0.6); }
+  .step:nth-child(2) .step-dot { background: var(--amber); box-shadow: 0 0 8px rgba(255,184,50,0.6); }
+  .step:nth-child(3) .step-dot { background: var(--green); box-shadow: 0 0 8px rgba(80,220,120,0.6); }
   .step-num {
-    font-size: 11px; font-weight: 700; letter-spacing: 1.2px;
-    text-transform: uppercase; color: var(--blue); margin-bottom: 20px;
+    font-size: 10px; font-weight: 700; letter-spacing: 1.4px;
+    text-transform: uppercase; color: var(--faint);
   }
-  .step h3 { font-size: 18px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 10px; }
-  .step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
+  .step:nth-child(1) .step-num { color: rgba(79,123,255,0.7); }
+  .step:nth-child(2) .step-num { color: rgba(255,184,50,0.7); }
+  .step:nth-child(3) .step-num { color: rgba(80,220,120,0.7); }
+  .step h3 {
+    font-size: 20px; font-weight: 600; letter-spacing: -0.02em;
+    margin-bottom: 10px; line-height: 1.25;
+  }
+  .step p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
 
   /* ── INSIGHTS ── */
   .insights { padding: 80px 0; border-top: 0.5px solid var(--border); }
+  .insights-header {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 40px;
+    align-items: end; margin-bottom: 40px;
+  }
+  .insights-header h2 {
+    font-size: 44px; font-weight: 500; letter-spacing: -0.03em;
+    line-height: 1.08; color: var(--text); margin-top: 14px;
+  }
+  .insights-header p { font-size: 15px; color: var(--muted); line-height: 1.6; align-self: end; padding-bottom: 6px; }
   .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .insight-card {
     background: var(--surface); border: 0.5px solid var(--border);
-    border-radius: 20px; padding: 28px;
-    transition: border-color 200ms;
+    border-radius: 16px; padding: 24px 26px;
+    transition: border-color 200ms, transform 200ms;
+    position: relative; overflow: hidden;
   }
-  .insight-card:hover { border-color: var(--border-strong); }
+  .insight-card::before {
+    content: ''; position: absolute; top: 0; left: 0;
+    width: 3px; height: 100%; border-radius: 3px 0 0 3px;
+  }
+  .insight-card:hover { border-color: var(--border-strong); transform: translateY(-2px); }
+  .insight-card.is-risk::before { background: var(--red); }
+  .insight-card.is-revenue::before { background: var(--green); }
+  .insight-card.is-action::before { background: var(--blue); }
+  .insight-card.is-signal::before { background: var(--amber); }
+  .insight-card.is-risk { border-color: rgba(255,80,80,0.15); }
+  .insight-card.is-revenue { border-color: rgba(80,220,120,0.15); }
+  .insight-card.is-action { border-color: rgba(79,123,255,0.15); }
+  .insight-card.is-signal { border-color: rgba(255,184,50,0.15); }
   .insight-type {
     font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
-    text-transform: uppercase; margin-bottom: 16px;
+    text-transform: uppercase; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
-  .insight-type.risk { color: var(--red); }
-  .insight-type.revenue { color: var(--green); }
-  .insight-type.action { color: var(--blue); }
-  .insight-type.signal { color: var(--amber); }
-  .insight-headline { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; line-height: 1.4; }
-  .insight-body { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .insight-type::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0;
+  }
+  .insight-card.is-risk .insight-type { color: var(--red); }
+  .insight-card.is-risk .insight-type::before { background: var(--red); box-shadow: 0 0 6px rgba(255,80,80,0.8); }
+  .insight-card.is-revenue .insight-type { color: var(--green); }
+  .insight-card.is-revenue .insight-type::before { background: var(--green); box-shadow: 0 0 6px rgba(80,220,120,0.8); }
+  .insight-card.is-action .insight-type { color: var(--blue); }
+  .insight-card.is-action .insight-type::before { background: var(--blue); box-shadow: 0 0 6px rgba(79,123,255,0.8); }
+  .insight-card.is-signal .insight-type { color: var(--amber); }
+  .insight-card.is-signal .insight-type::before { background: var(--amber); box-shadow: 0 0 6px rgba(255,184,50,0.8); }
+  .insight-headline { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 8px; line-height: 1.4; }
+  .insight-body { font-size: 12.5px; color: var(--muted); line-height: 1.65; }
 
   /* ── VOICE ── */
   .voice-section { padding: 120px 0; border-top: 0.5px solid var(--border); text-align: center; position: relative; overflow: hidden; }
@@ -417,10 +480,10 @@
     .hero-sub { font-size: 16px; }
     .section-head h2 { font-size: 30px; }
     .steps { grid-template-columns: 1fr; }
-    .step:first-child { border-radius: 20px 20px 0 0; }
-    .step:last-child { border-radius: 0 0 20px 20px; }
-    .step-border-right { border-right: none; border-bottom: 0.5px solid var(--border); }
+    .steps { grid-template-columns: 1fr; }
+    .how-header { flex-direction: column; gap: 12px; }
     .insights-grid { grid-template-columns: 1fr; }
+    .insights-header { grid-template-columns: 1fr; gap: 12px; }
     .voice-headline { font-size: 30px; }
     .final-cta h2 { font-size: 32px; }
     .footer-inner { flex-direction: column; align-items: flex-start; }
@@ -533,23 +596,29 @@
 <!-- HOW IT WORKS -->
 <section class="how">
   <div class="container">
-    <div class="section-head">
-      <div class="section-eyebrow">How it works</div>
-      <h2>Three things. Every day. Automatically.</h2>
+    <div class="how-header">
+      <div class="how-header-left">
+        <div class="section-eyebrow">How it works</div>
+        <h2>Three things. Every day. Automatically.</h2>
+      </div>
+      <div class="how-header-right">No setup required. Aria starts working the moment you connect your pipeline.</div>
     </div>
     <div class="steps">
-      <div class="step step-border-right">
-        <div class="step-num">01 — Connect</div>
+      <div class="step">
+        <div class="step-bg-num">01</div>
+        <div class="step-top"><span class="step-dot"></span><span class="step-num">Connect</span></div>
         <h3>Your pipeline, unified.</h3>
         <p>Aria ingests your clients, deals, calendar, and MLS activity into one living intelligence layer.</p>
       </div>
-      <div class="step step-border-right">
-        <div class="step-num">02 — Analyze</div>
+      <div class="step">
+        <div class="step-bg-num">02</div>
+        <div class="step-top"><span class="step-dot"></span><span class="step-num">Analyze</span></div>
         <h3>Overnight risk and revenue scoring.</h3>
         <p>Every night, Aria re-scores your pipeline — identifying what's at risk, what's ready, and what you're missing.</p>
       </div>
       <div class="step">
-        <div class="step-num">03 — Act</div>
+        <div class="step-bg-num">03</div>
+        <div class="step-top"><span class="step-dot"></span><span class="step-num">Act</span></div>
         <h3>A daily command briefing.</h3>
         <p>Wake up knowing exactly what to do. Call this person, send this text, close this deal — prioritized, in order.</p>
       </div>
@@ -560,29 +629,31 @@
 <!-- AI INSIGHTS -->
 <section class="insights">
   <div class="container">
-    <div class="section-head">
-      <div class="section-eyebrow">AI Insights</div>
-      <h2>What Aria sees that you don't.</h2>
-      <p>Aria processes your entire book of business and delivers the signals that move deals forward.</p>
+    <div class="insights-header">
+      <div>
+        <div class="section-eyebrow">AI Insights</div>
+        <h2>What Aria sees that you don't.</h2>
+      </div>
+      <p>Aria processes your entire book of business and surfaces the exact signals that move deals forward — before you'd ever notice them.</p>
     </div>
     <div class="insights-grid">
-      <div class="insight-card">
-        <div class="insight-type risk">Deal Risk</div>
+      <div class="insight-card is-risk">
+        <div class="insight-type">Deal Risk</div>
         <div class="insight-headline">The Chen offer expires in 3 hours. Send a counter now.</div>
         <div class="insight-body">Aria detected an unsigned counter from 2 days ago and escalated it before the window closed. You sent it. Deal saved.</div>
       </div>
-      <div class="insight-card">
-        <div class="insight-type revenue">Revenue Opportunity</div>
+      <div class="insight-card is-revenue">
+        <div class="insight-type">Revenue Opportunity</div>
         <div class="insight-headline">4 buyers in your pipeline match the new Sycamore listing.</div>
         <div class="insight-body">The moment the listing hit MLS, Aria cross-referenced your entire buyer book and flagged the matches. First call wins.</div>
       </div>
-      <div class="insight-card">
-        <div class="insight-type action">Next Best Action</div>
+      <div class="insight-card is-action">
+        <div class="insight-type">Next Best Action</div>
         <div class="insight-headline">Call Marcus Johnson. 8 days of silence is a signal.</div>
         <div class="insight-body">Aria tracks communication cadence per client and surfaces the leads most likely to go cold — before they do.</div>
       </div>
-      <div class="insight-card">
-        <div class="insight-type signal">Market Signal</div>
+      <div class="insight-card is-signal">
+        <div class="insight-type">Market Signal</div>
         <div class="insight-headline">Ridgewood inventory is down 22%. Your buyers need to move.</div>
         <div class="insight-body">Aria monitors the markets your clients care about and alerts you when urgency shifts — so your advice stays current.</div>
       </div>
