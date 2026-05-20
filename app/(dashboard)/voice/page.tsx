@@ -89,10 +89,10 @@ export default function VoicePage() {
   const handleQuery = useCallback(async (text: string) => {
     setVoiceState("thinking");
     try {
-      const res = await fetch("/api/ai", {
+      const res = await fetch("/api/ai/voice", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text, context: "Voice operator session. Keep responses short and conversational — 1-3 sentences max." }),
+        body: JSON.stringify({ question: text }),
       });
       const data = await res.json();
       const reply = String(data.reply ?? "I didn't catch that. Try again.");
