@@ -152,11 +152,75 @@
 
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  /* ── PRICING ── */
+  /* ── NAV DEMO ── */
+  .nav-demo {
+    font-size: 13.5px; font-weight: 500; color: var(--muted);
+    border: 0.5px solid var(--border-strong); border-radius: 999px;
+    padding: 8px 16px; transition: all 120ms;
+  }
+  .nav-demo:hover { color: var(--text); border-color: rgba(255,255,255,0.18); }
+
+  /* ── DEMO SECTION ── */
+  .demo-section { padding: 80px 0 100px; border-top: 0.5px solid var(--border); }
+  .demo-header { max-width: 620px; margin: 0 auto 56px; text-align: center; }
+  .demo-header h2 { font-size: 44px; font-weight: 500; letter-spacing: -0.03em; line-height: 1.08; margin-bottom: 14px; }
+  .demo-sub { font-size: 17px; color: var(--muted); line-height: 1.6; }
+  .demo-frame {
+    display: grid; grid-template-columns: 200px 1fr; gap: 0;
+    background: var(--surface); border: 0.5px solid var(--border-strong);
+    border-radius: 24px; overflow: hidden; min-height: 520px;
+  }
+  .demo-sidebar {
+    border-right: 0.5px solid var(--border); padding: 20px 0;
+    display: flex; flex-direction: column; gap: 2px;
+    background: var(--bg);
+  }
+  .demo-tab {
+    padding: 12px 20px; font-size: 13px; color: var(--muted);
+    cursor: pointer; transition: all 120ms; border-radius: 8px;
+    margin: 0 8px; font-weight: 500;
+  }
+  .demo-tab:hover { color: var(--text); background: rgba(255,255,255,0.04); }
+  .demo-tab.active { color: var(--text); background: rgba(79,123,255,0.1); color: #7fa8ff; }
+  .demo-screens { position: relative; display: flex; align-items: center; justify-content: center; padding: 40px; background: #060609; }
+  .demo-screen { display: none; width: 100%; max-width: 300px; }
+  .demo-screen.active { display: block; }
+  .demo-screen img { width: 100%; border-radius: 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.7), 0 0 0 0.5px rgba(255,255,255,0.08); }
+  .demo-card-mock {
+    background: var(--surface); border: 0.5px solid var(--border-strong);
+    border-radius: 20px; padding: 28px; width: 100%;
+  }
+  .dcm-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; margin-bottom: 16px;
+  }
+  .dcm-label.risk { color: var(--red); }
+  .dcm-label.revenue { color: var(--green); }
+  .dcm-headline { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 10px; line-height: 1.4; }
+  .dcm-body { font-size: 13.5px; color: var(--muted); line-height: 1.6; margin-bottom: 24px; }
+  .dcm-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .dcm-btn {
+    padding: 10px 18px; border-radius: 10px; font-size: 13px; font-weight: 500;
+    background: rgba(255,255,255,0.05); border: 0.5px solid var(--border-strong);
+    color: var(--muted); cursor: pointer;
+  }
+  .dcm-btn.primary { background: var(--blue); border-color: var(--blue); color: white; }
+  .dcm-buyers { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+  .dcm-buyer { display: flex; align-items: center; gap: 12px; }
+  .dcm-avatar {
+    width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0;
+    background: rgba(79,123,255,0.2); border: 0.5px solid rgba(79,123,255,0.3);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--blue);
+  }
+  .dcm-bname { font-size: 13.5px; font-weight: 600; margin-bottom: 1px; }
+  .dcm-bmeta { font-size: 12px; color: var(--muted); }
+
+  /* ── SECTION SHARED ── */
   .pricing { padding: 100px 0; border-top: 0.5px solid var(--border); }
   .pricing-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    max-width: 800px; margin: 0 auto;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    max-width: 1000px; margin: 0 auto;
   }
   .price-card {
     background: var(--surface); border: 0.5px solid var(--border);
@@ -223,7 +287,7 @@
   .section-head p { font-size: 17px; color: var(--muted); line-height: 1.6; }
 
   /* ── HOW IT WORKS ── */
-  .how { padding: 100px 0; border-top: 0.5px solid var(--border); }
+  .how { padding: 80px 0; border-top: 0.5px solid var(--border); }
   .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; }
   .step {
     background: var(--surface); padding: 36px 32px;
@@ -240,7 +304,7 @@
   .step p { font-size: 14px; color: var(--muted); line-height: 1.6; }
 
   /* ── INSIGHTS ── */
-  .insights { padding: 100px 0; border-top: 0.5px solid var(--border); }
+  .insights { padding: 80px 0; border-top: 0.5px solid var(--border); }
   .insights-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .insight-card {
     background: var(--surface); border: 0.5px solid var(--border);
@@ -334,7 +398,7 @@
   .copy-btn:hover { background: rgba(79,123,255,0.18); }
 
   /* ── NJ MLS ── */
-  .mls { padding: 100px 0; border-top: 0.5px solid var(--border); }
+  .mls { padding: 80px 0; border-top: 0.5px solid var(--border); }
   .mls-step-border-right { border-right: 0.5px solid var(--border); }
 
   /* ── FOOTER ── */
@@ -361,6 +425,9 @@
     .final-cta h2 { font-size: 32px; }
     .footer-inner { flex-direction: column; align-items: flex-start; }
     .container { padding: 0 20px; }
+    .demo-frame { grid-template-columns: 1fr; }
+    .demo-sidebar { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 0.5px solid var(--border); }
+    .demo-tab { white-space: nowrap; }
     .pricing-grid { grid-template-columns: 1fr; }
     .screen-wrap { width: 200px; }
     .screen-wrap:first-child { transform: rotate(-2deg) translateX(20px); }
@@ -375,7 +442,8 @@
     <a href="/" class="brand"><img src="/aria-logo.png" alt="Aria"> Aria</a>
     <div class="nav-cta">
       <a href="/login" class="nav-login">Log in</a>
-      <a href="#waitlist" class="btn btn-sm">Get access</a>
+      <a href="#demo" class="nav-demo">Try demo</a>
+      <a href="/login" class="btn btn-sm">Get access</a>
     </div>
   </div>
 </nav>
@@ -404,6 +472,59 @@
       </div>
       <div class="screen-wrap">
         <img src="/screen-lead.png" alt="Aria — new lead capture">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO -->
+<section class="demo-section" id="demo">
+  <div class="container">
+    <div class="demo-header">
+      <div class="section-eyebrow">Live Demo</div>
+      <h2>Aria at 7am, every morning.</h2>
+      <p class="demo-sub">This is what a real agent sees when they open Aria. No setup. No learning curve.</p>
+    </div>
+    <div class="demo-frame">
+      <div class="demo-sidebar">
+        <div class="demo-tab active" onclick="switchDemo(0)">Morning briefing</div>
+        <div class="demo-tab" onclick="switchDemo(1)">New lead alert</div>
+        <div class="demo-tab" onclick="switchDemo(2)">Deal risk</div>
+        <div class="demo-tab" onclick="switchDemo(3)">Buyer match</div>
+      </div>
+      <div class="demo-screens">
+        <div class="demo-screen active" id="demo-0">
+          <img src="/screen-dashboard.png" alt="Aria morning briefing">
+        </div>
+        <div class="demo-screen" id="demo-1">
+          <img src="/screen-lead.png" alt="Aria new lead">
+        </div>
+        <div class="demo-screen" id="demo-2">
+          <div class="demo-card-mock">
+            <div class="dcm-label risk">Deal Risk</div>
+            <div class="dcm-headline">The Chen offer expires in 3 hours. Send a counter now.</div>
+            <div class="dcm-body">Aria detected an unsigned counter from 2 days ago and flagged it before the window closed.</div>
+            <div class="dcm-actions">
+              <div class="dcm-btn primary">Draft counter</div>
+              <div class="dcm-btn">View deal</div>
+            </div>
+          </div>
+        </div>
+        <div class="demo-screen" id="demo-3">
+          <div class="demo-card-mock">
+            <div class="dcm-label revenue">Buyer Match</div>
+            <div class="dcm-headline">4 buyers in your pipeline match 24 Sycamore, Ridgewood.</div>
+            <div class="dcm-body">Listed 18 minutes ago at $775K. Marcus Johnson, Sarah Kim, and 2 others are within budget.</div>
+            <div class="dcm-buyers">
+              <div class="dcm-buyer"><div class="dcm-avatar">MJ</div><div><div class="dcm-bname">Marcus Johnson</div><div class="dcm-bmeta">Up to $840K · Ridgewood</div></div></div>
+              <div class="dcm-buyer"><div class="dcm-avatar">SK</div><div><div class="dcm-bname">Sarah Kim</div><div class="dcm-bmeta">Up to $800K · Ridgewood / Glen Rock</div></div></div>
+            </div>
+            <div class="dcm-actions">
+              <div class="dcm-btn primary">Text all 4</div>
+              <div class="dcm-btn">View listing</div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -488,31 +609,6 @@
   </div>
 </section>
 
-<!-- FINAL CTA -->
-<section class="final-cta" id="waitlist">
-  <div class="cta-glow"></div>
-  <div class="container">
-    <div class="section-eyebrow" style="margin-bottom: 20px;">Early access</div>
-    <h2>Get access to Aria.</h2>
-    <p>Join New Jersey's top agents on the waitlist. Free while in beta.</p>
-
-    <div id="cta-form-wrap">
-      <form class="email-form" id="cta-form" novalidate>
-        <input type="email" name="email" id="cta-email" placeholder="your@email.com" required>
-        <button type="submit" class="btn btn-sm" style="padding: 14px 22px; font-size: 14.5px;">Join waitlist</button>
-      </form>
-    </div>
-
-    <div class="success-box" id="cta-success">
-      <div class="pos" id="cta-pos"></div>
-      <div class="pos-lbl">Your position on the waitlist</div>
-      <div class="ref-lbl">Share your link to move up</div>
-      <div class="ref-url" id="cta-ref"></div>
-      <button class="copy-btn" onclick="copyRef('cta-ref')">Copy link</button>
-    </div>
-  </div>
-</section>
-
 <!-- PRICING -->
 <section class="pricing">
   <div class="container">
@@ -524,18 +620,32 @@
     <div class="pricing-grid">
 
       <div class="price-card">
+        <div class="price-name">Solo</div>
+        <div class="price-amount"><sup>$</sup>99</div>
+        <div class="price-period">per month</div>
+        <ul class="price-features">
+          <li>Up to 25 active clients</li>
+          <li>AI-drafted SMS follow-ups</li>
+          <li>Daily action checklist</li>
+          <li>Pipeline overview</li>
+          <li>Activity log</li>
+        </ul>
+        <a href="/login" class="price-cta">Sign up</a>
+      </div>
+
+      <div class="price-card">
         <div class="price-name">Starter</div>
         <div class="price-amount"><sup>$</sup>199</div>
         <div class="price-period">per month</div>
         <ul class="price-features">
-          <li>Full client CRM &amp; pipeline</li>
+          <li>Unlimited clients</li>
           <li>AI morning briefings</li>
           <li>Automated SMS follow-ups</li>
           <li>Deal risk scoring</li>
           <li>Buyer–listing matching</li>
           <li>Activity &amp; communication log</li>
         </ul>
-        <a href="/login" class="price-cta">Get started</a>
+        <a href="/login" class="price-cta">Sign up</a>
       </div>
 
       <div class="price-card featured">
@@ -553,7 +663,7 @@
           <li>Transaction &amp; document tracking</li>
           <li>Market pulse &amp; neighborhood reports</li>
         </ul>
-        <a href="/login" class="price-cta">Get started</a>
+        <a href="/login" class="price-cta">Sign up</a>
       </div>
 
     </div>
@@ -603,6 +713,11 @@
 </footer>
 
 <script>
+  function switchDemo(idx) {
+    document.querySelectorAll('.demo-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
+    document.querySelectorAll('.demo-screen').forEach((s,i) => s.classList.toggle('active', i===idx));
+  }
+
   function showSuccess(pos, refCode, formId, successId, posId, refId) {
     const url = `${window.location.origin}/?ref=${refCode}`;
     document.getElementById(posId).textContent = `#${pos}`;
