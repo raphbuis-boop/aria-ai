@@ -12,11 +12,9 @@ import {
   LayoutGrid,
   LineChart,
   MessageSquare,
-  Plus,
-  Search,
+  Mic,
   Settings,
   Sparkles,
-  UserPlus,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -88,26 +86,6 @@ const moreLinks: { href: string; label: string; Icon: LucideIcon; desc: string }
   },
 ];
 
-const quickActions: { href: string; label: string; Icon: LucideIcon; hint: string }[] = [
-  {
-    href: "/clients?new=1",
-    label: "Add Client",
-    Icon: UserPlus,
-    hint: "Capture a new lead",
-  },
-  {
-    href: "/listings",
-    label: "Property Search",
-    Icon: Search,
-    hint: "Live NJ listings",
-  },
-  {
-    href: "/showings?new=1",
-    label: "New Showing",
-    Icon: CalendarClock,
-    hint: "Log a property tour",
-  },
-];
 
 function PillItem({
   href,
@@ -162,7 +140,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const supabase = createClient();
   const [inboxUnread, setInboxUnread] = useState(0);
-  const [quickOpen, setQuickOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -186,10 +163,6 @@ export function BottomNav() {
       clearInterval(id);
     };
   }, [supabase]);
-
-  useEffect(() => {
-    setQuickOpen(false);
-  }, [pathname]);
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
@@ -219,21 +192,13 @@ export function BottomNav() {
           />
 
           <div className="flex flex-shrink-0 items-center justify-center px-1">
-            <button
-              type="button"
-              onClick={() => setQuickOpen((v) => !v)}
-              aria-label="Quick actions"
-              aria-expanded={quickOpen}
-              className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] text-white shadow-[0_0_16px_rgba(79,123,255,0.5),0_3px_8px_rgba(0,0,0,0.4)] transition-transform active:scale-95"
+            <Link
+              href="/voice"
+              aria-label="Voice assistant"
+              className="flex h-11 w-11 items-center justify-center rounded-full bg-[#4f7bff] text-white shadow-[0_0_20px_rgba(79,123,255,0.45),0_0_40px_rgba(79,123,255,0.15)] transition-transform active:scale-95"
             >
-              <Plus
-                size={18}
-                strokeWidth={2.5}
-                className={`transition-transform duration-150 ${
-                  quickOpen ? "rotate-45" : ""
-                }`}
-              />
-            </button>
+              <Mic size={18} strokeWidth={2} />
+            </Link>
           </div>
 
           <PillItem
@@ -257,52 +222,8 @@ export function BottomNav() {
         </div>
       </nav>
 
-      {quickOpen ? (
-        <QuickActionsSheet onClose={() => setQuickOpen(false)} />
-      ) : null}
     </>
   );
 }
 
-function QuickActionsSheet({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
-      <button
-        type="button"
-        aria-label="Close quick actions"
-        className="absolute inset-0"
-        onClick={onClose}
-      />
-      <div
-        role="menu"
-        className="relative z-10 mb-24 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4"
-      >
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-3 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
-          Quick actions
-        </div>
-        <div className="grid grid-cols-3 gap-2">
-          {quickActions.map(({ href, label, Icon, hint }) => (
-            <Link
-              key={label}
-              href={href}
-              onClick={onClose}
-              className="flex flex-col items-center gap-2 rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-3 py-4 text-center transition active:border-[#4f7bff]"
-            >
-              <span className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-[#4f7bff]/12 text-[#6f9bff]">
-                <Icon size={18} />
-              </span>
-              <span className="text-[12px] font-semibold text-[#d0d0e0]">
-                {label}
-              </span>
-              <span className="text-[10px] leading-tight text-[#555570]">
-                {hint}
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
 
