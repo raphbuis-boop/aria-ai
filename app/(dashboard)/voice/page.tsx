@@ -77,6 +77,7 @@ export default function VoicePage() {
   }, []);
 
   const handleQuery = useCallback(async (text: string) => {
+    console.log("[Aria voice] transcript:", text);
     setVoiceState("thinking");
     try {
       const res = await fetch("/api/ai/voice", {
@@ -84,13 +85,23 @@ export default function VoicePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text }),
       });
-      if (!res.ok) { console.error("Voice AI failed", res.status, await res.text()); setVoiceState("idle"); return; }
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("[Aria voice] AI route failed", res.status, errText);
+        setVoiceState("idle");
+        return;
+      }
       const data = await res.json();
+      console.log("[Aria voice] reply:", data);
       const reply = String(data.reply ?? "");
-      if (!reply) { setVoiceState("idle"); return; }
+      if (!reply) {
+        console.error("[Aria voice] empty reply — ANTHROPIC_API_KEY may be missing on Vercel");
+        setVoiceState("idle");
+        return;
+      }
       await speak(reply);
     } catch (e) {
-      console.error("handleQuery error", e);
+      console.error("[Aria voice] handleQuery error", e);
       setVoiceState("idle");
     }
   }, []);
