@@ -318,6 +318,10 @@
   .copy-btn { background: rgba(79,123,255,0.1); color: var(--blue); border: 0.5px solid rgba(79,123,255,0.2); border-radius: 999px; padding: 9px 20px; font-size: 13px; font-weight: 500; cursor: pointer; transition: background 120ms; }
   .copy-btn:hover { background: rgba(79,123,255,0.18); }
 
+  /* ── NJ MLS ── */
+  .mls { padding: 100px 0; border-top: 0.5px solid var(--border); }
+  .mls-step-border-right { border-right: 0.5px solid var(--border); }
+
   /* ── FOOTER ── */
   footer { padding: 48px 0 32px; border-top: 0.5px solid var(--border); }
   .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; }
@@ -510,6 +514,34 @@
       <div class="ref-lbl">Share your link to move up</div>
       <div class="ref-url" id="cta-ref"></div>
       <button class="copy-btn" onclick="copyRef('cta-ref')">Copy link</button>
+    </div>
+  </div>
+</section>
+
+<!-- NJ MLS -->
+<section class="mls">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">NJ MLS</div>
+      <h2>Live NJ MLS data. Built in.</h2>
+      <p>Aria connects directly to the New Jersey MLS. The moment a listing hits, your matching buyers know.</p>
+    </div>
+    <div class="steps">
+      <div class="step mls-step-border-right">
+        <div class="step-num">Real-time listings</div>
+        <h3>New listings the moment they go live.</h3>
+        <p>New listings flow into Aria the moment they go live — no manual refreshing, no delays.</p>
+      </div>
+      <div class="step mls-step-border-right">
+        <div class="step-num">Buyer matching</div>
+        <h3>Your pipeline, automatically matched.</h3>
+        <p>Aria matches new listings to buyers already in your pipeline. First call wins.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">Instant CMAs</div>
+        <h3>Market analyses in seconds.</h3>
+        <p>Pull historical data and generate market analyses in seconds — without leaving Aria.</p>
+      </div>
     </div>
   </div>
 </section>
