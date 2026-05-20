@@ -48,7 +48,8 @@ export default function VoicePage() {
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [supported, setSupported] = useState(true);
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const color = STATE_COLOR[voiceState];
 
   useEffect(() => {
@@ -88,10 +89,10 @@ export default function VoicePage() {
   }, []);
 
   async function speak(text: string) {
-    // Stop any current audio
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
+    // Stop any current source
+    if (sourceRef.current) {
+      try { sourceRef.current.stop(); } catch { /* already stopped */ }
+      sourceRef.current = null;
     }
 
     try {
@@ -102,16 +103,20 @@ export default function VoicePage() {
       });
       if (!res.ok) throw new Error("TTS failed");
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
+      const arrayBuffer = await res.arrayBuffer();
 
-      audio.onplay = () => setVoiceState("speaking");
-      audio.onended = () => { setVoiceState("idle"); URL.revokeObjectURL(url); };
-      audio.onerror = () => { setVoiceState("idle"); URL.revokeObjectURL(url); };
+      // AudioContext was unlocked on tap — use it to bypass iOS autoplay block
+      const ctx = audioCtxRef.current!;
+      if (ctx.state === "suspended") await ctx.resume();
+      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      const source = ctx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(ctx.destination);
+      sourceRef.current = source;
 
-      await audio.play();
+      setVoiceState("speaking");
+      source.onended = () => { setVoiceState("idle"); sourceRef.current = null; };
+      source.start(0);
     } catch {
       setVoiceState("idle");
     }
@@ -125,11 +130,20 @@ export default function VoicePage() {
 
   function stopAll() {
     recognitionRef.current?.stop();
-    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+    if (sourceRef.current) {
+      try { sourceRef.current.stop(); } catch { /* already stopped */ }
+      sourceRef.current = null;
+    }
     setVoiceState("idle");
   }
 
   function handleOrbTap() {
+    // Unlock / create AudioContext on first user gesture (required for iOS)
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    } else if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume();
+    }
     if (voiceState === "idle") startListening();
     else stopAll();
   }
