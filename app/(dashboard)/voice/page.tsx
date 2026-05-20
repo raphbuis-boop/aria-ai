@@ -80,10 +80,13 @@ export default function VoicePage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text }),
       });
+      if (!res.ok) { console.error("Voice AI failed", res.status, await res.text()); setVoiceState("idle"); return; }
       const data = await res.json();
-      const reply = String(data.reply ?? "I didn't catch that. Try again.");
+      const reply = String(data.reply ?? "");
+      if (!reply) { setVoiceState("idle"); return; }
       await speak(reply);
-    } catch {
+    } catch (e) {
+      console.error("handleQuery error", e);
       setVoiceState("idle");
     }
   }, []);
@@ -117,7 +120,8 @@ export default function VoicePage() {
       setVoiceState("speaking");
       source.onended = () => { setVoiceState("idle"); sourceRef.current = null; };
       source.start(0);
-    } catch {
+    } catch (e) {
+      console.error("speak error", e);
       setVoiceState("idle");
     }
   }

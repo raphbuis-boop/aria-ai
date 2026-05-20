@@ -47,5 +47,9 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Aria uses your microphone to understand your voice commands.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Aria uses speech recognition to convert your voice to text.</string>
 </dict>
 </plist>
