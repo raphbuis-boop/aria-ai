@@ -50,6 +50,7 @@ export default function VoicePage() {
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
+  const gotResultRef = useRef(false);
   const color = STATE_COLOR[voiceState];
 
   useEffect(() => {
@@ -61,12 +62,15 @@ export default function VoicePage() {
     r.lang = "en-US";
 
     r.onresult = (e) => {
+      gotResultRef.current = true;
       const text = e.results[0][0].transcript;
       handleQuery(text);
     };
     r.onerror = () => setVoiceState("idle");
     r.onend = () => {
-      setVoiceState((s) => s === "listening" ? "thinking" : s);
+      // If no result was captured (e.g. silence or mic denied), reset to idle
+      if (!gotResultRef.current) setVoiceState("idle");
+      gotResultRef.current = false;
     };
     recognitionRef.current = r;
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -121,8 +125,20 @@ export default function VoicePage() {
       source.onended = () => { setVoiceState("idle"); sourceRef.current = null; };
       source.start(0);
     } catch (e) {
-      console.error("speak error", e);
-      setVoiceState("idle");
+      console.error("speak error — falling back to browser TTS", e);
+      // Fallback: browser speech synthesis so something always plays
+      try {
+        const utt = new SpeechSynthesisUtterance(text);
+        utt.rate = 1.1;
+        const voices = speechSynthesis.getVoices();
+        const fem = voices.find(v => /female|samantha|karen|victoria/i.test(v.name));
+        if (fem) utt.voice = fem;
+        setVoiceState("speaking");
+        utt.onend = () => setVoiceState("idle");
+        speechSynthesis.speak(utt);
+      } catch {
+        setVoiceState("idle");
+      }
     }
   }
 
