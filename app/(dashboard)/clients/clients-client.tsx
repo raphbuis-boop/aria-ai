@@ -7,7 +7,7 @@ import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
-import { Mic, Search, Users } from "lucide-react";
+import { Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -192,21 +192,11 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       <div className="px-5 pt-5">
 
         {/* ── Header ── */}
-        <div className="mb-5 flex items-center justify-between">
-          <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Clients</h1>
-            <p className="mt-0.5 text-[12px] text-[#44445a]">
-              {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => router.push("/voice")}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-[#4f7bff] shadow-[0_0_20px_rgba(79,123,255,0.35)] transition hover:bg-[#3d6ae8] active:scale-95"
-            aria-label="Voice assistant"
-          >
-            <Mic size={18} strokeWidth={2} className="text-white" />
-          </button>
+        <div className="mb-5">
+          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Clients</h1>
+          <p className="mt-0.5 text-[12px] text-[#44445a]">
+            {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
+          </p>
         </div>
 
         {/* ── Search ── */}
