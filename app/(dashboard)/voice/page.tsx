@@ -42,24 +42,13 @@ declare global {
   }
 }
 
-// Pick best feminine voice available
-function pickVoice(): SpeechSynthesisVoice | null {
-  const voices = window.speechSynthesis.getVoices();
-  // Priority: Samantha (macOS/iOS) > Ava > Allison > any en-US female
-  const priority = ["Samantha", "Ava", "Allison", "Susan", "Victoria", "Karen", "Moira"];
-  for (const name of priority) {
-    const v = voices.find((v) => v.name === name);
-    if (v) return v;
-  }
-  // Fallback: any English female-sounding voice
-  return voices.find((v) => v.lang.startsWith("en") && !v.name.includes("Male")) ?? voices[0] ?? null;
-}
 
 export default function VoicePage() {
   const router = useRouter();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [supported, setSupported] = useState(true);
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const color = STATE_COLOR[voiceState];
 
   useEffect(() => {
@@ -79,10 +68,6 @@ export default function VoicePage() {
       setVoiceState((s) => s === "listening" ? "thinking" : s);
     };
     recognitionRef.current = r;
-
-    // Pre-load voices
-    window.speechSynthesis.getVoices();
-    window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -96,33 +81,39 @@ export default function VoicePage() {
       });
       const data = await res.json();
       const reply = String(data.reply ?? "I didn't catch that. Try again.");
-      speak(reply);
+      await speak(reply);
     } catch {
       setVoiceState("idle");
     }
   }, []);
 
-  function speak(text: string) {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
+  async function speak(text: string) {
+    // Stop any current audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
 
-    // Pick feminine voice, with slight delay to ensure voices loaded
-    const trySpeak = () => {
-      const voice = pickVoice();
-      if (voice) u.voice = voice;
-      u.rate = 0.95;
-      u.pitch = 1.1;
-      u.volume = 1;
-      u.onstart = () => setVoiceState("speaking");
-      u.onend = () => setVoiceState("idle");
-      u.onerror = () => setVoiceState("idle");
-      window.speechSynthesis.speak(u);
-    };
+    try {
+      const res = await fetch("/api/tts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      if (!res.ok) throw new Error("TTS failed");
 
-    if (window.speechSynthesis.getVoices().length > 0) {
-      trySpeak();
-    } else {
-      window.speechSynthesis.onvoiceschanged = trySpeak;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onplay = () => setVoiceState("speaking");
+      audio.onended = () => { setVoiceState("idle"); URL.revokeObjectURL(url); };
+      audio.onerror = () => { setVoiceState("idle"); URL.revokeObjectURL(url); };
+
+      await audio.play();
+    } catch {
+      setVoiceState("idle");
     }
   }
 
@@ -134,7 +125,7 @@ export default function VoicePage() {
 
   function stopAll() {
     recognitionRef.current?.stop();
-    window.speechSynthesis.cancel();
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
     setVoiceState("idle");
   }
 
