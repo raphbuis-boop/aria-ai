@@ -1,7 +1,6 @@
 import { AppHeader } from "@/components/AppHeader";
 import { AutomationRunner } from "@/components/AutomationRunner";
 import { BottomNav } from "@/components/BottomNav";
-import { VoiceAssistantRoot } from "@/components/VoiceAssistantRoot";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -25,7 +24,6 @@ export default async function DashboardLayout({
       <AppHeader />
       {children}
       <BottomNav />
-      <VoiceAssistantRoot />
     </div>
   );
 }

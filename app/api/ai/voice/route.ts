@@ -10,9 +10,9 @@ export async function POST(req: Request) {
   const question = String(body.question ?? "");
 
   const system =
-    "You are Aria, a voice AI assistant for a real estate agent. Reply in ONE short sentence — 15 words max. No lists, no markdown, no filler. Direct and warm.";
+    "You are Aria, a voice AI for a real estate agent. Reply in ONE sentence, 10 words max. No lists, no markdown, no filler. Ultra-brief, warm, direct.";
 
-  const reply = await callClaude(system, question, 80);
+  const reply = await callClaude(system, question, 50);
 
   return NextResponse.json({ reply });
 }
