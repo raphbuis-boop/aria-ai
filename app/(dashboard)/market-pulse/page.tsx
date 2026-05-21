@@ -50,8 +50,10 @@ export default function MarketPulsePage() {
       </div>
 
       {/* Headline stats */}
-      <div className="mt-5 grid grid-cols-3 gap-2 px-5">
-        <Stat label="Median" value={fmtMoney(overall.median)} tone="blue" />
+      <div className="mt-5 px-5 grid grid-cols-2 gap-2">
+        <div className="col-span-2">
+          <Stat label="Median" value={fmtMoney(overall.median)} tone="blue" />
+        </div>
         <Stat label="Avg DOM" value={`${overall.avgDom}d`} tone="plain" />
         <Stat label="List / Sale" value={`${overall.listToSale}%`} tone="green" />
       </div>
@@ -135,11 +137,11 @@ function Stat({
         ? "text-[#50dc78]"
         : "text-[#f0eee8]";
   return (
-    <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-4">
+    <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-3.5">
       <p className="mb-1 text-[10px] font-bold uppercase tracking-[1.2px] text-[#444460]">
         {label}
       </p>
-      <p className={`text-[20px] font-semibold leading-none ${color}`}>
+      <p className={`text-[18px] font-semibold leading-none ${color}`}>
         {value}
       </p>
     </div>

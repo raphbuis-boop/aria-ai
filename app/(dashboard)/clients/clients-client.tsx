@@ -60,7 +60,7 @@ function initialsOf(name: string | null | undefined) {
 
 // Shared input style
 const INPUT =
-  "w-full rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] px-4 py-3 text-[13.5px] text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition";
+  "w-full rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] px-4 py-3 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition";
 
 type Row = {
   id: string;
@@ -227,7 +227,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`whitespace-nowrap rounded-full border-[0.5px] px-3.5 py-[7px] text-[12px] font-medium transition ${
+              className={`whitespace-nowrap rounded-full border-[0.5px] px-3.5 py-2 text-[12px] font-medium transition ${
                 filter === f
                   ? "border-[#4f7bff]/35 bg-[#4f7bff]/12 text-[#6f9bff]"
                   : "border-[#1c1c2a] bg-[#0e0e18] text-[#44445a] hover:text-[#8888a0]"
@@ -313,7 +313,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1c1c2a] bg-[#0e0e18] px-5 pb-10 pt-4">
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1c1c2a] bg-[#0e0e18] px-5 pb-10 pt-4">
             <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2a3e]" />
             <p className="mb-0.5 text-[16px] font-semibold">New client</p>
             <p className="mb-5 text-[12px] text-[#44445a]">Saved to your clients table.</p>
@@ -362,10 +362,10 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
                   Preferred towns
                 </p>
-                <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-3">
+                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-2.5">
                   {NJ_TOWN_OPTIONS.map((t) => (
                     <button key={t} type="button" onClick={() => toggleTown(t)}
-                      className={`rounded-full border-[0.5px] px-2.5 py-[5px] text-[11px] font-medium transition ${
+                      className={`rounded-full border-[0.5px] px-2 py-[4px] text-[10px] font-medium transition ${
                         form.towns.includes(t)
                           ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
                           : "border-[#1c1c2a] bg-transparent text-[#44445a] hover:text-[#8888a0]"
@@ -379,7 +379,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-4 text-[13.5px] text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition" />
+                className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-4 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition" />
             </div>
 
             <div className="mt-5 flex gap-2">

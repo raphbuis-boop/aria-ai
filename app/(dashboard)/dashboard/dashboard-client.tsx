@@ -80,14 +80,14 @@ function StatCard({
   }[color];
 
   return (
-    <div className="rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4">
-      <div className={`mb-3 flex h-8 w-8 items-center justify-center rounded-[10px] ${bg} ${val}`}>
-        <Icon size={15} strokeWidth={2.2} />
+    <div className="rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-3">
+      <div className={`mb-2.5 flex h-7 w-7 items-center justify-center rounded-[9px] ${bg} ${val}`}>
+        <Icon size={14} strokeWidth={2.2} />
       </div>
-      <p className={`text-[24px] font-semibold leading-none tracking-tight ${val}`}>
+      <p className={`text-[20px] font-semibold leading-none tracking-tight ${val}`}>
         {value}
       </p>
-      <p className="mt-1.5 text-[11px] font-medium uppercase tracking-[0.9px] text-[#44445a]">
+      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.8px] text-[#44445a]">
         {label}
       </p>
     </div>
@@ -238,7 +238,7 @@ export function DashboardClient({
             <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[#4f7bff] mb-1">
               {today}
             </p>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">
+            <h1 className="text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.02em]">
               {greeting}, {firstName}.
             </h1>
           </div>
@@ -267,29 +267,29 @@ export function DashboardClient({
         </div>
 
         {/* ── Quick actions ── */}
-        <div className="mb-5 grid grid-cols-2 gap-2">
+        <div className="mb-5 grid grid-cols-2 gap-2 min-w-0">
           <Link
             href="/listings"
-            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-3.5 transition active:border-[#4f7bff]/40"
+            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3 py-3 transition active:border-[#4f7bff]/40 min-w-0"
           >
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#4f7bff]">
-              <Search size={16} strokeWidth={2.2} />
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#4f7bff]/12 text-[#4f7bff]">
+              <Search size={15} strokeWidth={2.2} />
             </span>
-            <div>
-              <p className="text-[13px] font-semibold leading-tight">Browse MLS</p>
-              <p className="mt-0.5 text-[11px] text-[#44445a]">Live NJ listings</p>
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold leading-tight truncate">Browse MLS</p>
+              <p className="mt-0.5 text-[10px] text-[#44445a] truncate">Live NJ listings</p>
             </div>
           </Link>
           <Link
             href="/properties"
-            className="flex items-center gap-3 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-3.5 transition active:border-[#4f7bff]/40"
+            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3 py-3 transition active:border-[#4f7bff]/40 min-w-0"
           >
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#4f7bff]">
-              <Building2 size={16} strokeWidth={2.2} />
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#4f7bff]/12 text-[#4f7bff]">
+              <Building2 size={15} strokeWidth={2.2} />
             </span>
-            <div>
-              <p className="text-[13px] font-semibold leading-tight">Properties</p>
-              <p className="mt-0.5 text-[11px] text-[#44445a]">Saved + matches</p>
+            <div className="min-w-0">
+              <p className="text-[12px] font-semibold leading-tight truncate">Properties</p>
+              <p className="mt-0.5 text-[10px] text-[#44445a] truncate">Saved + matches</p>
             </div>
           </Link>
         </div>
