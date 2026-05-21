@@ -171,7 +171,7 @@ export function PropertiesClient({
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
       <BackButton href="/more" className="mb-4" />
-      <header className="flex items-center justify-between gap-2">
+      <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Properties</div>
         <div className="flex flex-wrap items-center justify-end gap-2">
           <span className="rounded-full bg-[rgba(59,130,246,0.15)] px-2 py-0.5 text-[11px] font-medium text-accent-blue">
@@ -314,11 +314,11 @@ export function PropertiesClient({
                         key={String(m.id)}
                         className="flex items-center justify-between gap-2"
                       >
-                        <div>
-                          <div className="text-[13px] font-medium">
+                        <div className="min-w-0">
+                          <div className="truncate text-[13px] font-medium">
                             {c.name}
                           </div>
-                          <div className="text-[11px] text-text-dim">
+                          <div className="truncate text-[11px] text-text-dim">
                             {(m.match_reasons as string[])?.join(" · ")}
                           </div>
                         </div>
@@ -369,7 +369,7 @@ export function PropertiesClient({
                     setForm({ ...form, [k]: e.target.value })
                   }
                   placeholder={ph}
-                  className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+                  className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
                 />
               ))}
             </div>

@@ -351,7 +351,7 @@ export function ShowingsClient({
               onChange={(e) =>
                 setForm({ ...form, showing_date: e.target.value })
               }
-              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-base"
             />
             <select
               value={form.status}
@@ -379,18 +379,18 @@ export function ShowingsClient({
               placeholder="Feedback (optional — used for AI summary)"
               className="mt-2 min-h-[90px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
             />
-            <div className="mt-3 flex gap-2">
+            <div className="mt-3 flex flex-col gap-2 sm:flex-row pb-8">
               <button
                 type="button"
                 onClick={save}
-                className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
+                className="flex-1 rounded-[8px] bg-accent-blue py-3 text-[13px] text-white"
               >
                 Save
               </button>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-text-dim"
+                className="rounded-[8px] border border-border-card px-3 py-3 text-[13px] text-text-dim"
               >
                 Cancel
               </button>

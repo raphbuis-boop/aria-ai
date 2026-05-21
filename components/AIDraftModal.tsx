@@ -110,7 +110,7 @@ export function AIDraftModal({
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 mb-0 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4">
+      <div className="relative z-10 mb-0 w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4">
         <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
         <div className="flex items-start justify-between gap-3">
           <div>

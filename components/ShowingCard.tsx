@@ -35,7 +35,7 @@ export function ShowingCard({
   const showBbaBlock =
     bbaSigned !== undefined && (upcoming || st === "scheduled");
   return (
-    <div className="rounded-[14px] border border-border-card bg-bg-card p-4">
+    <div className="rounded-[14px] border border-border-card bg-bg-card p-4 pr-10">
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-full border border-border-card bg-bg-deep px-2 py-0.5 text-[11px] text-text-secondary">
           {clientName}

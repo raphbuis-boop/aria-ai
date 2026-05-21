@@ -407,7 +407,7 @@ function AddTxModal({
               setForm({ ...form, [key]: e.target.value } as TxForm)
             }
             placeholder={label}
-            className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+            className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-base"
           />
         ))}
         <input
@@ -434,18 +434,18 @@ function AddTxModal({
           placeholder="Lender email"
           className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
         />
-        <div className="mt-3 flex gap-2">
+        <div className="mt-3 flex flex-col gap-2 pb-8 sm:flex-row">
           <button
             type="button"
             onClick={onSave}
-            className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
+            className="flex-1 rounded-[8px] bg-accent-blue py-3 text-[13px] text-white"
           >
             Save
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-text-dim"
+            className="rounded-[8px] border border-border-card px-3 py-3 text-[13px] text-text-dim"
           >
             Cancel
           </button>

@@ -150,7 +150,7 @@ export function ClientDetail({
           <button
             type="button"
             onClick={() => setEditOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] px-3 py-1.5 text-[12px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
+            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] px-3 py-2.5 text-[12px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
           >
             <Pencil size={13} /> Edit
           </button>
@@ -179,7 +179,7 @@ export function ClientDetail({
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             {[
               { label: "Budget", value: budgetDisplay },
               { label: "Town", value: town },
@@ -208,7 +208,7 @@ export function ClientDetail({
         />
 
         {phone || email ? (
-          <div className="mb-4 flex gap-2">
+          <div className="mb-4 flex flex-wrap gap-2">
             {phone ? (
               <a
                 href={`tel:${phone}`}
@@ -229,7 +229,7 @@ export function ClientDetail({
         ) : null}
 
         {/* ─── Quick Actions ──────────────────────────────────────────── */}
-        <div className="mb-5 flex gap-2">
+        <div className="mb-5 flex flex-wrap gap-2">
           <button
             type="button"
             onClick={() => setDraftOpen(true)}
@@ -370,16 +370,16 @@ export function ClientDetail({
                         </div>
 
                         {/* Action buttons */}
-                        <div className="mt-2.5 flex gap-2 pl-12">
+                        <div className="mt-2.5 flex flex-wrap gap-2 pl-12">
                           <button
                             type="button"
                             onClick={() => {
                               setDraftPrefill(address);
                               setDraftOpen(true);
                             }}
-                            className="flex items-center gap-1 rounded-lg border border-[#4f7bff]/20 bg-[#4f7bff]/10 px-2.5 py-1.5 text-[11px] font-semibold text-[#6f9bff]"
+                            className="flex items-center gap-1 rounded-lg border border-[#4f7bff]/20 bg-[#4f7bff]/10 px-3 py-2 text-[11px] font-semibold text-[#6f9bff]"
                           >
-                            <Send size={10} />
+                            <Send size={12} />
                             Send to client
                           </button>
                           <button
@@ -387,9 +387,9 @@ export function ClientDetail({
                             onClick={() =>
                               toast.toast("Schedule showing — coming soon", "default")
                             }
-                            className="flex items-center gap-1 rounded-lg border border-[#1e1e2e] bg-[#0e0e1a] px-2.5 py-1.5 text-[11px] font-semibold text-[#888898]"
+                            className="flex items-center gap-1 rounded-lg border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-[11px] font-semibold text-[#888898]"
                           >
-                            <CalendarPlus size={10} />
+                            <CalendarPlus size={12} />
                             Schedule showing
                           </button>
                         </div>

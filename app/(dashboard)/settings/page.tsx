@@ -137,7 +137,7 @@ export default function SettingsPage() {
                 next[i] = e.target.value;
                 setSamples(next);
               }}
-              className="mt-1 min-h-[72px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px] text-text-primary"
+              className="mt-1 min-h-[56px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-base text-text-primary"
             />
           </div>
         ))}
@@ -162,7 +162,7 @@ export default function SettingsPage() {
         <input
           value={previewQ}
           onChange={(e) => setPreviewQ(e.target.value)}
-          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
         />
         <button
           type="button"
@@ -191,7 +191,7 @@ export default function SettingsPage() {
             onChange={(e) =>
               setProfile({ ...profile, license_state: e.target.value })
             }
-            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary"
+            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base text-text-primary"
           >
             <option value="NJ">New Jersey (NJ)</option>
           </select>
@@ -202,19 +202,19 @@ export default function SettingsPage() {
             setProfile({ ...profile, full_name: e.target.value })
           }
           placeholder="Full name"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
         />
         <input
           value={profile.phone}
           onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
           placeholder="Phone"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
         />
         <input
           value={profile.email}
           onChange={(e) => setProfile({ ...profile, email: e.target.value })}
           placeholder="Email"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
         />
         <button
           type="button"

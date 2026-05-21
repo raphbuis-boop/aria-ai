@@ -144,11 +144,11 @@ export default function AIPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Message Aria"
-            className="min-w-0 flex-1 bg-transparent text-[13px] text-text-primary outline-none placeholder:text-text-dim"
+            className="min-w-0 flex-1 bg-transparent text-base text-text-primary outline-none placeholder:text-text-dim"
           />
           <button
             type="submit"
-            className="rounded-[8px] bg-accent-blue p-2 text-white"
+            className="flex h-11 w-11 items-center justify-center rounded-[8px] bg-accent-blue text-white"
             aria-label="Send"
           >
             <Send size={18} />
