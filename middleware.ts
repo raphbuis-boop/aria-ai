@@ -35,6 +35,12 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
+  if (path === "/crm") {
+    const url = request.nextUrl.clone();
+    url.pathname = user ? "/dashboard" : "/login";
+    return NextResponse.redirect(url);
+  }
+
   if (path === "/landing") {
     if (user) {
       const url = request.nextUrl.clone();
