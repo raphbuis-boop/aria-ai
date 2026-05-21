@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!--
+        Privacy Manifest — required by Apple since May 2024 for all App Store submissions.
+        This manifest covers the Capacitor native shell only. All business logic,
+        data collection, and third-party SDKs run in the webview (getariaai.com/crm).
+
+        Required Reason APIs used by Capacitor core:
+        - NSUserDefaults (UserDefaults): Capacitor reads/writes plugin preferences.
+          Reason CA92.1: access info written by the same app (first-party use only).
+    -->
+
+    <!-- Required Reason APIs -->
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+        <dict>
+            <key>NSPrivacyAccessedAPIType</key>
+            <string>NSPrivacyAccessedAPICategoryUserDefaults</string>
+            <key>NSPrivacyAccessedAPITypeReasons</key>
+            <array>
+                <!-- CA92.1: Access info from UserDefaults that the app itself wrote -->
+                <string>CA92.1</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- Data collection: the native shell does not directly collect user data.
+         All data flows through the webview to Supabase. No native SDK tracking. -->
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array/>
+
+    <!-- Not using App Tracking Transparency / cross-app tracking -->
+    <key>NSPrivacyTracking</key>
+    <false/>
+
+    <!-- No tracking domains declared in the native layer -->
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+</dict>
+</plist>
