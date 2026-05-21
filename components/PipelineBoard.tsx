@@ -97,14 +97,14 @@ function DraggableCard({
     <div
       ref={setNodeRef}
       style={style}
-      className="rounded-[10px] border border-border-card bg-bg-card"
+      className="overflow-hidden rounded-[10px] border border-border-card bg-bg-card"
     >
-      <div className="flex gap-2 px-2 pt-2">
+      <div className="flex min-w-0 gap-2 px-2 pt-2">
         <button
           type="button"
           {...listeners}
           {...attributes}
-          className="shrink-0 cursor-grab touch-none rounded-md p-1 text-text-dim hover:bg-bg-deep active:cursor-grabbing"
+          className="shrink-0 cursor-grab touch-none rounded-md py-2.5 px-2 text-text-dim hover:bg-bg-deep active:cursor-grabbing"
           aria-label="Drag to change stage"
         >
           <GripVertical size={18} />
@@ -152,7 +152,7 @@ function DroppableColumn({
   const { setNodeRef, isOver } = useDroppable({ id: col.id });
   const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0);
   return (
-    <div className="flex w-[85vw] shrink-0 snap-start flex-col sm:w-[228px]">
+    <div className="flex w-full flex-col sm:w-[228px] sm:shrink-0 sm:snap-start">
       <div className="mb-2.5 flex items-center justify-between px-0.5">
         <div className="text-[11px] font-semibold uppercase tracking-widest text-text-dim">
           {col.label}
@@ -272,7 +272,7 @@ export function PipelineBoard({ initial }: { initial: Client[] }) {
         collisionDetection={closestCorners}
         onDragEnd={onDragEnd}
       >
-        <div className="-mx-4 flex gap-3 overflow-x-auto scroll-smooth px-4 pb-3 [scroll-padding-left:1rem] snap-x snap-mandatory sm:snap-none">
+        <div className="flex flex-col gap-3 pb-3 sm:-mx-4 sm:flex-row sm:overflow-x-auto sm:scroll-smooth sm:px-4 sm:[scroll-padding-left:1rem] sm:snap-x sm:snap-mandatory">
           {COLS.map((col) => (
             <DroppableColumn
               key={col.id}
