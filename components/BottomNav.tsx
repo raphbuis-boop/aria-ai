@@ -4,9 +4,8 @@ import { createClient } from "@/lib/supabase/client";
 import {
   Building2,
   House,
-  MessageSquare,
   Mic,
-  Sparkles,
+  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
@@ -21,12 +20,14 @@ type Tab = {
   exact?: boolean;
 };
 
-const TABS: Tab[] = [
+const LEFT_TABS: Tab[] = [
   { href: "/dashboard", label: "Today", Icon: House, exact: true },
   { href: "/clients", label: "Leads", Icon: Users },
-  { href: "/inbox", label: "Inbox", Icon: MessageSquare },
+];
+
+const RIGHT_TABS: Tab[] = [
   { href: "/listings", label: "MLS", Icon: Building2 },
-  { href: "/ai", label: "Aria AI", Icon: Sparkles },
+  { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
 function TabItem({
@@ -46,9 +47,9 @@ function TabItem({
     >
       <span className="relative">
         <tab.Icon
-          size={24}
-          strokeWidth={active ? 2.2 : 1.8}
-          className={active ? "text-[#3a65f0]" : "text-[#48485e]"}
+          size={23}
+          strokeWidth={active ? 2.2 : 1.7}
+          className={active ? "text-[#3a65f0]" : "text-[#464760]"}
         />
         {badge && badge > 0 ? (
           <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-md bg-[#c43838] px-1 text-[9px] font-bold text-white">
@@ -56,9 +57,7 @@ function TabItem({
           </span>
         ) : null}
       </span>
-      <span
-        className={`text-[10px] font-medium ${active ? "text-[#3a65f0]" : "text-[#48485e]"}`}
-      >
+      <span className={`text-[10px] font-medium ${active ? "text-[#3a65f0]" : "text-[#464760]"}`}>
         {tab.label}
       </span>
     </Link>
@@ -73,9 +72,7 @@ export function BottomNav() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       const { count } = await supabase
         .from("activities")
@@ -87,10 +84,7 @@ export function BottomNav() {
     }
     load();
     const id = setInterval(load, 15000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
+    return () => { cancelled = true; clearInterval(id); };
   }, [supabase]);
 
   function isActive(tab: Tab) {
@@ -98,25 +92,53 @@ export function BottomNav() {
     return pathname === tab.href || pathname.startsWith(tab.href + "/");
   }
 
+  const voiceActive = pathname === "/voice";
+
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e2230] bg-[#060709]/95 backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#181b24] bg-[#060709]/96 backdrop-blur-2xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex w-full items-stretch">
-        {TABS.map((tab) => {
-          const active = isActive(tab);
-          const badge = tab.href === "/inbox" ? inboxUnread : undefined;
-          return <TabItem key={tab.href} tab={tab} active={active} badge={badge} />;
-        })}
+      <div className="flex w-full items-center">
+        {/* Left two tabs */}
+        {LEFT_TABS.map((tab) => (
+          <TabItem
+            key={tab.href}
+            tab={tab}
+            active={isActive(tab)}
+            badge={tab.href === "/inbox" ? inboxUnread : undefined}
+          />
+        ))}
+
+        {/* Center glowing mic bubble */}
+        <div className="flex flex-1 flex-col items-center justify-center py-1">
+          <Link
+            href="/voice"
+            aria-label="Voice assistant"
+            className="flex h-14 w-14 -translate-y-3 items-center justify-center rounded-full transition-transform active:scale-90"
+            style={{
+              background: "radial-gradient(circle at 35% 35%, #5577ff, #2a45d0)",
+              boxShadow: voiceActive
+                ? "0 0 0 4px #3a65f020, 0 0 28px rgba(58,101,240,0.7), 0 0 56px rgba(58,101,240,0.3)"
+                : "0 0 0 1px #3a65f030, 0 0 20px rgba(58,101,240,0.45), 0 0 40px rgba(58,101,240,0.15)",
+            }}
+          >
+            <Mic size={22} strokeWidth={2} className="text-white" />
+          </Link>
+          <span className={`-mt-1 text-[10px] font-medium ${voiceActive ? "text-[#3a65f0]" : "text-[#464760]"}`}>
+            Voice
+          </span>
+        </div>
+
+        {/* Right two tabs */}
+        {RIGHT_TABS.map((tab) => (
+          <TabItem
+            key={tab.href}
+            tab={tab}
+            active={isActive(tab)}
+          />
+        ))}
       </div>
-      <Link
-        href="/voice"
-        aria-label="Voice"
-        className="absolute -top-6 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_20px_rgba(58,101,240,0.5)] active:scale-95 transition-transform"
-      >
-        <Mic size={20} strokeWidth={2} className="text-white" />
-      </Link>
     </nav>
   );
 }
