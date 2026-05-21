@@ -1,6 +1,5 @@
 "use client";
 
-import { BackButton } from "@/components/BackButton";
 import { CardMenu } from "@/components/CardMenu";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -200,27 +199,30 @@ export function ShowingsClient({
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <BackButton href="/dashboard" className="mb-4" />
-      <div className="text-[20px] font-medium text-text-primary">
-        Showings
-      </div>
-      <p className="mt-1 text-[13px] text-text-dim">
-        Upcoming and past property showings with your clients.
-      </p>
-      <button
-        type="button"
-        onClick={openModal}
-        className="mt-4 w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white"
-      >
-        Add Showing
-      </button>
+    <div className="min-h-screen bg-[#080910] pb-28">
+      <div className="px-5 pt-5">
 
-      <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+        {/* ── Header ── */}
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Timeline</h1>
+            <p className="mt-0.5 text-[12px] text-[#6b7090]">
+              {upcoming.length > 0 ? `${upcoming.length} upcoming` : "No upcoming showings"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={openModal}
+            className="rounded-full bg-[#3a65f0] px-4 py-2 text-[13px] font-semibold text-white"
+          >
+            + Add
+          </button>
+        </div>
+
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#3a3d52]">
           Upcoming
         </div>
-        <div className="mt-3 space-y-3">
+        <div className="space-y-2.5">
           {upcoming.length ? (
             upcoming.map((s) => {
               const id = String(s.id);
@@ -262,18 +264,17 @@ export function ShowingsClient({
               );
             })
           ) : (
-            <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
-              No upcoming showings.
+            <div className="rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4 text-[13px] text-[#555568]">
+              No upcoming showings. Tap + Add to schedule one.
             </div>
           )}
         </div>
-      </div>
 
-      <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+        <div className="mt-6">
+        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#3a3d52]">
           Past
         </div>
-        <div className="mt-3 space-y-3">
+        <div className="space-y-2.5">
           {past.length ? (
             past.map((s) => {
               const id = String(s.id);
@@ -314,23 +315,27 @@ export function ShowingsClient({
               );
             })
           ) : (
-            <div className="rounded-[14px] border border-border-card bg-bg-card p-4 text-[13px] text-text-muted">
+            <div className="rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4 text-[13px] text-[#555568]">
               No past showings yet.
             </div>
           )}
         </div>
+        </div>
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 p-4">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-[14px] border border-border-card bg-bg-card p-4">
-            <div className="text-[16px] font-medium">Add showing</div>
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
+          <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
+          <div className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4">
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2e40]" />
+            <p className="mb-4 text-[17px] font-semibold">Log a showing</p>
+            <div className="space-y-3">
             <select
               value={form.client_id}
               onChange={(e) =>
                 setForm({ ...form, client_id: e.target.value })
               }
-              className="mt-3 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             >
               <option value="">Select client</option>
               {clients.map((c) => (
@@ -343,7 +348,7 @@ export function ShowingsClient({
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               placeholder="Property address"
-              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             />
             <input
               type="datetime-local"
@@ -351,7 +356,7 @@ export function ShowingsClient({
               onChange={(e) =>
                 setForm({ ...form, showing_date: e.target.value })
               }
-              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-base"
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             />
             <select
               value={form.status}
@@ -361,7 +366,7 @@ export function ShowingsClient({
                   status: e.target.value as typeof form.status,
                 })
               }
-              className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             >
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
@@ -371,30 +376,24 @@ export function ShowingsClient({
               value={form.notes}
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Notes"
-              className="mt-2 min-h-[60px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
+              rows={2}
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             />
             <textarea
               value={form.feedback}
               onChange={(e) => setForm({ ...form, feedback: e.target.value })}
               placeholder="Feedback (optional — used for AI summary)"
-              className="mt-2 min-h-[90px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-[13px]"
+              rows={3}
+              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
             />
-            <div className="mt-3 flex flex-col gap-2 sm:flex-row pb-8">
-              <button
-                type="button"
-                onClick={save}
-                className="flex-1 rounded-[8px] bg-accent-blue py-3 text-[13px] text-white"
-              >
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="rounded-[8px] border border-border-card px-3 py-3 text-[13px] text-text-dim"
-              >
-                Cancel
-              </button>
             </div>
+            <button
+              type="button"
+              onClick={save}
+              className="mt-4 w-full rounded-[13px] bg-[#3a65f0] py-3.5 text-[14px] font-semibold text-white"
+            >
+              Save showing
+            </button>
           </div>
         </div>
       ) : null}

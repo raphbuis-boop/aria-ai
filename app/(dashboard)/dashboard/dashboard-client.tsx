@@ -3,7 +3,7 @@
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { useToast } from "@/components/ToastProvider";
 import { differenceInCalendarDays } from "date-fns";
-import { Building2, Search, ShieldAlert, Zap, TrendingUp, Users, CircleDot } from "lucide-react";
+import { ShieldAlert, Zap, TrendingUp, Users, CircleDot } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -248,56 +248,21 @@ export function DashboardClient({
         </div>
 
         {/* ── Intelligence briefing ── */}
-        <div className="mb-4 overflow-hidden rounded-[18px] border-[0.5px] border-[#3a65f0]/15 bg-[#0d0f16]">
-          <div className="flex items-center gap-2.5 border-b border-[#3a65f0]/10 px-4 py-3">
-            <span className="h-[5px] w-[5px] rounded-full bg-[#3a65f0] animate-pulse flex-shrink-0" />
-            <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#3a65f0]">
-              Today&apos;s intelligence
-            </span>
-          </div>
-          <div className="px-4 py-3.5">
+        {(briefing || clients.length === 0) && (
+          <div className="mb-4 flex items-start gap-3 rounded-[18px] border-[0.5px] border-[#3a65f0]/15 bg-[#0d0f16] px-4 py-3.5">
+            <span className="mt-[3px] h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#3a65f0] animate-pulse" />
             <p className="text-[13.5px] leading-[1.65] text-[#7878a0]">
               {briefing ?? (
                 clients.length === 0
-                  ? "No clients yet. Load demo data or add your first client to get started."
-                  : "All caught up. Pipeline is stable \u2014 no urgent actions detected."
+                  ? "No clients yet. Load demo data or add your first client."
+                  : "All caught up — no urgent actions."
               )}
             </p>
           </div>
-        </div>
+        )}
 
-        {/* ── Quick actions ── */}
-        <div className="mb-5 grid grid-cols-2 gap-2 min-w-0">
-          <Link
-            href="/listings"
-            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3 py-3 transition active:border-[#3a65f0]/40 min-w-0"
-          >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#3a65f0]/12 text-[#3a65f0]">
-              <Search size={15} strokeWidth={2.2} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[12px] font-semibold leading-tight truncate">Browse MLS</p>
-              <p className="mt-0.5 text-[10px] text-[#6b7090] truncate">Live NJ listings</p>
-            </div>
-          </Link>
-          <Link
-            href="/properties"
-            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3 py-3 transition active:border-[#3a65f0]/40 min-w-0"
-          >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#3a65f0]/12 text-[#3a65f0]">
-              <Building2 size={15} strokeWidth={2.2} />
-            </span>
-            <div className="min-w-0">
-              <p className="text-[12px] font-semibold leading-tight truncate">Properties</p>
-              <p className="mt-0.5 text-[10px] text-[#6b7090] truncate">Saved + matches</p>
-            </div>
-          </Link>
-        </div>
 
         {/* ── Stats ── */}
-        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
-          Stats
-        </p>
         <div className="mb-5 grid grid-cols-2 gap-2">
           <StatCard label="Pipeline" value={pipelineTotal(visible)} color="blue" icon={TrendingUp} />
           <StatCard label="Hot leads" value={hotLeads.length} color="amber" icon={Zap} />
@@ -306,17 +271,6 @@ export function DashboardClient({
         </div>
 
         {/* ── Action stack ── */}
-        <div className="flex items-center justify-between mb-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
-            Today&apos;s priorities
-          </p>
-          {(topHot || closingClient || followUpClient || initial.bbaAlerts.length > 0) && (
-            <span className="rounded-full bg-[#3a65f0]/10 px-2.5 py-[3px] text-[10px] font-semibold text-[#6b8fff]">
-              {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length} item
-              {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length !== 1 ? "s" : ""}
-            </span>
-          )}
-        </div>
 
         {/* BBA alert */}
         {initial.bbaAlerts.length > 0 && (
@@ -463,55 +417,61 @@ export function DashboardClient({
           </div>
         )}
 
-        {/* ── Voice + Ask Aria ── */}
-        <div className="mt-5 mb-4 grid grid-cols-2 gap-2">
+        {/* ── Aria shortcuts ── */}
+        <div className="mt-5 mb-4 overflow-hidden rounded-[18px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/5">
           <Link
             href="/voice"
-            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/6 py-4 transition active:bg-[#3a65f0]/10"
+            className="flex items-center gap-3 border-b border-[#3a65f0]/10 px-4 py-3.5 active:bg-[#3a65f0]/10"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_16px_rgba(58,101,240,0.4)]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_12px_rgba(58,101,240,0.45)]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="9" y="3" width="6" height="11" rx="3" />
                 <path d="M5 10a7 7 0 0014 0" />
                 <line x1="12" y1="19" x2="12" y2="22" />
                 <line x1="8" y1="22" x2="16" y2="22" />
               </svg>
             </span>
-            <div className="text-center">
-              <p className="text-[12px] font-semibold text-[#6b8fff]">Voice</p>
-              <p className="text-[10px] text-[#6b7090]">Talk to Aria</p>
+            <div className="flex-1">
+              <p className="text-[14px] font-semibold text-[#6b8fff]">Voice</p>
+              <p className="text-[11px] text-[#6b7090]">Talk to Aria hands-free</p>
             </div>
+            <span className="text-[16px] text-[#3a3d52]">›</span>
           </Link>
           <Link
             href="/ai"
-            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] py-4 transition hover:border-[#3a65f0]/20"
+            className="flex items-center gap-3 px-4 py-3.5 active:bg-[#3a65f0]/10"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3a65f0]/15">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </span>
-            <div className="text-center">
-              <p className="text-[12px] font-semibold text-[#9498b0]">Ask Aria</p>
-              <p className="text-[10px] text-[#6b7090]">Text chat</p>
+            <div className="flex-1">
+              <p className="text-[14px] font-semibold text-[#9498b0]">Ask Aria</p>
+              <p className="text-[11px] text-[#6b7090]">Text chat with your AI agent</p>
             </div>
+            <span className="text-[16px] text-[#3a3d52]">›</span>
           </Link>
         </div>
 
-        {/* ── Quick links ── */}
-        <div className="flex flex-wrap gap-2 pb-2">
+        {/* ── Quick actions ── */}
+        <div className="mt-2 overflow-hidden rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16]">
           {[
-            { href: "/clients?new=1", label: "+ New Client" },
-            { href: "/showings?new=1", label: "Log Showing" },
-            { href: "/listings", label: "MLS Search" },
-            { href: "/pipeline", label: "Pipeline" },
-          ].map((l) => (
+            { href: "/clients?new=1", label: "New Client", sub: "Add a lead" },
+            { href: "/showings?new=1", label: "Log Showing", sub: "Schedule a tour" },
+            { href: "/listings", label: "MLS Search", sub: "Browse NJ listings" },
+            { href: "/pipeline", label: "Pipeline", sub: "Track your deals" },
+          ].map((l, i, arr) => (
             <Link
               key={l.href}
               href={l.href}
-              className="rounded-full border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3.5 py-[7px] text-[12px] font-medium text-[#555568] transition hover:border-[#3a65f0]/30 hover:text-[#8888a0]"
+              className={`flex items-center justify-between px-4 py-3.5 active:bg-white/[0.03] ${i < arr.length - 1 ? "border-b border-[#1e2230]" : ""}`}
             >
-              {l.label}
+              <div>
+                <p className="text-[14px] font-medium text-[#c8cae0]">{l.label}</p>
+                <p className="text-[11px] text-[#555568]">{l.sub}</p>
+              </div>
+              <span className="text-[16px] text-[#3a3d52]">›</span>
             </Link>
           ))}
         </div>

@@ -1,8 +1,5 @@
 "use client";
 
-import { CardMenu } from "@/components/CardMenu";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { EditClientModal } from "@/components/EditClientModal";
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
@@ -88,8 +85,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
-  const [editClient, setEditClient] = useState<Row | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<Row | null>(null);
 
   useEffect(() => {
     if (searchParams.get("new") === "1") {
@@ -134,21 +129,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       ...f,
       towns: f.towns.includes(t) ? f.towns.filter((x) => x !== t) : [...f.towns, t],
     }));
-  }
-
-  async function archiveClient(c: Row) {
-    const { error } = await supabase.from("clients").update({ status: "dead" }).eq("id", c.id);
-    if (error) { toast.toast(error.message, "warn"); return; }
-    toast.toast(`${c.name} archived`, "success");
-    router.refresh();
-  }
-
-  async function deleteClient(c: Row) {
-    const { error } = await supabase.from("clients").delete().eq("id", c.id);
-    if (error) { toast.toast(error.message, "warn"); return; }
-    toast.toast(`${c.name} deleted`, "success");
-    setConfirmDelete(null);
-    router.refresh();
   }
 
   async function saveClient() {
@@ -257,7 +237,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               return (
                 <div key={client.id} className="relative">
                   <Link href={`/clients/${client.id}`}>
-                    <div className={`rounded-[18px] border-[0.5px] bg-[#0d0f16] p-4 pr-10 transition active:scale-[0.99] ${
+                    <div className={`rounded-[18px] border-[0.5px] bg-[#0d0f16] p-4 transition active:scale-[0.99] ${
                       isHot ? "border-[#3a65f0]/25" : "border-[#1e2230]"
                     }`}>
                       <div className="flex items-start gap-3">
@@ -296,12 +276,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                       </div>
                     </div>
                   </Link>
-                  <CardMenu
-                    className="absolute right-3 top-3"
-                    onEdit={() => setEditClient(client)}
-                    onArchive={() => archiveClient(client)}
-                    onDelete={() => setConfirmDelete(client)}
-                  />
                 </div>
               );
             })}
@@ -396,35 +370,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         </div>
       ) : null}
 
-      {editClient ? (
-        <EditClientModal
-          client={{
-            id: editClient.id,
-            name: editClient.name,
-            phone: editClient.phone ?? null,
-            email: editClient.email ?? null,
-            status: editClient.status,
-            budget_min: editClient.budget_min,
-            budget_max: editClient.budget_max,
-            town: editClient.town,
-            beds_wanted: editClient.beds_wanted ?? null,
-            baths_wanted: editClient.baths_wanted ?? null,
-            lead_score: editClient.lead_score,
-            notes: editClient.notes ?? null,
-            client_role: editClient.client_role ?? null,
-          }}
-          onClose={() => setEditClient(null)}
-        />
-      ) : null}
-
-      <ConfirmDialog
-        open={!!confirmDelete}
-        title="Delete this client?"
-        message={confirmDelete ? `${confirmDelete.name} and their record will be permanently removed. This cannot be undone.` : ""}
-        confirmLabel="Delete client"
-        onConfirm={async () => { if (confirmDelete) await deleteClient(confirmDelete); }}
-        onCancel={() => setConfirmDelete(null)}
-      />
     </div>
   );
 }
