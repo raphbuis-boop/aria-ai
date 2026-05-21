@@ -1,71 +1,54 @@
-import {
-  AGENT_LICENSE,
-  AGENT_NAME,
-  EQUAL_HOUSING_DISCLOSURE,
-  getIdxDisclaimerText,
-} from "@/lib/compliance";
+"use client";
+
+import { useState } from "react";
+import { getIdxDisclaimerText, AGENT_NAME, AGENT_LICENSE, EQUAL_HOUSING_DISCLOSURE } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
   brokerageName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   compact = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   logoSize = "default",
-  /** Agent + license line (prefer ComplianceFooter sitewide). */
   includeAgentAttribution = false,
 }: {
   brokerageName?: string | null;
   compact?: boolean;
-  /** Larger mark + disclaimer block for public IDX pages (NJMLS visibility). */
   logoSize?: "default" | "prominent";
   includeAgentAttribution?: boolean;
 }) {
-  const effectiveLogo =
-    compact || logoSize !== "prominent" ? "default" : "prominent";
+  const [expanded, setExpanded] = useState(false);
 
   return (
-    <div
-      className={`rounded-[10px] border border-border-card bg-bg-card px-3 py-2 text-text-dim ${
-        compact ? "text-[10px]" : effectiveLogo === "prominent" ? "text-[12px]" : "text-[11px]"
-      }`}
-    >
-      <div
-        className={`mb-3 rounded-[8px] bg-white ${
-          effectiveLogo === "prominent"
-            ? "flex justify-center px-4 py-5 sm:px-6 sm:py-6"
-            : "inline-block p-3"
-        }`}
+    <div className="border-t border-[#1e2230] pt-3">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-2 text-left"
       >
-        {/* NJMLS mark */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src="/IDX_logo.JPG"
-          width={effectiveLogo === "prominent" ? 360 : 200}
-          height={effectiveLogo === "prominent" ? 45 : 25}
-          alt="New Jersey Multiple Listing Service"
-          loading="eager"
-          decoding="async"
-          className={`block h-auto max-w-full object-contain ${
-            effectiveLogo === "prominent"
-              ? "w-[min(100%,360px)] min-h-[32px] min-w-[220px]"
-              : "min-h-[24px]"
-          }`}
-          style={
-            effectiveLogo === "prominent"
-              ? { width: "min(100%, 360px)", height: "auto" }
-              : { width: 200, height: "auto" }
-          }
+          width={64}
+          height={8}
+          alt="NJMLS IDX"
+          className="h-auto w-16 flex-shrink-0 rounded-[3px] bg-white px-1.5 py-1 object-contain"
         />
-      </div>
-      <p>{getIdxDisclaimerText()}</p>
-      {!compact && includeAgentAttribution ? (
-        <p className="mt-2 text-[11px] font-medium text-text-primary">
-          {AGENT_NAME}, NJ License #{AGENT_LICENSE}
-        </p>
-      ) : null}
-      <p className="mt-1">
-        Last updated: {new Date().toLocaleDateString()}
-      </p>
-      {brokerageName ? <p className="mt-1">Listing brokerage: {brokerageName}</p> : null}
-      <p className="mt-1">{EQUAL_HOUSING_DISCLOSURE}</p>
+        <span className="flex-1 text-[10px] text-[#424560]">
+          NJMLS IDX · Equal Housing Opportunity
+        </span>
+        <span className="text-[11px] text-[#424560]">{expanded ? "−" : "+"}</span>
+      </button>
+
+      {expanded && (
+        <div className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-[#424560]">
+          <p>{getIdxDisclaimerText()}</p>
+          {brokerageName && <p>Listing brokerage: {brokerageName}</p>}
+          {includeAgentAttribution && (
+            <p>{AGENT_NAME}, NJ License #{AGENT_LICENSE}</p>
+          )}
+          <p>{EQUAL_HOUSING_DISCLOSURE}</p>
+        </div>
+      )}
     </div>
   );
 }

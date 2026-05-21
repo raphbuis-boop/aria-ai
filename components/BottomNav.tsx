@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import {
-  Building2,
+  CalendarClock,
   House,
   Mic,
   Settings,
@@ -18,6 +18,7 @@ type Tab = {
   label: string;
   Icon: LucideIcon;
   exact?: boolean;
+  badge?: boolean;
 };
 
 const LEFT_TABS: Tab[] = [
@@ -26,7 +27,7 @@ const LEFT_TABS: Tab[] = [
 ];
 
 const RIGHT_TABS: Tab[] = [
-  { href: "/listings", label: "MLS", Icon: Building2 },
+  { href: "/showings", label: "Timeline", Icon: CalendarClock },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
@@ -42,22 +43,22 @@ function TabItem({
   return (
     <Link
       href={tab.href}
-      className="flex flex-1 flex-col items-center justify-center gap-[3px] py-2"
+      className="flex flex-1 flex-col items-center justify-center gap-1 py-2"
       aria-label={tab.label}
     >
-      <span className="relative">
+      <span className="relative flex items-center justify-center">
         <tab.Icon
-          size={23}
+          size={22}
           strokeWidth={active ? 2.2 : 1.7}
-          className={active ? "text-[#3a65f0]" : "text-[#464760]"}
+          className={active ? "text-[#3a65f0]" : "text-[#3e4058]"}
         />
         {badge && badge > 0 ? (
-          <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-md bg-[#c43838] px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-2 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#c43838] px-1 text-[9px] font-bold text-white">
             {badge > 9 ? "9+" : badge}
           </span>
         ) : null}
       </span>
-      <span className={`text-[10px] font-medium ${active ? "text-[#3a65f0]" : "text-[#464760]"}`}>
+      <span className={`text-[10px] font-medium tracking-wide ${active ? "text-[#3a65f0]" : "text-[#3e4058]"}`}>
         {tab.label}
       </span>
     </Link>
@@ -96,41 +97,47 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#181b24] bg-[#060709]/96 backdrop-blur-2xl"
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      className="fixed bottom-0 left-0 right-0 z-50 bg-[#06060d]/95 backdrop-blur-2xl"
+      style={{
+        borderTop: "0.5px solid #1a1d2a",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+      }}
     >
-      <div className="flex w-full items-center">
-        {/* Left two tabs */}
+      <div className="relative flex w-full items-end">
+        {/* Left tabs */}
         {LEFT_TABS.map((tab) => (
           <TabItem
             key={tab.href}
             tab={tab}
             active={isActive(tab)}
-            badge={tab.href === "/inbox" ? inboxUnread : undefined}
+            badge={tab.badge ? inboxUnread : undefined}
           />
         ))}
 
-        {/* Center glowing mic bubble */}
-        <div className="flex flex-1 flex-col items-center justify-center py-1">
+        {/* Center floating mic */}
+        <div className="flex flex-1 flex-col items-center pb-1">
           <Link
             href="/voice"
             aria-label="Voice assistant"
-            className="flex h-14 w-14 -translate-y-3 items-center justify-center rounded-full transition-transform active:scale-90"
+            className="mb-1 flex items-center justify-center rounded-full transition-transform active:scale-90"
             style={{
-              background: "radial-gradient(circle at 35% 35%, #5577ff, #2a45d0)",
+              width: 56,
+              height: 56,
+              marginTop: -20,
+              background: "linear-gradient(145deg, #4a72ff 0%, #2040c8 100%)",
               boxShadow: voiceActive
-                ? "0 0 0 4px #3a65f020, 0 0 28px rgba(58,101,240,0.7), 0 0 56px rgba(58,101,240,0.3)"
-                : "0 0 0 1px #3a65f030, 0 0 20px rgba(58,101,240,0.45), 0 0 40px rgba(58,101,240,0.15)",
+                ? "0 0 0 6px rgba(58,101,240,0.15), 0 0 32px rgba(58,101,240,0.6), 0 0 64px rgba(58,101,240,0.25), 0 4px 24px rgba(0,0,0,0.6)"
+                : "0 0 0 1px rgba(58,101,240,0.2), 0 0 20px rgba(58,101,240,0.35), 0 0 48px rgba(58,101,240,0.12), 0 4px 20px rgba(0,0,0,0.5)",
             }}
           >
             <Mic size={22} strokeWidth={2} className="text-white" />
           </Link>
-          <span className={`-mt-1 text-[10px] font-medium ${voiceActive ? "text-[#3a65f0]" : "text-[#464760]"}`}>
+          <span className={`text-[10px] font-medium tracking-wide ${voiceActive ? "text-[#3a65f0]" : "text-[#3e4058]"}`}>
             Voice
           </span>
         </div>
 
-        {/* Right two tabs */}
+        {/* Right tabs */}
         {RIGHT_TABS.map((tab) => (
           <TabItem
             key={tab.href}
