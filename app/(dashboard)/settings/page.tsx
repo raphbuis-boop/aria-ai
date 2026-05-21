@@ -1,6 +1,5 @@
 "use client";
 
-import { BackButton } from "@/components/BackButton";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
@@ -105,127 +104,141 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <BackButton href="/more" className="mb-4" />
-      <p className="mb-6 text-[12px] text-text-dim">
-        <Link
-          href="#bba-templates"
-          className="font-medium text-accent-blue hover:underline"
-        >
-          BBA PDF templates
-        </Link>
-        <span className="text-text-muted"> · </span>
-        Upload your brokerage Buyer Broker Agreement for client signing links.
-      </p>
-      <div className="text-[20px] font-medium text-text-primary">
-        Mirror My Voice
-      </div>
-      <p className="mt-2 text-[13px] text-text-dim">
-        Paste 5 real texts you&apos;ve sent to clients. Aria will match your tone
-        exactly.
-      </p>
-      <div className="mt-6 space-y-3">
-        {samples.map((s, i) => (
-          <div key={i}>
-            <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
-              Sample {i + 1}
-            </div>
-            <textarea
-              value={s}
-              onChange={(e) => {
-                const next = [...samples];
-                next[i] = e.target.value;
-                setSamples(next);
-              }}
-              className="mt-1 min-h-[56px] w-full rounded-[8px] border border-border-card bg-bg-deep p-3 text-base text-text-primary"
-            />
-          </div>
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={saveVoice}
-        className="mt-4 w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white"
-      >
-        Save & Analyze
-      </button>
-      {analysis ? (
-        <div className="mt-4 rounded-[14px] border border-border-card bg-bg-card p-3 text-[13px] text-text-secondary">
-          {analysis}
-        </div>
-      ) : null}
+    <div className="w-full px-4 pb-40 pt-6">
+      {/* iOS-style large page title */}
+      <h1 className="mb-6 text-[28px] font-semibold tracking-tight text-text-primary">Settings</h1>
 
-      <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
-          Preview
+      {/* Agent profile card */}
+      <div className="mb-3 rounded-[16px] border border-border-subtle bg-bg-card p-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-dim">Agent Profile</p>
+        <div className="space-y-2.5">
+          <div>
+            <p className="mb-1 text-[11px] text-text-muted">License state</p>
+            <select
+              value={profile.license_state}
+              onChange={(e) => setProfile({ ...profile, license_state: e.target.value })}
+              className="w-full rounded-[10px] border border-border-card bg-bg-deep px-3 py-2.5 text-base text-text-primary"
+            >
+              <option value="NJ">New Jersey (NJ)</option>
+            </select>
+          </div>
+          <input
+            value={profile.full_name}
+            onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+            placeholder="Full name"
+            className="w-full rounded-[10px] border border-border-card bg-bg-deep px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
+          />
+          <input
+            value={profile.phone}
+            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+            placeholder="Phone"
+            className="w-full rounded-[10px] border border-border-card bg-bg-deep px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
+          />
+          <input
+            value={profile.email}
+            onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+            placeholder="Email"
+            className="w-full rounded-[10px] border border-border-card bg-bg-deep px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
+          />
+          <button
+            type="button"
+            onClick={saveProfile}
+            className="w-full rounded-[10px] bg-accent-blue py-2.5 text-[13px] font-semibold text-white"
+          >
+            Save profile
+          </button>
         </div>
-        <input
-          value={previewQ}
-          onChange={(e) => setPreviewQ(e.target.value)}
-          className="mt-2 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
-        />
+      </div>
+
+      {/* Mirror My Voice card */}
+      <div className="mb-3 rounded-[16px] border border-border-subtle bg-bg-card p-4">
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-text-dim">AI Voice</p>
+        <p className="mb-3 text-[15px] font-semibold text-text-primary">Mirror My Voice</p>
+        <p className="mb-4 text-[13px] leading-relaxed text-text-muted">
+          Paste 5 real texts you&apos;ve sent to clients. Aria will match your tone exactly.
+        </p>
+        <div className="space-y-3">
+          {samples.map((s, i) => (
+            <div key={i}>
+              <p className="mb-1 text-[11px] text-text-dim">Sample {i + 1}</p>
+              <textarea
+                value={s}
+                onChange={(e) => {
+                  const next = [...samples];
+                  next[i] = e.target.value;
+                  setSamples(next);
+                }}
+                rows={2}
+                className="w-full rounded-[10px] border border-border-card bg-bg-deep p-3 text-base text-text-primary placeholder:text-text-dim"
+              />
+            </div>
+          ))}
+        </div>
         <button
           type="button"
-          onClick={preview}
-          className="mt-2 rounded-[8px] border border-border-card px-3 py-2 text-[13px] text-accent-blue"
+          onClick={saveVoice}
+          className="mt-4 w-full rounded-[10px] bg-accent-blue py-2.5 text-[13px] font-semibold text-white"
         >
-          Generate preview
+          Save & Analyze
         </button>
-        {previewOut ? (
-          <div className="mt-2 rounded-[12px] border border-border-card bg-bg-card p-3 text-[13px] text-text-secondary">
-            {previewOut}
+        {analysis ? (
+          <div className="mt-3 rounded-[12px] border border-border-card bg-bg-deep p-3 text-[13px] leading-relaxed text-text-secondary">
+            {analysis}
           </div>
         ) : null}
-      </div>
 
-      <div className="mt-8 space-y-2">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
-          Agent profile
-        </div>
-        <div>
-          <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
-            Your state
-          </div>
-          <select
-            value={profile.license_state}
-            onChange={(e) =>
-              setProfile({ ...profile, license_state: e.target.value })
-            }
-            className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base text-text-primary"
+        <div className="mt-4 border-t border-border-subtle pt-4">
+          <p className="mb-2 text-[11px] text-text-dim">Preview a draft</p>
+          <input
+            value={previewQ}
+            onChange={(e) => setPreviewQ(e.target.value)}
+            className="w-full rounded-[10px] border border-border-card bg-bg-deep px-3 py-2.5 text-base text-text-primary"
+          />
+          <button
+            type="button"
+            onClick={preview}
+            className="mt-2 rounded-[10px] border border-border-card px-4 py-2 text-[13px] text-accent-blue"
           >
-            <option value="NJ">New Jersey (NJ)</option>
-          </select>
+            Generate preview
+          </button>
+          {previewOut ? (
+            <div className="mt-2 rounded-[12px] border border-border-card bg-bg-deep p-3 text-[13px] leading-relaxed text-text-secondary">
+              {previewOut}
+            </div>
+          ) : null}
         </div>
-        <input
-          value={profile.full_name}
-          onChange={(e) =>
-            setProfile({ ...profile, full_name: e.target.value })
-          }
-          placeholder="Full name"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
-        />
-        <input
-          value={profile.phone}
-          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-          placeholder="Phone"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
-        />
-        <input
-          value={profile.email}
-          onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-          placeholder="Email"
-          className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-base"
-        />
-        <button
-          type="button"
-          onClick={saveProfile}
-          className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
-        >
-          Save profile
-        </button>
       </div>
 
-      <BbaTemplatesSection />
+      {/* BBA templates card */}
+      <div className="mb-3 rounded-[16px] border border-border-subtle bg-bg-card p-4">
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-text-dim">Documents</p>
+        <p className="mb-3 text-[15px] font-semibold text-text-primary">BBA Templates</p>
+        <p className="mb-3 text-[13px] leading-relaxed text-text-muted">
+          Upload your brokerage Buyer Broker Agreement for client signing links.
+        </p>
+        <BbaTemplatesSection />
+      </div>
+
+      {/* Legal links */}
+      <div className="rounded-[16px] border border-border-subtle bg-bg-card p-4">
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-text-dim">Legal</p>
+        <div className="space-y-3">
+          {[
+            { href: "/privacy", label: "Privacy Policy" },
+            { href: "/terms", label: "Terms of Service" },
+            { href: "/fair-housing", label: "Fair Housing" },
+          ].map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className="flex items-center justify-between text-[14px] text-text-secondary"
+            >
+              <span>{l.label}</span>
+              <span className="text-text-dim">›</span>
+            </Link>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

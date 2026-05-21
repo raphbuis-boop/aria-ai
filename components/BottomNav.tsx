@@ -18,7 +18,6 @@ type Tab = {
   label: string;
   Icon: LucideIcon;
   exact?: boolean;
-  badge?: boolean;
 };
 
 const LEFT_TABS: Tab[] = [
@@ -31,26 +30,18 @@ const RIGHT_TABS: Tab[] = [
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
-function TabItem({
-  tab,
-  active,
-  badge,
-}: {
-  tab: Tab;
-  active: boolean;
-  badge?: number;
-}) {
+function TabItem({ tab, active, badge }: { tab: Tab; active: boolean; badge?: number }) {
   return (
     <Link
       href={tab.href}
-      className="flex flex-1 flex-col items-center justify-center gap-1 py-2"
+      className="flex flex-1 flex-col items-center justify-end gap-1 pb-1 pt-2"
       aria-label={tab.label}
     >
       <span className="relative flex items-center justify-center">
         <tab.Icon
           size={22}
-          strokeWidth={active ? 2.2 : 1.7}
-          className={active ? "text-[#3a65f0]" : "text-[#3e4058]"}
+          strokeWidth={active ? 2.2 : 1.6}
+          className={active ? "text-white" : "text-[#3a3d52]"}
         />
         {badge && badge > 0 ? (
           <span className="absolute -right-2 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#c43838] px-1 text-[9px] font-bold text-white">
@@ -58,7 +49,7 @@ function TabItem({
           </span>
         ) : null}
       </span>
-      <span className={`text-[10px] font-medium tracking-wide ${active ? "text-[#3a65f0]" : "text-[#3e4058]"}`}>
+      <span className={`text-[9px] font-medium tracking-wide ${active ? "text-white" : "text-[#3a3d52]"}`}>
         {tab.label}
       </span>
     </Link>
@@ -96,56 +87,58 @@ export function BottomNav() {
   const voiceActive = pathname === "/voice";
 
   return (
-    <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-[#06060d]/95 backdrop-blur-2xl"
-      style={{
-        borderTop: "0.5px solid #1a1d2a",
-        paddingBottom: "env(safe-area-inset-bottom, 0px)",
-      }}
+    <div
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4"
+      style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
     >
-      <div className="relative flex w-full items-end">
-        {/* Left tabs */}
+      <nav
+        className="flex w-full max-w-sm items-end overflow-hidden rounded-[28px]"
+        style={{
+          background: "rgba(10, 11, 18, 0.92)",
+          backdropFilter: "blur(24px)",
+          WebkitBackdropFilter: "blur(24px)",
+          border: "0.5px solid rgba(255,255,255,0.07)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04) inset",
+        }}
+      >
         {LEFT_TABS.map((tab) => (
-          <TabItem
-            key={tab.href}
-            tab={tab}
-            active={isActive(tab)}
-            badge={tab.badge ? inboxUnread : undefined}
-          />
+          <TabItem key={tab.href} tab={tab} active={isActive(tab)} badge={tab.href === "/inbox" ? inboxUnread : undefined} />
         ))}
 
-        {/* Center floating mic */}
-        <div className="flex flex-1 flex-col items-center pb-1">
+        {/* Center mic */}
+        <div className="flex flex-col items-center justify-end pb-1 px-2 pt-1">
           <Link
             href="/voice"
             aria-label="Voice assistant"
-            className="mb-1 flex items-center justify-center rounded-full transition-transform active:scale-90"
+            className="flex items-center justify-center rounded-full transition-transform active:scale-90"
             style={{
-              width: 56,
-              height: 56,
-              marginTop: -20,
-              background: "linear-gradient(145deg, #4a72ff 0%, #2040c8 100%)",
+              width: 52,
+              height: 52,
+              marginTop: -16,
+              background: "rgba(12, 14, 22, 0.95)",
+              border: voiceActive
+                ? "1px solid rgba(100, 140, 255, 0.5)"
+                : "1px solid rgba(255,255,255,0.08)",
               boxShadow: voiceActive
-                ? "0 0 0 6px rgba(58,101,240,0.15), 0 0 32px rgba(58,101,240,0.6), 0 0 64px rgba(58,101,240,0.25), 0 4px 24px rgba(0,0,0,0.6)"
-                : "0 0 0 1px rgba(58,101,240,0.2), 0 0 20px rgba(58,101,240,0.35), 0 0 48px rgba(58,101,240,0.12), 0 4px 20px rgba(0,0,0,0.5)",
+                ? "0 0 0 4px rgba(58,101,240,0.12), 0 0 24px rgba(58,101,240,0.55), 0 0 48px rgba(58,101,240,0.2)"
+                : "0 0 0 1px rgba(58,101,240,0.08), 0 0 16px rgba(58,101,240,0.25), 0 4px 16px rgba(0,0,0,0.6)",
             }}
           >
-            <Mic size={22} strokeWidth={2} className="text-white" />
+            <Mic
+              size={20}
+              strokeWidth={1.8}
+              className={voiceActive ? "text-[#6b8fff]" : "text-[#4a6ae8]"}
+            />
           </Link>
-          <span className={`text-[10px] font-medium tracking-wide ${voiceActive ? "text-[#3a65f0]" : "text-[#3e4058]"}`}>
+          <span className={`mt-1 text-[9px] font-medium tracking-wide ${voiceActive ? "text-white" : "text-[#3a3d52]"}`}>
             Voice
           </span>
         </div>
 
-        {/* Right tabs */}
         {RIGHT_TABS.map((tab) => (
-          <TabItem
-            key={tab.href}
-            tab={tab}
-            active={isActive(tab)}
-          />
+          <TabItem key={tab.href} tab={tab} active={isActive(tab)} />
         ))}
-      </div>
-    </nav>
+      </nav>
+    </div>
   );
 }
