@@ -350,28 +350,28 @@ export function MlsSearchClient({
           value={minPrice}
           onChange={(e) => setMinPrice(e.target.value)}
           placeholder="Min $"
-          className="w-[100px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
           placeholder="Max $"
-          className="w-[100px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={minBeds}
           onChange={(e) => setMinBeds(e.target.value)}
           placeholder="Min beds"
-          className="w-[88px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={minBaths}
           onChange={(e) => setMinBaths(e.target.value)}
           placeholder="Min baths"
-          className="w-[92px] rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
         />
         <select
           value={propertyType}
@@ -389,7 +389,7 @@ export function MlsSearchClient({
           type="button"
           onClick={() => void applySearch()}
           disabled={loading}
-          className="inline-flex items-center gap-1.5 rounded-[8px] bg-accent-blue px-4 py-2 text-[13px] font-medium text-white disabled:opacity-60"
+          className="inline-flex h-11 items-center gap-1.5 rounded-[8px] bg-accent-blue px-4 py-3 text-[13px] font-medium text-white disabled:opacity-60"
         >
           <Search size={14} />
           Search
@@ -452,7 +452,7 @@ export function MlsSearchClient({
           <button
             type="button"
             onClick={() => void applySearch()}
-            className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
+            className="w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white h-11"
           >
             Apply filters
           </button>
@@ -479,7 +479,7 @@ export function MlsSearchClient({
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-3">
+      <div className="mt-6 grid grid-cols-1 gap-3">
         {listings.map((l) => {
           const photo = l.photos?.[0];
           const mlsKey = l.mlsNumber || l.id;
@@ -522,7 +522,7 @@ export function MlsSearchClient({
                 <img
                   src="/IDX_logo.JPG"
                   alt="NJMLS IDX"
-                  className="absolute bottom-2 right-2 h-auto w-[96px] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
+                  className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
                   draggable={false}
                 />
                 {variant === "member" && saved ? (
@@ -564,14 +564,14 @@ export function MlsSearchClient({
                   <button
                     type="button"
                     onClick={() => setMatchListing(l)}
-                    className="rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[12px] font-medium text-accent-blue"
+                    className="h-11 rounded-[8px] border border-border-card bg-bg-deep px-3 py-3 text-[12px] font-medium text-accent-blue"
                   >
                     Match to Clients
                   </button>
                   <button
                     type="button"
                     onClick={() => void toggleWatchlist(l)}
-                    className={`rounded-[8px] px-3 py-2 text-[12px] font-medium ${
+                    className={`h-11 rounded-[8px] px-3 py-3 text-[12px] font-medium ${
                       saved
                         ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
                         : "bg-accent-blue text-white"
