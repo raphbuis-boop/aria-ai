@@ -6,7 +6,7 @@ import { differenceInCalendarDays } from "date-fns";
 import { Building2, Search, ShieldAlert, Zap, TrendingUp, Users, CircleDot } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 export type ClientRow = {
   id: string;
@@ -41,6 +41,10 @@ type Initial = {
   newMatches: number;
   bbaAlerts: BbaAlert[];
 };
+
+function isHot(c: ClientRow) {
+  return c.status === "showing" || c.status === "hot" || (c.lead_score ?? 0) >= 8;
+}
 
 function pipelineTotal(clients: { budget_max: number | null }[]) {
   const total = clients.reduce((s, c) => s + (c.budget_max ?? 0), 0);
@@ -139,17 +143,27 @@ export function DashboardClient({
 
   const clients = initial.clients;
   const transactions = initial.transactions;
-  const visible = clients.filter((c) => !dismissed.has(c.id));
 
-  const isHot = (c: ClientRow) =>
-    c.status === "showing" || c.status === "hot" || (c.lead_score ?? 0) >= 8;
-
-  const hotLeads = visible.filter((c) => isHot(c) && !snoozed.has(c.id) && c.status !== "closed");
-  const followUp = visible.filter(
-    (c) => !snoozed.has(c.id) && c.status !== "closed" && !isHot(c) && (c.lead_score ?? 0) >= 5,
+  const visible = useMemo(
+    () => clients.filter((c) => !dismissed.has(c.id)),
+    [clients, dismissed],
   );
-  const activeClients = visible.filter((c) => c.status !== "closed");
-  const underContractClients = visible.filter((c) => c.status === "under_contract");
+  const hotLeads = useMemo(
+    () => visible.filter((c) => isHot(c) && !snoozed.has(c.id) && c.status !== "closed"),
+    [visible, snoozed],
+  );
+  const followUp = useMemo(
+    () => visible.filter((c) => !snoozed.has(c.id) && c.status !== "closed" && !isHot(c) && (c.lead_score ?? 0) >= 5),
+    [visible, snoozed],
+  );
+  const activeClients = useMemo(
+    () => visible.filter((c) => c.status !== "closed"),
+    [visible],
+  );
+  const underContractClients = useMemo(
+    () => visible.filter((c) => c.status === "under_contract"),
+    [visible],
+  );
   const underContractCount = Math.max(
     underContractClients.length,
     transactions.filter((t) => ["under_contract", "active"].includes(String(t.status ?? "active"))).length,
@@ -204,15 +218,15 @@ export function DashboardClient({
     }
   }
 
-  function snooze(id: string) {
+  const snooze = useCallback((id: string) => {
     setSnoozed((s) => new Set(s).add(id));
     toast.toast("Snoozed 1h", "success");
-  }
+  }, [toast]);
 
-  function dismiss(id: string) {
+  const dismiss = useCallback((id: string) => {
     setDismissed((s) => new Set(s).add(id));
     toast.toast("Dismissed", "default");
-  }
+  }, [toast]);
 
   return (
     <div className="min-h-screen bg-[#080810] text-[#f0eee8] pb-28">

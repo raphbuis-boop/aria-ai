@@ -30,7 +30,7 @@ export default async function ClientsPage() {
 
   const { data: clients } = await supabase
     .from("clients")
-    .select("*")
+    .select("id, name, town, status, lead_score, budget_min, budget_max, phone, email, beds_wanted, baths_wanted, notes, client_role")
     .eq("agent_id", user.id)
     .order("last_engagement_at", { ascending: false });
 

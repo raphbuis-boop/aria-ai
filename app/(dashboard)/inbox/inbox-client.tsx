@@ -64,15 +64,22 @@ export function InboxClient({
   }, [initial]);
 
   useEffect(() => {
+    const controller = new AbortController();
     void (async () => {
-      const res = await fetch("/api/inbox/backfill", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({}),
-      });
-      const data = (await res.json().catch(() => ({}))) as { updated?: number };
-      if ((data.updated ?? 0) > 0) router.refresh();
+      try {
+        const res = await fetch("/api/inbox/backfill", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({}),
+          signal: controller.signal,
+        });
+        const data = (await res.json().catch(() => ({}))) as { updated?: number };
+        if ((data.updated ?? 0) > 0) router.refresh();
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return;
+      }
     })();
+    return () => controller.abort();
   }, [router]);
 
   const filtered = useMemo(() => {
