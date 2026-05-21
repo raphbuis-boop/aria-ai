@@ -518,10 +518,19 @@
     <div class="hero-eyebrow"><span class="dot"></span> Built for New Jersey real estate agents</div>
     <h1 class="hero-h1">The <em>AI Revenue</em> Operating System for Real Estate.</h1>
     <p class="hero-sub">Aria analyzes your pipeline, surfaces deal risk, and tells you exactly what to do next — every morning.</p>
-    <form class="hero-email-form" id="hero-form" novalidate>
-      <input type="email" name="email" id="hero-email" placeholder="your@email.com" required>
-      <button type="submit" class="btn btn-sm">Get early access</button>
-    </form>
+    <div id="hero-form-wrap">
+      <form class="hero-email-form" id="hero-form" novalidate>
+        <input type="email" name="email" id="hero-email" placeholder="your@email.com" required>
+        <button type="submit" class="btn btn-sm">Get early access</button>
+      </form>
+    </div>
+    <div class="success-box" id="hero-success">
+      <div class="pos" id="hero-pos">#1</div>
+      <div class="pos-lbl">You're on the list</div>
+      <div class="ref-lbl">Share your link to move up</div>
+      <div class="ref-url" id="hero-ref"></div>
+      <button class="copy-btn" onclick="copyRef('hero-ref')">Copy link</button>
+    </div>
   </div>
 </section>
 
@@ -832,9 +841,8 @@
     if (!email) return;
     const btn = this.querySelector('button');
     btn.textContent = 'Joining…'; btn.disabled = true;
-    await submitWaitlist(email, 'cta-form', 'cta-success', 'cta-pos', 'cta-ref');
+    await submitWaitlist(email, 'hero-form', 'hero-success', 'hero-pos', 'hero-ref');
     btn.textContent = 'Get early access'; btn.disabled = false;
-    window.location.hash = '#waitlist';
   });
 
   document.getElementById('cta-form').addEventListener('submit', async function(e) {
