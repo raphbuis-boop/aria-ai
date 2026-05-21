@@ -30,7 +30,7 @@
 	<string>Main</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-		<string>armv7</string>
+		<string>arm64</string>
 	</array>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
@@ -51,5 +51,9 @@
 	<string>Aria uses your microphone to understand your voice commands.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Aria uses speech recognition to convert your voice to text.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Aria accesses your photo library so you can upload listing photos.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Aria uses your camera so you can take listing photos directly in the app.</string>
 </dict>
 </plist>

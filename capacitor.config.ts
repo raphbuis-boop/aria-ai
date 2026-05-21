@@ -6,7 +6,6 @@ const config: CapacitorConfig = {
   webDir: 'public', // doesn't matter when using url
   server: {
     url: 'https://getariaai.com/crm', // 🔥 THIS IS THE FIX
-    cleartext: true,
     iosScheme: 'https',
     androidScheme: 'https',
     allowNavigation: ['getariaai.com', '*.getariaai.com', '*.vercel.app']
