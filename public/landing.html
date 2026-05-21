@@ -512,7 +512,7 @@
 </nav>
 
 <!-- HERO -->
-<section class="hero">
+<section class="hero" id="waitlist">
   <div class="hero-glow"></div>
   <div class="container">
     <div class="hero-eyebrow"><span class="dot"></span> Built for New Jersey real estate agents</div>
@@ -701,7 +701,7 @@
           <li>Pipeline overview</li>
           <li>Activity log</li>
         </ul>
-        <a href="/login" class="price-cta">Sign up</a>
+        <a href="#waitlist" class="price-cta" onclick="focusWaitlist(event)">Join waitlist</a>
       </div>
 
       <div class="price-card">
@@ -716,7 +716,7 @@
           <li>Buyer–listing matching</li>
           <li>Activity &amp; communication log</li>
         </ul>
-        <a href="/login" class="price-cta">Sign up</a>
+        <a href="#waitlist" class="price-cta" onclick="focusWaitlist(event)">Join waitlist</a>
       </div>
 
       <div class="price-card featured">
@@ -734,7 +734,7 @@
           <li>Transaction &amp; document tracking</li>
           <li>Market pulse &amp; neighborhood reports</li>
         </ul>
-        <a href="/login" class="price-cta">Sign up</a>
+        <a href="#waitlist" class="price-cta" onclick="focusWaitlist(event)">Join waitlist</a>
       </div>
 
     </div>
@@ -784,6 +784,15 @@
 </footer>
 
 <script>
+  function focusWaitlist(e) {
+    e.preventDefault();
+    document.getElementById('waitlist').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    setTimeout(function() {
+      var input = document.getElementById('hero-email');
+      if (input) { input.focus(); }
+    }, 400);
+  }
+
   function switchDemo(idx) {
     document.querySelectorAll('.demo-tab').forEach((t,i) => t.classList.toggle('active', i===idx));
     document.querySelectorAll('.demo-screen').forEach((s,i) => s.classList.toggle('active', i===idx));
