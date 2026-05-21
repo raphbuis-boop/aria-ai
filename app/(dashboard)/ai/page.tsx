@@ -21,21 +21,24 @@ export default function AIPage() {
         data: { user },
       } = await supabase.auth.getUser();
       if (!user) return;
-      const { data: profile } = await supabase
-        .from("agent_profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .maybeSingle();
-      const { data: clients } = await supabase
-        .from("clients")
-        .select("name, town, status, lead_score, budget_min, budget_max")
-        .eq("agent_id", user.id)
-        .order("lead_score", { ascending: false });
-      const { data: tasks } = await supabase
-        .from("tasks")
-        .select("id")
-        .eq("agent_id", user.id)
-        .eq("done", false);
+      const [{ data: profile }, { data: clients }, { data: tasks }] =
+        await Promise.all([
+          supabase
+            .from("agent_profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("clients")
+            .select("name, town, status, lead_score, budget_min, budget_max")
+            .eq("agent_id", user.id)
+            .order("lead_score", { ascending: false }),
+          supabase
+            .from("tasks")
+            .select("id")
+            .eq("agent_id", user.id)
+            .eq("done", false),
+        ]);
       const hot = (clients ?? []).filter((c) => (c.lead_score ?? 0) >= 7).length;
       const pipeline = (clients ?? []).reduce(
         (s, c) => s + (c.budget_max ?? 0),

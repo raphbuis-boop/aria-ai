@@ -36,14 +36,14 @@ export default function ReferralsPage() {
     } = await supabase.auth.getUser();
     if (!user) return;
     setUserId(user.id);
-    const { data } = await supabase
-      .from("referrals")
-      .select("*")
-      .or(`from_agent_id.eq.${user.id},to_agent_id.eq.${user.id}`);
+    const [{ data }, { data: profs }] = await Promise.all([
+      supabase
+        .from("referrals")
+        .select("*")
+        .or(`from_agent_id.eq.${user.id},to_agent_id.eq.${user.id}`),
+      supabase.from("agent_profiles").select("id, full_name"),
+    ]);
     setRows(data ?? []);
-    const { data: profs } = await supabase
-      .from("agent_profiles")
-      .select("id, full_name");
     setAgents((profs as { id: string; full_name: string | null }[]) ?? []);
   }
 

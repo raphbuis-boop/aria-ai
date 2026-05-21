@@ -50,7 +50,7 @@ export default async function DashboardPage() {
   ] = await Promise.all([
     supabase
       .from("clients")
-      .select("*")
+      .select("id, name, town, status, lead_score, budget_min, budget_max, phone, client_role")
       .eq("agent_id", user.id)
       .order("lead_score", { ascending: false, nullsFirst: false }),
     supabase

@@ -25,30 +25,35 @@ export default async function PortalPage({
     );
   }
 
-  const { data: agent } = await admin
-    .from("agent_profiles")
-    .select("full_name, phone, email")
-    .eq("id", client.agent_id)
-    .maybeSingle();
-
-  const { data: matches } = await admin
-    .from("property_matches")
-    .select("*, properties(*)")
-    .eq("client_id", client.id)
-    .order("match_score", { ascending: false });
-
-  const { data: tasks } = await admin
-    .from("tasks")
-    .select("*")
-    .eq("client_id", client.id)
-    .order("due_at", { ascending: true });
-
   const town = String(client.town ?? "Ridgewood");
-  const { data: market } = await admin
-    .from("market_data")
-    .select("*")
-    .eq("town", town)
-    .maybeSingle();
+
+  const [
+    { data: agent },
+    { data: matches },
+    { data: tasks },
+    { data: market },
+  ] = await Promise.all([
+    admin
+      .from("agent_profiles")
+      .select("full_name, phone, email")
+      .eq("id", client.agent_id)
+      .maybeSingle(),
+    admin
+      .from("property_matches")
+      .select("*, properties(*)")
+      .eq("client_id", client.id)
+      .order("match_score", { ascending: false }),
+    admin
+      .from("tasks")
+      .select("*")
+      .eq("client_id", client.id)
+      .order("due_at", { ascending: true }),
+    admin
+      .from("market_data")
+      .select("*")
+      .eq("town", town)
+      .maybeSingle(),
+  ]);
 
   const first = String(client.name ?? "there").split(" ")[0];
 
