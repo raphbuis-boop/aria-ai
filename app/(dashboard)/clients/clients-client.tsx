@@ -168,26 +168,40 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
-    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
-      <div className="px-5 pt-5">
+    <div className="min-h-screen pb-28" style={{ background: "#050816", color: "#e4e8ff" }}>
+      <div className="px-5 pt-6">
 
         {/* ── Header ── */}
-        <div className="mb-5">
-          <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Clients</h1>
-          <p className="mt-0.5 text-[12px] text-[#6b7090]">
-            {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
-          </p>
+        <div className="mb-5 flex items-end justify-between">
+          <div>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Leads</h1>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#40486a" }}>
+              {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
+            style={{ background: "#4c7aff" }}
+          >
+            + Add
+          </button>
         </div>
 
         {/* ── Search ── */}
-        <div className="mb-3 flex items-center gap-3 rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-4 py-3">
-          <Search size={15} strokeWidth={2} className="flex-shrink-0 text-[#6b7090]" />
+        <div
+          className="mb-3 flex items-center gap-3 px-4 py-3"
+          style={{ borderRadius: 13, background: "#080c18", border: "0.5px solid #181d2e" }}
+        >
+          <Search size={14} strokeWidth={1.8} style={{ color: "#40486a", flexShrink: 0 }} />
           <input
             type="text"
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[13.5px] text-[#e8eaf2] placeholder-[#6b7090] outline-none"
+            className="flex-1 bg-transparent text-[14px] outline-none"
+            style={{ color: "#e4e8ff" }}
           />
           {search && (
             <button
@@ -201,17 +215,18 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         </div>
 
         {/* ── Filters ── */}
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1">
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scroll-touch">
           {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`whitespace-nowrap rounded-full border-[0.5px] px-3.5 py-2 text-[12px] font-medium transition ${
+              className="whitespace-nowrap rounded-full px-3.5 py-2 text-[12px] font-medium"
+              style={
                 filter === f
-                  ? "border-[#3a65f0]/35 bg-[#3a65f0]/12 text-[#6b8fff]"
-                  : "border-[#1e2230] bg-[#0d0f16] text-[#6b7090] hover:text-[#8888a0]"
-              }`}
+                  ? { background: "rgba(76,122,255,0.12)", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.25)" }
+                  : { background: "#080c18", color: "#40486a", border: "0.5px solid #181d2e" }
+              }
             >
               {f}
             </button>
@@ -221,62 +236,56 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         {/* ── List ── */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0]/10">
-              <Users size={22} className="text-[#3a65f0]" />
+            <div
+              className="mb-3 flex h-11 w-11 items-center justify-center rounded-full"
+              style={{ background: "rgba(76,122,255,0.1)" }}
+            >
+              <Users size={20} style={{ color: "#4c7aff" }} />
             </div>
-            <p className="text-[14px] font-semibold text-[#8888a0]">No clients found</p>
-            <p className="mt-1 text-[12px] text-[#6b7090]">Try a different filter or add a new client</p>
+            <p className="text-[14px] font-semibold" style={{ color: "#8088aa" }}>No clients found</p>
+            <p className="mt-1 text-[12px]" style={{ color: "#40486a" }}>Try a different filter or add a new client</p>
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((client) => {
+          <div className="ios-group">
+            {filtered.map((client, idx) => {
               const badge = STATUS_BADGE[client.status ?? ""] ?? null;
               const score = client.lead_score ?? 0;
-              const isHot = score >= 7;
+              const hot = score >= 7;
 
               return (
-                <div key={client.id} className="relative">
-                  <Link href={`/clients/${client.id}`}>
-                    <div className={`rounded-[18px] border-[0.5px] bg-[#0d0f16] p-4 transition active:scale-[0.99] ${
-                      isHot ? "border-[#3a65f0]/25" : "border-[#1e2230]"
-                    }`}>
-                      <div className="flex items-start gap-3">
-                        {/* Avatar */}
-                        <div className={`h-10 w-10 flex-shrink-0 rounded-[13px] flex items-center justify-center text-[13px] font-bold ${avatarColor(client.name)}`}>
-                          {initialsOf(client.name)}
-                        </div>
+                <Link
+                  key={client.id}
+                  href={`/clients/${client.id}`}
+                  className="ios-row"
+                  style={{ borderBottom: idx < filtered.length - 1 ? "0.5px solid #131520" : "none" }}
+                >
+                  {/* Avatar */}
+                  <div className={`mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${avatarColor(client.name)}`}>
+                    {initialsOf(client.name)}
+                  </div>
 
-                        {/* Main info */}
-                        <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex items-center gap-2">
-                            <span className="truncate text-[14px] font-semibold text-[#e8eaf2]">
-                              {client.name}
-                            </span>
-                            {client.client_role === "seller" && (
-                              <span className="flex-shrink-0 rounded-full border-[0.5px] border-[#1e2230] px-2 py-px text-[10px] font-medium text-[#6b7090]">
-                                Seller
-                              </span>
-                            )}
-                            {badge && (
-                              <span className={`flex-shrink-0 rounded-md border-[0.5px] px-2 py-px text-[10px] font-bold uppercase tracking-[0.5px] ${badge.cls}`}>
-                                {badge.label}
-                              </span>
-                            )}
-                          </div>
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[14px] font-medium" style={{ color: "#dde0f8" }}>
+                      {client.name}
+                    </p>
+                    <p className="mt-px truncate text-[11px]" style={{ color: "#40486a" }}>
+                      {client.town ?? "—"}
+                      {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
+                    </p>
+                  </div>
 
-                          <p className="mb-2 truncate text-[12px] text-[#6b7090]">
-                            {client.town ?? "—"}
-                            {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
-                          </p>
-
-                          {score > 0 && (
-                            <span className="text-[11px] font-medium text-[#6b7090]">Score {score}/10</span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
+                  {/* Right meta */}
+                  <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
+                    {hot && <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#4c7aff" }} />}
+                    {badge && (
+                      <span className="rounded px-1.5 py-[2px] text-[10px]" style={{ color: "#50587a" }}>
+                        {badge.label}
+                      </span>
+                    )}
+                    <span className="text-[14px]" style={{ color: "#2a3050" }}>›</span>
+                  </div>
+                </Link>
               );
             })}
           </div>
@@ -307,11 +316,14 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               <div className="flex gap-2">
                 {(["buyer", "seller"] as const).map((r) => (
                   <button key={r} type="button" onClick={() => setForm({ ...form, client_role: r })}
-                    className={`flex-1 rounded-[12px] border-[0.5px] py-2.5 text-[12px] font-semibold uppercase tracking-wider transition ${
+                    className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-semibold capitalize transition ${
+                      form.client_role === r ? "" : ""
+                    }`}
+                    style={
                       form.client_role === r
-                        ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
-                        : "border-[#1e2230] bg-[#080910] text-[#6b7090]"
-                    }`}>
+                        ? { background: "rgba(76,122,255,0.12)", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.25)" }
+                        : { background: "#060912", color: "#40486a", border: "0.5px solid #181d2e" }
+                    }>
                     {r}
                   </button>
                 ))}
@@ -356,14 +368,14 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                 className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] p-4 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#3a65f0]/50 transition" />
             </div>
 
-            <div className="mt-5 flex gap-2">
-              <button type="button" onClick={saveClient}
-                className="flex-1 rounded-[13px] bg-[#3a65f0] py-3 text-[13.5px] font-semibold text-white transition hover:bg-[#3d6ae8] active:scale-[0.98]">
+            <div className="mt-5">
+              <button
+                type="button"
+                onClick={saveClient}
+                className="w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-white press"
+                style={{ background: "#4c7aff" }}
+              >
                 Save client
-              </button>
-              <button type="button" onClick={() => setOpen(false)}
-                className="rounded-[13px] border-[0.5px] border-[#1e2230] px-5 py-3 text-[13.5px] font-semibold text-[#9498b0] transition hover:text-[#e8eaf2]">
-                Cancel
               </button>
             </div>
           </div>

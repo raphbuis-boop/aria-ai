@@ -3,7 +3,7 @@
 import { AIDraftModal } from "@/components/AIDraftModal";
 import { useToast } from "@/components/ToastProvider";
 import { differenceInCalendarDays } from "date-fns";
-import { ShieldAlert, Zap, TrendingUp, Users, CircleDot } from "lucide-react";
+import { ShieldAlert, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -54,42 +54,34 @@ function pipelineTotal(clients: { budget_max: number | null }[]) {
   return `$${total}`;
 }
 
-// ─── Stat card ───────────────────────────────────────────────────────────────
-function StatCard({
-  label,
-  value,
-  color,
-  icon: Icon,
-}: {
-  label: string;
-  value: string | number;
-  color: "blue" | "amber" | "green" | "white";
-  icon: React.ElementType;
-}) {
-  const val = {
-    blue: "text-[#3a65f0]",
-    amber: "text-[#c47e1a]",
-    green: "text-[#1a9b5e]",
-    white: "text-[#e8eaf2]",
-  }[color];
-  const bg = {
-    blue: "bg-[#3a65f0]/10",
-    amber: "bg-[#c47e1a]/10",
-    green: "bg-[#1a9b5e]/10",
-    white: "bg-white/6",
-  }[color];
-
+// ─── Stat strip — horizontal, no boxes ───────────────────────────────────────
+function StatStrip({ items }: { items: { label: string; value: string | number; color: string }[] }) {
   return (
-    <div className="rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-3">
-      <div className={`mb-2.5 flex h-7 w-7 items-center justify-center rounded-[9px] ${bg} ${val}`}>
-        <Icon size={14} strokeWidth={2.2} />
-      </div>
-      <p className={`text-[20px] font-semibold leading-none tracking-tight ${val}`}>
-        {value}
-      </p>
-      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.8px] text-[#6b7090]">
-        {label}
-      </p>
+    <div
+      className="mb-6 flex overflow-hidden"
+      style={{
+        borderRadius: 16,
+        background: "#080c18",
+        border: "0.5px solid #181d2e",
+      }}
+    >
+      {items.map((item, i) => (
+        <div
+          key={item.label}
+          className="flex-1 py-4 text-center"
+          style={{ borderRight: i < items.length - 1 ? "0.5px solid #181d2e" : "none" }}
+        >
+          <p
+            className="text-[22px] font-semibold leading-none tracking-tight"
+            style={{ color: item.color }}
+          >
+            {item.value}
+          </p>
+          <p className="mt-1.5 text-[10px]" style={{ color: "#40486a" }}>
+            {item.label}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
@@ -97,13 +89,16 @@ function StatCard({
 // ─── Badge ────────────────────────────────────────────────────────────────────
 function Badge({ children, tone }: { children: React.ReactNode; tone: "red" | "amber" | "green" | "blue" }) {
   const styles = {
-    red: "bg-[#c43838]/12 text-[#c43838] border-[#c43838]/20",
-    amber: "bg-[#c47e1a]/12 text-[#c47e1a] border-[#c47e1a]/20",
-    green: "bg-[#1a9b5e]/12 text-[#1a9b5e] border-[#1a9b5e]/20",
-    blue: "bg-[#3a65f0]/12 text-[#6b8fff] border-[#3a65f0]/20",
+    red: { background: "rgba(192,58,58,0.1)", color: "#d96060", border: "0.5px solid rgba(192,58,58,0.18)" },
+    amber: { background: "rgba(196,131,26,0.1)", color: "#c4831a", border: "0.5px solid rgba(196,131,26,0.18)" },
+    green: { background: "rgba(24,160,102,0.1)", color: "#18a066", border: "0.5px solid rgba(24,160,102,0.18)" },
+    blue: { background: "rgba(76,122,255,0.1)", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.18)" },
   }[tone];
   return (
-    <span className={`inline-flex items-center gap-1 rounded-md border-[0.5px] px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.6px] ${styles}`}>
+    <span
+      className="inline-flex items-center gap-1 rounded-md px-2 py-[3px] text-[10px] font-semibold"
+      style={styles}
+    >
       {children}
     </span>
   );
@@ -112,14 +107,15 @@ function Badge({ children, tone }: { children: React.ReactNode; tone: "red" | "a
 // ─── Action button ────────────────────────────────────────────────────────────
 function ActionBtn({ children, tone, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone: "green" | "blue" | "amber" }) {
   const styles = {
-    green: "bg-[#1a9b5e]/10 text-[#1a9b5e] border-[#1a9b5e]/18 hover:bg-[#1a9b5e]/16",
-    blue: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/18 hover:bg-[#3a65f0]/16",
-    amber: "bg-[#c47e1a]/10 text-[#c47e1a] border-[#c47e1a]/18 hover:bg-[#c47e1a]/16",
+    green: { background: "rgba(24,160,102,0.1)", color: "#18a066" },
+    blue: { background: "rgba(76,122,255,0.1)", color: "#7b9fff" },
+    amber: { background: "rgba(196,131,26,0.1)", color: "#c4831a" },
   }[tone];
   return (
     <button
       type="button"
-      className={`flex-1 rounded-[9px] border-[0.5px] px-3 py-[7px] text-center text-[12px] font-semibold transition ${styles}`}
+      className="flex-1 rounded-[10px] px-3 py-2 text-center text-[12px] font-semibold press"
+      style={styles}
       {...props}
     >
       {children}
@@ -229,46 +225,56 @@ export function DashboardClient({
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
-      <div className="px-5 pt-5">
+    <div className="min-h-screen pb-28" style={{ background: "#050816", color: "#e4e8ff" }}>
+      <div className="px-5 pt-6">
 
         {/* ── Header row ── */}
-        <div className="flex items-start justify-between mb-5">
+        <div className="flex items-start justify-between mb-6">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[#3a65f0] mb-1">
+            <p className="text-[11px] mb-1" style={{ color: "#4c7aff" }}>
               {today}
             </p>
-            <h1 className="text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.02em]">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">
               {greeting}, {firstName}.
             </h1>
           </div>
-          <div className="mt-1 h-[38px] w-[38px] flex-shrink-0 rounded-full bg-[#3a65f0]/15 flex items-center justify-center text-[14px] font-bold text-[#6b8fff] border-[0.5px] border-[#3a65f0]/25">
+          <div
+            className="mt-0.5 flex h-[36px] w-[36px] flex-shrink-0 items-center justify-center rounded-full text-[13px] font-semibold"
+            style={{
+              background: "rgba(76,122,255,0.12)",
+              color: "#7b9fff",
+              border: "0.5px solid rgba(76,122,255,0.2)",
+            }}
+          >
             {initial0}
           </div>
         </div>
 
         {/* ── Intelligence briefing ── */}
         {(briefing || clients.length === 0) && (
-          <div className="mb-4 flex items-start gap-3 rounded-[18px] border-[0.5px] border-[#3a65f0]/15 bg-[#0d0f16] px-4 py-3.5">
-            <span className="mt-[3px] h-[6px] w-[6px] flex-shrink-0 rounded-full bg-[#3a65f0] animate-pulse" />
-            <p className="text-[13.5px] leading-[1.65] text-[#7878a0]">
-              {briefing ?? (
-                clients.length === 0
-                  ? "No clients yet. Load demo data or add your first client."
-                  : "All caught up — no urgent actions."
-              )}
+          <div
+            className="mb-5 flex items-start gap-3 px-4 py-3.5"
+            style={{
+              borderRadius: 14,
+              background: "rgba(76,122,255,0.06)",
+              border: "0.5px solid rgba(76,122,255,0.12)",
+            }}
+          >
+            <span className="mt-1 h-[5px] w-[5px] flex-shrink-0 rounded-full animate-pulse" style={{ background: "#4c7aff" }} />
+            <p className="text-[13px] leading-relaxed" style={{ color: "#6878a8" }}>
+              {briefing ?? "No clients yet. Load demo data or add your first client."}
             </p>
           </div>
         )}
 
 
         {/* ── Stats ── */}
-        <div className="mb-5 grid grid-cols-2 gap-2">
-          <StatCard label="Pipeline" value={pipelineTotal(visible)} color="blue" icon={TrendingUp} />
-          <StatCard label="Hot leads" value={hotLeads.length} color="amber" icon={Zap} />
-          <StatCard label="Active" value={activeClients.length} color="white" icon={Users} />
-          <StatCard label="Closing" value={underContractCount} color="green" icon={CircleDot} />
-        </div>
+        <StatStrip items={[
+          { label: "Pipeline", value: pipelineTotal(visible), color: "#4c7aff" },
+          { label: "Hot", value: hotLeads.length, color: "#c4831a" },
+          { label: "Active", value: activeClients.length, color: "#e4e8ff" },
+          { label: "Closing", value: underContractCount, color: "#18a066" },
+        ]} />
 
         {/* ── Action stack ── */}
 
@@ -276,58 +282,53 @@ export function DashboardClient({
         {initial.bbaAlerts.length > 0 && (
           <Link
             href={`/clients/${initial.bbaAlerts[0].clientId}`}
-            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#3a1a1a] bg-[#120a0a] p-4"
+            className="mb-3 block p-4 press"
+            style={{ borderRadius: 18, background: "rgba(192,58,58,0.07)", border: "0.5px solid rgba(192,58,58,0.15)" }}
           >
-            <div className="mb-2.5 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <Badge tone="red"><ShieldAlert size={10} /> BBA required</Badge>
-              <span className="text-[11px] text-[#ff8a8a]">
+              <span className="text-[11px]" style={{ color: "#d96060" }}>
                 {initial.bbaAlerts.length} showing{initial.bbaAlerts.length > 1 ? "s" : ""}
               </span>
             </div>
             <p className="text-[15px] font-semibold mb-0.5">{initial.bbaAlerts[0].clientName}</p>
-            <p className="text-[12px] text-[#88607a] mb-3 leading-relaxed">
+            <p className="text-[12px] mb-3 leading-relaxed" style={{ color: "#6a4050" }}>
               {initial.bbaAlerts[0].address ?? "Upcoming showing"}
               {initial.bbaAlerts[0].showingDate
                 ? " · " + new Date(initial.bbaAlerts[0].showingDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
                 : ""}
-              {" "}— NJ/NAR rules require a signed BBA before the tour.
             </p>
-            <span className="inline-block rounded-[9px] bg-[#c43838]/90 px-3 py-[7px] text-[12px] font-semibold text-white">
-              Send signing link →
+            <span
+              className="inline-block rounded-[10px] px-3 py-2 text-[12px] font-semibold text-white"
+              style={{ background: "rgba(192,58,58,0.75)" }}
+            >
+              Send signing link
             </span>
           </Link>
         )}
 
         {/* Hot lead */}
         {topHot && (
-          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4">
-            <div className="mb-2.5 flex items-center justify-between">
+          <div
+            className="mb-3 p-4"
+            style={{ borderRadius: 18, background: "#080c18", border: "0.5px solid #181d2e" }}
+          >
+            <div className="mb-2 flex items-center justify-between">
               <Badge tone="red">Hot lead</Badge>
-              <span className="text-[11px] text-[#6b7090]">now</span>
             </div>
             <Link href={`/clients/${topHot.id}`}>
-              <p className="text-[15px] font-semibold mb-0.5">
-                {topHot.name}{topHot.town ? ` · ${topHot.town}` : ""}
+              <p className="text-[16px] font-semibold mb-0.5">
+                {topHot.name}{topHot.town ? <span className="font-normal" style={{ color: "#50587a" }}> · {topHot.town}</span> : ""}
               </p>
             </Link>
-            <p className="mb-2 text-[12px] text-[#6b7090]">
-              {topHot.status?.replace(/_/g, " ") ?? "—"}
+            <p className="mb-3 text-[12px]" style={{ color: "#50587a" }}>
+              {topHot.status?.replace(/_/g, " ") ?? "—"} · Score {topHot.lead_score ?? 0}/10
             </p>
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex gap-[3px]">
-                {Array.from({ length: 10 }).map((_, j) => (
-                  <div
-                    key={j}
-                    className={`h-1.5 w-1.5 rounded-full ${j < (topHot.lead_score ?? 0) ? "bg-[#3a65f0]" : "bg-[#1e2230]"}`}
-                  />
-                ))}
-              </div>
-              <span className="text-[11px] text-[#6b7090]">Score {topHot.lead_score ?? 0}/10</span>
-            </div>
             <div className="flex gap-2">
               <a
                 href={topHot.phone ? `tel:${topHot.phone}` : "#"}
-                className="flex-1 rounded-[9px] border-[0.5px] border-[#1a9b5e]/18 bg-[#1a9b5e]/10 px-3 py-[7px] text-center text-[12px] font-semibold text-[#1a9b5e] transition hover:bg-[#1a9b5e]/16"
+                className="flex-1 rounded-[10px] px-3 py-2 text-center text-[12px] font-semibold press"
+                style={{ background: "rgba(24,160,102,0.1)", color: "#18a066" }}
               >
                 Call
               </a>
@@ -337,7 +338,8 @@ export function DashboardClient({
             <button
               type="button"
               onClick={() => dismiss(topHot.id)}
-              className="mt-2 w-full text-center text-[11px] text-[#6b7090] transition hover:text-[#9498b0]"
+              className="mt-2.5 w-full text-center text-[11px]"
+              style={{ color: "#333a58" }}
             >
               Dismiss
             </button>
@@ -348,24 +350,21 @@ export function DashboardClient({
         {closingClient && (
           <Link
             href="/transactions"
-            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1a2a1c] bg-[#0a120c] p-4"
+            className="mb-3 block p-4 press"
+            style={{ borderRadius: 18, background: "rgba(24,160,102,0.06)", border: "0.5px solid rgba(24,160,102,0.12)" }}
           >
-            <div className="mb-2.5 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <Badge tone="green">Closing</Badge>
               {nearestClosing && (
-                <span className="text-[11px] text-[#1a9b5e]">
+                <span className="text-[11px]" style={{ color: "#18a066" }}>
                   {nearestClosing.days === 0 ? "today" : `in ${nearestClosing.days}d`}
                 </span>
               )}
             </div>
-            <p className="text-[15px] font-semibold mb-0.5">{closingClient.name}</p>
-            {closingClient.town && (
-              <p className="mb-0.5 text-[12px] text-[#6b7090]">{closingClient.town}</p>
-            )}
-            <p className="mb-3 text-[12px] text-[#1a9b5e]">Under contract · milestones due</p>
-            <span className="inline-block rounded-[9px] border-[0.5px] border-[#1e2230] px-3 py-[7px] text-[12px] font-semibold text-[#9498b0]">
-              View deal →
-            </span>
+            <p className="text-[16px] font-semibold mb-0.5">{closingClient.name}</p>
+            <p className="text-[12px]" style={{ color: "#50587a" }}>
+              {closingClient.town ? `${closingClient.town} · ` : ""}Under contract
+            </p>
           </Link>
         )}
 
@@ -373,43 +372,43 @@ export function DashboardClient({
         {followUpClient && (
           <Link
             href={`/clients/${followUpClient.id}`}
-            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4"
+            className="mb-3 block p-4 press"
+            style={{ borderRadius: 18, background: "#080c18", border: "0.5px solid #181d2e" }}
           >
-            <div className="mb-2.5 flex items-center justify-between">
+            <div className="mb-2 flex items-center justify-between">
               <Badge tone="amber">Follow-up</Badge>
             </div>
-            <p className="text-[15px] font-semibold mb-0.5">
-              {followUpClient.name}{followUpClient.town ? ` · ${followUpClient.town}` : ""}
+            <p className="text-[16px] font-semibold mb-0.5">
+              {followUpClient.name}
             </p>
-            <p className="mb-3 text-[12px] text-[#6b7090]">
-              {followUpClient.status?.replace(/_/g, " ") ?? "Check in"}
+            <p className="text-[12px]" style={{ color: "#50587a" }}>
+              {followUpClient.town ?? ""}{followUpClient.status ? ` · ${followUpClient.status.replace(/_/g, " ")}` : ""}
             </p>
-            <span className="inline-block rounded-[9px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/10 px-3 py-[7px] text-[12px] font-semibold text-[#6b8fff]">
-              Open client →
-            </span>
           </Link>
         )}
 
         {/* Empty state */}
         {clients.length === 0 && (
-          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0]/10">
-              <Users size={22} className="text-[#3a65f0]" />
+          <div className="mb-3 p-6 text-center" style={{ borderRadius: 18, background: "#080c18", border: "0.5px solid #181d2e" }}>
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-full" style={{ background: "rgba(76,122,255,0.1)" }}>
+              <Users size={20} style={{ color: "#4c7aff" }} />
             </div>
-            <p className="mb-1 text-[14px] font-semibold">No clients yet</p>
-            <p className="mb-4 text-[12px] text-[#6b7090]">Load demo data or add your first client.</p>
+            <p className="mb-1 text-[15px] font-semibold">No clients yet</p>
+            <p className="mb-4 text-[12px]" style={{ color: "#50587a" }}>Load demo data or add your first client.</p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={loadDemo}
                 disabled={seeding}
-                className="w-full rounded-[12px] bg-[#3a65f0] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60 transition hover:bg-[#3d6ae8]"
+                className="w-full rounded-[12px] py-3 text-[13px] font-semibold text-white disabled:opacity-50"
+                style={{ background: "#4c7aff" }}
               >
                 {seeding ? "Loading…" : "Load demo data"}
               </button>
               <Link
                 href="/clients?new=1"
-                className="w-full rounded-[12px] border-[0.5px] border-[#1e2230] py-2.5 text-[13px] font-semibold text-[#9498b0] transition hover:text-[#e8eaf2]"
+                className="w-full rounded-[12px] py-3 text-[13px] font-semibold"
+                style={{ color: "#50587a" }}
               >
                 + Add first client
               </Link>
@@ -417,14 +416,14 @@ export function DashboardClient({
           </div>
         )}
 
-        {/* ── Aria shortcuts ── */}
-        <div className="mt-5 mb-4 overflow-hidden rounded-[18px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/5">
-          <Link
-            href="/voice"
-            className="flex items-center gap-3 border-b border-[#3a65f0]/10 px-4 py-3.5 active:bg-[#3a65f0]/10"
-          >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_12px_rgba(58,101,240,0.45)]">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        {/* ── Aria + Quick actions ── */}
+        <div className="mt-2 ios-group">
+          <Link href="/voice" className="ios-row">
+            <span
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: "rgba(76,122,255,0.15)" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4c7aff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="9" y="3" width="6" height="11" rx="3" />
                 <path d="M5 10a7 7 0 0014 0" />
                 <line x1="12" y1="19" x2="12" y2="22" />
@@ -432,46 +431,37 @@ export function DashboardClient({
               </svg>
             </span>
             <div className="flex-1">
-              <p className="text-[14px] font-semibold text-[#6b8fff]">Voice</p>
-              <p className="text-[11px] text-[#6b7090]">Talk to Aria hands-free</p>
+              <p className="text-[14px] font-medium" style={{ color: "#c8d0f0" }}>Voice</p>
+              <p className="text-[11px]" style={{ color: "#40486a" }}>Talk to Aria hands-free</p>
             </div>
-            <span className="text-[16px] text-[#3a3d52]">›</span>
+            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
           </Link>
-          <Link
-            href="/ai"
-            className="flex items-center gap-3 px-4 py-3.5 active:bg-[#3a65f0]/10"
-          >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#3a65f0]/15">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b8fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <Link href="/ai" className="ios-row">
+            <span
+              className="mr-3 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full"
+              style={{ background: "rgba(255,255,255,0.05)" }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#50587a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </span>
             <div className="flex-1">
-              <p className="text-[14px] font-semibold text-[#9498b0]">Ask Aria</p>
-              <p className="text-[11px] text-[#6b7090]">Text chat with your AI agent</p>
+              <p className="text-[14px] font-medium" style={{ color: "#c8d0f0" }}>Ask Aria</p>
+              <p className="text-[11px]" style={{ color: "#40486a" }}>Text chat</p>
             </div>
-            <span className="text-[16px] text-[#3a3d52]">›</span>
+            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
           </Link>
-        </div>
-
-        {/* ── Quick actions ── */}
-        <div className="mt-2 overflow-hidden rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16]">
           {[
             { href: "/clients?new=1", label: "New Client", sub: "Add a lead" },
             { href: "/showings?new=1", label: "Log Showing", sub: "Schedule a tour" },
             { href: "/listings", label: "MLS Search", sub: "Browse NJ listings" },
-            { href: "/pipeline", label: "Pipeline", sub: "Track your deals" },
-          ].map((l, i, arr) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`flex items-center justify-between px-4 py-3.5 active:bg-white/[0.03] ${i < arr.length - 1 ? "border-b border-[#1e2230]" : ""}`}
-            >
-              <div>
-                <p className="text-[14px] font-medium text-[#c8cae0]">{l.label}</p>
-                <p className="text-[11px] text-[#555568]">{l.sub}</p>
+          ].map((l) => (
+            <Link key={l.href} href={l.href} className="ios-row">
+              <div className="flex-1">
+                <p className="text-[14px] font-medium" style={{ color: "#c8d0f0" }}>{l.label}</p>
+                <p className="text-[11px]" style={{ color: "#40486a" }}>{l.sub}</p>
               </div>
-              <span className="text-[16px] text-[#3a3d52]">›</span>
+              <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
             </Link>
           ))}
         </div>

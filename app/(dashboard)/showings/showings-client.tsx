@@ -199,27 +199,28 @@ export function ShowingsClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#080910] pb-28">
-      <div className="px-5 pt-5">
+    <div className="min-h-screen pb-28" style={{ background: "#050816", color: "#e4e8ff" }}>
+      <div className="px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Timeline</h1>
-            <p className="mt-0.5 text-[12px] text-[#6b7090]">
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Timeline</h1>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#40486a" }}>
               {upcoming.length > 0 ? `${upcoming.length} upcoming` : "No upcoming showings"}
             </p>
           </div>
           <button
             type="button"
             onClick={openModal}
-            className="rounded-full bg-[#3a65f0] px-4 py-2 text-[13px] font-semibold text-white"
+            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
+            style={{ background: "#4c7aff" }}
           >
             + Add
           </button>
         </div>
 
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#3a3d52]">
+        <div className="mb-2 text-[11px]" style={{ color: "#333a58" }}>
           Upcoming
         </div>
         <div className="space-y-2.5">
@@ -271,7 +272,7 @@ export function ShowingsClient({
         </div>
 
         <div className="mt-6">
-        <div className="mb-2 text-[11px] font-semibold uppercase tracking-[1px] text-[#3a3d52]">
+        <div className="mb-2 text-[11px]" style={{ color: "#333a58" }}>
           Past
         </div>
         <div className="space-y-2.5">

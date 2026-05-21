@@ -104,9 +104,8 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="w-full px-4 pb-40 pt-6">
-      {/* iOS-style large page title */}
-      <h1 className="mb-6 text-[28px] font-semibold tracking-tight text-text-primary">Settings</h1>
+    <div className="min-h-screen w-full px-5 pb-40 pt-6" style={{ background: "#050816", color: "#e4e8ff" }}>
+      <h1 className="mb-6 text-[26px] font-semibold tracking-[-0.025em]">Settings</h1>
 
       {/* Agent profile card */}
       <div className="mb-3 rounded-[16px] border border-border-subtle bg-bg-card p-4">

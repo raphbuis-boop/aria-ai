@@ -48,6 +48,52 @@ body {
 /* Tap highlight */
 * { -webkit-tap-highlight-color: transparent; }
 
+/* Global interaction transitions — feel instant and smooth */
+a, button, [role="button"] {
+  transition-property: opacity, background-color, border-color, color, box-shadow, transform;
+  transition-duration: 120ms;
+  transition-timing-function: ease;
+}
+
+/* Native momentum scroll on scrollable containers */
+.scroll-touch {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+/* iOS inset grouped list — the core native list pattern */
+.ios-group {
+  border-radius: 18px;
+  background: #0d0f16;
+  border: 0.5px solid #181b28;
+  overflow: hidden;
+}
+
+.ios-row {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 0.5px solid #131520;
+  transition: background-color 100ms ease;
+}
+
+.ios-row:last-child {
+  border-bottom: none;
+}
+
+.ios-row:active {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+
+/* Tactile press — use on any tappable card */
+.press {
+  transition: transform 100ms ease, opacity 100ms ease;
+}
+.press:active {
+  transform: scale(0.975);
+  opacity: 0.85;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;

@@ -30,26 +30,30 @@ const RIGHT_TABS: Tab[] = [
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
 
-function TabItem({ tab, active, badge }: { tab: Tab; active: boolean; badge?: number }) {
+function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
   return (
     <Link
       href={tab.href}
-      className="flex flex-1 flex-col items-center justify-end gap-1 pb-1 pt-2"
+      className="flex flex-1 flex-col items-center justify-center gap-[5px] py-2.5"
       aria-label={tab.label}
     >
-      <span className="relative flex items-center justify-center">
-        <tab.Icon
-          size={22}
-          strokeWidth={active ? 2.2 : 1.6}
-          className={active ? "text-white" : "text-[#3a3d52]"}
-        />
-        {badge && badge > 0 ? (
-          <span className="absolute -right-2 -top-1 flex h-[14px] min-w-[14px] items-center justify-center rounded-full bg-[#c43838] px-1 text-[9px] font-bold text-white">
-            {badge > 9 ? "9+" : badge}
-          </span>
-        ) : null}
-      </span>
-      <span className={`text-[9px] font-medium tracking-wide ${active ? "text-white" : "text-[#3a3d52]"}`}>
+      <tab.Icon
+        size={21}
+        strokeWidth={active ? 2.1 : 1.5}
+        style={{
+          color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.22)",
+          transition: "color 200ms ease, stroke-width 200ms ease",
+        }}
+      />
+      <span
+        style={{
+          fontSize: 10,
+          fontWeight: active ? 600 : 400,
+          letterSpacing: "0.01em",
+          color: active ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)",
+          transition: "color 200ms ease",
+        }}
+      >
         {tab.label}
       </span>
     </Link>
@@ -86,51 +90,74 @@ export function BottomNav() {
 
   const voiceActive = pathname === "/voice";
 
+  // suppress unused warning — badge logic kept for future inbox tab
+  void inboxUnread;
+
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center px-4"
-      style={{ paddingBottom: "max(16px, env(safe-area-inset-bottom))" }}
+      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
+      style={{
+        paddingLeft: 20,
+        paddingRight: 20,
+        paddingBottom: "max(12px, env(safe-area-inset-bottom))",
+      }}
     >
       <nav
-        className="flex w-full max-w-sm items-end overflow-hidden rounded-[28px]"
+        className="flex w-full max-w-[380px] items-end"
         style={{
-          background: "rgba(10, 11, 18, 0.92)",
-          backdropFilter: "blur(24px)",
-          WebkitBackdropFilter: "blur(24px)",
-          border: "0.5px solid rgba(255,255,255,0.07)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.04) inset",
+          background: "rgba(8, 9, 18, 0.88)",
+          backdropFilter: "blur(32px) saturate(180%)",
+          WebkitBackdropFilter: "blur(32px) saturate(180%)",
+          borderRadius: 26,
+          border: "0.5px solid rgba(255,255,255,0.06)",
+          boxShadow:
+            "0 12px 40px rgba(0,0,0,0.65), 0 0 0 0.5px rgba(255,255,255,0.03) inset",
         }}
       >
         {LEFT_TABS.map((tab) => (
-          <TabItem key={tab.href} tab={tab} active={isActive(tab)} badge={tab.href === "/inbox" ? inboxUnread : undefined} />
+          <TabItem key={tab.href} tab={tab} active={isActive(tab)} />
         ))}
 
-        {/* Center mic */}
-        <div className="flex flex-col items-center justify-end pb-1 px-2 pt-1">
+        {/* Center mic bubble */}
+        <div className="flex flex-col items-center justify-end pb-2.5 px-3">
           <Link
             href="/voice"
             aria-label="Voice assistant"
-            className="flex items-center justify-center rounded-full transition-transform active:scale-90"
+            className="flex items-center justify-center rounded-full"
             style={{
-              width: 52,
-              height: 52,
-              marginTop: -16,
-              background: "rgba(12, 14, 22, 0.95)",
+              width: 48,
+              height: 48,
+              marginTop: -14,
+              background: voiceActive
+                ? "rgba(76, 122, 255, 0.15)"
+                : "rgba(14, 17, 35, 0.98)",
               border: voiceActive
-                ? "1px solid rgba(100, 140, 255, 0.5)"
-                : "1px solid rgba(255,255,255,0.08)",
+                ? "0.5px solid rgba(76, 122, 255, 0.4)"
+                : "0.5px solid rgba(255,255,255,0.07)",
               boxShadow: voiceActive
-                ? "0 0 0 4px rgba(58,101,240,0.12), 0 0 24px rgba(58,101,240,0.55), 0 0 48px rgba(58,101,240,0.2)"
-                : "0 0 0 1px rgba(58,101,240,0.08), 0 0 16px rgba(58,101,240,0.25), 0 4px 16px rgba(0,0,0,0.6)",
+                ? "0 0 0 6px rgba(76,122,255,0.08), 0 0 20px rgba(76,122,255,0.35)"
+                : "0 0 0 1px rgba(76,122,255,0.06), 0 0 14px rgba(76,122,255,0.18), 0 4px 20px rgba(0,0,0,0.7)",
+              transition: "all 250ms ease",
             }}
           >
             <Mic
-              size={20}
-              strokeWidth={1.8}
-              className={voiceActive ? "text-[#6b8fff]" : "text-[#4a6ae8]"}
+              size={18}
+              strokeWidth={1.6}
+              style={{
+                color: voiceActive ? "rgba(76,122,255,0.9)" : "rgba(76,122,255,0.65)",
+                transition: "color 250ms ease",
+              }}
             />
           </Link>
-          <span className={`mt-1 text-[9px] font-medium tracking-wide ${voiceActive ? "text-white" : "text-[#3a3d52]"}`}>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: voiceActive ? 600 : 400,
+              marginTop: 5,
+              color: voiceActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)",
+              transition: "color 200ms ease",
+            }}
+          >
             Voice
           </span>
         </div>
