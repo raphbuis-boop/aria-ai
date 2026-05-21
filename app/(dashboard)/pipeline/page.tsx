@@ -20,7 +20,7 @@ export default async function PipelinePage() {
   const total = (clients ?? []).reduce((s, c) => s + (c.budget_max ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-28 pt-6">
+    <div className="w-full px-4 pb-28 pt-6">
       <BackButton href="/dashboard" className="mb-4" />
       <header className="flex items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Pipeline</div>

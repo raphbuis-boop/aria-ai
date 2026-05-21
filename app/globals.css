@@ -2,22 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
+html {
+  overflow-x: hidden;
+}
+
 body {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
-  max-width: 100vw;
+  max-width: 100%;
+  background: #0a0a0f;
+  color: #f0eee8;
 }
 
 ::-webkit-scrollbar {
   display: none;
 }
 
-body {
-  background: #0a0a0f;
-  color: #f0eee8;
-  /* Safe area handled per-component, not on body */
+/* Mobile-first safe area utility */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
 }
 
 @layer utilities {

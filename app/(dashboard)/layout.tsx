@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-bg-primary pb-28">
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-bg-primary pb-24">
       <AutomationRunner />
       <AppHeader />
       {children}
