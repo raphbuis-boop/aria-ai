@@ -338,46 +338,46 @@ export function MlsSearchClient({
         ) : null}
       </header>
 
-      <div className="mt-5 flex flex-wrap gap-2">
+      <div className="mt-5 grid grid-cols-2 gap-2">
         <input
           value={city}
           onChange={(e) => setCity(e.target.value)}
           placeholder="Town or city"
-          className="min-w-[140px] flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="col-span-2 w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={minPrice}
           onChange={(e) => setMinPrice(e.target.value)}
           placeholder="Min $"
-          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={maxPrice}
           onChange={(e) => setMaxPrice(e.target.value)}
           placeholder="Max $"
-          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={minBeds}
           onChange={(e) => setMinBeds(e.target.value)}
           placeholder="Min beds"
-          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
         />
         <input
           type="number"
           value={minBaths}
           onChange={(e) => setMinBaths(e.target.value)}
           placeholder="Min baths"
-          className="w-full flex-1 rounded-[8px] border border-border-card bg-bg-card px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim"
+          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
         />
         <select
           value={propertyType}
           onChange={(e) => setPropertyType(e.target.value)}
           aria-label="Property type"
-          className="min-w-[120px] flex-1 rounded-[8px] border border-border-card bg-bg-card px-2 py-2 text-[13px] text-text-primary"
+          className="col-span-2 w-full rounded-[8px] border border-border-card bg-bg-card px-2 py-2.5 text-base text-text-primary"
         >
           {PROPERTY_TYPES.map((o) => (
             <option key={o.label} value={o.value}>

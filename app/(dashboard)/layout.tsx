@@ -19,7 +19,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary pb-20" style={{ paddingLeft: "env(safe-area-inset-left)", paddingRight: "env(safe-area-inset-right)" }}>
+    <div className="min-h-screen w-full max-w-full overflow-x-hidden bg-bg-primary pb-28">
       <AutomationRunner />
       <AppHeader />
       {children}
