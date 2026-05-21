@@ -199,15 +199,15 @@ export function NextActionsSection({
   const totalCount = visibleAuto.length + tasks.length;
 
   return (
-    <div className="mb-4 rounded-2xl border border-[#1e1e2e] bg-[#12121e] overflow-hidden">
+    <div className="mb-4 rounded-2xl border border-[#1e2230] bg-[#12121e] overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
         <div className="flex items-center gap-2">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-[#444460]">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-[#6b7090]">
             Next Actions
           </p>
           {totalCount > 0 && (
-            <span className="rounded-full bg-[#4f7bff]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6f9bff]">
+            <span className="rounded-full bg-[#3a65f0]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6b8fff]">
               {totalCount}
             </span>
           )}
@@ -219,9 +219,9 @@ export function NextActionsSection({
         {visibleAuto.map((at) => (
           <div
             key={at.id}
-            className="flex items-center gap-2.5 rounded-xl border border-[#4f7bff]/15 bg-[#4f7bff]/6 px-3 py-2.5"
+            className="flex items-center gap-2.5 rounded-xl border border-[#3a65f0]/15 bg-[#3a65f0]/6 px-3 py-2.5"
           >
-            <span className="h-4 w-4 flex-shrink-0 rounded border border-[#4f7bff]/30 bg-transparent" />
+            <span className="h-4 w-4 flex-shrink-0 rounded border border-[#3a65f0]/30 bg-transparent" />
             <div className="min-w-0 flex-1">
               <p className="text-[12.5px] font-medium text-[#c0c0d8]">
                 {at.title}
@@ -235,7 +235,7 @@ export function NextActionsSection({
               onClick={() =>
                 setDismissedAuto((prev) => { const s = new Set(prev); s.add(at.id); return s; })
               }
-              className="flex-shrink-0 text-[#333350] hover:text-[#666680] transition-colors"
+              className="flex-shrink-0 text-[#333350] hover:text-[#9498b0] transition-colors"
               aria-label="Dismiss suggestion"
             >
               <X size={13} />
@@ -247,7 +247,7 @@ export function NextActionsSection({
         {tasks.map((task) => (
           <div
             key={task.id}
-            className="flex items-center gap-2.5 rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2.5"
+            className="flex items-center gap-2.5 rounded-xl border border-[#1e2230] bg-[#0e0e1a] px-3 py-2.5"
           >
             <button
               type="button"
@@ -278,7 +278,7 @@ export function NextActionsSection({
 
         {/* Empty state */}
         {totalCount === 0 && !addingNew && (
-          <p className="py-3 text-center text-[12px] text-[#444460]">
+          <p className="py-3 text-center text-[12px] text-[#6b7090]">
             No actions needed — keep up the good work
           </p>
         )}
@@ -287,7 +287,7 @@ export function NextActionsSection({
         {addingNew ? (
           <form
             onSubmit={submitNew}
-            className="rounded-xl border border-[#4f7bff]/25 bg-[#0e0e1a] px-3 py-2.5 space-y-2"
+            className="rounded-xl border border-[#3a65f0]/25 bg-[#0e0e1a] px-3 py-2.5 space-y-2"
           >
             <input
               autoFocus
@@ -295,19 +295,19 @@ export function NextActionsSection({
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               placeholder="Task title…"
-              className="w-full bg-transparent text-[12.5px] text-[#d0d0e0] placeholder-[#333350] outline-none"
+              className="w-full bg-transparent text-[12.5px] text-[#e8eaf2] placeholder-[#333350] outline-none"
             />
             <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={newDue}
                 onChange={(e) => setNewDue(e.target.value)}
-                className="flex-1 rounded-lg border border-[#1e1e2e] bg-[#0a0a0f] px-2 py-1 text-[11px] text-[#888898] outline-none focus:border-[#4f7bff]/40"
+                className="flex-1 rounded-lg border border-[#1e2230] bg-[#080910] px-2 py-1 text-[11px] text-[#9498b0] outline-none focus:border-[#3a65f0]/40"
               />
               <button
                 type="submit"
                 disabled={!newTitle.trim() || saving}
-                className="rounded-lg bg-[#4f7bff] px-3 py-1 text-[11px] font-semibold text-white disabled:opacity-40"
+                className="rounded-lg bg-[#3a65f0] px-3 py-1 text-[11px] font-semibold text-white disabled:opacity-40"
               >
                 Add
               </button>
@@ -328,7 +328,7 @@ export function NextActionsSection({
           <button
             type="button"
             onClick={() => setAddingNew(true)}
-            className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2 text-[12px] font-medium text-[#444460] hover:text-[#6f9bff] transition-colors"
+            className="flex w-full items-center gap-1.5 rounded-xl px-2 py-2 text-[12px] font-medium text-[#6b7090] hover:text-[#6b8fff] transition-colors"
           >
             <Plus size={13} />
             Add task
@@ -341,7 +341,7 @@ export function NextActionsSection({
             <button
               type="button"
               onClick={() => setDoneExpanded((p) => !p)}
-              className="flex items-center gap-1.5 text-[11px] text-[#444460] hover:text-[#666680] transition-colors"
+              className="flex items-center gap-1.5 text-[11px] text-[#6b7090] hover:text-[#9498b0] transition-colors"
             >
               {doneExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
               Done ({doneTasks.length})
@@ -356,7 +356,7 @@ export function NextActionsSection({
                     <span className="h-4 w-4 flex-shrink-0 rounded border border-green-500/40 bg-green-500/15 flex items-center justify-center">
                       <span className="block h-1.5 w-1.5 rounded-full bg-green-400" />
                     </span>
-                    <p className="text-[12px] line-through text-[#888898]">
+                    <p className="text-[12px] line-through text-[#9498b0]">
                       {task.title}
                     </p>
                     <button

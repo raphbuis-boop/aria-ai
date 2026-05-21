@@ -163,7 +163,7 @@ export function InboxClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-24 relative">
+    <div className="min-h-screen bg-[#080910] text-white pb-24 relative">
       <div className="px-5 pt-6">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-2xl font-semibold">Inbox</h1>
@@ -172,7 +172,7 @@ export function InboxClient({
               {pendingCount}
             </span>
           ) : unread > 0 ? (
-            <span className="bg-[#4f7bff] text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+            <span className="bg-[#3a65f0] text-white text-xs font-bold px-2.5 py-1 rounded-lg">
               {unread}
             </span>
           ) : null}
@@ -186,8 +186,8 @@ export function InboxClient({
               onClick={() => setFilter(f)}
               className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors ${
                 filter === f
-                  ? "bg-[#4f7bff]/15 border-[#4f7bff]/30 text-[#6f9bff]"
-                  : "bg-[#12121e] border-[#1e1e2e] text-[#666680]"
+                  ? "bg-[#3a65f0]/15 border-[#3a65f0]/30 text-[#6b8fff]"
+                  : "bg-[#12121e] border-[#1e2230] text-[#9498b0]"
               }`}
             >
               {f}
@@ -198,7 +198,7 @@ export function InboxClient({
 
       <div className="px-5 space-y-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-[#444460]">
+          <div className="text-center py-16 text-[#6b7090]">
             <p className="font-medium">All clear</p>
             <p className="text-sm mt-1">No messages in this category</p>
           </div>
@@ -216,7 +216,7 @@ export function InboxClient({
             >
               <div
                 className={`bg-[#12121e] border rounded-2xl p-3.5 flex items-start gap-3 transition-colors ${
-                  pending ? "border-[#2a2a4e]" : "border-[#1e1e2e] opacity-70"
+                  pending ? "border-[#2a2e40]" : "border-[#1e2230] opacity-70"
                 }`}
               >
                 <div
@@ -226,11 +226,11 @@ export function InboxClient({
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-[#d0d0e0] truncate">
+                    <span className="text-sm font-semibold text-[#e8eaf2] truncate">
                       {clientName}
                     </span>
                     {pending ? (
-                      <span className="text-[10px] font-bold bg-[#4f7bff]/12 text-[#6f9bff] px-2 py-0.5 rounded flex-shrink-0">
+                      <span className="text-[10px] font-bold bg-[#3a65f0]/12 text-[#6b8fff] px-2 py-0.5 rounded flex-shrink-0">
                         AI DRAFT
                       </span>
                     ) : null}
@@ -249,7 +249,7 @@ export function InboxClient({
                         NOTE
                       </span>
                     ) : null}
-                    <span className="text-xs text-[#444460] ml-auto flex-shrink-0">
+                    <span className="text-xs text-[#6b7090] ml-auto flex-shrink-0">
                       {new Date(item.created_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -258,7 +258,7 @@ export function InboxClient({
                   </div>
                   <p
                     className={`text-sm leading-relaxed line-clamp-2 ${
-                      pending ? "text-[#c0bfd8]" : "text-[#888898]"
+                      pending ? "text-[#e8eaf2]" : "text-[#9498b0]"
                     }`}
                   >
                     {item.body || "No content"}
@@ -279,32 +279,32 @@ export function InboxClient({
         >
           <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute bottom-0 left-0 right-0 bg-[#0f0f1a] border-t border-[#1e1e2e] rounded-t-3xl p-5 pb-10"
+            className="absolute bottom-0 left-0 right-0 bg-[#0d0f16] border-t border-[#1e2230] rounded-t-3xl p-5 pb-10"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-9 h-1 bg-[#2a2a3e] rounded-full mx-auto mb-4" />
+            <div className="w-9 h-1 bg-[#2a2e40] rounded-full mx-auto mb-4" />
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-[14px] bg-red-500/20 text-red-400 flex items-center justify-center text-sm font-bold">
                 {initialsOf(selected.clients?.name)}
               </div>
               <div>
-                <p className="text-base font-semibold text-[#d0d0e0]">
+                <p className="text-base font-semibold text-[#e8eaf2]">
                   {selected.clients?.name ?? "Client"}
                 </p>
-                <p className="text-xs text-[#444460]">AI matched your tone</p>
+                <p className="text-xs text-[#6b7090]">AI matched your tone</p>
               </div>
             </div>
             <textarea
               value={draftBody}
               onChange={(e) => setDraftBody(e.target.value)}
-              className="w-full bg-[#0a0a14] border border-[#2a2a3e] rounded-2xl p-4 text-sm text-[#d0d0e0] leading-relaxed resize-none outline-none mb-4"
+              className="w-full bg-[#0d0f16] border border-[#2a2e40] rounded-2xl p-4 text-sm text-[#e8eaf2] leading-relaxed resize-none outline-none mb-4"
               rows={5}
             />
             <button
               type="button"
               onClick={approveSend}
               disabled={busy}
-              className="w-full bg-[#4f7bff] text-white font-semibold rounded-xl py-3.5 text-sm mb-2.5 disabled:opacity-60"
+              className="w-full bg-[#3a65f0] text-white font-semibold rounded-xl py-3.5 text-sm mb-2.5 disabled:opacity-60"
             >
               {busy ? "Sending…" : "Approve & Send"}
             </button>
@@ -312,7 +312,7 @@ export function InboxClient({
               type="button"
               onClick={dismiss}
               disabled={busy}
-              className="w-full bg-transparent border border-[#2a2a3e] text-[#888898] font-semibold rounded-xl py-3 text-sm disabled:opacity-60"
+              className="w-full bg-transparent border border-[#2a2e40] text-[#9498b0] font-semibold rounded-xl py-3 text-sm disabled:opacity-60"
             >
               Dismiss
             </button>

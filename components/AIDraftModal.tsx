@@ -110,20 +110,20 @@ export function AIDraftModal({
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 mb-0 w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-8 pt-4">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+      <div className="relative z-10 mb-0 w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-8 pt-4">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40]" />
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#3a65f0]">
               <Sparkles size={12} /> Aria draft
             </div>
-            <div className="mt-1 text-[16px] font-semibold text-[#f0eee8]">
+            <div className="mt-1 text-[16px] font-semibold text-[#e8eaf2]">
               AI text · {client.name}
             </div>
             {client.phone ? (
-              <div className="text-[12px] text-[#666680]">{client.phone}</div>
+              <div className="text-[12px] text-[#9498b0]">{client.phone}</div>
             ) : (
-              <div className="text-[12px] text-[#ffb832]">No phone on file</div>
+              <div className="text-[12px] text-[#c47e1a]">No phone on file</div>
             )}
           </div>
           <button
@@ -138,8 +138,8 @@ export function AIDraftModal({
 
         <div className="mt-4">
           {loading ? (
-            <div className="flex items-center gap-2 rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-4 text-[13px] text-[#888898]">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4f7bff]" />
+            <div className="flex items-center gap-2 rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#0a0a15] px-3 py-4 text-[13px] text-[#9498b0]">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#3a65f0]" />
               Aria is drafting…
             </div>
           ) : error ? (
@@ -150,7 +150,7 @@ export function AIDraftModal({
             <textarea
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              className="min-h-[120px] w-full resize-none rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-3 text-[13px] leading-[1.55] text-[#e5e4df] outline-none focus:border-[#4f7bff]/40"
+              className="min-h-[120px] w-full resize-none rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#0a0a15] px-3 py-3 text-[13px] leading-[1.55] text-[#e5e4df] outline-none focus:border-[#3a65f0]/40"
             />
           )}
         </div>
@@ -159,7 +159,7 @@ export function AIDraftModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[12px] border-[0.5px] border-[#2a2a3e] px-3 py-2.5 text-[13px] font-semibold text-[#9090a8]"
+            className="rounded-[12px] border-[0.5px] border-[#2a2e40] px-3 py-2.5 text-[13px] font-semibold text-[#9090a8]"
           >
             Dismiss
           </button>
@@ -167,12 +167,12 @@ export function AIDraftModal({
             type="button"
             onClick={send}
             disabled={loading || sending || !draft.trim() || !client.phone}
-            className="rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] px-3 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
+            className="rounded-[12px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] px-3 py-2.5 text-[13px] font-semibold text-white disabled:opacity-50"
           >
             {sending ? "Sending…" : "Approve & Send"}
           </button>
         </div>
-        <p className="mt-2 text-center text-[10px] text-[#444460]">
+        <p className="mt-2 text-center text-[10px] text-[#6b7090]">
           You approve every message before it sends.
         </p>
       </div>

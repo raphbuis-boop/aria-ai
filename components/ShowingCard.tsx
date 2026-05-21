@@ -63,13 +63,13 @@ export function ShowingCard({
       ) : null}
       {showBbaBlock ? (
         bbaSigned ? (
-          <div className="mt-3 flex items-center gap-1.5 rounded-[10px] border border-[#1a2a1a] bg-[#0f1a10] px-2.5 py-1.5 text-[11px] text-[#50dc78]">
+          <div className="mt-3 flex items-center gap-1.5 rounded-[10px] border border-[#1a2a1a] bg-[#0f1a10] px-2.5 py-1.5 text-[11px] text-[#1a9b5e]">
             <ShieldCheck size={12} /> BBA signed
           </div>
         ) : (
           <Link
             href={clientId ? `/clients/${clientId}` : "#"}
-            className="mt-3 flex items-center justify-between gap-2 rounded-[10px] border border-[#3a1a1a] bg-[#1a0f0f] px-2.5 py-1.5 text-[11px] text-[#ff6060]"
+            className="mt-3 flex items-center justify-between gap-2 rounded-[10px] border border-[#3a1a1a] bg-[#1a0f0f] px-2.5 py-1.5 text-[11px] text-[#c43838]"
           >
             <span className="flex items-center gap-1.5">
               <ShieldAlert size={12} />

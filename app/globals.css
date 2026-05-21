@@ -2,8 +2,28 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  /* Premium dark palette */
+  --c-bg:          #080910;
+  --c-card:        #0d0f16;
+  --c-elevated:    #121520;
+  --c-deep:        #060709;
+  --c-border:      #1e2230;
+  --c-border-soft: #181b24;
+  --c-text:        #e8eaf2;
+  --c-text-2:      #9498b0;
+  --c-text-3:      #6b7090;
+  --c-text-dim:    #424560;
+  --c-blue:        #3a65f0;
+  --c-blue-bright: #6b8fff;
+  --c-amber:       #c47e1a;
+  --c-green:       #1a9b5e;
+  --c-red:         #c43838;
+}
+
 html {
   overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -11,21 +31,22 @@ body {
   -ms-overflow-style: none;
   overflow-x: hidden;
   max-width: 100%;
-  background: #0a0a0f;
-  color: #f0eee8;
+  background: var(--c-bg);
+  color: var(--c-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::-webkit-scrollbar {
   display: none;
 }
 
-/* Mobile-first safe area utility */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-.pt-safe {
-  padding-top: env(safe-area-inset-top, 0px);
-}
+/* Safe area utilities */
+.pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
+.pt-safe { padding-top: env(safe-area-inset-top, 0px); }
+
+/* Tap highlight */
+* { -webkit-tap-highlight-color: transparent; }
 
 @layer utilities {
   .text-balance {

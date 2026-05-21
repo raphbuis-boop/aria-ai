@@ -114,10 +114,10 @@ const sections: { title: string; items: Entry[] }[] = [
 
 export default function MorePage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
+    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
       <div className="px-5 pt-6">
         <h1 className="text-[26px] font-semibold leading-tight">More</h1>
-        <p className="mt-1 text-[13px] text-[#666680]">
+        <p className="mt-1 text-[13px] text-[#9498b0]">
           Everything outside the main Home · Inbox · Clients flow.
         </p>
       </div>
@@ -125,7 +125,7 @@ export default function MorePage() {
       <div className="mt-6 space-y-6 px-5">
         {sections.map((section) => (
           <div key={section.title}>
-            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.4px] text-[#444460]">
+            <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.4px] text-[#6b7090]">
               {section.title}
             </p>
             <div className="space-y-2">
@@ -133,13 +133,13 @@ export default function MorePage() {
                 <Link
                   key={href}
                   href={href}
-                  className="flex items-center gap-[14px] rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-4 py-[14px] transition active:border-[#4f7bff]"
+                  className="flex items-center gap-[14px] rounded-[18px] border-[0.5px] border-[#1c1c2e] bg-[#0f0f1e] px-4 py-[14px] transition active:border-[#3a65f0]"
                 >
-                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[13px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                  <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-[13px] bg-[#3a65f0]/12 text-[#6b8fff]">
                     <Icon size={18} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-semibold text-[#d0d0e0]">
+                    <div className="text-[14px] font-semibold text-[#e8eaf2]">
                       {label}
                     </div>
                     <div className="truncate text-[12px] text-[#555570]">

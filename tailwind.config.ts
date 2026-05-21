@@ -10,25 +10,37 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        "bg-primary": "#000000",
-        "bg-card": "#111111",
-        "bg-deep": "#0a0a0a",
-        "border-card": "#222222",
-        "accent-blue": "#3B82F6",
-        "accent-blue-bright": "#60A5FA",
-        "accent-blue-glow": "#2563EB",
-        "accent-amber": "#F59E0B",
-        "accent-purple": "#8B5CF6",
-        "accent-green": "#10B981",
-        "text-primary": "#FFFFFF",
-        "text-secondary": "#E5E7EB",
-        "text-muted": "#9CA3AF",
-        "text-dim": "#6B7280",
+        // Backgrounds — matte black, cool blue undertone
+        "bg-primary":  "#080910",
+        "bg-card":     "#0d0f16",
+        "bg-elevated": "#121520",
+        "bg-deep":     "#060709",
+        "bg-hover":    "#161921",
+
+        // Borders — architectural, barely-there
+        "border-subtle": "#181b24",
+        "border-card":   "#1e2230",
+        "border-strong": "#2a2e40",
+
+        // Text hierarchy
+        "text-primary":   "#e8eaf2",
+        "text-secondary": "#9498b0",
+        "text-muted":     "#6b7090",
+        "text-dim":       "#424560",
+
+        // Accent — refined navy blue
+        "accent-blue":       "#3a65f0",
+        "accent-blue-soft":  "#2a4fbf",
+        "accent-blue-bright":"#6b8fff",
+
+        // Semantic — muted, professional
+        "accent-amber":  "#c47e1a",
+        "accent-green":  "#1a9b5e",
+        "accent-purple": "#6a44c0",
+        "accent-red":    "#c43838",
       },
     },
   },
-  // tailwindcss-animate provides the data-[state=open]:animate-in / fade-in /
-  // zoom-in utility classes used by shadcn Dialog/Sheet/Tooltip primitives.
   plugins: [animate],
 };
 export default config;

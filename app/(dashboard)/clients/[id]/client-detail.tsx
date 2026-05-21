@@ -142,7 +142,7 @@ export function ClientDetail({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-white pb-24">
+    <div className="min-h-screen bg-[#080910] text-white pb-24">
       <div className="px-5 pt-6">
         {/* ─── Client Header ──────────────────────────────────────────── */}
         <div className="mb-4 flex items-center justify-between">
@@ -150,7 +150,7 @@ export function ClientDetail({
           <button
             type="button"
             onClick={() => setEditOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] px-3 py-2.5 text-[12px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
+            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e2230] bg-[#12121e] px-3 py-2.5 text-[12px] font-semibold text-[#9090a8] active:border-[#3a65f0]"
           >
             <Pencil size={13} /> Edit
           </button>
@@ -187,10 +187,10 @@ export function ClientDetail({
               { label: "Beds / Baths", value: formatBedsBaths(beds, baths) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-xl bg-black/30 p-3">
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-[#444460]">
+                <p className="mb-1 text-[10px] uppercase tracking-wider text-[#6b7090]">
                   {label}
                 </p>
-                <p className="text-sm font-semibold text-[#d0d0e0]">{value}</p>
+                <p className="text-sm font-semibold text-[#e8eaf2]">{value}</p>
               </div>
             ))}
           </div>
@@ -212,7 +212,7 @@ export function ClientDetail({
             {phone ? (
               <a
                 href={`tel:${phone}`}
-                className="flex-1 truncate rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#d0d0e0]"
+                className="flex-1 truncate rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#e8eaf2]"
               >
                 {phone}
               </a>
@@ -220,7 +220,7 @@ export function ClientDetail({
             {email ? (
               <a
                 href={`mailto:${email}`}
-                className="flex-1 truncate rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#d0d0e0]"
+                className="flex-1 truncate rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#e8eaf2]"
               >
                 {email}
               </a>
@@ -233,7 +233,7 @@ export function ClientDetail({
           <button
             type="button"
             onClick={() => setDraftOpen(true)}
-            className="flex-1 rounded-xl border border-[#4f7bff]/20 bg-[#4f7bff]/12 py-2.5 text-center text-sm font-semibold text-[#6f9bff]"
+            className="flex-1 rounded-xl border border-[#3a65f0]/20 bg-[#3a65f0]/12 py-2.5 text-center text-sm font-semibold text-[#6b8fff]"
           >
             AI Text
           </button>
@@ -246,7 +246,7 @@ export function ClientDetail({
           </button>
           <Link
             href={`/showings?new=1&client=${id}`}
-            className="flex flex-1 items-center justify-center rounded-xl border border-[#1e1e2e] bg-[#12121e] py-2.5 text-center text-xs font-semibold text-[#888898]"
+            className="flex flex-1 items-center justify-center rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-xs font-semibold text-[#9498b0]"
           >
             Log Showing
           </Link>
@@ -275,11 +275,11 @@ export function ClientDetail({
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between px-0.5">
             <div className="flex items-center gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#444460]">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6b7090]">
                 Property Matches
               </p>
               {matches.length > 0 && (
-                <span className="rounded-full bg-[#4f7bff]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6f9bff]">
+                <span className="rounded-full bg-[#3a65f0]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6b8fff]">
                   {matches.length}
                 </span>
               )}
@@ -292,7 +292,7 @@ export function ClientDetail({
           </div>
 
           {matches.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#666680]">
+            <div className="rounded-2xl border border-dashed border-[#2a2e40] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#9498b0]">
               No matches yet.{" "}
               <button
                 type="button"
@@ -300,7 +300,7 @@ export function ClientDetail({
                   const el = document.getElementById("matching-prefs");
                   el?.scrollIntoView({ behavior: "smooth" });
                 }}
-                className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+                className="font-semibold text-[#6b8fff] underline-offset-2 hover:underline"
               >
                 Update Matching Preferences →
               </button>
@@ -328,15 +328,15 @@ export function ClientDetail({
                     return (
                       <li
                         key={String(m.id)}
-                        className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] px-3 py-2.5"
+                        className="rounded-2xl border border-[#1e2230] bg-[#12121e] px-3 py-2.5"
                       >
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#3a65f0]/12 text-[#6b8fff]">
                             <Home size={15} />
                           </span>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
-                              <p className="truncate text-[13px] font-semibold text-[#d0d0e0]">
+                              <p className="truncate text-[13px] font-semibold text-[#e8eaf2]">
                                 {address}
                               </p>
                               {isNew && (
@@ -355,13 +355,13 @@ export function ClientDetail({
                             </p>
                           </div>
                           <div className="flex flex-shrink-0 items-center gap-1.5">
-                            <span className="rounded-md bg-[#4f7bff]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6f9bff]">
+                            <span className="rounded-md bg-[#3a65f0]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6b8fff]">
                               {score}%
                             </span>
                             {propertyId ? (
                               <Link
                                 href={`/properties/${propertyId}`}
-                                className="text-[11px] font-semibold text-[#6f9bff]"
+                                className="text-[11px] font-semibold text-[#6b8fff]"
                               >
                                 View
                               </Link>
@@ -377,7 +377,7 @@ export function ClientDetail({
                               setDraftPrefill(address);
                               setDraftOpen(true);
                             }}
-                            className="flex items-center gap-1 rounded-lg border border-[#4f7bff]/20 bg-[#4f7bff]/10 px-3 py-2 text-[11px] font-semibold text-[#6f9bff]"
+                            className="flex items-center gap-1 rounded-lg border border-[#3a65f0]/20 bg-[#3a65f0]/10 px-3 py-2 text-[11px] font-semibold text-[#6b8fff]"
                           >
                             <Send size={12} />
                             Send to client
@@ -387,7 +387,7 @@ export function ClientDetail({
                             onClick={() =>
                               toast.toast("Schedule showing — coming soon", "default")
                             }
-                            className="flex items-center gap-1 rounded-lg border border-[#1e1e2e] bg-[#0e0e1a] px-3 py-2 text-[11px] font-semibold text-[#888898]"
+                            className="flex items-center gap-1 rounded-lg border border-[#1e2230] bg-[#0e0e1a] px-3 py-2 text-[11px] font-semibold text-[#9498b0]"
                           >
                             <CalendarPlus size={12} />
                             Schedule showing
@@ -402,7 +402,7 @@ export function ClientDetail({
                 <button
                   type="button"
                   onClick={() => setMatchesExpanded((p) => !p)}
-                  className="mt-2 w-full rounded-xl border border-[#1e1e2e] bg-[#0e0e1a] py-2 text-center text-[12px] font-semibold text-[#6f9bff]"
+                  className="mt-2 w-full rounded-xl border border-[#1e2230] bg-[#0e0e1a] py-2 text-center text-[12px] font-semibold text-[#6b8fff]"
                 >
                   {matchesExpanded
                     ? "Show less"
@@ -427,7 +427,7 @@ export function ClientDetail({
         {/* ─── Notes (inline, only if present) ────────────────────────── */}
         {notes ? (
           <CollapsibleSection title="Notes">
-            <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4">
+            <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-4">
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#a0a0c0]">
                 {notes}
               </p>
@@ -445,7 +445,7 @@ export function ClientDetail({
           }
         >
           {activities.length === 0 ? (
-            <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-6 text-center text-sm text-[#444460]">
+            <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-6 text-center text-sm text-[#6b7090]">
               No activity yet
             </div>
           ) : (
@@ -459,13 +459,13 @@ export function ClientDetail({
                 return (
                   <div key={String(item.id)} className="flex gap-3 pb-4">
                     <div className="flex flex-col items-center">
-                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-[#4f7bff]" />
+                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-[#3a65f0]" />
                       {i < activities.length - 1 ? (
-                        <div className="mt-1 w-px flex-1 bg-[#1e1e2e]" />
+                        <div className="mt-1 w-px flex-1 bg-[#1e2230]" />
                       ) : null}
                     </div>
                     <div className="min-w-0 pb-2">
-                      <p className="text-sm font-semibold capitalize text-[#d0d0e0]">
+                      <p className="text-sm font-semibold capitalize text-[#e8eaf2]">
                         {typeLabel || "activity"}
                       </p>
                       <p className="mt-0.5 text-xs text-[#555570]">
@@ -478,7 +478,7 @@ export function ClientDetail({
                           : ""}
                       </p>
                       {item.body ? (
-                        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#888898]">
+                        <p className="mt-1 whitespace-pre-wrap text-xs leading-relaxed text-[#9498b0]">
                           {String(item.body)}
                         </p>
                       ) : null}

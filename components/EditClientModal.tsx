@@ -141,9 +141,9 @@ export function EditClientModal({
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-9 pt-4">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-1 text-[15px] font-semibold text-[#f0eee8]">
+      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-9 pt-4">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40]" />
+        <div className="mb-1 text-[15px] font-semibold text-[#e8eaf2]">
           Edit client
         </div>
         <p className="mb-4 text-xs text-[#555570]">
@@ -155,7 +155,7 @@ export function EditClientModal({
             value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             placeholder="Full name *"
-            className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+            className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
           />
           <div className="flex gap-2">
             <input
@@ -163,25 +163,25 @@ export function EditClientModal({
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
               placeholder="Phone"
               inputMode="tel"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
             <input
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
               placeholder="Email"
               inputMode="email"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
           </div>
 
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
               Status
             </p>
             <select
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
-              className="w-full appearance-none rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] outline-none focus:border-[#4f7bff]/40"
+              className="w-full appearance-none rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] outline-none focus:border-[#3a65f0]/40"
             >
               {STATUS_OPTIONS.map((o) => (
                 <option key={o.value} value={o.value}>
@@ -199,8 +199,8 @@ export function EditClientModal({
                 onClick={() => setForm({ ...form, client_role: r })}
                 className={`flex-1 rounded-[12px] border-[0.5px] py-2.5 text-xs font-semibold uppercase tracking-wider transition ${
                   form.client_role === r
-                    ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
-                    : "border-[#1e1e2e] bg-[#0a0a14] text-[#555570]"
+                    ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
+                    : "border-[#1e2230] bg-[#0d0f16] text-[#555570]"
                 }`}
               >
                 {r}
@@ -216,7 +216,7 @@ export function EditClientModal({
               }
               placeholder="Budget min"
               inputMode="numeric"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
             <input
               value={form.budget_max}
@@ -225,7 +225,7 @@ export function EditClientModal({
               }
               placeholder="Budget max"
               inputMode="numeric"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
           </div>
 
@@ -235,23 +235,23 @@ export function EditClientModal({
               onChange={(e) => setForm({ ...form, beds: e.target.value })}
               placeholder="Beds"
               inputMode="numeric"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
             <input
               value={form.baths}
               onChange={(e) => setForm({ ...form, baths: e.target.value })}
               placeholder="Baths"
               inputMode="decimal"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
             />
           </div>
 
           <div className="pt-1">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
+              <p className="text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
                 Lead score
               </p>
-              <span className="text-[13px] font-semibold text-[#6f9bff]">
+              <span className="text-[13px] font-semibold text-[#6b8fff]">
                 {form.lead_score} / 10
               </span>
             </div>
@@ -264,15 +264,15 @@ export function EditClientModal({
               onChange={(e) =>
                 setForm({ ...form, lead_score: Number(e.target.value) })
               }
-              className="w-full accent-[#4f7bff]"
+              className="w-full accent-[#3a65f0]"
             />
           </div>
 
           <div className="pt-1">
-            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
+            <p className="mb-2 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
               Preferred towns
             </p>
-            <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2e] bg-[#0a0a14] p-3">
+            <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2e] bg-[#0d0f16] p-3">
               {NJ_TOWN_OPTIONS.map((t) => (
                 <button
                   key={t}
@@ -280,8 +280,8 @@ export function EditClientModal({
                   onClick={() => toggleTown(t)}
                   className={`rounded-full border-[0.5px] px-2.5 py-1 text-[11px] font-medium transition ${
                     form.towns.includes(t)
-                      ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
-                      : "border-[#1e1e2e] bg-[#12121e] text-[#666680]"
+                      ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
+                      : "border-[#1e2230] bg-[#12121e] text-[#9498b0]"
                   }`}
                 >
                   {t}
@@ -295,7 +295,7 @@ export function EditClientModal({
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             placeholder="Notes (timeline, motivations, anything useful)"
             rows={4}
-            className="mt-1 w-full resize-none rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] p-4 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40"
+            className="mt-1 w-full resize-none rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] p-4 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
           />
         </div>
 
@@ -304,23 +304,23 @@ export function EditClientModal({
             type="button"
             onClick={save}
             disabled={saving}
-            className="flex-1 rounded-[12px] bg-[#4f7bff] py-3 text-sm font-semibold text-white transition active:bg-[#4369de] disabled:opacity-60"
+            className="flex-1 rounded-[12px] bg-[#3a65f0] py-3 text-sm font-semibold text-white transition active:bg-[#4369de] disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[12px] border-[0.5px] border-[#2a2a3e] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
+            className="rounded-[12px] border-[0.5px] border-[#2a2e40] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
           >
             Cancel
           </button>
         </div>
 
-        <div className="mt-6 border-t border-[#1e1e2e] pt-5">
+        <div className="mt-6 border-t border-[#1e2230] pt-5">
           {confirmDelete ? (
             <div className="rounded-[14px] border-[0.5px] border-[#3a1a1a] bg-[#1a0f0f] p-4">
-              <p className="text-[13px] font-semibold text-[#f0eee8]">
+              <p className="text-[13px] font-semibold text-[#e8eaf2]">
                 Delete this client?
               </p>
               <p className="mt-1 text-[12px] text-[#a08890]">
@@ -332,14 +332,14 @@ export function EditClientModal({
                   type="button"
                   onClick={destroy}
                   disabled={deleting}
-                  className="flex-1 rounded-[10px] bg-gradient-to-br from-[#ff6060] to-[#ff4848] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+                  className="flex-1 rounded-[10px] bg-gradient-to-br from-[#c43838] to-[#ff4848] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
                 >
                   {deleting ? "Deleting…" : "Yes, delete"}
                 </button>
                 <button
                   type="button"
                   onClick={() => setConfirmDelete(false)}
-                  className="rounded-[10px] border-[0.5px] border-[#2a2a3e] px-4 py-2.5 text-[13px] font-semibold text-[#888]"
+                  className="rounded-[10px] border-[0.5px] border-[#2a2e40] px-4 py-2.5 text-[13px] font-semibold text-[#888]"
                 >
                   Keep
                 </button>
@@ -349,7 +349,7 @@ export function EditClientModal({
             <button
               type="button"
               onClick={() => setConfirmDelete(true)}
-              className="flex w-full items-center justify-center gap-1.5 rounded-[12px] border-[0.5px] border-[#3a1a1a] bg-transparent py-2.5 text-[13px] font-semibold text-[#ff6060]"
+              className="flex w-full items-center justify-center gap-1.5 rounded-[12px] border-[0.5px] border-[#3a1a1a] bg-transparent py-2.5 text-[13px] font-semibold text-[#c43838]"
             >
               <Trash2 size={14} /> Delete client
             </button>

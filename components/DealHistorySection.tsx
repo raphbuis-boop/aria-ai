@@ -71,8 +71,8 @@ const REASON_LABEL: Record<FellThroughReason, string> = {
 
 const STATUS_STYLES: Record<Status, { bg: string; text: string; icon: typeof CheckCircle2 }> = {
   offer_made: {
-    bg: "bg-[#4f7bff]/15",
-    text: "text-[#6f9bff]",
+    bg: "bg-[#3a65f0]/15",
+    text: "text-[#6b8fff]",
     icon: Handshake,
   },
   offer_accepted: {
@@ -86,13 +86,13 @@ const STATUS_STYLES: Record<Status, { bg: string; text: string; icon: typeof Che
     icon: Hourglass,
   },
   closed: {
-    bg: "bg-[#50dc78]/15",
-    text: "text-[#50dc78]",
+    bg: "bg-[#1a9b5e]/15",
+    text: "text-[#1a9b5e]",
     icon: CheckCircle2,
   },
   fell_through: {
-    bg: "bg-[#ff5050]/15",
-    text: "text-[#ff6060]",
+    bg: "bg-[#c43838]/15",
+    text: "text-[#c43838]",
     icon: ShieldAlert,
   },
   cancelled: {
@@ -207,21 +207,21 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="inline-flex items-center gap-1 rounded-[10px] border-[0.5px] border-[#2a2a3e] bg-[#12121e] px-2.5 py-1 text-[11px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
+            className="inline-flex items-center gap-1 rounded-[10px] border-[0.5px] border-[#2a2e40] bg-[#12121e] px-2.5 py-1 text-[11px] font-semibold text-[#9090a8] active:border-[#3a65f0]"
           >
             <Plus size={12} /> Log Deal
           </button>
         }
       >
         {loading ? (
-          <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4 text-center text-[12px] text-[#555570]">
+          <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-4 text-center text-[12px] text-[#555570]">
             Loading deals…
           </div>
         ) : sorted.length === 0 ? (
           <button
             type="button"
             onClick={() => setCreating(true)}
-            className="flex w-full flex-col items-center gap-1.5 rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-[12.5px] text-[#666680] hover:border-[#4f7bff]/40 hover:text-[#9090a8]"
+            className="flex w-full flex-col items-center gap-1.5 rounded-2xl border border-dashed border-[#2a2e40] bg-[#12121e] px-4 py-6 text-[12.5px] text-[#9498b0] hover:border-[#3a65f0]/40 hover:text-[#9090a8]"
           >
             <Handshake size={18} />
             <span>No deals logged yet — tap to add the first one</span>
@@ -236,7 +236,7 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
               return (
                 <li
                   key={deal.id}
-                  className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-3"
+                  className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-3"
                 >
                   <button
                     type="button"
@@ -257,7 +257,7 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
                           {STATUS_LABEL[deal.status]}
                         </span>
                         {deal.offer_amount != null ? (
-                          <span className="text-[11px] font-semibold text-[#d0d0e0]">
+                          <span className="text-[11px] font-semibold text-[#e8eaf2]">
                             {fmtMoney(deal.offer_amount)}
                           </span>
                         ) : null}
@@ -267,7 +267,7 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
                           </span>
                         ) : null}
                       </div>
-                      <p className="mt-0.5 truncate text-[13px] font-semibold text-[#d0d0e0]">
+                      <p className="mt-0.5 truncate text-[13px] font-semibold text-[#e8eaf2]">
                         {deal.property_address}
                       </p>
                       <p className="mt-0.5 text-[11px] text-[#555570]">
@@ -290,7 +290,7 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
                   </button>
 
                   {isOpen ? (
-                    <div className="mt-3 space-y-2 rounded-xl border border-[#1e1e2e] bg-[#0a0a15] p-3 text-[12px] text-[#9090a8]">
+                    <div className="mt-3 space-y-2 rounded-xl border border-[#1e2230] bg-[#0a0a15] p-3 text-[12px] text-[#9090a8]">
                       <div className="grid grid-cols-3 gap-2">
                         <DateStat label="Offer" value={formatDate(deal.offer_date)} />
                         <DateStat label="Accepted" value={formatDate(deal.accepted_date)} />
@@ -298,14 +298,14 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
                       </div>
                       {deal.fell_through_reason ? (
                         <p>
-                          <span className="text-[#ff6060]">Fell through:</span>{" "}
+                          <span className="text-[#c43838]">Fell through:</span>{" "}
                           {REASON_LABEL[deal.fell_through_reason]}
                         </p>
                       ) : null}
                       {deal.outcome ? (
                         <p>
-                          <span className="text-[#666680]">Outcome:</span>{" "}
-                          <span className="text-[#d0d0e0]">{deal.outcome}</span>
+                          <span className="text-[#9498b0]">Outcome:</span>{" "}
+                          <span className="text-[#e8eaf2]">{deal.outcome}</span>
                         </p>
                       ) : null}
                       {deal.outcome_notes ? (
@@ -318,14 +318,14 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
                           <button
                             type="button"
                             onClick={() => setEditing(deal)}
-                            className="inline-flex items-center gap-1 rounded-[8px] border border-[#1e1e2e] bg-[#12121e] px-2 py-1 text-[11px] text-[#9090a8] active:border-[#4f7bff]"
+                            className="inline-flex items-center gap-1 rounded-[8px] border border-[#1e2230] bg-[#12121e] px-2 py-1 text-[11px] text-[#9090a8] active:border-[#3a65f0]"
                           >
                             <Pencil size={11} /> Edit
                           </button>
                           <button
                             type="button"
                             onClick={() => setConfirmDelete(deal)}
-                            className="inline-flex items-center gap-1 rounded-[8px] border border-[#1e1e2e] bg-[#12121e] px-2 py-1 text-[11px] text-[#ff6060] active:border-[#ff6060]/50"
+                            className="inline-flex items-center gap-1 rounded-[8px] border border-[#1e2230] bg-[#12121e] px-2 py-1 text-[11px] text-[#c43838] active:border-[#c43838]/50"
                           >
                             <Trash2 size={11} /> Delete
                           </button>
@@ -384,10 +384,10 @@ export function DealHistorySection({ clientId }: { clientId: string }) {
 function DateStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg bg-black/30 px-2 py-1.5">
-      <p className="text-[9.5px] font-bold uppercase tracking-widest text-[#444460]">
+      <p className="text-[9.5px] font-bold uppercase tracking-widest text-[#6b7090]">
         {label}
       </p>
-      <p className="mt-0.5 text-[11.5px] font-semibold text-[#d0d0e0]">
+      <p className="mt-0.5 text-[11.5px] font-semibold text-[#e8eaf2]">
         {value}
       </p>
     </div>
@@ -473,16 +473,16 @@ function DealModal({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 pb-6 pt-20 sm:items-center">
-      <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-[18px] border border-[#1e1e2e] bg-[#0e0e18]">
-        <div className="flex items-center justify-between border-b border-[#1e1e2e] p-4">
-          <h3 className="text-[15px] font-semibold text-[#f0eee8]">
+      <div className="flex max-h-[85vh] w-full max-w-md flex-col overflow-hidden rounded-[18px] border border-[#1e2230] bg-[#0d0f16]">
+        <div className="flex items-center justify-between border-b border-[#1e2230] p-4">
+          <h3 className="text-[15px] font-semibold text-[#e8eaf2]">
             {isEdit ? "Edit deal" : "Log deal"}
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full border-[0.5px] border-[#1e1e2e] text-[#9090a8]"
+            className="flex h-8 w-8 items-center justify-center rounded-full border-[0.5px] border-[#1e2230] text-[#9090a8]"
           >
             <X size={14} />
           </button>
@@ -494,7 +494,7 @@ function DealModal({
               value={form.property_address}
               onChange={(e) => setForm({ ...form, property_address: e.target.value })}
               placeholder="123 Oak Street, Westfield NJ"
-              className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none placeholder:text-[#444460] focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090] focus:border-[#3a65f0]/40"
             />
           </Field>
 
@@ -504,7 +504,7 @@ function DealModal({
               onChange={(e) =>
                 setForm({ ...form, status: e.target.value as Status })
               }
-              className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none focus:border-[#3a65f0]/40"
             >
               {statusOptions.map((s) => (
                 <option key={s} value={s}>
@@ -522,7 +522,7 @@ function DealModal({
                 setForm({ ...form, offer_amount: e.target.value })
               }
               placeholder="750000"
-              className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none placeholder:text-[#444460] focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090] focus:border-[#3a65f0]/40"
             />
           </Field>
 
@@ -534,7 +534,7 @@ function DealModal({
                 onChange={(e) =>
                   setForm({ ...form, offer_date: e.target.value })
                 }
-                className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#d0d0e0] outline-none"
+                className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#e8eaf2] outline-none"
               />
             </Field>
             <Field label="Accepted">
@@ -544,7 +544,7 @@ function DealModal({
                 onChange={(e) =>
                   setForm({ ...form, accepted_date: e.target.value })
                 }
-                className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#d0d0e0] outline-none"
+                className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#e8eaf2] outline-none"
               />
             </Field>
             <Field label="Closed">
@@ -554,7 +554,7 @@ function DealModal({
                 onChange={(e) =>
                   setForm({ ...form, closed_date: e.target.value })
                 }
-                className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#d0d0e0] outline-none"
+                className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-2.5 py-2 text-[12px] text-[#e8eaf2] outline-none"
               />
             </Field>
           </div>
@@ -569,7 +569,7 @@ function DealModal({
                     fell_through_reason: e.target.value as FellThroughReason | "",
                   })
                 }
-                className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none focus:border-[#4f7bff]/40"
+                className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none focus:border-[#3a65f0]/40"
               >
                 <option value="">Select reason…</option>
                 {(
@@ -588,7 +588,7 @@ function DealModal({
               value={form.outcome}
               onChange={(e) => setForm({ ...form, outcome: e.target.value })}
               placeholder="e.g. Accepted, closed 45 days"
-              className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none placeholder:text-[#444460] focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090] focus:border-[#3a65f0]/40"
             />
           </Field>
 
@@ -600,16 +600,16 @@ function DealModal({
               }
               rows={3}
               placeholder="What happened with this deal…"
-              className="w-full resize-none rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none placeholder:text-[#444460] focus:border-[#4f7bff]/40"
+              className="w-full resize-none rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090] focus:border-[#3a65f0]/40"
             />
           </Field>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 border-t border-[#1e1e2e] p-4">
+        <div className="grid grid-cols-2 gap-2 border-t border-[#1e2230] p-4">
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[10px] border-[0.5px] border-[#2a2a3e] bg-[#12121e] py-2.5 text-[13px] font-semibold text-[#9090a8]"
+            className="rounded-[10px] border-[0.5px] border-[#2a2e40] bg-[#12121e] py-2.5 text-[13px] font-semibold text-[#9090a8]"
           >
             Cancel
           </button>
@@ -617,7 +617,7 @@ function DealModal({
             type="button"
             onClick={submit}
             disabled={submitting}
-            className="rounded-[10px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            className="rounded-[10px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
           >
             {submitting ? "Saving…" : isEdit ? "Save changes" : "Save deal"}
           </button>
@@ -636,7 +636,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#444460]">
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#6b7090]">
         {label}
       </span>
       {children}

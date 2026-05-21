@@ -39,7 +39,7 @@ export function CollapsibleSection({
             className={`text-[#555570] transition-transform ${open ? "" : "-rotate-90"}`}
             strokeWidth={2.5}
           />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-[#444460] group-hover:text-[#888898]">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-[#6b7090] group-hover:text-[#9498b0]">
             {title}
           </span>
           {summary ? (

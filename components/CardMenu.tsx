@@ -67,14 +67,14 @@ export function CardMenu({
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="flex h-7 w-7 items-center justify-center rounded-full border-[0.5px] border-transparent text-[#666680] transition hover:border-[#1e1e2e] hover:bg-[#12121e] hover:text-[#d0d0e0]"
+        className="flex h-7 w-7 items-center justify-center rounded-full border-[0.5px] border-transparent text-[#9498b0] transition hover:border-[#1e2230] hover:bg-[#12121e] hover:text-[#e8eaf2]"
       >
         <MoreHorizontal size={16} />
       </button>
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-8 z-40 w-[152px] overflow-hidden rounded-[12px] border-[0.5px] border-[#1e1e2e] bg-[#0f0f1a] shadow-xl"
+          className="absolute right-0 top-8 z-40 w-[152px] overflow-hidden rounded-[12px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] shadow-xl"
           onClick={(e) => e.stopPropagation()}
         >
           {actions.map((a) => (
@@ -90,8 +90,8 @@ export function CardMenu({
               }}
               className={`flex w-full items-center gap-2 px-3 py-2.5 text-left text-[13px] font-medium transition ${
                 a.danger
-                  ? "text-[#ff6060] hover:bg-[#1a0f0f]"
-                  : "text-[#d0d0e0] hover:bg-[#12121e]"
+                  ? "text-[#c43838] hover:bg-[#1a0f0f]"
+                  : "text-[#e8eaf2] hover:bg-[#12121e]"
               }`}
             >
               {a.key === "edit" ? (

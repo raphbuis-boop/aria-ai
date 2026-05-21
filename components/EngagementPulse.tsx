@@ -51,9 +51,9 @@ const CONFIG = {
   },
   none: {
     icon: "⚪",
-    border: "border-[#2a2a3e]",
+    border: "border-[#2a2e40]",
     bg: "bg-[#12121e]",
-    text: "text-[#666680]",
+    text: "text-[#9498b0]",
     label: () => "No activity yet — log your first interaction",
   },
 } as const;

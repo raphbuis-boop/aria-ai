@@ -119,7 +119,7 @@ export function MatchingPreferencesSection({
 
   return (
     <div>
-      <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4">
+      <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-4">
         <div className="mb-3 flex items-center gap-2 text-[12px] text-[#9090a8]">
           <SlidersHorizontal size={13} />
           Properties are matched against these criteria. Looser = more results.
@@ -127,20 +127,20 @@ export function MatchingPreferencesSection({
 
         {/* Preferred towns */}
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
             Preferred towns
           </p>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {prefs.preferred_towns.map((t) => (
               <span
                 key={t}
-                className="inline-flex items-center gap-1 rounded-full bg-[#4f7bff]/12 px-2.5 py-1 text-[11px] font-medium text-[#9fb8ff]"
+                className="inline-flex items-center gap-1 rounded-full bg-[#3a65f0]/12 px-2.5 py-1 text-[11px] font-medium text-[#9fb8ff]"
               >
                 {t}
                 <button
                   type="button"
                   onClick={() => removeTown(t)}
-                  className="text-[#6f9bff]"
+                  className="text-[#6b8fff]"
                   aria-label={`Remove ${t}`}
                 >
                   <X size={10} />
@@ -148,7 +148,7 @@ export function MatchingPreferencesSection({
               </span>
             ))}
             {prefs.preferred_towns.length === 0 ? (
-              <span className="text-[11px] text-[#666680]">
+              <span className="text-[11px] text-[#9498b0]">
                 None set — matching will fall back to {primaryTown ?? "any town"}.
               </span>
             ) : null}
@@ -164,16 +164,16 @@ export function MatchingPreferencesSection({
                 }
               }}
               placeholder="Add a town and hit Enter"
-              className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#f0eee8] outline-none placeholder:text-[#444460]"
+              className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090]"
             />
             {suggestions.length > 0 ? (
-              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] shadow-lg">
+              <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-[10px] border border-[#1e2230] bg-[#0a0a15] shadow-lg">
                 {suggestions.map((s) => (
                   <button
                     type="button"
                     key={s}
                     onClick={() => addTown(s)}
-                    className="block w-full px-3 py-1.5 text-left text-[12px] text-[#d0d0e0] hover:bg-[#4f7bff]/10"
+                    className="block w-full px-3 py-1.5 text-left text-[12px] text-[#e8eaf2] hover:bg-[#3a65f0]/10"
                   >
                     {s}
                   </button>
@@ -184,12 +184,12 @@ export function MatchingPreferencesSection({
         </div>
 
         {/* Nearby towns toggle */}
-        <label className="mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5">
+        <label className="mt-4 flex items-center justify-between gap-3 rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2.5">
           <div>
-            <p className="text-[13px] font-medium text-[#f0eee8]">
+            <p className="text-[13px] font-medium text-[#e8eaf2]">
               Include nearby towns
             </p>
-            <p className="text-[11px] text-[#666680]">
+            <p className="text-[11px] text-[#9498b0]">
               Match adjacent towns (e.g. Glen Rock, Ho-Ho-Kus for Ridgewood).
             </p>
           </div>
@@ -199,17 +199,17 @@ export function MatchingPreferencesSection({
             onChange={(e) =>
               setPrefs((p) => ({ ...p, nearby_towns_ok: e.target.checked }))
             }
-            className="h-4 w-4 accent-[#4f7bff]"
+            className="h-4 w-4 accent-[#3a65f0]"
           />
         </label>
 
         {/* Budget flex slider */}
         <div className="mt-4">
           <div className="mb-1 flex items-center justify-between text-[11px]">
-            <span className="font-bold uppercase tracking-[1.2px] text-[#444460]">
+            <span className="font-bold uppercase tracking-[1.2px] text-[#6b7090]">
               Budget flexibility
             </span>
-            <span className="font-medium text-[#d0d0e0]">
+            <span className="font-medium text-[#e8eaf2]">
               ±{prefs.budget_flex_pct}%
             </span>
           </div>
@@ -225,9 +225,9 @@ export function MatchingPreferencesSection({
                 budget_flex_pct: Number(e.target.value),
               }))
             }
-            className="w-full accent-[#4f7bff]"
+            className="w-full accent-[#3a65f0]"
           />
-          <p className="text-[11px] text-[#666680]">
+          <p className="text-[11px] text-[#9498b0]">
             Listings up to {prefs.budget_flex_pct}% over or under budget will
             still surface.
           </p>
@@ -235,7 +235,7 @@ export function MatchingPreferencesSection({
 
         {/* Bed flex */}
         <div className="mt-4">
-          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
             Beds flexibility
           </p>
           <div className="mt-1.5 grid grid-cols-3 gap-2">
@@ -250,8 +250,8 @@ export function MatchingPreferencesSection({
                 onClick={() => setPrefs((p) => ({ ...p, bed_flex: opt.v }))}
                 className={`rounded-[10px] border px-3 py-2 text-[12px] font-medium ${
                   prefs.bed_flex === opt.v
-                    ? "border-[#4f7bff] bg-[#4f7bff]/10 text-[#6f9bff]"
-                    : "border-[#1e1e2e] text-[#9090a8]"
+                    ? "border-[#3a65f0] bg-[#3a65f0]/10 text-[#6b8fff]"
+                    : "border-[#1e2230] text-[#9090a8]"
                 }`}
               >
                 {opt.label}
@@ -262,7 +262,7 @@ export function MatchingPreferencesSection({
 
         {/* Bath flex */}
         <div className="mt-4">
-          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+          <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
             Baths flexibility
           </p>
           <div className="mt-1.5 grid grid-cols-3 gap-2">
@@ -277,8 +277,8 @@ export function MatchingPreferencesSection({
                 onClick={() => setPrefs((p) => ({ ...p, bath_flex: opt.v }))}
                 className={`rounded-[10px] border px-3 py-2 text-[12px] font-medium ${
                   prefs.bath_flex === opt.v
-                    ? "border-[#4f7bff] bg-[#4f7bff]/10 text-[#6f9bff]"
-                    : "border-[#1e1e2e] text-[#9090a8]"
+                    ? "border-[#3a65f0] bg-[#3a65f0]/10 text-[#6b8fff]"
+                    : "border-[#1e2230] text-[#9090a8]"
                 }`}
               >
                 {opt.label}
@@ -291,7 +291,7 @@ export function MatchingPreferencesSection({
           type="button"
           onClick={save}
           disabled={saving}
-          className="mt-5 w-full rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+          className="mt-5 w-full rounded-[12px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
         >
           {saving ? "Saving…" : "Save preferences"}
         </button>

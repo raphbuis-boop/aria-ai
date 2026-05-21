@@ -29,7 +29,7 @@ export function BackButton({
       type="button"
       onClick={go}
       aria-label={label}
-      className={`inline-flex items-center gap-1 text-[#4f7bff] text-sm font-semibold ${className}`}
+      className={`inline-flex items-center gap-1 text-[#3a65f0] text-sm font-semibold ${className}`}
     >
       <ChevronLeft size={18} strokeWidth={2.5} className="-ml-1" />
       <span>{label}</span>

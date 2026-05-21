@@ -77,7 +77,7 @@ export function EditPropertyModal({
   }
 
   const inputClass =
-    "w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0a0a14] px-4 py-3 text-sm text-[#d0d0e0] placeholder-[#444460] outline-none focus:border-[#4f7bff]/40";
+    "w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40";
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
@@ -87,9 +87,9 @@ export function EditPropertyModal({
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-9 pt-4">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
-        <div className="mb-1 text-[15px] font-semibold text-[#f0eee8]">
+      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-9 pt-4">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40]" />
+        <div className="mb-1 text-[15px] font-semibold text-[#e8eaf2]">
           Edit property
         </div>
         <p className="mb-4 text-xs text-[#555570]">
@@ -141,7 +141,7 @@ export function EditPropertyModal({
           </div>
 
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#444460]">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
               Status
             </p>
             <select
@@ -173,14 +173,14 @@ export function EditPropertyModal({
             type="button"
             onClick={save}
             disabled={saving}
-            className="flex-1 rounded-[12px] bg-[#4f7bff] py-3 text-sm font-semibold text-white transition active:bg-[#4369de] disabled:opacity-60"
+            className="flex-1 rounded-[12px] bg-[#3a65f0] py-3 text-sm font-semibold text-white transition active:bg-[#4369de] disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[12px] border-[0.5px] border-[#2a2a3e] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
+            className="rounded-[12px] border-[0.5px] border-[#2a2e40] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
           >
             Cancel
           </button>

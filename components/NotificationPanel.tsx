@@ -45,8 +45,8 @@ const KIND_CONFIG: Record<
   },
   match_found: {
     Icon: Home,
-    color: "text-[#6f9bff]",
-    bg: "bg-[#4f7bff]/12",
+    color: "text-[#6b8fff]",
+    bg: "bg-[#3a65f0]/12",
     href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/mls"),
   },
 };
@@ -148,7 +148,7 @@ export function NotificationBell() {
       >
         {unread > 0 ? <Bell size={20} strokeWidth={2} /> : <Bell size={20} strokeWidth={2} />}
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-md bg-[#ff4d4d] px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-md bg-[#c43838] px-1 text-[9px] font-bold text-white">
             {unread > 9 ? "9+" : unread}
           </span>
         )}
@@ -156,10 +156,10 @@ export function NotificationBell() {
 
       {/* Dropdown panel */}
       {open && (
-        <div className="absolute right-0 top-12 z-[95] w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#1e1e2e] bg-[#0f0f1a] shadow-2xl">
+        <div className="absolute right-0 top-12 z-[95] w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#1e2230] bg-[#0d0f16] shadow-2xl">
           {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#1e1e2e] px-4 py-3">
-            <p className="text-[12px] font-bold uppercase tracking-widest text-[#444460]">
+          <div className="flex items-center justify-between border-b border-[#1e2230] px-4 py-3">
+            <p className="text-[12px] font-bold uppercase tracking-widest text-[#6b7090]">
               Notifications
             </p>
             <div className="flex items-center gap-2">
@@ -167,7 +167,7 @@ export function NotificationBell() {
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="flex items-center gap-1 text-[11px] font-medium text-[#6f9bff] hover:text-blue-300"
+                  className="flex items-center gap-1 text-[11px] font-medium text-[#6b8fff] hover:text-blue-300"
                 >
                   <CheckCheck size={12} />
                   Mark all read
@@ -176,7 +176,7 @@ export function NotificationBell() {
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="text-[#333350] hover:text-[#666680]"
+                className="text-[#333350] hover:text-[#9498b0]"
               >
                 <X size={14} />
               </button>
@@ -187,12 +187,12 @@ export function NotificationBell() {
           <div className="max-h-[420px] overflow-y-auto">
             {loading && notifications.length === 0 ? (
               <div className="flex items-center justify-center py-10">
-                <span className="text-[12px] text-[#444460]">Loading…</span>
+                <span className="text-[12px] text-[#6b7090]">Loading…</span>
               </div>
             ) : notifications.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-2 py-10">
-                <BellOff size={24} className="text-[#2a2a3e]" />
-                <p className="text-[12px] text-[#444460]">No notifications yet</p>
+                <BellOff size={24} className="text-[#2a2e40]" />
+                <p className="text-[12px] text-[#6b7090]">No notifications yet</p>
               </div>
             ) : (
               <ul>
@@ -207,7 +207,7 @@ export function NotificationBell() {
                           "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
                           "border-b border-[#111118] last:border-b-0",
                           n.read
-                            ? "hover:bg-[#0e0e18]"
+                            ? "hover:bg-[#0d0f16]"
                             : "bg-[#12121e] hover:bg-[#14142a]",
                         ].join(" ")}
                       >
@@ -220,8 +220,8 @@ export function NotificationBell() {
                           <p
                             className={`text-[12.5px] leading-snug ${
                               n.read
-                                ? "font-normal text-[#888898]"
-                                : "font-semibold text-[#d0d0e0]"
+                                ? "font-normal text-[#9498b0]"
+                                : "font-semibold text-[#e8eaf2]"
                             }`}
                           >
                             {n.title}
@@ -236,7 +236,7 @@ export function NotificationBell() {
                           </p>
                         </div>
                         {!n.read && (
-                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#4f7bff]" />
+                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#3a65f0]" />
                         )}
                       </button>
                     </li>

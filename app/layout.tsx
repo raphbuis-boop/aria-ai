@@ -28,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${dmSans.className} min-h-screen bg-[#0a0a0f] text-[#f0eee8]`}>
+      <body className={`${dmSans.className} min-h-screen bg-[#080910] text-[#e8eaf2]`}>
         <PostHogProvider>
           <ToastProvider>
             {children}

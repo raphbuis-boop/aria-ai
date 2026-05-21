@@ -67,27 +67,27 @@ function StatCard({
   icon: React.ElementType;
 }) {
   const val = {
-    blue: "text-[#4f7bff]",
-    amber: "text-[#ffb832]",
-    green: "text-[#50dc78]",
-    white: "text-[#f0eee8]",
+    blue: "text-[#3a65f0]",
+    amber: "text-[#c47e1a]",
+    green: "text-[#1a9b5e]",
+    white: "text-[#e8eaf2]",
   }[color];
   const bg = {
-    blue: "bg-[#4f7bff]/10",
-    amber: "bg-[#ffb832]/10",
-    green: "bg-[#50dc78]/10",
+    blue: "bg-[#3a65f0]/10",
+    amber: "bg-[#c47e1a]/10",
+    green: "bg-[#1a9b5e]/10",
     white: "bg-white/6",
   }[color];
 
   return (
-    <div className="rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-3">
+    <div className="rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-3">
       <div className={`mb-2.5 flex h-7 w-7 items-center justify-center rounded-[9px] ${bg} ${val}`}>
         <Icon size={14} strokeWidth={2.2} />
       </div>
       <p className={`text-[20px] font-semibold leading-none tracking-tight ${val}`}>
         {value}
       </p>
-      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.8px] text-[#44445a]">
+      <p className="mt-1.5 text-[10px] font-medium uppercase tracking-[0.8px] text-[#6b7090]">
         {label}
       </p>
     </div>
@@ -97,10 +97,10 @@ function StatCard({
 // ─── Badge ────────────────────────────────────────────────────────────────────
 function Badge({ children, tone }: { children: React.ReactNode; tone: "red" | "amber" | "green" | "blue" }) {
   const styles = {
-    red: "bg-[#ff5050]/12 text-[#ff6060] border-[#ff5050]/20",
-    amber: "bg-[#ffb832]/12 text-[#ffb832] border-[#ffb832]/20",
-    green: "bg-[#50dc78]/12 text-[#50dc78] border-[#50dc78]/20",
-    blue: "bg-[#4f7bff]/12 text-[#6f9bff] border-[#4f7bff]/20",
+    red: "bg-[#c43838]/12 text-[#c43838] border-[#c43838]/20",
+    amber: "bg-[#c47e1a]/12 text-[#c47e1a] border-[#c47e1a]/20",
+    green: "bg-[#1a9b5e]/12 text-[#1a9b5e] border-[#1a9b5e]/20",
+    blue: "bg-[#3a65f0]/12 text-[#6b8fff] border-[#3a65f0]/20",
   }[tone];
   return (
     <span className={`inline-flex items-center gap-1 rounded-md border-[0.5px] px-2 py-[3px] text-[10px] font-bold uppercase tracking-[0.6px] ${styles}`}>
@@ -112,9 +112,9 @@ function Badge({ children, tone }: { children: React.ReactNode; tone: "red" | "a
 // ─── Action button ────────────────────────────────────────────────────────────
 function ActionBtn({ children, tone, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { tone: "green" | "blue" | "amber" }) {
   const styles = {
-    green: "bg-[#50dc78]/10 text-[#50dc78] border-[#50dc78]/18 hover:bg-[#50dc78]/16",
-    blue: "bg-[#4f7bff]/10 text-[#6f9bff] border-[#4f7bff]/18 hover:bg-[#4f7bff]/16",
-    amber: "bg-[#ffb832]/10 text-[#ffb832] border-[#ffb832]/18 hover:bg-[#ffb832]/16",
+    green: "bg-[#1a9b5e]/10 text-[#1a9b5e] border-[#1a9b5e]/18 hover:bg-[#1a9b5e]/16",
+    blue: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/18 hover:bg-[#3a65f0]/16",
+    amber: "bg-[#c47e1a]/10 text-[#c47e1a] border-[#c47e1a]/18 hover:bg-[#c47e1a]/16",
   }[tone];
   return (
     <button
@@ -229,29 +229,29 @@ export function DashboardClient({
   }, [toast]);
 
   return (
-    <div className="min-h-screen bg-[#080810] text-[#f0eee8] pb-28">
+    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
       <div className="px-5 pt-5">
 
         {/* ── Header row ── */}
         <div className="flex items-start justify-between mb-5">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[#4f7bff] mb-1">
+            <p className="text-[11px] font-semibold uppercase tracking-[1.1px] text-[#3a65f0] mb-1">
               {today}
             </p>
             <h1 className="text-[22px] sm:text-[26px] font-semibold leading-tight tracking-[-0.02em]">
               {greeting}, {firstName}.
             </h1>
           </div>
-          <div className="mt-1 h-[38px] w-[38px] flex-shrink-0 rounded-full bg-[#4f7bff]/15 flex items-center justify-center text-[14px] font-bold text-[#6f9bff] border-[0.5px] border-[#4f7bff]/25">
+          <div className="mt-1 h-[38px] w-[38px] flex-shrink-0 rounded-full bg-[#3a65f0]/15 flex items-center justify-center text-[14px] font-bold text-[#6b8fff] border-[0.5px] border-[#3a65f0]/25">
             {initial0}
           </div>
         </div>
 
         {/* ── Intelligence briefing ── */}
-        <div className="mb-4 overflow-hidden rounded-[18px] border-[0.5px] border-[#4f7bff]/15 bg-[#0a0a14]">
-          <div className="flex items-center gap-2.5 border-b border-[#4f7bff]/10 px-4 py-3">
-            <span className="h-[5px] w-[5px] rounded-full bg-[#4f7bff] animate-pulse flex-shrink-0" />
-            <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+        <div className="mb-4 overflow-hidden rounded-[18px] border-[0.5px] border-[#3a65f0]/15 bg-[#0d0f16]">
+          <div className="flex items-center gap-2.5 border-b border-[#3a65f0]/10 px-4 py-3">
+            <span className="h-[5px] w-[5px] rounded-full bg-[#3a65f0] animate-pulse flex-shrink-0" />
+            <span className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#3a65f0]">
               Today&apos;s intelligence
             </span>
           </div>
@@ -270,32 +270,32 @@ export function DashboardClient({
         <div className="mb-5 grid grid-cols-2 gap-2 min-w-0">
           <Link
             href="/listings"
-            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3 py-3 transition active:border-[#4f7bff]/40 min-w-0"
+            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3 py-3 transition active:border-[#3a65f0]/40 min-w-0"
           >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#4f7bff]/12 text-[#4f7bff]">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#3a65f0]/12 text-[#3a65f0]">
               <Search size={15} strokeWidth={2.2} />
             </span>
             <div className="min-w-0">
               <p className="text-[12px] font-semibold leading-tight truncate">Browse MLS</p>
-              <p className="mt-0.5 text-[10px] text-[#44445a] truncate">Live NJ listings</p>
+              <p className="mt-0.5 text-[10px] text-[#6b7090] truncate">Live NJ listings</p>
             </div>
           </Link>
           <Link
             href="/properties"
-            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3 py-3 transition active:border-[#4f7bff]/40 min-w-0"
+            className="flex items-center gap-2 rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3 py-3 transition active:border-[#3a65f0]/40 min-w-0"
           >
-            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#4f7bff]/12 text-[#4f7bff]">
+            <span className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px] bg-[#3a65f0]/12 text-[#3a65f0]">
               <Building2 size={15} strokeWidth={2.2} />
             </span>
             <div className="min-w-0">
               <p className="text-[12px] font-semibold leading-tight truncate">Properties</p>
-              <p className="mt-0.5 text-[10px] text-[#44445a] truncate">Saved + matches</p>
+              <p className="mt-0.5 text-[10px] text-[#6b7090] truncate">Saved + matches</p>
             </div>
           </Link>
         </div>
 
         {/* ── Stats ── */}
-        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
+        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
           Stats
         </p>
         <div className="mb-5 grid grid-cols-2 gap-2">
@@ -307,11 +307,11 @@ export function DashboardClient({
 
         {/* ── Action stack ── */}
         <div className="flex items-center justify-between mb-2.5">
-          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
+          <p className="text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
             Today&apos;s priorities
           </p>
           {(topHot || closingClient || followUpClient || initial.bbaAlerts.length > 0) && (
-            <span className="rounded-full bg-[#4f7bff]/10 px-2.5 py-[3px] text-[10px] font-semibold text-[#6f9bff]">
+            <span className="rounded-full bg-[#3a65f0]/10 px-2.5 py-[3px] text-[10px] font-semibold text-[#6b8fff]">
               {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length} item
               {[topHot, closingClient, followUpClient, initial.bbaAlerts[0]].filter(Boolean).length !== 1 ? "s" : ""}
             </span>
@@ -338,7 +338,7 @@ export function DashboardClient({
                 : ""}
               {" "}— NJ/NAR rules require a signed BBA before the tour.
             </p>
-            <span className="inline-block rounded-[9px] bg-[#ff5050]/90 px-3 py-[7px] text-[12px] font-semibold text-white">
+            <span className="inline-block rounded-[9px] bg-[#c43838]/90 px-3 py-[7px] text-[12px] font-semibold text-white">
               Send signing link →
             </span>
           </Link>
@@ -346,17 +346,17 @@ export function DashboardClient({
 
         {/* Hot lead */}
         {topHot && (
-          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4">
+          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4">
             <div className="mb-2.5 flex items-center justify-between">
               <Badge tone="red">Hot lead</Badge>
-              <span className="text-[11px] text-[#44445a]">now</span>
+              <span className="text-[11px] text-[#6b7090]">now</span>
             </div>
             <Link href={`/clients/${topHot.id}`}>
               <p className="text-[15px] font-semibold mb-0.5">
                 {topHot.name}{topHot.town ? ` · ${topHot.town}` : ""}
               </p>
             </Link>
-            <p className="mb-2 text-[12px] text-[#44445a]">
+            <p className="mb-2 text-[12px] text-[#6b7090]">
               {topHot.status?.replace(/_/g, " ") ?? "—"}
             </p>
             <div className="mb-3 flex items-center gap-2">
@@ -364,16 +364,16 @@ export function DashboardClient({
                 {Array.from({ length: 10 }).map((_, j) => (
                   <div
                     key={j}
-                    className={`h-1.5 w-1.5 rounded-full ${j < (topHot.lead_score ?? 0) ? "bg-[#4f7bff]" : "bg-[#1c1c2a]"}`}
+                    className={`h-1.5 w-1.5 rounded-full ${j < (topHot.lead_score ?? 0) ? "bg-[#3a65f0]" : "bg-[#1e2230]"}`}
                   />
                 ))}
               </div>
-              <span className="text-[11px] text-[#44445a]">Score {topHot.lead_score ?? 0}/10</span>
+              <span className="text-[11px] text-[#6b7090]">Score {topHot.lead_score ?? 0}/10</span>
             </div>
             <div className="flex gap-2">
               <a
                 href={topHot.phone ? `tel:${topHot.phone}` : "#"}
-                className="flex-1 rounded-[9px] border-[0.5px] border-[#50dc78]/18 bg-[#50dc78]/10 px-3 py-[7px] text-center text-[12px] font-semibold text-[#50dc78] transition hover:bg-[#50dc78]/16"
+                className="flex-1 rounded-[9px] border-[0.5px] border-[#1a9b5e]/18 bg-[#1a9b5e]/10 px-3 py-[7px] text-center text-[12px] font-semibold text-[#1a9b5e] transition hover:bg-[#1a9b5e]/16"
               >
                 Call
               </a>
@@ -383,7 +383,7 @@ export function DashboardClient({
             <button
               type="button"
               onClick={() => dismiss(topHot.id)}
-              className="mt-2 w-full text-center text-[11px] text-[#44445a] transition hover:text-[#888898]"
+              className="mt-2 w-full text-center text-[11px] text-[#6b7090] transition hover:text-[#9498b0]"
             >
               Dismiss
             </button>
@@ -399,17 +399,17 @@ export function DashboardClient({
             <div className="mb-2.5 flex items-center justify-between">
               <Badge tone="green">Closing</Badge>
               {nearestClosing && (
-                <span className="text-[11px] text-[#50dc78]">
+                <span className="text-[11px] text-[#1a9b5e]">
                   {nearestClosing.days === 0 ? "today" : `in ${nearestClosing.days}d`}
                 </span>
               )}
             </div>
             <p className="text-[15px] font-semibold mb-0.5">{closingClient.name}</p>
             {closingClient.town && (
-              <p className="mb-0.5 text-[12px] text-[#44445a]">{closingClient.town}</p>
+              <p className="mb-0.5 text-[12px] text-[#6b7090]">{closingClient.town}</p>
             )}
-            <p className="mb-3 text-[12px] text-[#50dc78]">Under contract · milestones due</p>
-            <span className="inline-block rounded-[9px] border-[0.5px] border-[#1c1c2a] px-3 py-[7px] text-[12px] font-semibold text-[#888898]">
+            <p className="mb-3 text-[12px] text-[#1a9b5e]">Under contract · milestones due</p>
+            <span className="inline-block rounded-[9px] border-[0.5px] border-[#1e2230] px-3 py-[7px] text-[12px] font-semibold text-[#9498b0]">
               View deal →
             </span>
           </Link>
@@ -419,7 +419,7 @@ export function DashboardClient({
         {followUpClient && (
           <Link
             href={`/clients/${followUpClient.id}`}
-            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-4"
+            className="mb-2.5 block rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4"
           >
             <div className="mb-2.5 flex items-center justify-between">
               <Badge tone="amber">Follow-up</Badge>
@@ -427,10 +427,10 @@ export function DashboardClient({
             <p className="text-[15px] font-semibold mb-0.5">
               {followUpClient.name}{followUpClient.town ? ` · ${followUpClient.town}` : ""}
             </p>
-            <p className="mb-3 text-[12px] text-[#44445a]">
+            <p className="mb-3 text-[12px] text-[#6b7090]">
               {followUpClient.status?.replace(/_/g, " ") ?? "Check in"}
             </p>
-            <span className="inline-block rounded-[9px] border-[0.5px] border-[#4f7bff]/20 bg-[#4f7bff]/10 px-3 py-[7px] text-[12px] font-semibold text-[#6f9bff]">
+            <span className="inline-block rounded-[9px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/10 px-3 py-[7px] text-[12px] font-semibold text-[#6b8fff]">
               Open client →
             </span>
           </Link>
@@ -438,24 +438,24 @@ export function DashboardClient({
 
         {/* Empty state */}
         {clients.length === 0 && (
-          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] p-6 text-center">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#4f7bff]/10">
-              <Users size={22} className="text-[#4f7bff]" />
+          <div className="mb-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-6 text-center">
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0]/10">
+              <Users size={22} className="text-[#3a65f0]" />
             </div>
             <p className="mb-1 text-[14px] font-semibold">No clients yet</p>
-            <p className="mb-4 text-[12px] text-[#44445a]">Load demo data or add your first client.</p>
+            <p className="mb-4 text-[12px] text-[#6b7090]">Load demo data or add your first client.</p>
             <div className="flex flex-col gap-2">
               <button
                 type="button"
                 onClick={loadDemo}
                 disabled={seeding}
-                className="w-full rounded-[12px] bg-[#4f7bff] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60 transition hover:bg-[#3d6ae8]"
+                className="w-full rounded-[12px] bg-[#3a65f0] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60 transition hover:bg-[#3d6ae8]"
               >
                 {seeding ? "Loading…" : "Load demo data"}
               </button>
               <Link
                 href="/clients?new=1"
-                className="w-full rounded-[12px] border-[0.5px] border-[#1c1c2a] py-2.5 text-[13px] font-semibold text-[#888898] transition hover:text-[#f0eee8]"
+                className="w-full rounded-[12px] border-[0.5px] border-[#1e2230] py-2.5 text-[13px] font-semibold text-[#9498b0] transition hover:text-[#e8eaf2]"
               >
                 + Add first client
               </Link>
@@ -467,9 +467,9 @@ export function DashboardClient({
         <div className="mt-5 mb-4 grid grid-cols-2 gap-2">
           <Link
             href="/voice"
-            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#4f7bff]/20 bg-[#4f7bff]/6 py-4 transition active:bg-[#4f7bff]/10"
+            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#3a65f0]/20 bg-[#3a65f0]/6 py-4 transition active:bg-[#3a65f0]/10"
           >
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#4f7bff] shadow-[0_0_16px_rgba(79,123,255,0.4)]">
+            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_16px_rgba(58,101,240,0.4)]">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="9" y="3" width="6" height="11" rx="3" />
                 <path d="M5 10a7 7 0 0014 0" />
@@ -478,22 +478,22 @@ export function DashboardClient({
               </svg>
             </span>
             <div className="text-center">
-              <p className="text-[12px] font-semibold text-[#6f9bff]">Voice</p>
-              <p className="text-[10px] text-[#44445a]">Talk to Aria</p>
+              <p className="text-[12px] font-semibold text-[#6b8fff]">Voice</p>
+              <p className="text-[10px] text-[#6b7090]">Talk to Aria</p>
             </div>
           </Link>
           <Link
             href="/ai"
-            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] py-4 transition hover:border-[#4f7bff]/20"
+            className="flex flex-col items-center gap-2.5 rounded-[18px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] py-4 transition hover:border-[#3a65f0]/20"
           >
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-white/5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6f9bff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#6b8fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
             </span>
             <div className="text-center">
-              <p className="text-[12px] font-semibold text-[#888898]">Ask Aria</p>
-              <p className="text-[10px] text-[#44445a]">Text chat</p>
+              <p className="text-[12px] font-semibold text-[#9498b0]">Ask Aria</p>
+              <p className="text-[10px] text-[#6b7090]">Text chat</p>
             </div>
           </Link>
         </div>
@@ -509,7 +509,7 @@ export function DashboardClient({
             <Link
               key={l.href}
               href={l.href}
-              className="rounded-full border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-3.5 py-[7px] text-[12px] font-medium text-[#555568] transition hover:border-[#4f7bff]/30 hover:text-[#8888a0]"
+              className="rounded-full border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-3.5 py-[7px] text-[12px] font-medium text-[#555568] transition hover:border-[#3a65f0]/30 hover:text-[#8888a0]"
             >
               {l.label}
             </Link>

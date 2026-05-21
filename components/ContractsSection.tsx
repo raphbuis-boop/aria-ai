@@ -127,32 +127,32 @@ export function ContractsSection({ clientId }: { clientId: string }) {
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="inline-flex items-center gap-1 rounded-[10px] border-[0.5px] border-[#2a2a3e] bg-[#12121e] px-2.5 py-1 text-[11px] font-semibold text-[#9090a8] active:border-[#4f7bff]"
+            className="inline-flex items-center gap-1 rounded-[10px] border-[0.5px] border-[#2a2e40] bg-[#12121e] px-2.5 py-1 text-[11px] font-semibold text-[#9090a8] active:border-[#3a65f0]"
           >
             <Plus size={12} /> Upload
           </button>
         }
       >
-        <p className="mb-3 text-[11px] leading-relaxed text-[#666680]">
+        <p className="mb-3 text-[11px] leading-relaxed text-[#9498b0]">
           Per-client PDFs (including a signed or draft BBA) live here. Your
           default PDF for BBA signing links is managed in{" "}
           <Link
             href="/settings#bba-templates"
-            className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+            className="font-semibold text-[#6b8fff] underline-offset-2 hover:underline"
           >
             Settings → BBA Templates
           </Link>
           .
         </p>
         {loading ? (
-          <div className="rounded-2xl border border-[#1e1e2e] bg-[#12121e] p-4 text-center text-[12px] text-[#555570]">
+          <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-4 text-center text-[12px] text-[#555570]">
             Loading documents…
           </div>
         ) : docs.length === 0 ? (
           <button
             type="button"
             onClick={() => setUploadOpen(true)}
-            className="flex w-full flex-col items-center gap-1.5 rounded-2xl border border-dashed border-[#2a2a3e] bg-[#12121e] px-4 py-6 text-[12.5px] text-[#666680] hover:border-[#4f7bff]/40 hover:text-[#9090a8]"
+            className="flex w-full flex-col items-center gap-1.5 rounded-2xl border border-dashed border-[#2a2e40] bg-[#12121e] px-4 py-6 text-[12.5px] text-[#9498b0] hover:border-[#3a65f0]/40 hover:text-[#9090a8]"
           >
             <Upload size={18} />
             <span>No documents yet — tap to upload</span>
@@ -164,13 +164,13 @@ export function ContractsSection({ clientId }: { clientId: string }) {
               return (
                 <li
                   key={doc.id}
-                  className="flex items-center gap-3 rounded-2xl border border-[#1e1e2e] bg-[#12121e] px-3 py-2.5"
+                  className="flex items-center gap-3 rounded-2xl border border-[#1e2230] bg-[#12121e] px-3 py-2.5"
                 >
-                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#4f7bff]/12 text-[#6f9bff]">
+                  <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#3a65f0]/12 text-[#6b8fff]">
                     <Icon size={16} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold text-[#d0d0e0]">
+                    <p className="truncate text-[13px] font-semibold text-[#e8eaf2]">
                       {doc.file_name}
                     </p>
                     <p className="mt-0.5 text-[11px] text-[#555570]">
@@ -189,7 +189,7 @@ export function ContractsSection({ clientId }: { clientId: string }) {
                         href={doc.signed_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e1e2e] bg-[#0a0a15] text-[#9090a8] active:border-[#4f7bff]"
+                        className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e2230] bg-[#0a0a15] text-[#9090a8] active:border-[#3a65f0]"
                         aria-label="Open"
                         title="Open"
                       >
@@ -200,7 +200,7 @@ export function ContractsSection({ clientId }: { clientId: string }) {
                       <a
                         href={doc.signed_url}
                         download={doc.file_name}
-                        className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e1e2e] bg-[#0a0a15] text-[#9090a8] active:border-[#4f7bff]"
+                        className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e2230] bg-[#0a0a15] text-[#9090a8] active:border-[#3a65f0]"
                         aria-label="Download"
                         title="Download"
                       >
@@ -210,7 +210,7 @@ export function ContractsSection({ clientId }: { clientId: string }) {
                     <button
                       type="button"
                       onClick={() => setConfirmDelete(doc)}
-                      className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e1e2e] bg-[#0a0a15] text-[#ff6060] active:border-[#ff6060]/50"
+                      className="flex h-8 w-8 items-center justify-center rounded-[8px] border border-[#1e2230] bg-[#0a0a15] text-[#c43838] active:border-[#c43838]/50"
                       aria-label="Delete"
                       title="Delete"
                     >
@@ -295,29 +295,29 @@ function UploadModal({
 
   return (
     <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 px-4 pb-6 pt-24 sm:items-center">
-      <div className="w-full max-w-md rounded-[18px] border border-[#1e1e2e] bg-[#0e0e18] p-5">
+      <div className="w-full max-w-md rounded-[18px] border border-[#1e2230] bg-[#0d0f16] p-5">
         <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-[15px] font-semibold text-[#f0eee8]">
+          <h3 className="text-[15px] font-semibold text-[#e8eaf2]">
             Upload document
           </h3>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="flex h-8 w-8 items-center justify-center rounded-full border-[0.5px] border-[#1e1e2e] text-[#9090a8]"
+            className="flex h-8 w-8 items-center justify-center rounded-full border-[0.5px] border-[#1e2230] text-[#9090a8]"
           >
             <X size={14} />
           </button>
         </div>
 
         <label className="block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#444460]">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#6b7090]">
             Category
           </span>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none focus:border-[#4f7bff]/40"
+            className="w-full rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none focus:border-[#3a65f0]/40"
           >
             {CATEGORIES.map((c) => (
               <option key={c.value} value={c.value}>
@@ -328,7 +328,7 @@ function UploadModal({
         </label>
 
         <div className="mt-3">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#444460]">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#6b7090]">
             File
           </span>
           <input
@@ -341,7 +341,7 @@ function UploadModal({
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex w-full items-center justify-between gap-2 rounded-[10px] border-[0.5px] border-[#2a2a3e] bg-[#0a0a15] px-3 py-2.5 text-[13px] text-[#9090a8] active:border-[#4f7bff]"
+            className="flex w-full items-center justify-between gap-2 rounded-[10px] border-[0.5px] border-[#2a2e40] bg-[#0a0a15] px-3 py-2.5 text-[13px] text-[#9090a8] active:border-[#3a65f0]"
           >
             <span className="min-w-0 truncate">
               {file ? file.name : "Choose file (PDF, image, doc)"}
@@ -356,7 +356,7 @@ function UploadModal({
         </div>
 
         <label className="mt-3 block">
-          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#444460]">
+          <span className="mb-1 block text-[10px] font-bold uppercase tracking-widest text-[#6b7090]">
             Notes (optional)
           </span>
           <textarea
@@ -364,7 +364,7 @@ function UploadModal({
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder="e.g. Submitted 3/15 — waiting on seller response"
-            className="w-full resize-none rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#d0d0e0] outline-none placeholder:text-[#444460] focus:border-[#4f7bff]/40"
+            className="w-full resize-none rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-3 py-2 text-[13px] text-[#e8eaf2] outline-none placeholder:text-[#6b7090] focus:border-[#3a65f0]/40"
           />
         </label>
 
@@ -372,7 +372,7 @@ function UploadModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[10px] border-[0.5px] border-[#2a2a3e] bg-[#12121e] py-2.5 text-[13px] font-semibold text-[#9090a8]"
+            className="rounded-[10px] border-[0.5px] border-[#2a2e40] bg-[#12121e] py-2.5 text-[13px] font-semibold text-[#9090a8]"
           >
             Cancel
           </button>
@@ -380,7 +380,7 @@ function UploadModal({
             type="button"
             onClick={submit}
             disabled={submitting || !file}
-            className="rounded-[10px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
+            className="rounded-[10px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white disabled:opacity-60"
           >
             {submitting ? "Uploading…" : "Upload"}
           </button>

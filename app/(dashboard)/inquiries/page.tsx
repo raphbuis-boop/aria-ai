@@ -42,7 +42,7 @@ const STATUS_COLORS: Record<Inquiry["status"], string> = {
   new: "bg-accent-blue/15 text-accent-blue",
   contacted: "bg-amber-500/15 text-amber-400",
   converted: "bg-emerald-500/15 text-emerald-400",
-  archived: "bg-[#2a2a3e] text-text-dim",
+  archived: "bg-[#2a2e40] text-text-dim",
 };
 
 function InquiryDetailPanel({
@@ -86,8 +86,8 @@ function InquiryDetailPanel({
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-10 pt-4 md:max-h-[85vh] md:overflow-y-auto md:rounded-[20px] md:border-b-[0.5px]">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e] md:hidden" />
+      <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4 md:max-h-[85vh] md:overflow-y-auto md:rounded-[20px] md:border-b-[0.5px]">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40] md:hidden" />
 
         {/* header */}
         <div className="mb-4 flex items-start justify-between gap-3">
@@ -103,7 +103,7 @@ function InquiryDetailPanel({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1a1a2e] text-text-dim"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1e2230] text-text-dim"
             aria-label="Close"
           >
             <X size={14} />
@@ -296,7 +296,7 @@ export default function InquiriesPage() {
               key={inq.id}
               type="button"
               onClick={() => setSelected(inq)}
-              className="w-full rounded-[14px] border border-border-card bg-bg-card px-4 py-3 text-left transition hover:border-[#2a2a4e]"
+              className="w-full rounded-[14px] border border-border-card bg-bg-card px-4 py-3 text-left transition hover:border-[#2a2e40]"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">

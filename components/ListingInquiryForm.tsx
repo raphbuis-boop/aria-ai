@@ -243,8 +243,8 @@ export function ListingInquiryForm({
           className="absolute inset-0"
           onClick={onClose}
         />
-        <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e1e2e] bg-[#0f0f1a] px-5 pb-10 pt-4">
-          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+        <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4">
+          <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40]" />
           <div className="mb-4 flex items-center justify-between">
             <p className="text-[15px] font-semibold text-text-primary">
               {intent === "showing" ? "Schedule a Showing" : "Contact Agent"}
@@ -252,7 +252,7 @@ export function ListingInquiryForm({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1a1a2e] text-text-dim"
+              className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1e2230] text-text-dim"
               aria-label="Close"
             >
               <X size={14} />

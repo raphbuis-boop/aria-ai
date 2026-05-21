@@ -23,22 +23,22 @@ const STATUS_FILTERS = [
 
 // Status → badge style
 const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  new:            { label: "New",            cls: "bg-[#ffb832]/10 text-[#ffb832] border-[#ffb832]/20" },
-  contacted:      { label: "Contacted",      cls: "bg-[#4f7bff]/10 text-[#6f9bff] border-[#4f7bff]/20" },
-  showing:        { label: "Showing",        cls: "bg-[#4f7bff]/10 text-[#6f9bff] border-[#4f7bff]/20" },
-  offer:          { label: "Offer",          cls: "bg-[#50dc78]/10 text-[#50dc78] border-[#50dc78]/20" },
+  new:            { label: "New",            cls: "bg-[#c47e1a]/10 text-[#c47e1a] border-[#c47e1a]/20" },
+  contacted:      { label: "Contacted",      cls: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/20" },
+  showing:        { label: "Showing",        cls: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/20" },
+  offer:          { label: "Offer",          cls: "bg-[#1a9b5e]/10 text-[#1a9b5e] border-[#1a9b5e]/20" },
   under_contract: { label: "Under Contract", cls: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20" },
-  closed:         { label: "Closed",         cls: "bg-white/6 text-[#666680] border-white/10" },
+  closed:         { label: "Closed",         cls: "bg-white/6 text-[#9498b0] border-white/10" },
   dead:           { label: "Archived",       cls: "bg-white/6 text-[#444458] border-white/8" },
 };
 
 // Deterministic avatar color from name
 const AVATAR_PALETTE = [
-  "bg-[#4f7bff]/15 text-[#6f9bff]",
+  "bg-[#3a65f0]/15 text-[#6b8fff]",
   "bg-[#c084fc]/15 text-[#c084fc]",
-  "bg-[#50dc78]/15 text-[#50dc78]",
-  "bg-[#ffb832]/15 text-[#ffb832]",
-  "bg-[#ff6060]/15 text-[#ff8080]",
+  "bg-[#1a9b5e]/15 text-[#1a9b5e]",
+  "bg-[#c47e1a]/15 text-[#c47e1a]",
+  "bg-[#c43838]/15 text-[#ff8080]",
 ];
 
 function avatarColor(name: string) {
@@ -60,7 +60,7 @@ function initialsOf(name: string | null | undefined) {
 
 // Shared input style
 const INPUT =
-  "w-full rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] px-4 py-3 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition";
+  "w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#3a65f0]/50 transition";
 
 type Row = {
   id: string;
@@ -188,32 +188,32 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
-    <div className="min-h-screen bg-[#080810] text-[#f0eee8] pb-28">
+    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
       <div className="px-5 pt-5">
 
         {/* ── Header ── */}
         <div className="mb-5">
           <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.02em]">Clients</h1>
-          <p className="mt-0.5 text-[12px] text-[#44445a]">
+          <p className="mt-0.5 text-[12px] text-[#6b7090]">
             {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
           </p>
         </div>
 
         {/* ── Search ── */}
-        <div className="mb-3 flex items-center gap-3 rounded-[14px] border-[0.5px] border-[#1c1c2a] bg-[#0e0e18] px-4 py-3">
-          <Search size={15} strokeWidth={2} className="flex-shrink-0 text-[#44445a]" />
+        <div className="mb-3 flex items-center gap-3 rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] px-4 py-3">
+          <Search size={15} strokeWidth={2} className="flex-shrink-0 text-[#6b7090]" />
           <input
             type="text"
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[13.5px] text-[#f0eee8] placeholder-[#44445a] outline-none"
+            className="flex-1 bg-transparent text-[13.5px] text-[#e8eaf2] placeholder-[#6b7090] outline-none"
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-[#44445a] transition hover:text-[#888898]"
+              className="text-[#6b7090] transition hover:text-[#9498b0]"
             >
               ×
             </button>
@@ -229,8 +229,8 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               onClick={() => setFilter(f)}
               className={`whitespace-nowrap rounded-full border-[0.5px] px-3.5 py-2 text-[12px] font-medium transition ${
                 filter === f
-                  ? "border-[#4f7bff]/35 bg-[#4f7bff]/12 text-[#6f9bff]"
-                  : "border-[#1c1c2a] bg-[#0e0e18] text-[#44445a] hover:text-[#8888a0]"
+                  ? "border-[#3a65f0]/35 bg-[#3a65f0]/12 text-[#6b8fff]"
+                  : "border-[#1e2230] bg-[#0d0f16] text-[#6b7090] hover:text-[#8888a0]"
               }`}
             >
               {f}
@@ -241,11 +241,11 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         {/* ── List ── */}
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#4f7bff]/10">
-              <Users size={22} className="text-[#4f7bff]" />
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0]/10">
+              <Users size={22} className="text-[#3a65f0]" />
             </div>
             <p className="text-[14px] font-semibold text-[#8888a0]">No clients found</p>
-            <p className="mt-1 text-[12px] text-[#44445a]">Try a different filter or add a new client</p>
+            <p className="mt-1 text-[12px] text-[#6b7090]">Try a different filter or add a new client</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -257,8 +257,8 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               return (
                 <div key={client.id} className="relative">
                   <Link href={`/clients/${client.id}`}>
-                    <div className={`rounded-[18px] border-[0.5px] bg-[#0e0e18] p-4 pr-10 transition active:scale-[0.99] ${
-                      isHot ? "border-[#4f7bff]/25" : "border-[#1c1c2a]"
+                    <div className={`rounded-[18px] border-[0.5px] bg-[#0d0f16] p-4 pr-10 transition active:scale-[0.99] ${
+                      isHot ? "border-[#3a65f0]/25" : "border-[#1e2230]"
                     }`}>
                       <div className="flex items-start gap-3">
                         {/* Avatar */}
@@ -269,11 +269,11 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                         {/* Main info */}
                         <div className="min-w-0 flex-1">
                           <div className="mb-1 flex items-center gap-2">
-                            <span className="truncate text-[14px] font-semibold text-[#f0eee8]">
+                            <span className="truncate text-[14px] font-semibold text-[#e8eaf2]">
                               {client.name}
                             </span>
                             {client.client_role === "seller" && (
-                              <span className="flex-shrink-0 rounded-full border-[0.5px] border-[#1c1c2a] px-2 py-px text-[10px] font-medium text-[#44445a]">
+                              <span className="flex-shrink-0 rounded-full border-[0.5px] border-[#1e2230] px-2 py-px text-[10px] font-medium text-[#6b7090]">
                                 Seller
                               </span>
                             )}
@@ -284,13 +284,13 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                             )}
                           </div>
 
-                          <p className="mb-2 truncate text-[12px] text-[#44445a]">
+                          <p className="mb-2 truncate text-[12px] text-[#6b7090]">
                             {client.town ?? "—"}
                             {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
                           </p>
 
                           {score > 0 && (
-                            <span className="text-[11px] font-medium text-[#44445a]">Score {score}/10</span>
+                            <span className="text-[11px] font-medium text-[#6b7090]">Score {score}/10</span>
                           )}
                         </div>
                       </div>
@@ -313,10 +313,10 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1c1c2a] bg-[#0e0e18] px-5 pb-10 pt-4">
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2a3e]" />
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4">
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2e40]" />
             <p className="mb-0.5 text-[16px] font-semibold">New client</p>
-            <p className="mb-5 text-[12px] text-[#44445a]">Saved to your clients table.</p>
+            <p className="mb-5 text-[12px] text-[#6b7090]">Saved to your clients table.</p>
 
             <div className="space-y-3">
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -335,8 +335,8 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   <button key={r} type="button" onClick={() => setForm({ ...form, client_role: r })}
                     className={`flex-1 rounded-[12px] border-[0.5px] py-2.5 text-[12px] font-semibold uppercase tracking-wider transition ${
                       form.client_role === r
-                        ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
-                        : "border-[#1c1c2a] bg-[#080810] text-[#44445a]"
+                        ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
+                        : "border-[#1e2230] bg-[#080910] text-[#6b7090]"
                     }`}>
                     {r}
                   </button>
@@ -359,16 +359,16 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
               {/* Town picker */}
               <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-[#44445a]">
+                <p className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
                   Preferred towns
                 </p>
-                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-2.5">
+                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#080910] p-2.5">
                   {NJ_TOWN_OPTIONS.map((t) => (
                     <button key={t} type="button" onClick={() => toggleTown(t)}
                       className={`rounded-full border-[0.5px] px-2 py-[4px] text-[10px] font-medium transition ${
                         form.towns.includes(t)
-                          ? "border-[#4f7bff]/40 bg-[#4f7bff]/12 text-[#6f9bff]"
-                          : "border-[#1c1c2a] bg-transparent text-[#44445a] hover:text-[#8888a0]"
+                          ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
+                          : "border-[#1e2230] bg-transparent text-[#6b7090] hover:text-[#8888a0]"
                       }`}>
                       {t}
                     </button>
@@ -379,16 +379,16 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1c1c2a] bg-[#080810] p-4 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#4f7bff]/50 transition" />
+                className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] p-4 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#3a65f0]/50 transition" />
             </div>
 
             <div className="mt-5 flex gap-2">
               <button type="button" onClick={saveClient}
-                className="flex-1 rounded-[13px] bg-[#4f7bff] py-3 text-[13.5px] font-semibold text-white transition hover:bg-[#3d6ae8] active:scale-[0.98]">
+                className="flex-1 rounded-[13px] bg-[#3a65f0] py-3 text-[13.5px] font-semibold text-white transition hover:bg-[#3d6ae8] active:scale-[0.98]">
                 Save client
               </button>
               <button type="button" onClick={() => setOpen(false)}
-                className="rounded-[13px] border-[0.5px] border-[#1c1c2a] px-5 py-3 text-[13.5px] font-semibold text-[#888898] transition hover:text-[#f0eee8]">
+                className="rounded-[13px] border-[0.5px] border-[#1e2230] px-5 py-3 text-[13.5px] font-semibold text-[#9498b0] transition hover:text-[#e8eaf2]">
                 Cancel
               </button>
             </div>

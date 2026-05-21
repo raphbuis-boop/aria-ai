@@ -66,7 +66,7 @@ export function AriaOAuthLoginExperience() {
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 800px 600px at 50% 0%, rgba(79,123,255,0.10) 0%, transparent 65%)",
+          background: "radial-gradient(ellipse 800px 600px at 50% 0%, rgba(58,101,240,0.10) 0%, transparent 65%)",
         }}
       />
       <div
@@ -74,7 +74,7 @@ export function AriaOAuthLoginExperience() {
         style={{
           top: "20%", left: "50%", transform: "translateX(-50%)",
           width: 280, height: 280,
-          background: "radial-gradient(circle, rgba(79,123,255,0.07) 0%, transparent 70%)",
+          background: "radial-gradient(circle, rgba(58,101,240,0.07) 0%, transparent 70%)",
           filter: "blur(40px)",
         }}
       />
@@ -92,7 +92,7 @@ export function AriaOAuthLoginExperience() {
             <div
               className="absolute inset-0 rounded-[22px]"
               style={{
-                boxShadow: "0 0 40px rgba(79,123,255,0.3), 0 0 80px rgba(79,123,255,0.12)",
+                boxShadow: "0 0 40px rgba(58,101,240,0.3), 0 0 80px rgba(58,101,240,0.12)",
                 borderRadius: "22px",
               }}
             />
@@ -110,7 +110,7 @@ export function AriaOAuthLoginExperience() {
             <span className="text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
               Aria
             </span>
-            <span className="text-[12px] tracking-wide text-[#44445a]">
+            <span className="text-[12px] tracking-wide text-[#6b7090]">
               AI Revenue Operating System
             </span>
           </div>
@@ -165,7 +165,7 @@ export function AriaOAuthLoginExperience() {
 
           <Link
             href="/login/email"
-            className="mt-1 w-full rounded-full py-[14px] text-center text-[13px] font-medium text-[#44445a] transition hover:text-[#888898]"
+            className="mt-1 w-full rounded-full py-[14px] text-center text-[13px] font-medium text-[#6b7090] transition hover:text-[#9498b0]"
           >
             Sign in with email
           </Link>
@@ -177,9 +177,9 @@ export function AriaOAuthLoginExperience() {
           className="mt-8 text-center text-[11px] leading-relaxed text-[#2e2e46]"
         >
           By continuing you agree to the{" "}
-          <Link href="/terms" className="text-[#44445a] hover:text-white">Terms</Link>{" "}
+          <Link href="/terms" className="text-[#6b7090] hover:text-white">Terms</Link>{" "}
           &amp;{" "}
-          <Link href="/privacy" className="text-[#44445a] hover:text-white">Privacy Policy</Link>.
+          <Link href="/privacy" className="text-[#6b7090] hover:text-white">Privacy Policy</Link>.
         </motion.p>
       </motion.div>
     </div>

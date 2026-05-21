@@ -48,16 +48,16 @@ function TabItem({
         <tab.Icon
           size={24}
           strokeWidth={active ? 2.2 : 1.8}
-          className={active ? "text-[#4f7bff]" : "text-[#48485e]"}
+          className={active ? "text-[#3a65f0]" : "text-[#48485e]"}
         />
         {badge && badge > 0 ? (
-          <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-md bg-[#ff4d4d] px-1 text-[9px] font-bold text-white">
+          <span className="absolute -right-1.5 -top-1 flex h-[15px] min-w-[15px] items-center justify-center rounded-md bg-[#c43838] px-1 text-[9px] font-bold text-white">
             {badge > 9 ? "9+" : badge}
           </span>
         ) : null}
       </span>
       <span
-        className={`text-[10px] font-medium ${active ? "text-[#4f7bff]" : "text-[#48485e]"}`}
+        className={`text-[10px] font-medium ${active ? "text-[#3a65f0]" : "text-[#48485e]"}`}
       >
         {tab.label}
       </span>
@@ -100,7 +100,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#111122] bg-[#07070f]/95 backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-50 border-t border-[#1e2230] bg-[#060709]/95 backdrop-blur-xl"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex w-full items-stretch">
@@ -113,7 +113,7 @@ export function BottomNav() {
       <Link
         href="/voice"
         aria-label="Voice"
-        className="absolute -top-6 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#4f7bff] shadow-[0_0_20px_rgba(79,123,255,0.5)] active:scale-95 transition-transform"
+        className="absolute -top-6 right-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#3a65f0] shadow-[0_0_20px_rgba(58,101,240,0.5)] active:scale-95 transition-transform"
       >
         <Mic size={20} strokeWidth={2} className="text-white" />
       </Link>

@@ -35,16 +35,16 @@ function fmtMoney(n: number) {
 
 export default function MarketPulsePage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-28">
+    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
       <div className="px-5 pt-6">
         <BackButton href="/more" className="mb-4" />
-        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#4f7bff]">
+        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#3a65f0]">
           {overall.monthLabel}
         </p>
         <h1 className="mt-1 text-[26px] font-semibold leading-tight">
           Market Pulse
         </h1>
-        <p className="mt-1 text-[13px] text-[#666680]">
+        <p className="mt-1 text-[13px] text-[#9498b0]">
           New Jersey snapshot · updated weekly
         </p>
       </div>
@@ -60,19 +60,19 @@ export default function MarketPulsePage() {
 
       <div className="mt-5 px-5">
         <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-4">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#4f7bff]" />
+          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#3a65f0]">
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#3a65f0]" />
             Momentum read
           </div>
           <p className="mt-2 text-[13px] leading-[1.55] text-[#a0a0c0]">
-            Median up <span className="font-medium text-[#50dc78]">+{overall.changePct}%</span> YoY.
+            Median up <span className="font-medium text-[#1a9b5e]">+{overall.changePct}%</span> YoY.
             Inventory tight across Summit, Ridgewood, and Hoboken — expect bidding wars under DOM 15.
           </p>
         </div>
       </div>
 
       <div className="mt-6 px-5">
-        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.4px] text-[#444460]">
+        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.4px] text-[#6b7090]">
           By town
         </p>
         <div className="overflow-hidden rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c]">
@@ -84,19 +84,19 @@ export default function MarketPulsePage() {
               }`}
             >
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold text-[#d0d0e0]">
+                <div className="text-[14px] font-semibold text-[#e8eaf2]">
                   {t.town}
                 </div>
                 <div className="text-[11px] text-[#555570]">{t.dom} days avg on market</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-[14px] font-semibold text-[#4f7bff]">
+                  <div className="text-[14px] font-semibold text-[#3a65f0]">
                     {fmtMoney(t.median)}
                   </div>
                   <div
                     className={`flex items-center justify-end gap-0.5 text-[11px] font-medium ${
-                      t.changePct >= 0 ? "text-[#50dc78]" : "text-[#ff6060]"
+                      t.changePct >= 0 ? "text-[#1a9b5e]" : "text-[#c43838]"
                     }`}
                   >
                     {t.changePct >= 0 ? (
@@ -114,7 +114,7 @@ export default function MarketPulsePage() {
         </div>
       </div>
 
-      <p className="mt-5 px-5 text-[11px] text-[#444460]">
+      <p className="mt-5 px-5 text-[11px] text-[#6b7090]">
         Market estimates compiled for {overall.monthLabel} · NJ Bergen, Essex &amp; Union counties. Not sourced from live MLS data. For actual listing data, see the MLS search.
       </p>
     </div>
@@ -132,13 +132,13 @@ function Stat({
 }) {
   const color =
     tone === "blue"
-      ? "text-[#4f7bff]"
+      ? "text-[#3a65f0]"
       : tone === "green"
-        ? "text-[#50dc78]"
-        : "text-[#f0eee8]";
+        ? "text-[#1a9b5e]"
+        : "text-[#e8eaf2]";
   return (
     <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-3.5">
-      <p className="mb-1 text-[10px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+      <p className="mb-1 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
         {label}
       </p>
       <p className={`text-[18px] font-semibold leading-none ${color}`}>

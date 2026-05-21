@@ -14,10 +14,10 @@ const STATE_LABEL: Record<VoiceState, string> = {
 };
 
 const STATE_COLOR: Record<VoiceState, string> = {
-  idle: "#4f7bff",
-  listening: "#50dc78",
-  thinking: "#4f7bff",
-  speaking: "#4f7bff",
+  idle: "#3a65f0",
+  listening: "#1a9b5e",
+  thinking: "#3a65f0",
+  speaking: "#3a65f0",
 };
 
 type SpeechRecognitionResult = { transcript: string };
@@ -253,12 +253,12 @@ export default function VoicePage() {
               width: 120, height: 120,
               background:
                 voiceState === "listening"
-                  ? "radial-gradient(circle at 38% 35%, #80f0a8, #50dc78 55%, #28a855)"
-                  : "radial-gradient(circle at 38% 35%, #8aacff, #4f7bff 55%, #2a48cc)",
+                  ? "radial-gradient(circle at 38% 35%, #80f0a8, #1a9b5e 55%, #28a855)"
+                  : "radial-gradient(circle at 38% 35%, #8aacff, #3a65f0 55%, #2a48cc)",
               boxShadow:
                 voiceState === "listening"
                   ? "0 0 0 1px rgba(80,220,120,0.25), 0 20px 80px rgba(80,220,120,0.4)"
-                  : "0 0 0 1px rgba(79,123,255,0.25), 0 20px 80px rgba(79,123,255,0.4)",
+                  : "0 0 0 1px rgba(58,101,240,0.25), 0 20px 80px rgba(58,101,240,0.4)",
               transition: "all 700ms cubic-bezier(0.16,1,0.3,1)",
               transform: isThinking ? "scale(0.9)" : isActive ? "scale(1.06)" : "scale(1)",
               opacity: isThinking ? 0.7 : 1,

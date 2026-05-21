@@ -144,15 +144,15 @@ export function BbaSection({
 
   const templateSelector =
     templates.length > 1 ? (
-      <label className="mt-3 flex items-center gap-2 rounded-[10px] border border-[#1e1e2e] bg-[#0a0a15] px-2.5 py-1.5">
-        <FileText size={12} className="text-[#666680]" />
-        <span className="text-[10px] uppercase tracking-wider text-[#666680]">
+      <label className="mt-3 flex items-center gap-2 rounded-[10px] border border-[#1e2230] bg-[#0a0a15] px-2.5 py-1.5">
+        <FileText size={12} className="text-[#9498b0]" />
+        <span className="text-[10px] uppercase tracking-wider text-[#9498b0]">
           Template
         </span>
         <select
           value={selectedTemplate}
           onChange={(e) => setSelectedTemplate(e.target.value)}
-          className="flex-1 bg-transparent text-[12px] text-[#d0d0e0] outline-none"
+          className="flex-1 bg-transparent text-[12px] text-[#e8eaf2] outline-none"
         >
           {templates.map((t) => (
             <option key={t.id} value={t.id}>
@@ -169,12 +169,12 @@ export function BbaSection({
       {signed ? (
         <div className="rounded-2xl border border-[#1a2a1a] bg-[#0f1a10] p-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#50dc78]/15 text-[#50dc78]">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#1a9b5e]/15 text-[#1a9b5e]">
               <Check size={16} strokeWidth={2.5} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider rounded-md bg-[#50dc78]/15 text-[#50dc78] px-2 py-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider rounded-md bg-[#1a9b5e]/15 text-[#1a9b5e] px-2 py-0.5">
                   Signed
                 </span>
                 <span className="text-[11px] text-[#555570]">
@@ -185,11 +185,11 @@ export function BbaSection({
                   })}
                 </span>
               </div>
-              <p className="mt-1 text-[13px] font-semibold text-[#d0d0e0]">
+              <p className="mt-1 text-[13px] font-semibold text-[#e8eaf2]">
                 {bba!.commission_pct}% · term {bba!.term_start} → {bba!.term_end}
               </p>
               {bba!.search_area ? (
-                <p className="text-[11px] text-[#666680]">
+                <p className="text-[11px] text-[#9498b0]">
                   Search area: {bba!.search_area}
                 </p>
               ) : null}
@@ -198,14 +198,14 @@ export function BbaSection({
           <div className="mt-3 grid grid-cols-2 gap-2">
             <Link
               href={`/bba/sign/${clientId}`}
-              className="rounded-[10px] border border-[#1e1e2e] bg-[#12121e] py-2 text-center text-[12px] font-semibold text-[#9090a8]"
+              className="rounded-[10px] border border-[#1e2230] bg-[#12121e] py-2 text-center text-[12px] font-semibold text-[#9090a8]"
             >
               View / re-sign
             </Link>
             <button
               type="button"
               onClick={copyLink}
-              className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[#1e1e2e] bg-[#12121e] py-2 text-[12px] font-semibold text-[#9090a8]"
+              className="flex items-center justify-center gap-1.5 rounded-[10px] border border-[#1e2230] bg-[#12121e] py-2 text-[12px] font-semibold text-[#9090a8]"
             >
               <Copy size={12} /> Copy link
             </button>
@@ -215,7 +215,7 @@ export function BbaSection({
               href={signedPdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-2 flex items-center justify-center gap-1.5 rounded-[10px] border border-[#50dc78]/30 bg-[#50dc78]/5 py-2 text-[12px] font-semibold text-[#50dc78]"
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-[10px] border border-[#1a9b5e]/30 bg-[#1a9b5e]/5 py-2 text-[12px] font-semibold text-[#1a9b5e]"
             >
               <Download size={12} /> Download signed PDF
             </a>
@@ -224,27 +224,27 @@ export function BbaSection({
       ) : (
         <div className="rounded-2xl border border-[#2a1a1a] bg-[#1a0f0f] p-4">
           <div className="flex items-start gap-3">
-            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#ff5050]/15 text-[#ff6060]">
+            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[12px] bg-[#c43838]/15 text-[#c43838]">
               <ShieldAlert size={16} />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider rounded-md bg-[#ff5050]/15 text-[#ff6060] px-2 py-0.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider rounded-md bg-[#c43838]/15 text-[#c43838] px-2 py-0.5">
                   Not signed
                 </span>
               </div>
-              <p className="mt-1 text-[13px] font-semibold text-[#f0eee8]">
+              <p className="mt-1 text-[13px] font-semibold text-[#e8eaf2]">
                 BBA required before next showing
               </p>
               <p className="text-[11px] text-[#9090a8]">
                 NJ / NAR settlement rule. Text the signing link to{" "}
                 {clientName.split(" ")[0]} so they can sign on their phone.
               </p>
-              <p className="mt-2 text-[11px] text-[#666680]">
+              <p className="mt-2 text-[11px] text-[#9498b0]">
                 Default PDF for links:{" "}
                 <Link
                   href="/settings#bba-templates"
-                  className="font-semibold text-[#6f9bff] underline-offset-2 hover:underline"
+                  className="font-semibold text-[#6b8fff] underline-offset-2 hover:underline"
                 >
                   BBA Templates
                 </Link>{" "}
@@ -258,7 +258,7 @@ export function BbaSection({
               type="button"
               onClick={sendSms}
               disabled={sending || !clientPhone}
-              className="flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2 text-[12px] font-semibold text-white disabled:opacity-60"
+              className="flex items-center justify-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] py-2 text-[12px] font-semibold text-white disabled:opacity-60"
             >
               <FileSignature size={12} />
               {sending ? "Sending…" : "Send BBA for signature"}
@@ -268,7 +268,7 @@ export function BbaSection({
                 typeof window !== "undefined" ? window.location.origin : "",
                 "",
               )}
-              className="rounded-[10px] border border-[#2a2a3e] py-2 text-center text-[12px] font-semibold text-[#9090a8]"
+              className="rounded-[10px] border border-[#2a2e40] py-2 text-center text-[12px] font-semibold text-[#9090a8]"
             >
               Sign in person
             </Link>
@@ -276,7 +276,7 @@ export function BbaSection({
           <button
             type="button"
             onClick={copyLink}
-            className="mt-2 flex w-full items-center justify-center gap-1 text-[11px] text-[#6f9bff]"
+            className="mt-2 flex w-full items-center justify-center gap-1 text-[11px] text-[#6b8fff]"
           >
             <Copy size={11} /> Copy signing link
           </button>
