@@ -24,6 +24,8 @@
 html {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
+  /* Overscroll area matches app bg — no white flash */
+  background: #050816;
 }
 
 body {
@@ -31,10 +33,12 @@ body {
   -ms-overflow-style: none;
   overflow-x: hidden;
   max-width: 100%;
-  background: var(--c-bg);
-  color: var(--c-text);
+  background: #050816;
+  color: #e4e8ff;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Contain overscroll within the app — prevents rubber-band flash */
+  overscroll-behavior-x: none;
 }
 
 ::-webkit-scrollbar {
@@ -51,30 +55,34 @@ body {
 /* Global interaction transitions — feel instant and smooth */
 a, button, [role="button"] {
   transition-property: opacity, background-color, border-color, color, box-shadow, transform;
-  transition-duration: 120ms;
-  transition-timing-function: ease;
+  transition-duration: 100ms;
+  transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
 
 /* Native momentum scroll on scrollable containers */
 .scroll-touch {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
+  overscroll-behavior-y: auto;
+  overscroll-behavior-x: contain;
 }
 
 /* iOS inset grouped list — the core native list pattern */
 .ios-group {
   border-radius: 18px;
-  background: #0d0f16;
-  border: 0.5px solid #181b28;
+  background: #080c18;
+  border: 0.5px solid #181d2e;
   overflow: hidden;
 }
 
 .ios-row {
   display: flex;
   align-items: center;
-  padding: 14px 16px;
-  border-bottom: 0.5px solid #131520;
-  transition: background-color 100ms ease;
+  padding: 13px 16px;
+  border-bottom: 0.5px solid #0f1220;
+  transition: background-color 80ms ease;
+  cursor: pointer;
+  /* Larger touch target without visual change */
+  min-height: 52px;
 }
 
 .ios-row:last-child {
@@ -82,16 +90,55 @@ a, button, [role="button"] {
 }
 
 .ios-row:active {
-  background-color: rgba(255, 255, 255, 0.025);
+  background-color: rgba(255, 255, 255, 0.045);
 }
 
 /* Tactile press — use on any tappable card */
 .press {
-  transition: transform 100ms ease, opacity 100ms ease;
+  transition: transform 100ms cubic-bezier(0.25, 0.46, 0.45, 0.94),
+              opacity 100ms ease !important;
 }
 .press:active {
-  transform: scale(0.975);
-  opacity: 0.85;
+  transform: scale(0.968);
+  opacity: 0.82;
+}
+
+/* Page enter animation — plays on every route mount */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Skeleton pulse for loading states */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+.skeleton {
+  background: #0d1228;
+  border-radius: 8px;
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+/* Input focus — native-feeling highlight */
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: rgba(76, 122, 255, 0.45) !important;
+  box-shadow: 0 0 0 3px rgba(76, 122, 255, 0.08);
+  transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
 @layer utilities {

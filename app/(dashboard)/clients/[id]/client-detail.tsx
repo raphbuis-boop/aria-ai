@@ -142,55 +142,63 @@ export function ClientDetail({
   }
 
   return (
-    <div className="min-h-screen bg-[#080910] text-white pb-24">
+    <div className="min-h-screen pb-24" style={{ background: "#050816", color: "#e4e8ff" }}>
       <div className="px-5 pt-6">
         {/* ─── Client Header ──────────────────────────────────────────── */}
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-5 flex items-center justify-between">
           <BackButton href="/clients" />
           <button
             type="button"
             onClick={() => setEditOpen(true)}
-            className="inline-flex items-center gap-1.5 rounded-[12px] border-[0.5px] border-[#1e2230] bg-[#12121e] px-3 py-2.5 text-[12px] font-semibold text-[#9090a8] active:border-[#3a65f0]"
+            className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-medium press"
+            style={{ background: "#080c18", color: "#50587a", border: "0.5px solid #181d2e" }}
           >
-            <Pencil size={13} /> Edit
+            <Pencil size={12} /> Edit
           </button>
         </div>
 
-        <div className="mb-4 rounded-2xl border border-[#1e2a4e] bg-gradient-to-br from-[#0e1428] to-[#111230] p-5">
+        {/* ─── Hero card ─────────────────────────────────────────────── */}
+        <div
+          className="mb-5 p-5"
+          style={{ borderRadius: 20, background: "#080c18", border: "0.5px solid #181d2e" }}
+        >
           <div className="mb-4 flex items-center gap-4">
             <div
-              className={`flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-[18px] text-lg font-bold ${AVATAR_COLORS[0]}`}
+              className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full text-[15px] font-bold ${AVATAR_COLORS[0]}`}
             >
               {initialsOf(name)}
             </div>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold text-white">
+              <h1 className="truncate text-[20px] font-semibold">
                 {name}
               </h1>
               <div className="mt-1 flex items-center gap-2">
                 {status ? (
-                  <span className="rounded-md bg-blue-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-blue-400">
-                    {status.replace("_", " ")}
+                  <span
+                    className="rounded px-2 py-[2px] text-[10px] font-semibold"
+                    style={{ background: "rgba(76,122,255,0.1)", color: "#7b9fff" }}
+                  >
+                    {status.replace(/_/g, " ")}
                   </span>
                 ) : null}
                 {leadScore >= 7 ? (
-                  <div className="h-2 w-2 rounded-full bg-green-400" />
+                  <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#4c7aff" }} />
                 ) : null}
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+          <div className="grid grid-cols-2 gap-2">
             {[
               { label: "Budget", value: budgetDisplay },
               { label: "Town", value: town },
-              { label: "Lead Score", value: `${leadScore} / 10` },
+              { label: "Lead score", value: `${leadScore} / 10` },
               { label: "Beds / Baths", value: formatBedsBaths(beds, baths) },
             ].map(({ label, value }) => (
-              <div key={label} className="rounded-xl bg-black/30 p-3">
-                <p className="mb-1 text-[10px] uppercase tracking-wider text-[#6b7090]">
+              <div key={label} className="rounded-[12px] p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
+                <p className="mb-0.5 text-[10px]" style={{ color: "#333a58" }}>
                   {label}
                 </p>
-                <p className="text-sm font-semibold text-[#e8eaf2]">{value}</p>
+                <p className="text-[13px] font-semibold">{value}</p>
               </div>
             ))}
           </div>
@@ -207,48 +215,46 @@ export function ClientDetail({
           showings={showings}
         />
 
-        {phone || email ? (
-          <div className="mb-4 flex flex-wrap gap-2">
-            {phone ? (
-              <a
-                href={`tel:${phone}`}
-                className="flex-1 truncate rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#e8eaf2]"
-              >
-                {phone}
-              </a>
-            ) : null}
-            {email ? (
-              <a
-                href={`mailto:${email}`}
-                className="flex-1 truncate rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-sm font-medium text-[#e8eaf2]"
-              >
-                {email}
-              </a>
-            ) : null}
-          </div>
-        ) : null}
-
-        {/* ─── Quick Actions ──────────────────────────────────────────── */}
-        <div className="mb-5 flex flex-wrap gap-2">
-          <button
-            type="button"
-            onClick={() => setDraftOpen(true)}
-            className="flex-1 rounded-xl border border-[#3a65f0]/20 bg-[#3a65f0]/12 py-2.5 text-center text-sm font-semibold text-[#6b8fff]"
-          >
-            AI Text
+        {/* ─── Contact + Actions ──────────────────────────────────────── */}
+        <div className="mb-5 ios-group">
+          {phone ? (
+            <a href={`tel:${phone}`} className="ios-row press">
+              <div className="flex-1">
+                <p className="text-[13px]" style={{ color: "#40486a" }}>Phone</p>
+                <p className="text-[15px] font-medium">{phone}</p>
+              </div>
+              <span className="text-[13px]" style={{ color: "#4c7aff" }}>Call</span>
+            </a>
+          ) : null}
+          {email ? (
+            <a href={`mailto:${email}`} className="ios-row press">
+              <div className="flex-1">
+                <p className="text-[13px]" style={{ color: "#40486a" }}>Email</p>
+                <p className="text-[15px] font-medium truncate">{email}</p>
+              </div>
+              <span className="text-[13px]" style={{ color: "#4c7aff" }}>Mail</span>
+            </a>
+          ) : null}
+          <button type="button" onClick={() => setDraftOpen(true)} className="ios-row w-full press">
+            <div className="flex-1 text-left">
+              <p className="text-[15px] font-medium" style={{ color: "#7b9fff" }}>AI Text</p>
+              <p className="text-[11px]" style={{ color: "#40486a" }}>Generate a message in your tone</p>
+            </div>
+            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
           </button>
-          <button
-            type="button"
-            onClick={logCall}
-            className="flex-1 rounded-xl border border-green-500/20 bg-green-500/12 py-2.5 text-sm font-semibold text-green-400"
-          >
-            Log Call
+          <button type="button" onClick={logCall} className="ios-row w-full press">
+            <div className="flex-1 text-left">
+              <p className="text-[15px] font-medium" style={{ color: "#18a066" }}>Log Call</p>
+              <p className="text-[11px]" style={{ color: "#40486a" }}>Record this interaction</p>
+            </div>
+            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
           </button>
-          <Link
-            href={`/showings?new=1&client=${id}`}
-            className="flex flex-1 items-center justify-center rounded-xl border border-[#1e2230] bg-[#12121e] py-2.5 text-center text-xs font-semibold text-[#9498b0]"
-          >
-            Log Showing
+          <Link href={`/showings?new=1&client=${id}`} className="ios-row press">
+            <div className="flex-1">
+              <p className="text-[15px] font-medium" style={{ color: "#c8d0f0" }}>Log Showing</p>
+              <p className="text-[11px]" style={{ color: "#40486a" }}>Schedule a property tour</p>
+            </div>
+            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
           </Link>
         </div>
 

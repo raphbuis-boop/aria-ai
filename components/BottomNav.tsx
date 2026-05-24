@@ -34,15 +34,16 @@ function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
   return (
     <Link
       href={tab.href}
-      className="flex flex-1 flex-col items-center justify-center gap-[5px] py-2.5"
+      className="flex flex-1 flex-col items-center justify-center gap-[5px] py-2.5 active:opacity-60"
       aria-label={tab.label}
+      style={{ transition: "opacity 80ms ease" }}
     >
       <tab.Icon
         size={21}
-        strokeWidth={active ? 2.1 : 1.5}
+        strokeWidth={active ? 2.2 : 1.5}
         style={{
-          color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.22)",
-          transition: "color 200ms ease, stroke-width 200ms ease",
+          color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.28)",
+          transition: "color 150ms ease",
         }}
       />
       <span
@@ -50,8 +51,8 @@ function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
           fontSize: 10,
           fontWeight: active ? 600 : 400,
           letterSpacing: "0.01em",
-          color: active ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)",
-          transition: "color 200ms ease",
+          color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.28)",
+          transition: "color 150ms ease",
         }}
       >
         {tab.label}
