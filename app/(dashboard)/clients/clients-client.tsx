@@ -247,7 +247,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
           </div>
         ) : (
           <div className="ios-group">
-            {filtered.map((client, idx) => {
+            {filtered.map((client) => {
               const badge = STATUS_BADGE[client.status ?? ""] ?? null;
               const score = client.lead_score ?? 0;
               const hot = score >= 7;
