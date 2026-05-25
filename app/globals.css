@@ -39,6 +39,9 @@ body {
   -moz-osx-font-smoothing: grayscale;
   /* Contain overscroll within the app — prevents rubber-band flash */
   overscroll-behavior-x: none;
+  /* Universal safe area — protects content from notch and home indicator on all pages */
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 ::-webkit-scrollbar {

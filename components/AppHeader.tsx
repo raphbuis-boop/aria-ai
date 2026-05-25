@@ -8,9 +8,9 @@ export function AppHeader() {
       className="sticky top-0 z-[60] flex items-center justify-end px-4 backdrop-blur-sm"
       style={{
         background: "rgba(10,10,10,0.92)",
-        paddingTop: "max(0.5rem, env(safe-area-inset-top))",
+        paddingTop: "0.5rem",
         paddingBottom: "0.375rem",
-        minHeight: "calc(env(safe-area-inset-top) + 36px)",
+        minHeight: "44px",
       }}
     >
       <NotificationBell />
