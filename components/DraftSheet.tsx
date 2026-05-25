@@ -6,6 +6,7 @@ import type { TodayItem } from "@/lib/today-items";
 
 export type DraftSheetProps = {
   item: TodayItem | null;
+  prefetchedDraft?: string;
   onClose: () => void;
   onSent: (itemId: string) => void;
 };
@@ -32,7 +33,7 @@ function triggerHaptic() {
   }
 }
 
-export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
+export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftSheetProps) {
   const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -45,7 +46,7 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
   const isSending = sendState === "sending";
   const canSend = hasPhone && draftText.trim().length > 0 && !loading && !isSending;
 
-  // Fetch draft when item changes
+  // Populate draft when item changes — use prefetched draft if available, otherwise fetch
   useEffect(() => {
     if (!item) {
       // Reset all state when sheet closes
@@ -56,12 +57,21 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
       return;
     }
 
-    let cancelled = false;
-    setLoading(true);
-    setDraftText("");
     setIsEditing(false);
     setSendState("idle");
     setErrorMsg("");
+
+    // Use prefetched draft if ready (non-undefined means the prefetch ran)
+    if (prefetchedDraft !== undefined) {
+      setDraftText(prefetchedDraft);
+      setLoading(false);
+      return;
+    }
+
+    // Fall back to fetching (e.g. user tapped before prefetch completed)
+    let cancelled = false;
+    setLoading(true);
+    setDraftText("");
 
     fetch("/api/ai/draft-text", {
       method: "POST",
@@ -71,7 +81,7 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
         scenario: item.reason,
         context: item.context ?? "",
         clientId: item.clientId,
-        skipInsert: true, // DraftSheet manages its own activity insert via /api/sms/send
+        skipInsert: true,
       }),
     })
       .then((r) => r.json())
@@ -89,7 +99,7 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
       cancelled = true;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [item?.id]); // intentionally keyed on item.id — re-fetch only when a different item opens
+  }, [item?.id]); // intentionally keyed on item.id — re-populate only when a different item opens
 
   // Focus textarea when edit mode turns on
   useEffect(() => {
