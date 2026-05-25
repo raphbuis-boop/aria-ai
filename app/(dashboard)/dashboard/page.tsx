@@ -25,12 +25,19 @@ export default async function DashboardPage() {
   const minus24hISO = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
   const [
+    profileRes,
     clientsRes,
     transactionsRes,
     activitiesRes,
     matchesRes,
     bbaRes,
   ] = await Promise.all([
+    // 0. Agent profile — real name
+    supabase
+      .from("agent_profiles")
+      .select("full_name")
+      .eq("id", user.id)
+      .maybeSingle(),
     // 1. Clients — exclude closed at the SQL level
     supabase
       .from("clients")
@@ -70,6 +77,7 @@ export default async function DashboardPage() {
   ]);
 
   // Log errors without crashing the page
+  if (profileRes.error) console.error("[today] agent_profiles:", profileRes.error);
   if (clientsRes.error) console.error("[today] clients:", clientsRes.error);
   if (transactionsRes.error) console.error("[today] transactions:", transactionsRes.error);
   if (activitiesRes.error) console.error("[today] activities:", activitiesRes.error);
@@ -96,8 +104,8 @@ export default async function DashboardPage() {
   );
 
   const firstName =
+    (profileRes.data?.full_name as string | undefined)?.split(" ")[0] ??
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
-    user.email?.split("@")[0] ??
     "there";
 
   return (
