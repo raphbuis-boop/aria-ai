@@ -199,14 +199,14 @@ export function ShowingsClient({
   }
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#050816", color: "#e4e8ff" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-end justify-between">
           <div>
             <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Timeline</h1>
-            <p className="mt-0.5 text-[12px]" style={{ color: "#40486a" }}>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#636366" }}>
               {upcoming.length > 0 ? `${upcoming.length} upcoming` : "No upcoming showings"}
             </p>
           </div>
@@ -214,13 +214,13 @@ export function ShowingsClient({
             type="button"
             onClick={openModal}
             className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
-            style={{ background: "#4c7aff" }}
+            style={{ background: "#0a7cff" }}
           >
             + Add
           </button>
         </div>
 
-        <div className="mb-2 text-[11px]" style={{ color: "#333a58" }}>
+        <div className="mb-2 text-[12px]" style={{ color: "#636366" }}>
           Upcoming
         </div>
         <div className="space-y-2.5">
@@ -265,14 +265,14 @@ export function ShowingsClient({
               );
             })
           ) : (
-            <div className="rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4 text-[13px] text-[#555568]">
+            <div className="rounded-[16px] p-4 text-[13px]" style={{ background: "#1c1c1e", color: "#636366" }}>
               No upcoming showings. Tap + Add to schedule one.
             </div>
           )}
         </div>
 
         <div className="mt-6">
-        <div className="mb-2 text-[11px]" style={{ color: "#333a58" }}>
+        <div className="mb-2 text-[12px]" style={{ color: "#636366" }}>
           Past
         </div>
         <div className="space-y-2.5">
@@ -316,7 +316,7 @@ export function ShowingsClient({
               );
             })
           ) : (
-            <div className="rounded-[16px] border-[0.5px] border-[#1e2230] bg-[#0d0f16] p-4 text-[13px] text-[#555568]">
+            <div className="rounded-[16px] p-4 text-[13px]" style={{ background: "#1c1c1e", color: "#636366" }}>
               No past showings yet.
             </div>
           )}
@@ -327,8 +327,8 @@ export function ShowingsClient({
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4">
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2e40]" />
+          <div className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] bg-[#1c1c1e] px-5 pb-10 pt-4">
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#3a3a3c]" />
             <p className="mb-4 text-[17px] font-semibold">Log a showing</p>
             <div className="space-y-3">
             <select
@@ -336,7 +336,7 @@ export function ShowingsClient({
               onChange={(e) =>
                 setForm({ ...form, client_id: e.target.value })
               }
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             >
               <option value="">Select client</option>
               {clients.map((c) => (
@@ -349,7 +349,7 @@ export function ShowingsClient({
               value={form.address}
               onChange={(e) => setForm({ ...form, address: e.target.value })}
               placeholder="Property address"
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             />
             <input
               type="datetime-local"
@@ -357,7 +357,7 @@ export function ShowingsClient({
               onChange={(e) =>
                 setForm({ ...form, showing_date: e.target.value })
               }
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             />
             <select
               value={form.status}
@@ -367,7 +367,7 @@ export function ShowingsClient({
                   status: e.target.value as typeof form.status,
                 })
               }
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             >
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
@@ -378,20 +378,21 @@ export function ShowingsClient({
               onChange={(e) => setForm({ ...form, notes: e.target.value })}
               placeholder="Notes"
               rows={2}
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             />
             <textarea
               value={form.feedback}
               onChange={(e) => setForm({ ...form, feedback: e.target.value })}
               placeholder="Feedback (optional — used for AI summary)"
               rows={3}
-              className="w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] outline-none"
+              className="w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] outline-none"
             />
             </div>
             <button
               type="button"
               onClick={save}
-              className="mt-4 w-full rounded-[13px] bg-[#3a65f0] py-3.5 text-[14px] font-semibold text-white"
+              className="mt-4 w-full rounded-full py-3.5 text-[14px] font-semibold text-white"
+              style={{ background: "#0a7cff" }}
             >
               Save showing
             </button>

@@ -25,7 +25,7 @@ html {
   overflow-x: hidden;
   -webkit-text-size-adjust: 100%;
   /* Overscroll area matches app bg — no white flash */
-  background: #050816;
+  background: #0a0a0a;
 }
 
 body {
@@ -33,8 +33,8 @@ body {
   -ms-overflow-style: none;
   overflow-x: hidden;
   max-width: 100%;
-  background: #050816;
-  color: #e4e8ff;
+  background: #0a0a0a;
+  color: #f0f0f5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Contain overscroll within the app — prevents rubber-band flash */
@@ -66,11 +66,10 @@ a, button, [role="button"] {
   overscroll-behavior-x: contain;
 }
 
-/* iOS inset grouped list — the core native list pattern */
+/* iOS inset grouped list — defined purely by background contrast, no borders */
 .ios-group {
   border-radius: 18px;
-  background: #080c18;
-  border: 0.5px solid #181d2e;
+  background: #1c1c1e;
   overflow: hidden;
 }
 
@@ -78,19 +77,14 @@ a, button, [role="button"] {
   display: flex;
   align-items: center;
   padding: 13px 16px;
-  border-bottom: 0.5px solid #0f1220;
   transition: background-color 80ms ease;
   cursor: pointer;
   /* Larger touch target without visual change */
   min-height: 52px;
 }
 
-.ios-row:last-child {
-  border-bottom: none;
-}
-
 .ios-row:active {
-  background-color: rgba(255, 255, 255, 0.045);
+  background-color: rgba(255, 255, 255, 0.06);
 }
 
 /* Tactile press — use on any tappable card */
@@ -136,8 +130,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: rgba(76, 122, 255, 0.45) !important;
-  box-shadow: 0 0 0 3px rgba(76, 122, 255, 0.08);
+  border-color: rgba(10, 124, 255, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(10, 124, 255, 0.08);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 

@@ -19,8 +19,8 @@ type Section = "profile" | "voice" | "bba" | null;
 function SectionHeader({ label }: { label: string }) {
   return (
     <p
-      className="mb-2 ml-1 text-[11px] font-semibold uppercase tracking-[0.08em]"
-      style={{ color: "#333a58" }}
+      className="mb-2 ml-1 text-[12px]"
+      style={{ color: "#636366" }}
     >
       {label}
     </p>
@@ -46,24 +46,24 @@ function SettingsRow({
     <div className="ios-row press w-full">
       <span
         className="mr-3 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-[9px]"
-        style={{ background: destructive ? "rgba(192,58,58,0.1)" : "rgba(76,122,255,0.1)" }}
+        style={{ background: destructive ? "rgba(255,59,48,0.12)" : "rgba(255,255,255,0.08)" }}
       >
-        <Icon size={15} style={{ color: destructive ? "#d96060" : "#4c7aff" }} />
+        <Icon size={15} style={{ color: destructive ? "#ff453a" : "#aeaeb2" }} />
       </span>
       <div className="flex-1 text-left">
         <p
           className="text-[15px] font-medium"
-          style={{ color: destructive ? "#d96060" : "#dde0f8" }}
+          style={{ color: destructive ? "#ff453a" : "#f0f0f5" }}
         >
           {label}
         </p>
         {sub && (
-          <p className="mt-[1px] text-[11px]" style={{ color: "#40486a" }}>
+          <p className="mt-[1px] text-[11px]" style={{ color: "#636366" }}>
             {sub}
           </p>
         )}
       </div>
-      {!destructive && <ChevronRight size={15} style={{ color: "#2a3050" }} />}
+      {!destructive && <ChevronRight size={15} style={{ color: "#48484a" }} />}
     </div>
   );
 
@@ -83,7 +83,7 @@ function ProfileForm({
   onSave: () => void;
 }) {
   const inputStyle = "w-full rounded-[13px] px-4 py-3 text-base outline-none";
-  const inputBg = { background: "#060912", border: "0.5px solid #181d2e", color: "#e4e8ff" };
+  const inputBg = { background: "#1c1c1e", border: "none", color: "#f0f0f5" };
 
   return (
     <div className="space-y-2.5">
@@ -121,8 +121,8 @@ function ProfileForm({
       <button
         type="button"
         onClick={onSave}
-        className="w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-white press"
-        style={{ background: "#4c7aff" }}
+        className="w-full rounded-full py-3.5 text-[14px] font-semibold text-white press"
+        style={{ background: "#0a7cff" }}
       >
         Save profile
       </button>
@@ -150,7 +150,7 @@ function VoiceForm({
   onPreview: () => void;
 }) {
   const taStyle = "w-full rounded-[13px] px-4 py-3 text-base outline-none resize-none";
-  const inputBg = { background: "#060912", border: "0.5px solid #181d2e", color: "#e4e8ff" };
+  const inputBg = { background: "#1c1c1e", border: "none", color: "#f0f0f5" };
 
   return (
     <div>
@@ -179,38 +179,38 @@ function VoiceForm({
         type="button"
         onClick={onSave}
         className="mt-4 w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-white press"
-        style={{ background: "#4c7aff" }}
+        style={{ background: "#0a7cff" }}
       >
         Save & Analyze
       </button>
       {analysis && (
         <div
           className="mt-3 rounded-[13px] p-4 text-[13px] leading-relaxed"
-          style={{ background: "#080c18", border: "0.5px solid #181d2e", color: "#7b9fff" }}
+          style={{ background: "#1c1c1e", color: "#8e8e93" }}
         >
           {analysis}
         </div>
       )}
-      <div className="mt-6" style={{ borderTop: "0.5px solid #181d2e", paddingTop: 20 }}>
+      <div className="mt-6" style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 20 }}>
         <p className="mb-2 text-[12px]" style={{ color: "#333a58" }}>Preview a draft</p>
         <input
           value={previewQ}
           onChange={(e) => setPreviewQ(e.target.value)}
           className="w-full rounded-[13px] px-4 py-3 text-base outline-none"
-          style={{ background: "#060912", border: "0.5px solid #181d2e", color: "#e4e8ff" }}
+          style={{ background: "#1c1c1e", border: "none", color: "#f0f0f5" }}
         />
         <button
           type="button"
           onClick={onPreview}
           className="mt-2.5 rounded-full px-4 py-2 text-[13px] font-medium press"
-          style={{ background: "#080c18", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.2)" }}
+          style={{ background: "rgba(255,255,255,0.06)", color: "#8e8e93" }}
         >
           Generate preview
         </button>
         {previewOut && (
           <div
             className="mt-3 rounded-[13px] p-4 text-[13px] leading-relaxed"
-            style={{ background: "#080c18", border: "0.5px solid #181d2e", color: "#9098c0" }}
+            style={{ background: "#1c1c1e", color: "#8e8e93" }}
           >
             {previewOut}
           </div>
@@ -312,12 +312,12 @@ export default function SettingsPage() {
   // ── Sub-page view ─────────────────────────────────────────────────────────
   if (section) {
     return (
-      <div className="min-h-screen w-full px-5 pb-40 pt-6" style={{ background: "#050816", color: "#e4e8ff" }}>
+      <div className="min-h-screen w-full px-5 pb-40 pt-6" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
         <button
           type="button"
           onClick={() => setSection(null)}
           className="mb-5 flex items-center gap-1 text-[14px] press"
-          style={{ color: "#4c7aff" }}
+          style={{ color: "#0a7cff" }}
         >
           ‹ Back
         </button>
@@ -364,7 +364,7 @@ export default function SettingsPage() {
     : "A";
 
   return (
-    <div className="min-h-screen w-full px-5 pb-40 pt-6" style={{ background: "#050816", color: "#e4e8ff" }}>
+    <div className="min-h-screen w-full px-5 pb-40 pt-6" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <h1 className="mb-6 text-[26px] font-semibold tracking-[-0.025em]">Settings</h1>
 
       {/* ── Profile header ── */}
@@ -375,7 +375,7 @@ export default function SettingsPage() {
       >
         <div
           className="flex h-[56px] w-[56px] flex-shrink-0 items-center justify-center rounded-full text-[18px] font-bold"
-          style={{ background: "rgba(76,122,255,0.15)", color: "#7b9fff" }}
+          style={{ background: "rgba(255,255,255,0.08)", color: "#aeaeb2" }}
         >
           {initials}
         </div>
@@ -383,11 +383,11 @@ export default function SettingsPage() {
           <p className="text-[17px] font-semibold">
             {profile.full_name || "Your Profile"}
           </p>
-          <p className="text-[13px]" style={{ color: "#40486a" }}>
+          <p className="text-[13px]" style={{ color: "#636366" }}>
             {profile.email || "Tap to set up your profile"}
           </p>
         </div>
-        <ChevronRight size={16} style={{ color: "#2a3050" }} />
+        <ChevronRight size={16} style={{ color: "#48484a" }} />
       </button>
 
       {/* ── Aria AI ── */}
@@ -431,7 +431,7 @@ export default function SettingsPage() {
         />
       </div>
 
-      <p className="text-center text-[11px]" style={{ color: "#262c48" }}>
+      <p className="text-center text-[11px]" style={{ color: "#3a3a3c" }}>
         Aria · Real Estate AI
       </p>
     </div>

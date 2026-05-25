@@ -57,7 +57,7 @@ function initialsOf(name: string | null | undefined) {
 
 // Shared input style
 const INPUT =
-  "w-full rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] px-4 py-3 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#3a65f0]/50 transition";
+  "w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] placeholder-[#636366] outline-none transition";
 
 type Row = {
   id: string;
@@ -168,14 +168,14 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#050816", color: "#e4e8ff" }}>
+    <div className="min-h-screen pb-28" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Leads</h1>
-            <p className="mt-0.5 text-[12px]" style={{ color: "#40486a" }}>
+            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Clients</h1>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#636366" }}>
               {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
             </p>
           </div>
@@ -183,7 +183,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
             type="button"
             onClick={() => setOpen(true)}
             className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
-            style={{ background: "#4c7aff" }}
+            style={{ background: "#0a7cff" }}
           >
             + Add
           </button>
@@ -192,22 +192,22 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         {/* ── Search ── */}
         <div
           className="mb-3 flex items-center gap-3 px-4 py-3"
-          style={{ borderRadius: 13, background: "#080c18", border: "0.5px solid #181d2e" }}
+          style={{ borderRadius: 13, background: "#1c1c1e" }}
         >
-          <Search size={14} strokeWidth={1.8} style={{ color: "#40486a", flexShrink: 0 }} />
+          <Search size={14} strokeWidth={1.8} style={{ color: "#636366", flexShrink: 0 }} />
           <input
             type="text"
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent text-[14px] outline-none"
-            style={{ color: "#e4e8ff" }}
+            style={{ color: "#f0f0f5" }}
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-[#6b7090] transition hover:text-[#9498b0]"
+              className="text-[#636366]"
             >
               ×
             </button>
@@ -224,8 +224,8 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               className="whitespace-nowrap rounded-full px-3.5 py-2 text-[12px] font-medium"
               style={
                 filter === f
-                  ? { background: "rgba(76,122,255,0.12)", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.25)" }
-                  : { background: "#080c18", color: "#40486a", border: "0.5px solid #181d2e" }
+                  ? { background: "#0a7cff", color: "#ffffff" }
+                  : { background: "#1c1c1e", color: "#8e8e93" }
               }
             >
               {f}
@@ -238,12 +238,12 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div
               className="mb-3 flex h-11 w-11 items-center justify-center rounded-full"
-              style={{ background: "rgba(76,122,255,0.1)" }}
+              style={{ background: "rgba(255,255,255,0.07)" }}
             >
-              <Users size={20} style={{ color: "#4c7aff" }} />
+              <Users size={20} style={{ color: "#636366" }} />
             </div>
-            <p className="text-[14px] font-semibold" style={{ color: "#8088aa" }}>No clients found</p>
-            <p className="mt-1 text-[12px]" style={{ color: "#40486a" }}>Try a different filter or add a new client</p>
+            <p className="text-[14px] font-semibold" style={{ color: "#8e8e93" }}>No clients found</p>
+            <p className="mt-1 text-[12px]" style={{ color: "#636366" }}>Try a different filter or add a new client</p>
           </div>
         ) : (
           <div className="ios-group">
@@ -257,7 +257,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   key={client.id}
                   href={`/clients/${client.id}`}
                   className="ios-row"
-                  style={{ borderBottom: idx < filtered.length - 1 ? "0.5px solid #131520" : "none" }}
                 >
                   {/* Avatar */}
                   <div className={`mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${avatarColor(client.name)}`}>
@@ -266,10 +265,10 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium" style={{ color: "#dde0f8" }}>
+                    <p className="truncate text-[14px] font-medium" style={{ color: "#f0f0f5" }}>
                       {client.name}
                     </p>
-                    <p className="mt-px truncate text-[11px]" style={{ color: "#40486a" }}>
+                    <p className="mt-px truncate text-[11px]" style={{ color: "#636366" }}>
                       {client.town ?? "—"}
                       {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
                     </p>
@@ -277,13 +276,13 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
                   {/* Right meta */}
                   <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
-                    {hot && <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#4c7aff" }} />}
+                    {hot && <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#0a7cff" }} />}
                     {badge && (
-                      <span className="rounded px-1.5 py-[2px] text-[10px]" style={{ color: "#50587a" }}>
+                      <span className="rounded px-1.5 py-[2px] text-[10px]" style={{ color: "#636366" }}>
                         {badge.label}
                       </span>
                     )}
-                    <span className="text-[14px]" style={{ color: "#2a3050" }}>›</span>
+                    <span className="text-[14px]" style={{ color: "#48484a" }}>›</span>
                   </div>
                 </Link>
               );
@@ -296,10 +295,10 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4">
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#2a2e40]" />
-            <p className="mb-0.5 text-[16px] font-semibold">New client</p>
-            <p className="mb-5 text-[12px] text-[#6b7090]">Saved to your clients table.</p>
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] bg-[#1c1c1e] px-5 pb-10 pt-4">
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#3a3a3c]" />
+            <p className="mb-0.5 text-[16px] font-semibold" style={{ color: "#f0f0f5" }}>New client</p>
+            <p className="mb-5 text-[12px]" style={{ color: "#636366" }}>Saved to your clients table.</p>
 
             <div className="space-y-3">
               <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -321,8 +320,8 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                     }`}
                     style={
                       form.client_role === r
-                        ? { background: "rgba(76,122,255,0.12)", color: "#7b9fff", border: "0.5px solid rgba(76,122,255,0.25)" }
-                        : { background: "#060912", color: "#40486a", border: "0.5px solid #181d2e" }
+                        ? { background: "#0a7cff", color: "#ffffff" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#8e8e93" }
                     }>
                     {r}
                   </button>
@@ -345,17 +344,18 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
               {/* Town picker */}
               <div>
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
+                <p className="mb-2 text-[12px]" style={{ color: "#636366" }}>
                   Preferred towns
                 </p>
-                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] border-[0.5px] border-[#1e2230] bg-[#080910] p-2.5">
+                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] bg-[#2c2c2e] p-2.5">
                   {NJ_TOWN_OPTIONS.map((t) => (
                     <button key={t} type="button" onClick={() => toggleTown(t)}
-                      className={`rounded-full border-[0.5px] px-2 py-[4px] text-[10px] font-medium transition ${
+                      className="rounded-full px-2 py-[4px] text-[10px] font-medium"
+                      style={
                         form.towns.includes(t)
-                          ? "border-[#3a65f0]/40 bg-[#3a65f0]/12 text-[#6b8fff]"
-                          : "border-[#1e2230] bg-transparent text-[#6b7090] hover:text-[#8888a0]"
-                      }`}>
+                          ? { background: "#0a7cff", color: "#ffffff" }
+                          : { background: "rgba(255,255,255,0.06)", color: "#8e8e93" }
+                      }>
                       {t}
                     </button>
                   ))}
@@ -365,15 +365,16 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none rounded-[13px] border-[0.5px] border-[#1e2230] bg-[#080910] p-4 text-base text-[#e8e6e0] placeholder-[#3a3a50] outline-none focus:border-[#3a65f0]/50 transition" />
+                className="w-full resize-none rounded-[13px] p-4 text-base outline-none"
+                style={{ background: "#2c2c2e", color: "#f0f0f5" }} />
             </div>
 
             <div className="mt-5">
               <button
                 type="button"
                 onClick={saveClient}
-                className="w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-white press"
-                style={{ background: "#4c7aff" }}
+                className="w-full rounded-full py-3.5 text-[14px] font-semibold text-white press"
+                style={{ background: "#0a7cff" }}
               >
                 Save client
               </button>

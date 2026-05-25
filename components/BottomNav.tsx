@@ -106,13 +106,12 @@ export function BottomNav() {
       <nav
         className="flex w-full max-w-[380px] items-end"
         style={{
-          background: "rgba(8, 9, 18, 0.88)",
+          background: "rgba(18, 18, 18, 0.92)",
           backdropFilter: "blur(32px) saturate(180%)",
           WebkitBackdropFilter: "blur(32px) saturate(180%)",
           borderRadius: 26,
-          border: "0.5px solid rgba(255,255,255,0.06)",
-          boxShadow:
-            "0 12px 40px rgba(0,0,0,0.65), 0 0 0 0.5px rgba(255,255,255,0.03) inset",
+          border: "0.5px solid rgba(255,255,255,0.04)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
         }}
       >
         {LEFT_TABS.map((tab) => (
@@ -130,14 +129,14 @@ export function BottomNav() {
               height: 48,
               marginTop: -14,
               background: voiceActive
-                ? "rgba(76, 122, 255, 0.15)"
-                : "rgba(14, 17, 35, 0.98)",
+                ? "rgba(10, 124, 255, 0.18)"
+                : "rgba(28, 28, 30, 0.98)",
               border: voiceActive
-                ? "0.5px solid rgba(76, 122, 255, 0.4)"
-                : "0.5px solid rgba(255,255,255,0.07)",
+                ? "0.5px solid rgba(10, 124, 255, 0.35)"
+                : "0.5px solid rgba(255,255,255,0.08)",
               boxShadow: voiceActive
-                ? "0 0 0 6px rgba(76,122,255,0.08), 0 0 20px rgba(76,122,255,0.35)"
-                : "0 0 0 1px rgba(76,122,255,0.06), 0 0 14px rgba(76,122,255,0.18), 0 4px 20px rgba(0,0,0,0.7)",
+                ? "0 0 0 6px rgba(10,124,255,0.07), 0 0 16px rgba(10,124,255,0.3)"
+                : "0 4px 16px rgba(0,0,0,0.6)",
               transition: "all 250ms ease",
             }}
           >
@@ -145,7 +144,7 @@ export function BottomNav() {
               size={18}
               strokeWidth={1.6}
               style={{
-                color: voiceActive ? "rgba(76,122,255,0.9)" : "rgba(76,122,255,0.65)",
+                color: voiceActive ? "rgba(10,124,255,0.95)" : "rgba(10,124,255,0.6)",
                 transition: "color 250ms ease",
               }}
             />
