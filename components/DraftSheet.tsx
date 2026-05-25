@@ -42,7 +42,8 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
 
   const isOpen = item !== null;
   const hasPhone = !!item?.clientPhone;
-  const canSend = hasPhone && draftText.trim().length > 0 && !loading && sendState !== "sending";
+  const isSending = sendState === "sending";
+  const canSend = hasPhone && draftText.trim().length > 0 && !loading && !isSending;
 
   // Fetch draft when item changes
   useEffect(() => {
@@ -87,7 +88,8 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
     return () => {
       cancelled = true;
     };
-  }, [item?.id]); // re-fetch when a different item opens the sheet
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]); // intentionally keyed on item.id — re-fetch only when a different item opens
 
   // Focus textarea when edit mode turns on
   useEffect(() => {
@@ -214,7 +216,7 @@ export function DraftSheet({ item, onClose, onSent }: DraftSheetProps) {
             <button
               type="button"
               onClick={handleSend}
-              disabled={!canSend || sendState === "sending" || sendState === "sent"}
+              disabled={!canSend || sendState === "sent"}
               className="w-full rounded-[12px] py-[17px] text-[17px] font-semibold text-white mb-3 disabled:opacity-50"
               style={{
                 background: sendState === "sent" ? "#16a34a" : "#3B82F6",
