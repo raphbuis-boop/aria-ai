@@ -1,0 +1,3 @@
+ALTER TABLE clients
+  ADD COLUMN IF NOT EXISTS birthday DATE,
+  ADD COLUMN IF NOT EXISTS home_purchase_date DATE;

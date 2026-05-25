@@ -1,35 +1,10 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardClient } from "./dashboard-client";
+import { buildTodayItems } from "@/lib/today-items";
+import type { TodayClient, TodayTransaction, TodayActivity } from "@/lib/today-items";
+import { TodayClient as TodayClientComponent } from "./today-client";
 
 export const dynamic = "force-dynamic";
-
-type ClientRow = {
-  id: string;
-  name: string;
-  town: string | null;
-  status: string | null;
-  lead_score: number | null;
-  budget_min: number | null;
-  budget_max: number | null;
-  phone: string | null;
-  client_role?: string | null;
-};
-
-type ShowingRow = {
-  id: string;
-  client_id: string;
-  address: string | null;
-  showing_date: string | null;
-  clients: { name: string | null } | null;
-};
-
-type TxRow = {
-  id: string;
-  client_id: string;
-  address: string | null;
-  closing_date: string | null;
-  status: string | null;
-};
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -38,90 +13,98 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return <DashboardClient user={null} initial={empty()} />;
+    redirect("/login");
   }
+
+  const now = new Date();
+  const todayISO = now.toISOString().split("T")[0];
+  const plus3ISO = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
+  const minus30ISO = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const minus24hISO = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
   const [
     clientsRes,
     transactionsRes,
-    newMatchesRes,
-    upcomingShowingsRes,
+    activitiesRes,
+    matchesRes,
     bbaRes,
   ] = await Promise.all([
+    // 1. Clients — exclude closed at the SQL level
     supabase
       .from("clients")
-      .select("id, name, town, status, lead_score, budget_min, budget_max, phone, client_role")
+      .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
       .eq("agent_id", user.id)
-      .order("lead_score", { ascending: false, nullsFirst: false }),
+      .neq("status", "closed"),
+
+    // 2. Transactions — closing within the next 3 days
     supabase
       .from("transactions")
       .select("id, client_id, address, closing_date, status")
-      .eq("agent_id", user.id),
+      .eq("agent_id", user.id)
+      .gte("closing_date", todayISO)
+      .lte("closing_date", plus3ISO),
+
+    // 3. Activities — last 30 days only, most recent first
+    supabase
+      .from("activities")
+      .select("client_id, created_at")
+      .eq("agent_id", user.id)
+      .gte("created_at", minus30ISO)
+      .order("created_at", { ascending: false }),
+
+    // 4. New MLS matches — last 24h, not yet notified, distinct client_ids
     supabase
       .from("property_matches")
-      .select("*", { count: "exact", head: true })
+      .select("client_id")
       .eq("agent_id", user.id)
-      .eq("notified", false),
-    supabase
-      .from("showings")
-      .select("id, client_id, address, showing_date, clients(name)")
-      .eq("agent_id", user.id)
-      .gte("showing_date", new Date().toISOString())
-      .order("showing_date", { ascending: true }),
+      .eq("notified", false)
+      .gte("created_at", minus24hISO),
+
+    // 5. BBA-signed client IDs — any row = signed
     supabase
       .from("buyer_broker_agreements")
       .select("client_id")
       .eq("agent_id", user.id),
   ]);
 
-  // Surface schema/RLS errors in server logs so missing columns don't silently
-  // zero-out the dashboard the way `client_role` did.
-  if (clientsRes.error) console.error("[dashboard] clients:", clientsRes.error);
-  if (transactionsRes.error)
-    console.error("[dashboard] transactions:", transactionsRes.error);
-  if (newMatchesRes.error)
-    console.error("[dashboard] property_matches:", newMatchesRes.error);
-  if (upcomingShowingsRes.error)
-    console.error("[dashboard] showings:", upcomingShowingsRes.error);
-  if (bbaRes.error)
-    console.error("[dashboard] buyer_broker_agreements:", bbaRes.error);
+  // Log errors without crashing the page
+  if (clientsRes.error) console.error("[today] clients:", clientsRes.error);
+  if (transactionsRes.error) console.error("[today] transactions:", transactionsRes.error);
+  if (activitiesRes.error) console.error("[today] activities:", activitiesRes.error);
+  if (matchesRes.error) console.error("[today] property_matches:", matchesRes.error);
+  if (bbaRes.error) console.error("[today] buyer_broker_agreements:", bbaRes.error);
 
-  const clients = clientsRes.data;
-  const transactions = transactionsRes.data;
-  const newMatchesCount = newMatchesRes.count;
-  const upcomingShowings = upcomingShowingsRes.data;
-  const bbaRows = bbaRes.data;
+  const clients = (clientsRes.data ?? []) as TodayClient[];
+  const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
+  const activities = (activitiesRes.data ?? []) as TodayActivity[];
 
-  const signedClientIds = new Set(
-    (bbaRows ?? []).map((r) => String(r.client_id)),
+  // Deduplicate client_ids for matches
+  const newMatchClientIds = [
+    ...new Set((matchesRes.data ?? []).map((r) => String(r.client_id))),
+  ];
+
+  const bbaSignedClientIds = (bbaRes.data ?? []).map((r) => String(r.client_id));
+
+  const { items, overflowCount } = buildTodayItems(
+    clients,
+    transactions,
+    activities,
+    newMatchClientIds,
+    bbaSignedClientIds,
   );
 
-  const bbaAlerts = ((upcomingShowings as ShowingRow[] | null) ?? [])
-    .filter((s) => !signedClientIds.has(String(s.client_id ?? "")))
-    .map((s) => ({
-      clientId: String(s.client_id ?? ""),
-      clientName: s.clients?.name ?? "Client",
-      address: s.address,
-      showingDate: s.showing_date,
-    }));
+  const firstName =
+    (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
+    user.email?.split("@")[0] ??
+    "there";
 
   return (
-    <DashboardClient
-      user={{
-        email: user.email ?? null,
-        fullName:
-          (user.user_metadata?.full_name as string | undefined) ?? null,
-      }}
-      initial={{
-        clients: (clients as ClientRow[] | null) ?? [],
-        transactions: (transactions as TxRow[] | null) ?? [],
-        newMatches: newMatchesCount ?? 0,
-        bbaAlerts,
-      }}
+    <TodayClientComponent
+      items={items}
+      overflowCount={overflowCount}
+      userName={firstName}
     />
   );
-}
-
-function empty() {
-  return { clients: [], transactions: [], newMatches: 0, bbaAlerts: [] };
 }
