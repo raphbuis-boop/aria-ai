@@ -1,171 +1,108 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import {
-  CalendarClock,
+  Briefcase,
+  Building2,
+  Ellipsis,
   House,
   Mic,
-  Settings,
   Users,
   type LucideIcon,
 } from "lucide-react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
 
 type Tab = {
   href: string;
   label: string;
   Icon: LucideIcon;
-  exact?: boolean;
+  // Additional hrefs that should count as "active" for this tab
+  activeFor?: string[];
 };
 
-const LEFT_TABS: Tab[] = [
-  { href: "/dashboard", label: "Today", Icon: House, exact: true },
-  { href: "/clients", label: "Clients", Icon: Users },
+const TABS: Tab[] = [
+  { href: "/dashboard", label: "Today", Icon: House },
+  { href: "/people", label: "People", Icon: Users, activeFor: ["/clients", "/inbox", "/pipeline"] },
+  { href: "/properties", label: "Properties", Icon: Building2, activeFor: ["/listings", "/properties"] },
+  { href: "/deals", label: "Deals", Icon: Briefcase, activeFor: ["/transactions", "/showings", "/cma"] },
+  { href: "/more", label: "More", Icon: Ellipsis, activeFor: ["/settings", "/voice", "/referrals", "/market-pulse"] },
 ];
 
-const RIGHT_TABS: Tab[] = [
-  { href: "/showings", label: "Timeline", Icon: CalendarClock },
-  { href: "/settings", label: "Settings", Icon: Settings },
-];
-
-function TabItem({ tab, active }: { tab: Tab; active: boolean }) {
-  return (
-    <Link
-      href={tab.href}
-      className="flex flex-1 flex-col items-center justify-center gap-[5px] py-2.5 active:opacity-60"
-      aria-label={tab.label}
-      style={{ transition: "opacity 80ms ease" }}
-    >
-      <tab.Icon
-        size={21}
-        strokeWidth={active ? 2.2 : 1.5}
-        style={{
-          color: active ? "rgba(255,255,255,0.95)" : "rgba(255,255,255,0.28)",
-          transition: "color 150ms ease",
-        }}
-      />
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: active ? 600 : 400,
-          letterSpacing: "0.01em",
-          color: active ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.28)",
-          transition: "color 150ms ease",
-        }}
-      >
-        {tab.label}
-      </span>
-    </Link>
+function isTabActive(tab: Tab, pathname: string): boolean {
+  if (pathname === tab.href) return true;
+  if (pathname.startsWith(tab.href + "/")) return true;
+  return (tab.activeFor ?? []).some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
   );
 }
 
 export function BottomNav() {
   const pathname = usePathname();
-  const supabase = createClient();
-  const [inboxUnread, setInboxUnread] = useState(0);
-
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { count } = await supabase
-        .from("activities")
-        .select("*", { count: "exact", head: true })
-        .eq("agent_id", user.id)
-        .eq("ai_draft", true)
-        .eq("approved", false);
-      if (!cancelled) setInboxUnread(count ?? 0);
-    }
-    load();
-    const id = setInterval(load, 15000);
-    return () => { cancelled = true; clearInterval(id); };
-  }, [supabase]);
-
-  function isActive(tab: Tab) {
-    if (tab.exact) return pathname === tab.href;
-    return pathname === tab.href || pathname.startsWith(tab.href + "/");
-  }
-
-  const voiceActive = pathname === "/voice";
-
-  // suppress unused warning — badge logic kept for future inbox tab
-  void inboxUnread;
+  const router = useRouter();
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-50 flex justify-center"
-      style={{
-        paddingLeft: 20,
-        paddingRight: 20,
-        paddingBottom: "max(12px, env(safe-area-inset-bottom))",
-      }}
-    >
-      <nav
-        className="flex w-full max-w-[380px] items-end"
+    <>
+      {/* Floating voice button — centered, 96px above nav */}
+      <div
+        className="fixed z-50 left-1/2"
+        style={{ bottom: "calc(max(12px, env(safe-area-inset-bottom)) + 64px + 96px)", transform: "translateX(-50%)" }}
+      >
+        <button
+          type="button"
+          aria-label="Voice assistant"
+          onClick={() => router.push("/voice")}
+          className="flex items-center justify-center rounded-full"
+          style={{
+            width: 56,
+            height: 56,
+            background: "#3B82F6",
+            boxShadow: "0 4px 24px rgba(59,130,246,0.5), 0 2px 8px rgba(0,0,0,0.6)",
+          }}
+        >
+          <Mic size={22} strokeWidth={1.8} color="#ffffff" />
+        </button>
+      </div>
+
+      {/* Bottom tab bar */}
+      <div
+        className="fixed bottom-0 left-0 right-0 z-50"
         style={{
-          background: "rgba(18, 18, 18, 0.92)",
-          backdropFilter: "blur(32px) saturate(180%)",
-          WebkitBackdropFilter: "blur(32px) saturate(180%)",
-          borderRadius: 26,
-          border: "0.5px solid rgba(255,255,255,0.04)",
-          boxShadow: "0 8px 32px rgba(0,0,0,0.7)",
+          background: "#000000",
+          borderTop: "1px solid #222222",
+          paddingBottom: "max(12px, env(safe-area-inset-bottom))",
         }}
       >
-        {LEFT_TABS.map((tab) => (
-          <TabItem key={tab.href} tab={tab} active={isActive(tab)} />
-        ))}
-
-        {/* Center mic bubble */}
-        <div className="flex flex-col items-center justify-end pb-2.5 px-3">
-          <Link
-            href="/voice"
-            aria-label="Voice assistant"
-            className="flex items-center justify-center rounded-full"
-            style={{
-              width: 48,
-              height: 48,
-              marginTop: -14,
-              background: voiceActive
-                ? "rgba(10, 124, 255, 0.18)"
-                : "rgba(28, 28, 30, 0.98)",
-              border: voiceActive
-                ? "0.5px solid rgba(10, 124, 255, 0.35)"
-                : "0.5px solid rgba(255,255,255,0.08)",
-              boxShadow: voiceActive
-                ? "0 0 0 6px rgba(10,124,255,0.07), 0 0 16px rgba(10,124,255,0.3)"
-                : "0 4px 16px rgba(0,0,0,0.6)",
-              transition: "all 250ms ease",
-            }}
-          >
-            <Mic
-              size={18}
-              strokeWidth={1.6}
-              style={{
-                color: voiceActive ? "rgba(10,124,255,0.95)" : "rgba(10,124,255,0.6)",
-                transition: "color 250ms ease",
-              }}
-            />
-          </Link>
-          <span
-            style={{
-              fontSize: 10,
-              fontWeight: voiceActive ? 600 : 400,
-              marginTop: 5,
-              color: voiceActive ? "rgba(255,255,255,0.85)" : "rgba(255,255,255,0.22)",
-              transition: "color 200ms ease",
-            }}
-          >
-            Voice
-          </span>
-        </div>
-
-        {RIGHT_TABS.map((tab) => (
-          <TabItem key={tab.href} tab={tab} active={isActive(tab)} />
-        ))}
-      </nav>
-    </div>
+        <nav className="flex items-stretch">
+          {TABS.map((tab) => {
+            const active = isTabActive(tab, pathname);
+            return (
+              <Link
+                key={tab.href}
+                href={tab.href}
+                className="flex flex-1 flex-col items-center justify-center gap-[5px] pt-2.5 pb-1 active:opacity-60"
+                style={{ transition: "opacity 80ms ease" }}
+                aria-label={tab.label}
+              >
+                <tab.Icon
+                  size={22}
+                  strokeWidth={active ? 2.2 : 1.6}
+                  style={{ color: active ? "#ffffff" : "#6B7280" }}
+                />
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: active ? 600 : 400,
+                    color: active ? "#ffffff" : "#6B7280",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
+    </>
   );
 }

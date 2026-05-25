@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
+import { Bell } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -93,28 +94,32 @@ export function TodayClient({ items, overflowCount, userName }: Props) {
     [router],
   );
 
-  const countLine =
-    visibleItems.length === 0
-      ? "All caught up — nothing urgent today."
-      : visibleItems.length === 1
-        ? "1 person to follow up with today"
-        : `${visibleItems.length} people to follow up with today`;
-
   return (
     <div className="min-h-screen pb-28" style={{ background: "#000000", color: "#ffffff" }}>
       <div className="px-5 pt-8">
 
         {/* ── Header ── */}
-        <p className="text-[14px]" style={{ color: "#9CA3AF" }}>
-          {greeting}, {userName}
-        </p>
-        <h1 className="mt-1 text-[28px] font-bold leading-tight tracking-[-0.02em]">
-          {countLine}
-        </h1>
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <p className="text-[14px]" style={{ color: "#9CA3AF" }}>
+              {greeting}, {userName}
+            </p>
+            <h1 className="mt-1 text-[36px] font-bold leading-[1.1] tracking-[-0.02em]">
+              {visibleItems.length === 0 ? (
+                "All caught up today."
+              ) : visibleItems.length === 1 ? (
+                <><span style={{ color: "#FACC15" }}>1</span> person to follow up with today</>
+              ) : (
+                <><span style={{ color: "#FACC15" }}>{visibleItems.length}</span> people to follow up with today</>
+              )}
+            </h1>
+          </div>
+          <Bell size={24} style={{ color: "#6B7280", flexShrink: 0, marginTop: 4 }} />
+        </div>
 
         {/* ── Empty state ── */}
         {visibleItems.length === 0 && (
-          <div className="mt-10">
+          <div className="mt-6">
             <p className="text-[14px]" style={{ color: "#6B7280" }}>
               No follow-ups, no signatures pending. Enjoy the quiet.
             </p>
@@ -130,7 +135,7 @@ export function TodayClient({ items, overflowCount, userName }: Props) {
 
         {/* ── Item list ── */}
         {visibleItems.length > 0 && (
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-[10px]">
             {visibleItems.map((item, index) => (
               <div
                 key={item.id}
@@ -149,9 +154,19 @@ export function TodayClient({ items, overflowCount, userName }: Props) {
                     {index + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[22px] font-bold leading-tight" style={{ color: "#ffffff" }}>
-                      {item.clientName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[22px] font-bold leading-tight" style={{ color: "#ffffff" }}>
+                        {item.clientName}
+                      </p>
+                      {item.urgencyRank === 1 && (
+                        <span
+                          className="shrink-0 rounded-[4px] px-[6px] py-[2px] text-[11px] font-semibold uppercase tracking-wide"
+                          style={{ color: "#FCA5A5", background: "#7F1D1D" }}
+                        >
+                          Urgent
+                        </span>
+                      )}
+                    </div>
                     <p className="mt-1.5 text-[16px] leading-snug" style={{ color: "#9CA3AF" }}>
                       {item.reason}
                     </p>
@@ -168,8 +183,8 @@ export function TodayClient({ items, overflowCount, userName }: Props) {
                   <button
                     type="button"
                     onClick={() => handleAction(item)}
-                    className="w-full rounded-[12px] py-[17px] text-[17px] font-semibold text-white"
-                    style={{ background: "#3B82F6", minHeight: "56px" }}
+                    className="w-full rounded-[12px] py-[17px] text-[17px] font-semibold"
+                    style={{ background: "#FACC15", color: "#000000", minHeight: "56px" }}
                   >
                     {item.actionLabel}
                   </button>
