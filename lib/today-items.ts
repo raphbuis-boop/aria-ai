@@ -17,8 +17,8 @@ export type TodayClient = {
   budget_min: number | null;
   budget_max: number | null;
   phone: string | null;
-  birthday: string | null;           // DATE column added in migration
-  home_purchase_date: string | null; // DATE column added in migration
+  birthday: string | null;
+  home_purchase_date: string | null;
 };
 
 export type TodayTransaction = {
@@ -34,30 +34,88 @@ export type TodayActivity = {
   created_at: string;
 };
 
+export type NewMatchItem = {
+  clientId: string;
+  propertyAddress: string | null;
+};
+
 // ─── Output type ─────────────────────────────────────────────────────────────
 
 export type ActionType = "text" | "navigate";
 
 export type TodayItem = {
-  id: string;          // unique key for React
+  id: string;
   clientId: string;
   clientName: string;
   clientPhone: string | null;
   clientTown: string | null;
   clientBudgetMax: number | null;
   clientStatus: string | null;
-  reason: string;      // plain English — shown to user
-  context: string | null; // second muted line, optional
-  actionLabel: string; // text on the big button
+  reason: string;
+  context: string | null;
+  actionLabel: string;
   actionType: ActionType;
-  navigateTo: string | null; // used when actionType === "navigate"
-  urgencyRank: number; // lower = higher urgency (for sort)
+  navigateTo: string | null;
+  urgencyRank: number;
+  transactionId?: string;
+  propertyAddress?: string | null;
 };
 
-export type TodayResult = {
-  items: TodayItem[];
-  overflowCount: number;
-};
+// ─── Label helpers ────────────────────────────────────────────────────────────
+
+/** Detects couple names: contains &, and, or / between names */
+function isCouple(name: string): boolean {
+  return /\s+(?:&|and|\/)\s+/i.test(name);
+}
+
+/**
+ * Pluralizes a last name for "the Roths" / "the Joneses" style labels.
+ * Strips hyphenated prefix first: "Smith-Roth" → "Roth".
+ */
+function pluralizeCoupleLastName(lastName: string): string {
+  const base = lastName.includes("-") ? lastName.split("-").pop()! : lastName;
+  // Ends in s/x/z/ch/sh → add "es"
+  if (/(s|x|z|ch|sh)$/i.test(base)) return `${base}es`;
+  // All other cases → add s (Kennedy → Kennedys, Roth → Roths, Chen → Chens)
+  return `${base}s`;
+}
+
+/**
+ * Returns the shared last name (last word of the full name string).
+ * Works for "Mike & Linda Roth", "Sarah and James Jones", "Emma & Tom Smith-Roth".
+ */
+function coupleLastName(name: string): string {
+  return name.trim().split(/\s+/).pop() ?? name;
+}
+
+/**
+ * "Mike Rodriguez" → "Mike"
+ * "Mike & Linda Roth" → "the Roths"
+ * "Sarah and James Jones" → "the Joneses"
+ * "Emma & Tom Smith-Roth" → "the Roths"
+ */
+function textRecipient(name: string): string {
+  if (isCouple(name)) {
+    const lastName = coupleLastName(name);
+    return `the ${pluralizeCoupleLastName(lastName)}`;
+  }
+  return name.split(" ")[0];
+}
+
+/**
+ * "John Peterson" → "Open John's deal"
+ * "Mike & Linda Roth" → "Open the Roths' deal"
+ * "Sarah and James Jones" → "Open the Joneses' deal"
+ */
+function closingLabel(name: string): string {
+  if (isCouple(name)) {
+    const lastName = coupleLastName(name);
+    const plural = pluralizeCoupleLastName(lastName);
+    // Possessive: "Roths'" / "Joneses'"
+    return `Open the ${plural}' deal`;
+  }
+  return `Open ${name.split(" ")[0]}'s deal`;
+}
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -66,7 +124,6 @@ function isHot(c: TodayClient): boolean {
   return c.status === "showing" || (c.lead_score ?? 0) >= 8;
 }
 
-// Statuses that represent an actively searching buyer
 const ACTIVE_BUYER_STATUSES = ["new", "contacted", "showing", "offer"];
 
 function fmtBudget(min: number | null, max: number | null): string | null {
@@ -83,19 +140,14 @@ function fmtBudget(min: number | null, max: number | null): string | null {
   return `${fmt(lo)}+`;
 }
 
-/** Returns true if a DATE string (YYYY-MM-DD) falls on today's month/day. */
 function isAnniversaryToday(dateStr: string | null): boolean {
   if (!dateStr) return false;
   const today = new Date();
-  const d = new Date(dateStr + "T00:00:00"); // avoid UTC shift
+  const d = new Date(dateStr + "T00:00:00");
   return d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
 }
 
-/** Days since the most recent activity for a client. Returns null if no activity. */
-function daysSinceContact(
-  clientId: string,
-  activities: TodayActivity[],
-): number | null {
+function daysSinceContact(clientId: string, activities: TodayActivity[]): number | null {
   const clientActivities = activities.filter((a) => a.client_id === clientId);
   if (clientActivities.length === 0) return null;
   const latest = clientActivities.reduce((a, b) =>
@@ -106,14 +158,12 @@ function daysSinceContact(
 
 // ─── Main export ─────────────────────────────────────────────────────────────
 
-const MAX_ITEMS = 7;
-
 /**
- * Builds the sorted, capped Today list from raw Supabase data.
- * Pure function — no I/O, easy to test.
+ * Builds the urgency-sorted Today list from raw Supabase data.
+ * Pure function — no I/O, easy to test. No cap — returns all qualifying items.
  *
  * Urgency rank:
- *   1  — transaction closing/contingency in ≤3 days
+ *   1  — transaction closing in ≤3 days
  *   2  — hot leads with no activity in 5+ days
  *   3  — birthdays / home purchase anniversaries today
  *   4  — pending signatures (no BBA)
@@ -123,13 +173,13 @@ export function buildTodayItems(
   clients: TodayClient[],
   transactions: TodayTransaction[],
   activities: TodayActivity[],
-  newMatchClientIds: string[],  // client IDs with unnotified matches
-  bbaSignedClientIds: string[], // client IDs who have already signed a BBA
-): TodayResult {
+  newMatchItems: NewMatchItem[],
+  bbaSignedClientIds: string[],
+): TodayItem[] {
   const items: TodayItem[] = [];
   const now = new Date();
 
-  // ── 1. At-risk transactions (closing/contingency ≤3 days) ─────────────────
+  // ── 1. At-risk transactions (closing ≤3 days) ─────────────────────────────
   for (const tx of transactions) {
     if (!tx.closing_date) continue;
     const days = differenceInCalendarDays(new Date(tx.closing_date), now);
@@ -138,9 +188,8 @@ export function buildTodayItems(
     const client = clients.find((c) => c.id === tx.client_id);
     if (!client) continue;
 
-    const daysLabel =
-      days === 0 ? "today" : days === 1 ? "tomorrow" : `in ${days} days`;
-    const addr = tx.address ? ` at ${tx.address}` : "";
+    // reason identifies WHICH closing; timing pill ("TODAY"/"TOMORROW"/"2 DAYS") conveys urgency
+    const reason = tx.address ? `Closing at ${tx.address}` : "Closing soon";
 
     items.push({
       id: `tx-${tx.id}`,
@@ -150,19 +199,19 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
-      reason: `Closing${addr} is ${daysLabel} — check in now`,
+      reason,
       context: client.town ?? null,
-      actionLabel: `Open ${client.name.split(" ")[0]}'s deal`,
+      actionLabel: closingLabel(client.name),
       actionType: "navigate",
-      navigateTo: `/transactions`,
+      navigateTo: `/transactions/${tx.id}`,
       urgencyRank: 1,
+      transactionId: tx.id,
     });
   }
 
   // ── 2. Hot leads quiet for 5+ days ────────────────────────────────────────
   for (const client of clients) {
     if (!isHot(client)) continue;
-    if (client.status === "closed") continue;
     if (items.some((i) => i.clientId === client.id)) continue;
 
     const days = daysSinceContact(client.id, activities);
@@ -183,7 +232,7 @@ export function buildTodayItems(
       clientStatus: client.status,
       reason: daysPhrase,
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
-      actionLabel: `Text ${client.name.split(" ")[0]} now`,
+      actionLabel: `Text ${textRecipient(client.name)}`,
       actionType: "text",
       navigateTo: null,
       urgencyRank: 2,
@@ -191,8 +240,7 @@ export function buildTodayItems(
   }
 
   // ── 3. Birthdays & home purchase anniversaries today ──────────────────────
-  // Fix: if BOTH birthday and home purchase anniversary fall today,
-  // prefer home purchase anniversary (more meaningful in a real estate relationship).
+  // If BOTH fall today, home purchase anniversary takes priority.
   for (const client of clients) {
     if (client.status === "closed") continue;
     if (items.some((i) => i.clientId === client.id)) continue;
@@ -202,7 +250,6 @@ export function buildTodayItems(
     if (!isBirthday && !isHomePurchase) continue;
 
     if (isHomePurchase) {
-      // Home purchase anniversary takes priority over birthday
       const purchaseYear = client.home_purchase_date
         ? new Date(client.home_purchase_date + "T00:00:00").getFullYear()
         : null;
@@ -219,13 +266,12 @@ export function buildTodayItems(
         clientStatus: client.status,
         reason: `Home purchase anniversary${yearLabel}`,
         context: client.town ?? null,
-        actionLabel: `Send anniversary text`,
+        actionLabel: `Send anniversary text to ${textRecipient(client.name)}`,
         actionType: "text",
         navigateTo: null,
         urgencyRank: 3,
       });
     } else {
-      // Birthday only (no home purchase anniversary today)
       items.push({
         id: `bday-${client.id}`,
         clientId: client.id,
@@ -236,7 +282,7 @@ export function buildTodayItems(
         clientStatus: client.status,
         reason: "Today is their birthday",
         context: client.town ?? null,
-        actionLabel: `Send birthday text`,
+        actionLabel: `Send birthday text to ${textRecipient(client.name)}`,
         actionType: "text",
         navigateTo: null,
         urgencyRank: 3,
@@ -269,14 +315,17 @@ export function buildTodayItems(
   }
 
   // ── 5. New MLS matches — active buyers only ───────────────────────────────
-  for (const clientId of newMatchClientIds) {
+  for (const { clientId, propertyAddress } of newMatchItems) {
     if (items.some((i) => i.clientId === clientId)) continue;
     const client = clients.find((c) => c.id === clientId);
     if (!client) continue;
-    // Only surface matches for clients actively searching
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
     const budget = fmtBudget(client.budget_min, client.budget_max);
+    const firstName = client.name.split(" ")[0];
+    const addrLabel = propertyAddress
+      ? `Send ${propertyAddress} to ${firstName}`
+      : `Send new listing to ${firstName}`;
 
     items.push({
       id: `match-${client.id}`,
@@ -288,18 +337,15 @@ export function buildTodayItems(
       clientStatus: client.status,
       reason: "New listing just hit MLS that fits what they want",
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
-      actionLabel: `Send listing to ${client.name.split(" ")[0]}`,
+      actionLabel: addrLabel,
       actionType: "navigate",
       navigateTo: `/clients/${client.id}`,
       urgencyRank: 5,
+      propertyAddress: propertyAddress ?? null,
     });
   }
 
-  // ── Sort by urgency, cap at MAX_ITEMS, return overflow count ──────────────
+  // ── Sort by urgency, return all items (no cap) ────────────────────────────
   items.sort((a, b) => a.urgencyRank - b.urgencyRank);
-  const overflowCount = Math.max(0, items.length - MAX_ITEMS);
-  return {
-    items: items.slice(0, MAX_ITEMS),
-    overflowCount,
-  };
+  return items;
 }

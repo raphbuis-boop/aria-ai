@@ -50,8 +50,17 @@ Tap the button → next screen shows the AI-drafted message full-screen → [Sen
 - Professional: dense, serious, fast — like the dark workout app aesthetic, not pastel AI consumer apps
 - Plain English: no labels like "Hot Lead" or "BBA Alert" — say "She's been quiet for 6 days" instead
 
-## Design tokens (locked)
-Background #000000, cards #111111, deep surfaces #0a0a0a, borders #222222, primary accent #3B82F6 (open to brighter alternative for primary CTAs), Inter font. No gradients, shadows, blur, or glass effects.
+## Design system (current)
+- **Background:** Gradient mesh — radial blue + purple radials over `#000000`. Allowed and encouraged.
+- **Elevated surfaces:** Glass-effect cards using `rgba()` backgrounds + `backdrop-filter: blur()`. Default for floating elements like the bottom nav and DraftSheet.
+- **Cards in lists:** Flat row style with `0.5px solid rgba(255,255,255,0.06)` separators. NO bubble containers on the Today screen.
+- **Accent gradient:** `linear-gradient(135deg, #3B82F6, #06B6D4)` (blue → cyan) for hero text, the Aria logo, and primary CTAs.
+- **Urgency colors:** Red `#EF4444` (closing-at-risk), Amber `#F59E0B` (quiet hot leads), Purple `#A78BFA` (past-client touches + AI suggestions), Blue `#3B82F6` (signatures), `#10B981` (new MLS matches).
+- **Subtle glows allowed** on focus/urgency elements (e.g. red glow on rank-1 dot, blue glow halo on nav, blue shadow on Aria mic button).
+- **Logo:** Angular A letterform with the blue→cyan gradient. Lives at `public/aria-logo.svg`.
+- **Navigation:** Floating pill bar with glass blur, NOT a flush bottom bar. Centered Aria voice button.
+- **Typography:** Inter font throughout. Confident weights (500-700) for hierarchy.
+- **Splash:** Stroke-draw animation on the A logo (2.2s), then fill fade + glow + wordmark + tagline. ~3.5s total. Once per session via sessionStorage.
 
 ## Rules for future development
 1. Read this file before any structural change

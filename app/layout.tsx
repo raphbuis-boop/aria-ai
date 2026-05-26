@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ConditionalComplianceFooter } from "@/components/ConditionalComplianceFooter";
+import { SplashScreen } from "@/components/SplashScreen";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.className} min-h-screen bg-[#0a0a0a] text-[#f0f0f5]`}>
+        <SplashScreen />
         <PostHogProvider>
           <ToastProvider>
             {children}
