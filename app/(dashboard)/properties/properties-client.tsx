@@ -170,7 +170,7 @@ export function PropertiesClient({
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <BackButton href="/more" className="mb-4" />
+      <BackButton className="mb-4" />
       <header className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-[20px] font-medium text-text-primary">Properties</div>
         <div className="flex flex-wrap items-center justify-end gap-2">

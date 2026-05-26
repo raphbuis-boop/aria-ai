@@ -142,16 +142,16 @@ export function ClientDetail({
   }
 
   return (
-    <div className="min-h-screen pb-24" style={{ background: "#050816", color: "#e4e8ff" }}>
+    <div className="min-h-screen pb-24" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
         {/* ─── Client Header ──────────────────────────────────────────── */}
         <div className="mb-5 flex items-center justify-between">
-          <BackButton href="/clients" />
+          <BackButton />
           <button
             type="button"
             onClick={() => setEditOpen(true)}
             className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-2 text-[12px] font-medium press"
-            style={{ background: "#080c18", color: "#50587a", border: "0.5px solid #181d2e" }}
+            style={{ background: "#1c1c1e", color: "#8e8e93" }}
           >
             <Pencil size={12} /> Edit
           </button>
@@ -160,7 +160,7 @@ export function ClientDetail({
         {/* ─── Hero card ─────────────────────────────────────────────── */}
         <div
           className="mb-5 p-5"
-          style={{ borderRadius: 20, background: "#080c18", border: "0.5px solid #181d2e" }}
+          style={{ borderRadius: 20, background: "#1c1c1e" }}
         >
           <div className="mb-4 flex items-center gap-4">
             <div
@@ -176,13 +176,13 @@ export function ClientDetail({
                 {status ? (
                   <span
                     className="rounded px-2 py-[2px] text-[10px] font-semibold"
-                    style={{ background: "rgba(76,122,255,0.1)", color: "#7b9fff" }}
+                    style={{ background: "rgba(10,124,255,0.1)", color: "#0a7cff" }}
                   >
                     {status.replace(/_/g, " ")}
                   </span>
                 ) : null}
                 {leadScore >= 7 ? (
-                  <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#4c7aff" }} />
+                  <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#0a7cff" }} />
                 ) : null}
               </div>
             </div>
@@ -195,7 +195,7 @@ export function ClientDetail({
               { label: "Beds / Baths", value: formatBedsBaths(beds, baths) },
             ].map(({ label, value }) => (
               <div key={label} className="rounded-[12px] p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                <p className="mb-0.5 text-[10px]" style={{ color: "#333a58" }}>
+                <p className="mb-0.5 text-[10px]" style={{ color: "#48484a" }}>
                   {label}
                 </p>
                 <p className="text-[13px] font-semibold">{value}</p>
@@ -220,41 +220,41 @@ export function ClientDetail({
           {phone ? (
             <a href={`tel:${phone}`} className="ios-row press">
               <div className="flex-1">
-                <p className="text-[13px]" style={{ color: "#40486a" }}>Phone</p>
+                <p className="text-[13px]" style={{ color: "#636366" }}>Phone</p>
                 <p className="text-[15px] font-medium">{phone}</p>
               </div>
-              <span className="text-[13px]" style={{ color: "#4c7aff" }}>Call</span>
+              <span className="text-[13px]" style={{ color: "#0a7cff" }}>Call</span>
             </a>
           ) : null}
           {email ? (
             <a href={`mailto:${email}`} className="ios-row press">
               <div className="flex-1">
-                <p className="text-[13px]" style={{ color: "#40486a" }}>Email</p>
+                <p className="text-[13px]" style={{ color: "#636366" }}>Email</p>
                 <p className="text-[15px] font-medium truncate">{email}</p>
               </div>
-              <span className="text-[13px]" style={{ color: "#4c7aff" }}>Mail</span>
+              <span className="text-[13px]" style={{ color: "#0a7cff" }}>Mail</span>
             </a>
           ) : null}
           <button type="button" onClick={() => setDraftOpen(true)} className="ios-row w-full press">
             <div className="flex-1 text-left">
               <p className="text-[15px] font-medium" style={{ color: "#7b9fff" }}>AI Text</p>
-              <p className="text-[11px]" style={{ color: "#40486a" }}>Generate a message in your tone</p>
+              <p className="text-[11px]" style={{ color: "#636366" }}>Generate a message in your tone</p>
             </div>
-            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
+            <span className="text-[15px]" style={{ color: "#48484a" }}>›</span>
           </button>
           <button type="button" onClick={logCall} className="ios-row w-full press">
             <div className="flex-1 text-left">
               <p className="text-[15px] font-medium" style={{ color: "#18a066" }}>Log Call</p>
-              <p className="text-[11px]" style={{ color: "#40486a" }}>Record this interaction</p>
+              <p className="text-[11px]" style={{ color: "#636366" }}>Record this interaction</p>
             </div>
-            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
+            <span className="text-[15px]" style={{ color: "#48484a" }}>›</span>
           </button>
           <Link href={`/showings?new=1&client=${id}`} className="ios-row press">
             <div className="flex-1">
               <p className="text-[15px] font-medium" style={{ color: "#c8d0f0" }}>Log Showing</p>
-              <p className="text-[11px]" style={{ color: "#40486a" }}>Schedule a property tour</p>
+              <p className="text-[11px]" style={{ color: "#636366" }}>Schedule a property tour</p>
             </div>
-            <span className="text-[15px]" style={{ color: "#333a58" }}>›</span>
+            <span className="text-[15px]" style={{ color: "#48484a" }}>›</span>
           </Link>
         </div>
 
@@ -281,11 +281,11 @@ export function ClientDetail({
         <div className="mb-4">
           <div className="mb-2 flex items-center justify-between px-0.5">
             <div className="flex items-center gap-2">
-              <p className="text-[11px] font-bold uppercase tracking-widest text-[#6b7090]">
+              <p className="text-[12px]" style={{ color: "#636366" }}>
                 Property Matches
               </p>
               {matches.length > 0 && (
-                <span className="rounded-full bg-[#3a65f0]/20 px-1.5 py-0.5 text-[10px] font-bold text-[#6b8fff]">
+                <span className="rounded-full px-1.5 py-0.5 text-[10px] font-bold" style={{ background: "rgba(10,124,255,0.12)", color: "#0a7cff" }}>
                   {matches.length}
                 </span>
               )}
@@ -298,7 +298,7 @@ export function ClientDetail({
           </div>
 
           {matches.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-[#2a2e40] bg-[#12121e] px-4 py-6 text-center text-[12.5px] text-[#9498b0]">
+            <div className="rounded-2xl px-4 py-6 text-center text-[12.5px]" style={{ background: "#1c1c1e", color: "#8e8e93" }}>
               No matches yet.{" "}
               <button
                 type="button"
@@ -334,10 +334,10 @@ export function ClientDetail({
                     return (
                       <li
                         key={String(m.id)}
-                        className="rounded-2xl border border-[#1e2230] bg-[#12121e] px-3 py-2.5"
+                        className="rounded-2xl px-3 py-2.5" style={{ background: "#1c1c1e" }}
                       >
                         <div className="flex items-center gap-3">
-                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px] bg-[#3a65f0]/12 text-[#6b8fff]">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-[10px]" style={{ background: "rgba(255,255,255,0.07)", color: "#aeaeb2" }}>
                             <Home size={15} />
                           </span>
                           <div className="min-w-0 flex-1">
@@ -361,7 +361,7 @@ export function ClientDetail({
                             </p>
                           </div>
                           <div className="flex flex-shrink-0 items-center gap-1.5">
-                            <span className="rounded-md bg-[#3a65f0]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#6b8fff]">
+                            <span className="rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider" style={{ background: "rgba(10,124,255,0.12)", color: "#0a7cff" }}>
                               {score}%
                             </span>
                             {propertyId ? (
@@ -383,7 +383,7 @@ export function ClientDetail({
                               setDraftPrefill(address);
                               setDraftOpen(true);
                             }}
-                            className="flex items-center gap-1 rounded-lg border border-[#3a65f0]/20 bg-[#3a65f0]/10 px-3 py-2 text-[11px] font-semibold text-[#6b8fff]"
+                            className="flex items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-semibold" style={{ background: "rgba(10,124,255,0.1)", color: "#0a7cff" }}
                           >
                             <Send size={12} />
                             Send to client
@@ -393,7 +393,7 @@ export function ClientDetail({
                             onClick={() =>
                               toast.toast("Schedule showing — coming soon", "default")
                             }
-                            className="flex items-center gap-1 rounded-lg border border-[#1e2230] bg-[#0e0e1a] px-3 py-2 text-[11px] font-semibold text-[#9498b0]"
+                            className="flex items-center gap-1 rounded-lg px-3 py-2 text-[11px] font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#8e8e93" }}
                           >
                             <CalendarPlus size={12} />
                             Schedule showing
@@ -408,7 +408,7 @@ export function ClientDetail({
                 <button
                   type="button"
                   onClick={() => setMatchesExpanded((p) => !p)}
-                  className="mt-2 w-full rounded-xl border border-[#1e2230] bg-[#0e0e1a] py-2 text-center text-[12px] font-semibold text-[#6b8fff]"
+                  className="mt-2 w-full rounded-xl py-2 text-center text-[12px] font-semibold" style={{ background: "rgba(255,255,255,0.06)", color: "#0a7cff" }}
                 >
                   {matchesExpanded
                     ? "Show less"
@@ -433,7 +433,7 @@ export function ClientDetail({
         {/* ─── Notes (inline, only if present) ────────────────────────── */}
         {notes ? (
           <CollapsibleSection title="Notes">
-            <div className="rounded-2xl border border-[#1e2230] bg-[#12121e] p-4">
+            <div className="rounded-2xl p-4" style={{ background: "#1c1c1e" }}>
               <p className="whitespace-pre-wrap text-sm leading-relaxed text-[#a0a0c0]">
                 {notes}
               </p>
@@ -465,9 +465,9 @@ export function ClientDetail({
                 return (
                   <div key={String(item.id)} className="flex gap-3 pb-4">
                     <div className="flex flex-col items-center">
-                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-[#3a65f0]" />
+                      <div className="mt-1 h-2 w-2 flex-shrink-0 rounded-full" style={{ background: "#0a7cff" }} />
                       {i < activities.length - 1 ? (
-                        <div className="mt-1 w-px flex-1 bg-[#1e2230]" />
+                        <div className="mt-1 w-px flex-1" style={{ background: "rgba(255,255,255,0.06)" }} />
                       ) : null}
                     </div>
                     <div className="min-w-0 pb-2">

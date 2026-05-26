@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, Building2, MoreHorizontal, type LucideIcon } from "lucide-react";
+import { Home, Users, Building2, Settings, type LucideIcon } from "lucide-react";
 
 type Tab = {
   href: string;
@@ -16,7 +16,7 @@ const TABS_LEFT: Tab[] = [
 
 const TABS_RIGHT: Tab[] = [
   { href: "/properties", Icon: Building2, activeFor: ["/listings", "/property-search"] },
-  { href: "/more", Icon: MoreHorizontal, activeFor: ["/settings", "/voice", "/referrals", "/market-pulse"] },
+  { href: "/settings", Icon: Settings, activeFor: ["/more", "/voice", "/referrals", "/market-pulse"] },
 ];
 
 function isTabActive(tab: Tab, pathname: string): boolean {

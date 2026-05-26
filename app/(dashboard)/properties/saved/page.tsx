@@ -39,7 +39,7 @@ export default function SavedPropertiesPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <BackButton href="/listings" label="Property Search" className="mb-4" />
+      <BackButton label="Property Search" className="mb-4" />
       <div className="flex items-center gap-2">
         <Bookmark className="text-accent-blue" size={22} />
         <h1 className="text-[20px] font-semibold text-text-primary">

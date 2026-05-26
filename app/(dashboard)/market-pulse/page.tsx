@@ -35,16 +35,16 @@ function fmtMoney(n: number) {
 
 export default function MarketPulsePage() {
   return (
-    <div className="min-h-screen bg-[#080910] text-[#e8eaf2] pb-28">
+    <div className="min-h-screen pb-28" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
-        <BackButton href="/more" className="mb-4" />
-        <p className="text-[11px] font-semibold uppercase tracking-[1px] text-[#3a65f0]">
+        <BackButton className="mb-4" />
+        <p className="text-[12px]" style={{ color: "#636366" }}>
           {overall.monthLabel}
         </p>
         <h1 className="mt-1 text-[26px] font-semibold leading-tight">
           Market Pulse
         </h1>
-        <p className="mt-1 text-[13px] text-[#9498b0]">
+        <p className="mt-1 text-[13px]" style={{ color: "#636366" }}>
           New Jersey snapshot · updated weekly
         </p>
       </div>
@@ -52,19 +52,19 @@ export default function MarketPulsePage() {
       {/* Headline stats */}
       <div className="mt-5 px-5 grid grid-cols-2 gap-2">
         <div className="col-span-2">
-          <Stat label="Median" value={fmtMoney(overall.median)} tone="blue" />
+          <Stat label="Median" value={fmtMoney(overall.median)} tone="plain" />
         </div>
         <Stat label="Avg DOM" value={`${overall.avgDom}d`} tone="plain" />
         <Stat label="List / Sale" value={`${overall.listToSale}%`} tone="green" />
       </div>
 
       <div className="mt-5 px-5">
-        <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-4">
-          <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[1.2px] text-[#3a65f0]">
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-[#3a65f0]" />
+        <div className="rounded-[18px] p-4" style={{ background: "#1c1c1e" }}>
+          <div className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: "#636366" }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "#0a7cff" }} />
             Momentum read
           </div>
-          <p className="mt-2 text-[13px] leading-[1.55] text-[#a0a0c0]">
+          <p className="mt-2 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
             Median up <span className="font-medium text-[#1a9b5e]">+{overall.changePct}%</span> YoY.
             Inventory tight across Summit, Ridgewood, and Hoboken — expect bidding wars under DOM 15.
           </p>
@@ -72,26 +72,25 @@ export default function MarketPulsePage() {
       </div>
 
       <div className="mt-6 px-5">
-        <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[1.4px] text-[#6b7090]">
+        <p className="mb-2.5 text-[12px]" style={{ color: "#636366" }}>
           By town
         </p>
-        <div className="overflow-hidden rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c]">
+        <div className="overflow-hidden rounded-[18px]" style={{ background: "#1c1c1e" }}>
           {towns.map((t, i) => (
             <div
               key={t.town}
-              className={`flex items-center justify-between px-4 py-[14px] ${
-                i > 0 ? "border-t-[0.5px] border-[#141420]" : ""
-              }`}
+              className="flex items-center justify-between px-4 py-[14px]"
+              style={i > 0 ? { borderTop: "0.5px solid rgba(255,255,255,0.06)" } : {}}
             >
               <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold text-[#e8eaf2]">
+                <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
                   {t.town}
                 </div>
-                <div className="text-[11px] text-[#555570]">{t.dom} days avg on market</div>
+                <div className="text-[11px]" style={{ color: "#636366" }}>{t.dom} days avg on market</div>
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-right">
-                  <div className="text-[14px] font-semibold text-[#3a65f0]">
+                  <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
                     {fmtMoney(t.median)}
                   </div>
                   <div
@@ -114,7 +113,7 @@ export default function MarketPulsePage() {
         </div>
       </div>
 
-      <p className="mt-5 px-5 text-[11px] text-[#6b7090]">
+      <p className="mt-5 px-5 text-[11px]" style={{ color: "#636366" }}>
         Market estimates compiled for {overall.monthLabel} · NJ Bergen, Essex &amp; Union counties. Not sourced from live MLS data. For actual listing data, see the MLS search.
       </p>
     </div>
@@ -128,20 +127,15 @@ function Stat({
 }: {
   label: string;
   value: string;
-  tone: "blue" | "green" | "plain";
+  tone: "green" | "plain";
 }) {
-  const color =
-    tone === "blue"
-      ? "text-[#3a65f0]"
-      : tone === "green"
-        ? "text-[#1a9b5e]"
-        : "text-[#e8eaf2]";
+  const valueColor = tone === "green" ? "#1a9b5e" : "#f0f0f5";
   return (
-    <div className="rounded-[18px] border-[0.5px] border-[#1a1a2c] bg-[#0d0d1c] p-3.5">
-      <p className="mb-1 text-[10px] font-bold uppercase tracking-[1.2px] text-[#6b7090]">
+    <div className="rounded-[18px] p-3.5" style={{ background: "#1c1c1e" }}>
+      <p className="mb-1 text-[11px] font-medium" style={{ color: "#636366" }}>
         {label}
       </p>
-      <p className={`text-[18px] font-semibold leading-none ${color}`}>
+      <p className="text-[18px] font-semibold leading-none" style={{ color: valueColor }}>
         {value}
       </p>
     </div>
