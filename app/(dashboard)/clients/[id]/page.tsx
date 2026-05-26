@@ -1,4 +1,3 @@
-import { fetchMlsListingsForClient } from "@/lib/simplyrets";
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ClientDetail } from "./client-detail";
@@ -18,70 +17,69 @@ export default async function ClientDetailPage({
     .from("clients")
     .select("*")
     .eq("id", params.id)
-    .eq("agent_id", user.id)
+    .eq("agent_id", user.id) // multi-tenant safety
     .maybeSingle();
 
   if (!client) notFound();
 
-  const [
-    { data: activities },
-    { data: tasks },
-    { data: files },
-    { data: showings },
-    { data: matches },
-    { data: bba },
-    mlsLive,
-  ] = await Promise.all([
-    supabase
-      .from("activities")
-      .select("*")
-      .eq("client_id", params.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("client_id", params.id)
-      .order("due_at", { ascending: true }),
-    supabase
-      .from("files")
-      .select("*")
-      .eq("client_id", params.id),
-    supabase
-      .from("showings")
-      .select("*")
-      .eq("client_id", params.id)
-      .order("showing_date", { ascending: false }),
-    supabase
-      .from("property_matches")
-      .select("*, properties(*)")
-      .eq("client_id", params.id)
-      .order("match_score", { ascending: false }),
-    supabase
-      .from("buyer_broker_agreements")
-      .select("signed_at, commission_pct, term_start, term_end, search_area, agent_name, client_name")
-      .eq("client_id", params.id)
-      .order("signed_at", { ascending: false })
-      .limit(1)
-      .maybeSingle(),
-    fetchMlsListingsForClient({
-      city: client.town as string | null,
-      minPrice: client.budget_min as number | null,
-      maxPrice: client.budget_max as number | null,
-      minBeds: client.beds_wanted as number | null,
-      limit: 24,
-    }),
-  ]);
+  const minus24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
+  const [{ data: activities }, { data: tasks }, { data: matches }] =
+    await Promise.all([
+      // All activities for this client, newest first
+      supabase
+        .from("activities")
+        .select("id, type, body, ai_draft, approved, sent, created_at")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .order("created_at", { ascending: false }),
+
+      // Open tasks
+      supabase
+        .from("tasks")
+        .select("id, done")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id),
+
+      // Property matches — recent (last 24h, unnotified) for badge count
+      supabase
+        .from("property_matches")
+        .select("id, created_at, notified")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .gte("created_at", minus24h)
+        .eq("notified", false),
+    ]);
+
+  const allActivities = activities ?? [];
+  const allTasks = tasks ?? [];
+  const allMatches = matches ?? [];
+
+  // Inbox: drafts awaiting agent review (activities table has no inbound
+  // direction — inbox = ai_draft=true, approved=false, sent=false)
+  const draftCount = allActivities.filter(
+    (a) => a.ai_draft && !a.approved && !a.sent,
+  ).length;
+
+  const lastDraftBody =
+    (allActivities.find((a) => a.ai_draft && !a.approved && !a.sent)
+      ?.body as string | null) ?? null;
+
+  const openTaskCount = allTasks.filter((t) => !t.done).length;
+
+  const recentMatchCount = allMatches.length;
+
+  // Last 5 activities for the timeline
+  const recentActivities = allActivities.slice(0, 5);
 
   return (
     <ClientDetail
       client={client}
-      activities={activities ?? []}
-      tasks={tasks ?? []}
-      files={files ?? []}
-      showings={showings ?? []}
-      matches={matches ?? []}
-      mlsLive={mlsLive}
-      bba={bba ?? null}
+      recentActivities={recentActivities}
+      draftCount={draftCount}
+      lastDraftBody={lastDraftBody}
+      openTaskCount={openTaskCount}
+      recentMatchCount={recentMatchCount}
     />
   );
 }
