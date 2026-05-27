@@ -4,7 +4,7 @@ import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
 import { useToast } from "@/components/ToastProvider";
-import { Search, Users } from "lucide-react";
+import { ChevronRight, Search, Users } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -18,31 +18,31 @@ const STATUS_FILTERS = [
   "Closed",
 ] as const;
 
-// Status → badge style
-const STATUS_BADGE: Record<string, { label: string; cls: string }> = {
-  new:            { label: "New",            cls: "bg-[#c47e1a]/10 text-[#c47e1a] border-[#c47e1a]/20" },
-  contacted:      { label: "Contacted",      cls: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/20" },
-  showing:        { label: "Showing",        cls: "bg-[#3a65f0]/10 text-[#6b8fff] border-[#3a65f0]/20" },
-  offer:          { label: "Offer",          cls: "bg-[#1a9b5e]/10 text-[#1a9b5e] border-[#1a9b5e]/20" },
-  under_contract: { label: "Under Contract", cls: "bg-[#c084fc]/10 text-[#c084fc] border-[#c084fc]/20" },
-  closed:         { label: "Closed",         cls: "bg-white/6 text-[#9498b0] border-white/10" },
-  dead:           { label: "Archived",       cls: "bg-white/6 text-[#444458] border-white/8" },
-};
-
-// Deterministic avatar color from name
+// Locked avatar palette — hash-based, all from design system
 const AVATAR_PALETTE = [
-  "bg-[#3a65f0]/15 text-[#6b8fff]",
-  "bg-[#c084fc]/15 text-[#c084fc]",
-  "bg-[#1a9b5e]/15 text-[#1a9b5e]",
-  "bg-[#c47e1a]/15 text-[#c47e1a]",
-  "bg-[#c43838]/15 text-[#ff8080]",
+  { bg: "rgba(59,130,246,0.15)", text: "#3B82F6" },   // blue
+  { bg: "rgba(167,139,250,0.15)", text: "#A78BFA" },  // purple
+  { bg: "rgba(6,182,212,0.15)", text: "#06B6D4" },    // cyan
+  { bg: "rgba(16,185,129,0.15)", text: "#10B981" },   // green
+  { bg: "rgba(245,158,11,0.15)", text: "#F59E0B" },   // amber
 ];
 
-function avatarColor(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
+function avatarColors(name: string) {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) hash = (hash + name.charCodeAt(i)) % AVATAR_PALETTE.length;
+  return AVATAR_PALETTE[hash];
 }
+
+// Semantic status badge styles
+const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
+  new:            { bg: "rgba(59,130,246,0.15)",  text: "#3B82F6", label: "New" },
+  contacted:      { bg: "rgba(167,139,250,0.15)", text: "#A78BFA", label: "Contacted" },
+  showing:        { bg: "rgba(245,158,11,0.15)",  text: "#F59E0B", label: "Showing" },
+  offer:          { bg: "rgba(167,139,250,0.15)", text: "#A78BFA", label: "Offer" },
+  under_contract: { bg: "rgba(59,130,246,0.15)",  text: "#3B82F6", label: "Under Contract" },
+  closed:         { bg: "rgba(16,185,129,0.15)",  text: "#10B981", label: "Closed" },
+  dead:           { bg: "rgba(255,255,255,0.06)", text: "#6B7280", label: "Archived" },
+};
 
 function initialsOf(name: string | null | undefined) {
   return (
@@ -55,9 +55,14 @@ function initialsOf(name: string | null | undefined) {
   );
 }
 
-// Shared input style
+// Shared input style for the Add sheet
 const INPUT =
-  "w-full rounded-[13px] bg-[#2c2c2e] px-4 py-3 text-base text-[#f0f0f5] placeholder-[#636366] outline-none transition";
+  "w-full rounded-[13px] px-4 py-3 text-[14px] outline-none placeholder-[#4B5563]";
+const INPUT_STYLE = {
+  background: "rgba(255,255,255,0.06)",
+  border: "0.5px solid rgba(255,255,255,0.08)",
+  color: "#ffffff",
+};
 
 type Row = {
   id: string;
@@ -168,22 +173,41 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
+    <div
+      className="min-h-screen pb-[130px]"
+      style={{
+        background: `
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
+          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent),
+          #000000
+        `,
+        color: "#ffffff",
+      }}
+    >
       <div className="px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-end justify-between">
           <div>
-            <h1 className="text-[26px] font-semibold leading-tight tracking-[-0.025em]">Clients</h1>
-            <p className="mt-0.5 text-[12px]" style={{ color: "#636366" }}>
+            <h1
+              className="text-[26px] font-semibold leading-tight"
+              style={{ letterSpacing: "-0.025em" }}
+            >
+              Clients
+            </h1>
+            <p className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
               {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
             </p>
           </div>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="rounded-full px-4 py-2 text-[13px] font-semibold text-white"
-            style={{ background: "#0a7cff" }}
+            className="text-[13px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
+            style={{
+              background: "#3B82F6",
+              padding: "8px 16px",
+              borderRadius: 8,
+            }}
           >
             + Add
           </button>
@@ -192,22 +216,27 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         {/* ── Search ── */}
         <div
           className="mb-3 flex items-center gap-3 px-4 py-3"
-          style={{ borderRadius: 13, background: "#1c1c1e" }}
+          style={{
+            borderRadius: 13,
+            background: "rgba(20,20,22,0.6)",
+            border: "0.5px solid rgba(255,255,255,0.06)",
+          }}
         >
-          <Search size={14} strokeWidth={1.8} style={{ color: "#636366", flexShrink: 0 }} />
+          <Search size={14} strokeWidth={1.8} style={{ color: "#6B7280", flexShrink: 0 }} />
           <input
             type="text"
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[14px] outline-none"
-            style={{ color: "#f0f0f5" }}
+            className="flex-1 bg-transparent text-[14px] outline-none placeholder-[#4B5563]"
+            style={{ color: "#ffffff" }}
           />
           {search && (
             <button
               type="button"
               onClick={() => setSearch("")}
-              className="text-[#636366]"
+              className="text-[14px]"
+              style={{ color: "#6B7280" }}
             >
               ×
             </button>
@@ -215,17 +244,23 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         </div>
 
         {/* ── Filters ── */}
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1 scroll-touch">
+        <div className="mb-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className="whitespace-nowrap rounded-full px-3.5 py-2 text-[12px] font-medium"
+              className="whitespace-nowrap text-[12px] font-medium active:scale-[0.97] transition-transform duration-100"
               style={
                 filter === f
-                  ? { background: "#0a7cff", color: "#ffffff" }
-                  : { background: "#1c1c1e", color: "#8e8e93" }
+                  ? { background: "#3B82F6", color: "#ffffff", padding: "7px 14px", borderRadius: 20 }
+                  : {
+                      background: "rgba(20,20,22,0.6)",
+                      color: "#6B7280",
+                      padding: "7px 14px",
+                      borderRadius: 20,
+                      border: "0.5px solid rgba(255,255,255,0.06)",
+                    }
               }
             >
               {f}
@@ -237,52 +272,104 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <div
-              className="mb-3 flex h-11 w-11 items-center justify-center rounded-full"
-              style={{ background: "rgba(255,255,255,0.07)" }}
+              className="mb-4 flex h-11 w-11 items-center justify-center rounded-full"
+              style={{ background: "rgba(255,255,255,0.05)" }}
             >
-              <Users size={20} style={{ color: "#636366" }} />
+              <Users size={20} style={{ color: "#6B7280" }} />
             </div>
-            <p className="text-[14px] font-semibold" style={{ color: "#8e8e93" }}>No clients found</p>
-            <p className="mt-1 text-[12px]" style={{ color: "#636366" }}>Try a different filter or add a new client</p>
+            <p
+              className="mb-1 text-[11px] font-semibold uppercase"
+              style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+            >
+              No Results
+            </p>
+            <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
+              {rows.length === 0
+                ? "No clients yet — tap Add to get started"
+                : "Try adjusting your search or filters"}
+            </p>
+            {rows.length === 0 && (
+              <button
+                type="button"
+                onClick={() => setOpen(true)}
+                className="mt-6 text-[14px] font-semibold active:scale-[0.97] transition-transform duration-100"
+                style={{
+                  background: "#3B82F6",
+                  color: "#ffffff",
+                  padding: "10px 20px",
+                  borderRadius: 8,
+                }}
+              >
+                + Add your first client
+              </button>
+            )}
           </div>
         ) : (
-          <div className="ios-group">
-            {filtered.map((client) => {
-              const badge = STATUS_BADGE[client.status ?? ""] ?? null;
+          <div>
+            {filtered.map((client, idx) => {
+              const statusStyle = STATUS_STYLE[client.status ?? ""] ?? null;
               const score = client.lead_score ?? 0;
               const hot = score >= 7;
+              const colors = avatarColors(client.name);
+              const isLast = idx === filtered.length - 1;
 
               return (
                 <Link
                   key={client.id}
                   href={`/clients/${client.id}`}
-                  className="ios-row"
+                  className="flex items-center active:bg-white/[0.03]"
+                  style={{
+                    padding: "14px 0",
+                    borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+                  }}
                 >
                   {/* Avatar */}
-                  <div className={`mr-3 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full text-[12px] font-bold ${avatarColor(client.name)}`}>
+                  <div
+                    className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
+                    style={{ background: colors.bg, color: colors.text }}
+                  >
                     {initialsOf(client.name)}
                   </div>
 
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[14px] font-medium" style={{ color: "#f0f0f5" }}>
-                      {client.name}
-                    </p>
-                    <p className="mt-px truncate text-[11px]" style={{ color: "#636366" }}>
+                    <div className="flex items-center gap-2">
+                      <p
+                        className="truncate text-[15px] font-semibold"
+                        style={{ color: "#ffffff", letterSpacing: "-0.01em" }}
+                      >
+                        {client.name}
+                      </p>
+                      {hot && (
+                        <span
+                          className="h-[5px] w-[5px] shrink-0 rounded-full"
+                          style={{ background: "#3B82F6" }}
+                        />
+                      )}
+                    </div>
+                    <p className="mt-px truncate text-[12px]" style={{ color: "#6B7280" }}>
                       {client.town ?? "—"}
                       {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
                     </p>
                   </div>
 
                   {/* Right meta */}
-                  <div className="ml-2 flex flex-shrink-0 items-center gap-1.5">
-                    {hot && <span className="h-[5px] w-[5px] rounded-full" style={{ background: "#0a7cff" }} />}
-                    {badge && (
-                      <span className="rounded px-1.5 py-[2px] text-[10px]" style={{ color: "#636366" }}>
-                        {badge.label}
+                  <div className="ml-3 flex shrink-0 items-center gap-2">
+                    {statusStyle && (
+                      <span
+                        className="text-[10px] font-semibold uppercase"
+                        style={{
+                          background: statusStyle.bg,
+                          color: statusStyle.text,
+                          padding: "2px 7px",
+                          borderRadius: 4,
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        {statusStyle.label}
                       </span>
                     )}
-                    <span className="text-[14px]" style={{ color: "#48484a" }}>›</span>
+                    <ChevronRight size={14} style={{ color: "#4B5563" }} />
                   </div>
                 </Link>
               );
@@ -295,86 +382,174 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       {open ? (
         <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] bg-[#1c1c1e] px-5 pb-10 pt-4">
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-[#3a3a3c]" />
-            <p className="mb-0.5 text-[16px] font-semibold" style={{ color: "#f0f0f5" }}>New client</p>
-            <p className="mb-5 text-[12px]" style={{ color: "#636366" }}>Saved to your clients table.</p>
+          <div
+            className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
+            style={{
+              background: "rgba(20,20,22,0.95)",
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              borderBottom: "none",
+            }}
+          >
+            {/* Drag handle */}
+            <div
+              className="mx-auto mb-5 h-1 w-9 rounded-full"
+              style={{ background: "rgba(255,255,255,0.15)" }}
+            />
+
+            <p className="mb-0.5 text-[17px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.02em" }}>
+              New client
+            </p>
+            <p className="mb-5 text-[13px]" style={{ color: "#6B7280" }}>
+              Saved to your clients table.
+            </p>
 
             <div className="space-y-3">
-              <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Full name *" className={INPUT} />
+              <input
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                placeholder="Full name *"
+                className={INPUT}
+                style={INPUT_STYLE}
+              />
 
               <div className="grid grid-cols-2 gap-2">
-                <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="Phone" inputMode="tel" className={INPUT} />
-                <input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Email" inputMode="email" className={INPUT} />
+                <input
+                  value={form.phone}
+                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                  placeholder="Phone"
+                  inputMode="tel"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
+                <input
+                  value={form.email}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  placeholder="Email"
+                  inputMode="email"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
               </div>
 
               {/* Role toggle */}
               <div className="flex gap-2">
                 {(["buyer", "seller"] as const).map((r) => (
-                  <button key={r} type="button" onClick={() => setForm({ ...form, client_role: r })}
-                    className={`flex-1 rounded-[12px] py-2.5 text-[13px] font-semibold capitalize transition ${
-                      form.client_role === r ? "" : ""
-                    }`}
-                    style={
-                      form.client_role === r
-                        ? { background: "#0a7cff", color: "#ffffff" }
-                        : { background: "rgba(255,255,255,0.06)", color: "#8e8e93" }
-                    }>
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setForm({ ...form, client_role: r })}
+                    className="flex-1 py-2.5 text-[13px] font-semibold capitalize active:scale-[0.97] transition-transform duration-100"
+                    style={{
+                      borderRadius: 10,
+                      ...(form.client_role === r
+                        ? { background: "#3B82F6", color: "#ffffff" }
+                        : { background: "rgba(255,255,255,0.06)", color: "#6B7280", border: "0.5px solid rgba(255,255,255,0.08)" }),
+                    }}
+                  >
                     {r}
                   </button>
                 ))}
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <input value={form.budget_min} onChange={(e) => setForm({ ...form, budget_min: e.target.value })}
-                  placeholder="Budget min" inputMode="numeric" className={INPUT} />
-                <input value={form.budget_max} onChange={(e) => setForm({ ...form, budget_max: e.target.value })}
-                  placeholder="Budget max" inputMode="numeric" className={INPUT} />
+                <input
+                  value={form.budget_min}
+                  onChange={(e) => setForm({ ...form, budget_min: e.target.value })}
+                  placeholder="Budget min"
+                  inputMode="numeric"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
+                <input
+                  value={form.budget_max}
+                  onChange={(e) => setForm({ ...form, budget_max: e.target.value })}
+                  placeholder="Budget max"
+                  inputMode="numeric"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <input value={form.beds} onChange={(e) => setForm({ ...form, beds: e.target.value })}
-                  placeholder="Beds" inputMode="numeric" className={INPUT} />
-                <input value={form.baths} onChange={(e) => setForm({ ...form, baths: e.target.value })}
-                  placeholder="Baths" inputMode="decimal" className={INPUT} />
+                <input
+                  value={form.beds}
+                  onChange={(e) => setForm({ ...form, beds: e.target.value })}
+                  placeholder="Beds"
+                  inputMode="numeric"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
+                <input
+                  value={form.baths}
+                  onChange={(e) => setForm({ ...form, baths: e.target.value })}
+                  placeholder="Baths"
+                  inputMode="decimal"
+                  className={INPUT}
+                  style={INPUT_STYLE}
+                />
               </div>
 
               {/* Town picker */}
               <div>
-                <p className="mb-2 text-[12px]" style={{ color: "#636366" }}>
+                <p
+                  className="mb-2 text-[11px] font-semibold uppercase"
+                  style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                >
                   Preferred towns
                 </p>
-                <div className="flex max-h-36 flex-wrap gap-1 overflow-y-auto rounded-[14px] bg-[#2c2c2e] p-2.5">
+                <div
+                  className="flex max-h-36 flex-wrap gap-1 overflow-y-auto p-2.5"
+                  style={{
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,0.04)",
+                    border: "0.5px solid rgba(255,255,255,0.06)",
+                  }}
+                >
                   {NJ_TOWN_OPTIONS.map((t) => (
-                    <button key={t} type="button" onClick={() => toggleTown(t)}
-                      className="rounded-full px-2 py-[4px] text-[10px] font-medium"
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => toggleTown(t)}
+                      className="rounded-full px-2 py-[4px] text-[10px] font-medium active:scale-[0.97] transition-transform duration-100"
                       style={
                         form.towns.includes(t)
-                          ? { background: "#0a7cff", color: "#ffffff" }
-                          : { background: "rgba(255,255,255,0.06)", color: "#8e8e93" }
-                      }>
+                          ? { background: "#3B82F6", color: "#ffffff" }
+                          : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }
+                      }
+                    >
                       {t}
                     </button>
                   ))}
                 </div>
               </div>
 
-              <textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              <textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none rounded-[13px] p-4 text-base outline-none"
-                style={{ background: "#2c2c2e", color: "#f0f0f5" }} />
+                className="w-full resize-none p-4 text-[14px] outline-none placeholder-[#4B5563]"
+                style={{
+                  borderRadius: 13,
+                  background: "rgba(255,255,255,0.06)",
+                  border: "0.5px solid rgba(255,255,255,0.08)",
+                  color: "#ffffff",
+                }}
+              />
             </div>
 
             <div className="mt-5">
               <button
                 type="button"
                 onClick={saveClient}
-                className="w-full rounded-full py-3.5 text-[14px] font-semibold text-white press"
-                style={{ background: "#0a7cff" }}
+                className="w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
+                style={{
+                  background: "#3B82F6",
+                  padding: "14px",
+                  borderRadius: 10,
+                }}
               >
                 Save client
               </button>
