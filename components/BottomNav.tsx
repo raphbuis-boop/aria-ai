@@ -87,6 +87,8 @@ export function BottomNav() {
           WebkitBackdropFilter: "blur(28px) saturate(180%)",
           border: "0.5px solid rgba(255,255,255,0.10)",
           boxShadow: "0 0 40px rgba(59,130,246,0.18), 0 10px 30px rgba(0,0,0,0.5)",
+          pointerEvents: "auto",
+          overflow: "visible",
         }}
       >
         {/* Left tabs */}
@@ -98,7 +100,7 @@ export function BottomNav() {
         <button
           type="button"
           aria-label="Ask Aria"
-          onClick={() => { triggerHaptic(); router.push("/voice"); }}
+          onClick={() => { console.log('aria button tapped'); triggerHaptic(); router.push("/voice"); }}
           className="flex items-center justify-center rounded-full"
           style={{
             width: 48,
@@ -106,6 +108,9 @@ export function BottomNav() {
             background: "linear-gradient(135deg, #1a1a1d, #0a0a0c)",
             boxShadow: "0 0 24px rgba(59,130,246,0.5), inset 0 0 0 1px rgba(255,255,255,0.1)",
             flexShrink: 0,
+            pointerEvents: "auto",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           {/* Aria "A" logo inline SVG at 22px */}
