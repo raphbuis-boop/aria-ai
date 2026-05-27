@@ -2,9 +2,13 @@
 
 import { createClient } from "@/lib/supabase/client";
 import {
+  BarChart3,
   Bell,
+  CalendarDays,
   ChevronRight,
+  FileText,
   Globe,
+  Inbox,
   Lock,
   LogOut,
   Mic,
@@ -197,7 +201,18 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 2: Business ── */}
+        {/* ── Group 2: Workflow ── */}
+        <GroupLabel label="Workflow" />
+        <SettingsGroup>
+          <SettingsRow icon={BarChart3} label="Pipeline" href="/pipeline" />
+          <SettingsRow icon={Inbox} label="Inbox" href="/inbox" />
+          <SettingsRow icon={CalendarDays} label="Showings" href="/showings" />
+          <SettingsRow icon={FileText} label="Transactions" href="/transactions" isLast />
+        </SettingsGroup>
+
+        <div style={{ marginTop: 24 }} />
+
+        {/* ── Group 3: Business ── */}
         <GroupLabel label="Business" />
         <SettingsGroup>
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
