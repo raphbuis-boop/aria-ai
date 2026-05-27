@@ -202,7 +202,7 @@ export default function SettingsPage() {
         <SettingsGroup>
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
           <SettingsRow icon={TrendingUp} label="Market Pulse" href="/market-pulse" />
-          <SettingsRow icon={Globe} label="Client Portal" href="/portal" isLast />
+          <SettingsRow icon={Globe} label="Client Portal" soon isLast />
         </SettingsGroup>
 
         <div style={{ marginTop: 24 }} />
