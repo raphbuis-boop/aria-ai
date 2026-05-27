@@ -40,6 +40,22 @@ const SORT_OPTS: { value: string; label: string }[] = [
   { value: "beds_desc", label: "Most bedrooms" },
 ];
 
+const INPUT_STYLE = {
+  background: "rgba(255,255,255,0.06)",
+  border: "0.5px solid rgba(255,255,255,0.08)",
+  color: "#ffffff",
+  borderRadius: 10,
+  padding: "10px 12px",
+  fontSize: 14,
+  width: "100%",
+  outline: "none",
+};
+
+const SELECT_STYLE = {
+  ...INPUT_STYLE,
+  appearance: "none" as const,
+};
+
 function buildListingsQuery(sp: URLSearchParams): string {
   const q = new URLSearchParams();
   q.set("limit", String(PAGE_SIZE));
@@ -85,9 +101,7 @@ export function MlsSearchClient({
   const [loadingMore, setLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savedMls, setSavedMls] = useState<Set<string>>(new Set());
-  const [matchListing, setMatchListing] = useState<MlsListingPayload | null>(
-    null,
-  );
+  const [matchListing, setMatchListing] = useState<MlsListingPayload | null>(null);
 
   const [city, setCity] = useState("");
   const [minPrice, setMinPrice] = useState("");
@@ -125,19 +139,7 @@ export function MlsSearchClient({
     if (sortKey.trim()) q.set("sort", sortKey.trim());
     const basePath = variant === "public" ? "/property-search" : "/listings";
     router.replace(`${basePath}?${q.toString()}`, { scroll: false });
-  }, [
-    city,
-    minPrice,
-    maxPrice,
-    minBeds,
-    minBaths,
-    minSqft,
-    propertyType,
-    status,
-    sortKey,
-    router,
-    variant,
-  ]);
+  }, [city, minPrice, maxPrice, minBeds, minBaths, minSqft, propertyType, status, sortKey, router, variant]);
 
   const fetchPage = useCallback(
     async (nextOffset: number, append: boolean) => {
@@ -151,14 +153,10 @@ export function MlsSearchClient({
         hasMore?: boolean;
         offset?: number;
       };
-      if (!res.ok) {
-        throw new Error(data.error ?? "Search failed");
-      }
+      if (!res.ok) throw new Error(data.error ?? "Search failed");
       const batch = data.listings ?? [];
       setTotal(
-        typeof data.total === "number" && Number.isFinite(data.total)
-          ? data.total
-          : null,
+        typeof data.total === "number" && Number.isFinite(data.total) ? data.total : null,
       );
       setHasMore(Boolean(data.hasMore));
       setOffset(nextOffset + batch.length);
@@ -167,10 +165,7 @@ export function MlsSearchClient({
           const seen = new Set(prev.map((l) => l.id));
           const merged = [...prev];
           for (const l of batch) {
-            if (!seen.has(l.id)) {
-              seen.add(l.id);
-              merged.push(l);
-            }
+            if (!seen.has(l.id)) { seen.add(l.id); merged.push(l); }
           }
           return merged;
         });
@@ -206,9 +201,7 @@ export function MlsSearchClient({
         if (!res.ok) return;
         const data = (await res.json()) as { mlsNumbers?: string[] };
         setSavedMls(new Set(data.mlsNumbers ?? []));
-      } catch {
-        /* ignore */
-      }
+      } catch { /* ignore */ }
     })();
   }, [variant]);
 
@@ -222,23 +215,13 @@ export function MlsSearchClient({
     } finally {
       setLoadingMore(false);
     }
-  }, [
-    loading,
-    loadingMore,
-    hasMore,
-    offset,
-    listings.length,
-    fetchPage,
-    toast,
-  ]);
+  }, [loading, loadingMore, hasMore, offset, listings.length, fetchPage, toast]);
 
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) void loadMore();
-      },
+      (entries) => { if (entries[0]?.isIntersecting) void loadMore(); },
       { rootMargin: "120px" },
     );
     obs.observe(el);
@@ -248,19 +231,9 @@ export function MlsSearchClient({
   async function toggleWatchlist(listing: MlsListingPayload) {
     const key = listing.mlsNumber || listing.id;
     if (savedMls.has(key)) {
-      const res = await fetch(
-        `/api/saved-properties/${encodeURIComponent(key)}`,
-        { method: "DELETE" },
-      );
-      if (!res.ok) {
-        toast.toast("Could not remove", "warn");
-        return;
-      }
-      setSavedMls((s) => {
-        const n = new Set(s);
-        n.delete(key);
-        return n;
-      });
+      const res = await fetch(`/api/saved-properties/${encodeURIComponent(key)}`, { method: "DELETE" });
+      if (!res.ok) { toast.toast("Could not remove", "warn"); return; }
+      setSavedMls((s) => { const n = new Set(s); n.delete(key); return n; });
       toast.toast("Removed from watchlist", "default");
     } else {
       const res = await fetch("/api/saved-properties", {
@@ -268,25 +241,18 @@ export function MlsSearchClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listing }),
       });
-      if (!res.ok) {
-        toast.toast("Could not save", "warn");
-        return;
-      }
+      if (!res.ok) { toast.toast("Could not save", "warn"); return; }
       setSavedMls((s) => new Set(s).add(key));
       toast.toast("Saved to watchlist", "success");
     }
   }
 
-  function applySearch() {
-    pushUrlFromForm();
-  }
+  function applySearch() { pushUrlFromForm(); }
 
   const showingLine = useMemo(() => {
     if (loading && listings.length === 0) return null;
     const n = listings.length;
-    if (total != null && Number.isFinite(total)) {
-      return `Showing ${n} of ${total} properties`;
-    }
+    if (total != null && Number.isFinite(total)) return `Showing ${n} of ${total} properties`;
     return `Showing ${n} properties`;
   }, [loading, listings.length, total]);
 
@@ -296,327 +262,433 @@ export function MlsSearchClient({
     return encodeURIComponent(q ? `${base}?${q}` : base);
   }, [searchParams, variant]);
 
-  const listingDetailBase =
-    variant === "public" ? "/property-search" : "/properties";
+  const listingDetailBase = variant === "public" ? "/property-search" : "/properties";
 
   return (
     <div
-      className={`mx-auto max-w-lg px-4 pt-6 ${
-        variant === "public" ? "pb-16" : "pb-28"
-      }`}
+      className="min-h-screen pb-[130px]"
+      style={{
+        background: `
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
+          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent),
+          #000000
+        `,
+        color: "#ffffff",
+      }}
     >
-      {variant === "member" ? (
-        <div className="mb-4 flex items-center justify-between gap-2">
-          <Link
-            href="/more"
-            className="text-[12px] font-medium text-accent-blue"
-          >
-            ← More
-          </Link>
-          <Link
-            href="/properties/saved"
-            className="flex items-center gap-1 text-[12px] font-medium text-text-dim"
-          >
-            <Bookmark size={14} /> Watchlist
-          </Link>
-        </div>
-      ) : null}
-      {variant === "member" ? (
-        <div className="mt-3">
-          <IdxComplianceNotice />
-        </div>
-      ) : null}
-      <header className="mt-3">
-        <div className="text-[20px] font-medium text-text-primary">
-          Property Search
-        </div>
-        <div className="text-[13px] text-text-dim">
-          Live property listings
-        </div>
-        {showingLine ? (
-          <p className="mt-2 text-[12px] text-text-muted">{showingLine}</p>
-        ) : null}
-      </header>
+      <div className="mx-auto max-w-lg px-5 pt-6">
 
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        <input
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          placeholder="Town or city"
-          className="col-span-2 w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
-        />
-        <input
-          type="number"
-          value={minPrice}
-          onChange={(e) => setMinPrice(e.target.value)}
-          placeholder="Min $"
-          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
-        />
-        <input
-          type="number"
-          value={maxPrice}
-          onChange={(e) => setMaxPrice(e.target.value)}
-          placeholder="Max $"
-          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
-        />
-        <input
-          type="number"
-          value={minBeds}
-          onChange={(e) => setMinBeds(e.target.value)}
-          placeholder="Min beds"
-          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
-        />
-        <input
-          type="number"
-          value={minBaths}
-          onChange={(e) => setMinBaths(e.target.value)}
-          placeholder="Min baths"
-          className="w-full rounded-[8px] border border-border-card bg-bg-card px-3 py-2.5 text-base text-text-primary placeholder:text-text-dim"
-        />
-        <select
-          value={propertyType}
-          onChange={(e) => setPropertyType(e.target.value)}
-          aria-label="Property type"
-          className="col-span-2 w-full rounded-[8px] border border-border-card bg-bg-card px-2 py-2.5 text-base text-text-primary"
-        >
-          {PROPERTY_TYPES.map((o) => (
-            <option key={o.label} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
-        <button
-          type="button"
-          onClick={() => void applySearch()}
-          disabled={loading}
-          className="inline-flex h-11 items-center gap-1.5 rounded-[8px] bg-accent-blue px-4 py-3 text-[13px] font-medium text-white disabled:opacity-60"
-        >
-          <Search size={14} />
-          Search
-        </button>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => setFiltersOpen((o) => !o)}
-        className="mt-2 text-[12px] font-medium text-accent-blue"
-      >
-        {filtersOpen ? "Hide filters" : "More filters & sort"}
-      </button>
-
-      {filtersOpen ? (
-        <div className="mt-3 space-y-2 rounded-[12px] border border-border-card bg-bg-card p-3">
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-              Min sqft
-            </label>
-            <input
-              type="number"
-              value={minSqft}
-              onChange={(e) => setMinSqft(e.target.value)}
-              className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-1.5 text-[13px] text-text-primary"
-            />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-              Status
-            </label>
-            <select
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
-              className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-2 text-[13px] text-text-primary"
+        {/* ── Watchlist link (member) ── */}
+        {variant === "member" && (
+          <div className="mb-4 flex justify-end">
+            <Link
+              href="/properties/saved"
+              className="flex items-center gap-1.5 text-[13px] font-medium"
+              style={{ color: "#3B82F6" }}
             >
-              {STATUS_OPTS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              <Bookmark size={14} /> Watchlist
+            </Link>
           </div>
-          <div>
-            <label className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
-              Sort by
-            </label>
-            <select
-              value={sortKey}
-              onChange={(e) => setSortKey(e.target.value)}
-              className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-2 py-2 text-[13px] text-text-primary"
-            >
-              {SORT_OPTS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+        )}
+
+        {/* ── IDX compliance (member) ── */}
+        {variant === "member" && (
+          <div className="mb-4">
+            <IdxComplianceNotice />
           </div>
+        )}
+
+        {/* ── Header ── */}
+        <header className="mb-5">
+          <h1
+            className="text-[22px] font-semibold leading-tight"
+            style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
+          >
+            Property Search
+          </h1>
+          <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
+            Live property listings
+          </p>
+          {showingLine && (
+            <p className="mt-1 text-[12px]" style={{ color: "#6B7280" }}>
+              {showingLine}
+            </p>
+          )}
+        </header>
+
+        {/* ── Search form ── */}
+        <div className="grid grid-cols-2 gap-2 mb-2">
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Town or city"
+            className="col-span-2 placeholder-[#4B5563]"
+            style={INPUT_STYLE}
+          />
+          <input
+            type="number"
+            value={minPrice}
+            onChange={(e) => setMinPrice(e.target.value)}
+            placeholder="Min $"
+            className="placeholder-[#4B5563]"
+            style={INPUT_STYLE}
+          />
+          <input
+            type="number"
+            value={maxPrice}
+            onChange={(e) => setMaxPrice(e.target.value)}
+            placeholder="Max $"
+            className="placeholder-[#4B5563]"
+            style={INPUT_STYLE}
+          />
+          <input
+            type="number"
+            value={minBeds}
+            onChange={(e) => setMinBeds(e.target.value)}
+            placeholder="Min beds"
+            className="placeholder-[#4B5563]"
+            style={INPUT_STYLE}
+          />
+          <input
+            type="number"
+            value={minBaths}
+            onChange={(e) => setMinBaths(e.target.value)}
+            placeholder="Min baths"
+            className="placeholder-[#4B5563]"
+            style={INPUT_STYLE}
+          />
+          <select
+            value={propertyType}
+            onChange={(e) => setPropertyType(e.target.value)}
+            aria-label="Property type"
+            className="col-span-2"
+            style={SELECT_STYLE}
+          >
+            {PROPERTY_TYPES.map((o) => (
+              <option key={o.label} value={o.value} style={{ background: "#111111" }}>
+                {o.label}
+              </option>
+            ))}
+          </select>
           <button
             type="button"
             onClick={() => void applySearch()}
-            className="w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white h-11"
+            disabled={loading}
+            className="col-span-2 flex items-center justify-center gap-2 text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100 disabled:opacity-60"
+            style={{
+              background: "#3B82F6",
+              borderRadius: 8,
+              padding: "11px",
+            }}
           >
-            Apply filters
+            <Search size={14} />
+            Search
           </button>
         </div>
-      ) : null}
 
-      {errorMessage ? (
-        <div className="mt-4 rounded-[12px] border border-border-card bg-bg-card px-3 py-3 text-[13px] text-accent-amber">
-          {errorMessage}
-        </div>
-      ) : null}
+        {/* ── More filters toggle ── */}
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="mb-3 text-[13px] font-medium"
+          style={{ color: "#3B82F6" }}
+        >
+          {filtersOpen ? "Hide filters" : "More filters & sort"}
+        </button>
 
-      {loading && listings.length === 0 ? (
-        <div className="mt-8 flex justify-center text-text-dim">
-          <Loader2 className="animate-spin" size={22} />
-        </div>
-      ) : null}
-
-      {!loading &&
-      listings.length === 0 &&
-      !errorMessage ? (
-        <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
-          No listings match your filters.
-        </div>
-      ) : null}
-
-      <div className="mt-6 grid grid-cols-1 gap-3">
-        {listings.map((l) => {
-          const photo = l.photos?.[0];
-          const mlsKey = l.mlsNumber || l.id;
-          const saved = savedMls.has(mlsKey);
-          return (
-            <div
-              key={l.id}
-              role="button"
-              tabIndex={0}
-              onClick={() =>
-                router.push(
-                  `${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`,
-                )
-              }
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  router.push(
-                    `${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`,
-                  );
-                }
-              }}
-              className="cursor-pointer rounded-[14px] border border-border-card bg-bg-card p-[14px] text-left outline-none ring-accent-blue/40 transition hover:border-accent-blue/30 focus-visible:ring-2"
+        {/* ── Expanded filter panel ── */}
+        {filtersOpen && (
+          <div
+            className="mb-4 space-y-3 p-4"
+            style={{
+              background: "rgba(20,20,22,0.6)",
+              border: "0.5px solid rgba(255,255,255,0.06)",
+              borderRadius: 14,
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+            }}
+          >
+            <div>
+              <p
+                className="mb-1.5 text-[11px] font-semibold uppercase"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Min sqft
+              </p>
+              <input
+                type="number"
+                value={minSqft}
+                onChange={(e) => setMinSqft(e.target.value)}
+                className="placeholder-[#4B5563]"
+                style={INPUT_STYLE}
+              />
+            </div>
+            <div>
+              <p
+                className="mb-1.5 text-[11px] font-semibold uppercase"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Status
+              </p>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                style={SELECT_STYLE}
+              >
+                {STATUS_OPTS.map((o) => (
+                  <option key={o.value} value={o.value} style={{ background: "#111111" }}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <p
+                className="mb-1.5 text-[11px] font-semibold uppercase"
+                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              >
+                Sort by
+              </p>
+              <select
+                value={sortKey}
+                onChange={(e) => setSortKey(e.target.value)}
+                style={SELECT_STYLE}
+              >
+                {SORT_OPTS.map((o) => (
+                  <option key={o.value} value={o.value} style={{ background: "#111111" }}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <button
+              type="button"
+              onClick={() => void applySearch()}
+              className="w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
+              style={{ background: "#3B82F6", borderRadius: 8, padding: "11px" }}
             >
-              <div className="relative h-36 w-full overflow-hidden rounded-[10px] bg-bg-deep">
-                {photo ? (
-                  // eslint-disable-next-line @next/next/no-img-element
+              Apply filters
+            </button>
+          </div>
+        )}
+
+        {/* ── Error state ── */}
+        {errorMessage && (
+          <div
+            className="mb-4 px-4 py-3 text-[13px]"
+            style={{
+              background: "rgba(20,20,22,0.6)",
+              border: "0.5px solid rgba(255,255,255,0.06)",
+              borderRadius: 12,
+              color: "#F59E0B",
+            }}
+          >
+            {errorMessage}
+          </div>
+        )}
+
+        {/* ── Loading spinner ── */}
+        {loading && listings.length === 0 && (
+          <div className="mt-12 flex justify-center">
+            <Loader2 className="animate-spin" size={22} style={{ color: "#6B7280" }} />
+          </div>
+        )}
+
+        {/* ── Empty state ── */}
+        {!loading && listings.length === 0 && !errorMessage && (
+          <div className="mt-12 flex flex-col items-center text-center">
+            <p
+              className="mb-1 text-[11px] font-semibold uppercase"
+              style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+            >
+              No Results
+            </p>
+            <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
+              No listings match your filters
+            </p>
+          </div>
+        )}
+
+        {/* ── Listing cards ── */}
+        <div className="mt-4 grid grid-cols-1 gap-3">
+          {listings.map((l) => {
+            const photo = l.photos?.[0];
+            const mlsKey = l.mlsNumber || l.id;
+            const saved = savedMls.has(mlsKey);
+            return (
+              <div
+                key={l.id}
+                role="button"
+                tabIndex={0}
+                onClick={() =>
+                  router.push(`${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`)
+                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    router.push(`${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`);
+                  }
+                }}
+                className="cursor-pointer text-left outline-none"
+                style={{
+                  background: "rgba(20,20,22,0.7)",
+                  border: "0.5px solid rgba(255,255,255,0.06)",
+                  borderRadius: 14,
+                  padding: 14,
+                  backdropFilter: "blur(20px)",
+                  WebkitBackdropFilter: "blur(20px)",
+                }}
+              >
+                {/* Photo */}
+                <div
+                  className="relative w-full overflow-hidden"
+                  style={{ height: 144, borderRadius: 10, background: "rgba(255,255,255,0.04)" }}
+                >
+                  {photo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={photo} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-[11px]" style={{ color: "#6B7280" }}>
+                      No photo
+                    </div>
+                  )}
+                  {/* NJMLS IDX trademark — required on every listing photo per IDX agreement */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={photo}
-                    alt=""
-                    className="h-full w-full object-cover"
+                    src="/IDX_logo.JPG"
+                    alt="NJMLS IDX"
+                    className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
+                    draggable={false}
                   />
-                ) : (
-                  <div className="flex h-full items-center justify-center text-[11px] text-text-dim">
-                    No photo
+                  {variant === "member" && saved && (
+                    <span
+                      className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full"
+                      style={{ background: "rgba(0,0,0,0.55)", color: "#3B82F6" }}
+                    >
+                      <Bookmark size={16} fill="currentColor" />
+                    </span>
+                  )}
+                </div>
+
+                {/* Address */}
+                <div className="mt-3 text-[14px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.01em" }}>
+                  {l.address || "—"}
+                </div>
+
+                {/* City + MLS # */}
+                <div className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+                  {l.city} · Listing #{l.mlsNumber}
+                </div>
+
+                {/* Price */}
+                <div className="mt-1.5 text-[15px] font-semibold" style={{ color: "#3B82F6" }}>
+                  {fmtMoney(l.price)}
+                </div>
+
+                {/* Beds/baths/sqft */}
+                <div className="mt-2 text-[12px]" style={{ color: "#9CA3AF" }}>
+                  {l.beds} bd · {l.baths} ba · {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
+                </div>
+
+                {/* Brokerage + updated */}
+                <div className="mt-1 text-[11px]" style={{ color: "#6B7280" }}>
+                  {l.listingFirm?.name ?? "N/A"}
+                </div>
+                <div className="mt-0.5 text-[11px]" style={{ color: "#6B7280" }}>
+                  Last updated: {new Date().toLocaleDateString()}
+                </div>
+
+                {/* Days on market pill */}
+                {l.daysOnMarket != null && (
+                  <div
+                    className="mt-2 inline-block text-[11px]"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      color: "#6B7280",
+                      padding: "2px 8px",
+                      borderRadius: 6,
+                    }}
+                  >
+                    {l.daysOnMarket} days on market
                   </div>
                 )}
-                {/* NJMLS IDX trademark — required on every listing photo per IDX agreement */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/IDX_logo.JPG"
-                  alt="NJMLS IDX"
-                  className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
-                  draggable={false}
-                />
-                {variant === "member" && saved ? (
-                  <span className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/55 text-accent-blue">
-                    <Bookmark size={16} fill="currentColor" />
-                  </span>
-                ) : null}
-              </div>
-              <div className="mt-3 text-[13px] font-medium text-text-primary">
-                {l.address || "—"}
-              </div>
-              <div className="text-[11px] text-text-dim">
-                {l.city} · Listing #{l.mlsNumber}
-              </div>
-              <div className="mt-1 text-[14px] font-medium text-accent-blue">
-                {fmtMoney(l.price)}
-              </div>
-              <div className="mt-3 text-[12px] text-text-muted">
-                {l.beds} bd · {l.baths} ba ·{" "}
-                {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
-              </div>
-              <div className="mt-2 text-[11px] text-text-dim">
-                Listing brokerage: {l.listingFirm?.name ?? "N/A"}
-              </div>
-              <div className="mt-1 text-[11px] text-text-dim">
-                Last updated: {new Date().toLocaleDateString()}
-              </div>
-              {l.daysOnMarket != null ? (
-                <div className="mt-2 inline-block rounded-[8px] bg-bg-deep px-2 py-1 text-[11px] text-text-dim">
-                  {l.daysOnMarket} days on market
-                </div>
-              ) : null}
-              {variant === "member" ? (
-                <div
-                  className="mt-3 flex flex-wrap gap-2"
-                  onClick={(e) => e.stopPropagation()}
-                  onKeyDown={(e) => e.stopPropagation()}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setMatchListing(l)}
-                    className="h-11 rounded-[8px] border border-border-card bg-bg-deep px-3 py-3 text-[12px] font-medium text-accent-blue"
-                  >
-                    Match to Clients
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void toggleWatchlist(l)}
-                    className={`h-11 rounded-[8px] px-3 py-3 text-[12px] font-medium ${
-                      saved
-                        ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
-                        : "bg-accent-blue text-white"
-                    }`}
-                  >
-                    {saved ? "Saved" : "Watchlist"}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          );
-        })}
-      </div>
 
-      <div ref={sentinelRef} className="h-4 w-full" />
-      {loadingMore ? (
-        <div className="flex justify-center py-6 text-text-dim">
-          <Loader2 className="animate-spin" size={22} />
+                {/* CRM actions (member only) */}
+                {variant === "member" && (
+                  <div
+                    className="mt-3 flex flex-wrap gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => e.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setMatchListing(l)}
+                      className="text-[13px] font-medium text-white active:scale-[0.97] transition-transform duration-100"
+                      style={{
+                        background: "transparent",
+                        border: "0.5px solid rgba(255,255,255,0.15)",
+                        borderRadius: 8,
+                        padding: "9px 14px",
+                      }}
+                    >
+                      Match to Clients
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void toggleWatchlist(l)}
+                      className="text-[13px] font-semibold active:scale-[0.97] transition-transform duration-100"
+                      style={
+                        saved
+                          ? { background: "rgba(59,130,246,0.15)", color: "#3B82F6", borderRadius: 8, padding: "9px 14px" }
+                          : { background: "#3B82F6", color: "#ffffff", borderRadius: 8, padding: "9px 14px" }
+                      }
+                    >
+                      {saved ? "Saved" : "Watchlist"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
-      ) : null}
 
-      {variant === "member" ? (
-        <Link
-          href="/properties"
-          className="mt-6 inline-block text-[12px] font-medium text-accent-blue"
-        >
-          My tracked properties →
-        </Link>
-      ) : (
-        <p className="mt-6 text-center text-[12px] text-text-dim">
-          Have an account?{" "}
-          <Link href="/login" className="font-medium text-accent-blue">
-            Sign in
-          </Link>{" "}
-          for client matching and your watchlist.
-        </p>
-      )}
+        {/* ── Infinite scroll sentinel ── */}
+        <div ref={sentinelRef} className="h-4 w-full" />
+        {loadingMore && (
+          <div className="flex justify-center py-6">
+            <Loader2 className="animate-spin" size={22} style={{ color: "#6B7280" }} />
+          </div>
+        )}
 
-      {variant === "member" ? (
-        <MatchClientsModal
-          open={matchListing !== null}
-          onClose={() => setMatchListing(null)}
-          listing={matchListing}
-        />
-      ) : null}
+        {/* ── Footer ── */}
+        {variant === "member" ? (
+          <Link
+            href="/properties"
+            className="mt-6 inline-block text-[13px] font-medium"
+            style={{ color: "#3B82F6" }}
+          >
+            My tracked properties →
+          </Link>
+        ) : (
+          <p className="mt-6 text-center text-[12px]" style={{ color: "#6B7280" }}>
+            Have an account?{" "}
+            <Link href="/login" className="font-medium" style={{ color: "#3B82F6" }}>
+              Sign in
+            </Link>{" "}
+            for client matching and your watchlist.
+          </p>
+        )}
+
+        {/* ── Match to Clients modal ── */}
+        {variant === "member" && (
+          <MatchClientsModal
+            open={matchListing !== null}
+            onClose={() => setMatchListing(null)}
+            listing={matchListing}
+          />
+        )}
+
+      </div>
     </div>
   );
 }
