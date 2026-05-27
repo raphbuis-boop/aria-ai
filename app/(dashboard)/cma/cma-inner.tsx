@@ -15,6 +15,17 @@ type Slide = {
   highlight: string;
 };
 
+const INPUT_STYLE = {
+  background: "rgba(255,255,255,0.06)",
+  border: "0.5px solid rgba(255,255,255,0.08)",
+  color: "#ffffff",
+  borderRadius: 10,
+  padding: "10px 12px",
+  fontSize: 14,
+  width: "100%",
+  outline: "none",
+};
+
 export function CmaInner() {
   const toast = useToast();
   const search = useSearchParams();
@@ -36,34 +47,24 @@ export function CmaInner() {
   async function generate() {
     const supabase = createClient();
     const { data: md } = await supabase
-      .from("market_data")
-      .select("*")
-      .eq("town", form.town)
-      .maybeSingle();
+      .from("market_data").select("*").eq("town", form.town).maybeSingle();
     const res = await fetch("/api/ai/cma", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        address: form.address,
-        town: form.town,
-        beds: Number(form.beds),
-        baths: Number(form.baths),
-        sqft: Number(form.sqft),
-        priceMin: Number(form.priceMin),
-        priceMax: Number(form.priceMax),
-        sellerName: form.sellerName,
+        address: form.address, town: form.town,
+        beds: Number(form.beds), baths: Number(form.baths),
+        sqft: Number(form.sqft), priceMin: Number(form.priceMin),
+        priceMax: Number(form.priceMax), sellerName: form.sellerName,
         marketStats: md ?? {},
       }),
     });
     const data = await res.json();
     setSlides(data.slides ?? []);
     setTextCopy(
-      (data.slides ?? [])
-        .map(
-          (s: Slide) =>
-            `${s.title}\n${s.subtitle}\n${s.content}\n${s.highlight}\n`,
-        )
-        .join("\n---\n"),
+      (data.slides ?? []).map(
+        (s: Slide) => `${s.title}\n${s.subtitle}\n${s.content}\n${s.highlight}\n`,
+      ).join("\n---\n"),
     );
   }
 
@@ -80,79 +81,127 @@ export function CmaInner() {
   }
 
   return (
-    <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <div className="text-[20px] font-medium text-text-primary">
-        Pitch Deck Generator
-      </div>
-      <p className="mt-2 text-[13px] text-text-dim">
-        Win your next listing presentation.
-      </p>
-      <MarketsComingSoonNote className="mt-2" />
-      <div className="mt-4 space-y-2">
-        {(
-          [
-            ["address", "Address"],
-            ["town", "Town"],
-            ["beds", "Beds"],
-            ["baths", "Baths"],
-            ["sqft", "Sqft"],
-            ["priceMin", "Price min"],
-            ["priceMax", "Price max"],
-            ["sellerName", "Seller name"],
-          ] as const
-        ).map(([k, ph]) => (
-          <input
-            key={k}
-            value={form[k]}
-            onChange={(e) => setForm({ ...form, [k]: e.target.value })}
-            placeholder={ph}
-            className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
-          />
-        ))}
-      </div>
-      <button
-        type="button"
-        onClick={generate}
-        className="mt-4 w-full rounded-[8px] bg-accent-blue py-3 text-[13px] font-medium text-white"
-      >
-        Generate Pitch Deck
-      </button>
+    <div
+      className="min-h-screen pb-[130px]"
+      style={{
+        background: `
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
+          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent),
+          #000000
+        `,
+        color: "#ffffff",
+      }}
+    >
+      <div className="mx-auto max-w-lg px-5 pt-6">
 
-      <div ref={deckRef} className="mt-6 space-y-3">
-        {slides.map((s, i) => (
-          <div
-            key={i}
-            className="rounded-[14px] border border-border-card bg-bg-card p-4"
-          >
-            <div className="text-[16px] font-medium text-accent-blue">{s.title}</div>
-            <div className="text-[12px] text-text-dim">{s.subtitle}</div>
-            <p className="mt-2 text-[13px] text-text-secondary">{s.content}</p>
-            <div className="mt-2 text-[12px] font-medium text-accent-blue">
-              {s.highlight}
+        {/* ── Header ── */}
+        <h1
+          className="text-[22px] font-semibold leading-tight"
+          style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
+        >
+          Pitch Deck Generator
+        </h1>
+        <p className="mt-1 text-[13px]" style={{ color: "#6B7280" }}>
+          Win your next listing presentation.
+        </p>
+        <MarketsComingSoonNote className="mt-3 mb-5" />
+
+        {/* ── Form ── */}
+        <div className="space-y-2.5">
+          {(
+            [
+              ["address", "Address"],
+              ["town", "Town"],
+              ["beds", "Beds"],
+              ["baths", "Baths"],
+              ["sqft", "Sqft"],
+              ["priceMin", "Price min"],
+              ["priceMax", "Price max"],
+              ["sellerName", "Seller name"],
+            ] as const
+          ).map(([k, ph]) => (
+            <input
+              key={k}
+              value={form[k]}
+              onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+              placeholder={ph}
+              className="placeholder-[#4B5563]"
+              style={INPUT_STYLE}
+            />
+          ))}
+        </div>
+
+        <button
+          type="button"
+          onClick={generate}
+          className="mt-4 w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
+          style={{ background: "#3B82F6", borderRadius: 8, padding: "13px" }}
+        >
+          Generate Pitch Deck
+        </button>
+
+        {/* ── Slide deck ── */}
+        <div ref={deckRef} className="mt-6 space-y-3">
+          {slides.map((s, i) => (
+            <div
+              key={i}
+              style={{
+                background: "rgba(20,20,22,0.7)",
+                border: "0.5px solid rgba(255,255,255,0.06)",
+                borderRadius: 18,
+                padding: 18,
+                backdropFilter: "blur(20px)",
+                WebkitBackdropFilter: "blur(20px)",
+              }}
+            >
+              <div
+                className="text-[16px] font-semibold"
+                style={{ color: "#3B82F6", letterSpacing: "-0.01em" }}
+              >
+                {s.title}
+              </div>
+              <div className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+                {s.subtitle}
+              </div>
+              <p className="mt-2 text-[13px] leading-relaxed" style={{ color: "#9CA3AF" }}>
+                {s.content}
+              </p>
+              <div className="mt-2 text-[12px] font-semibold" style={{ color: "#3B82F6" }}>
+                {s.highlight}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
 
-      <div className="mt-4 flex gap-2">
-        <button
-          type="button"
-          onClick={downloadPdf}
-          className="flex-1 rounded-[8px] bg-accent-blue py-2 text-[13px] font-medium text-white"
-        >
-          Download PDF
-        </button>
-        <button
-          type="button"
-          onClick={() =>
-            void navigator.clipboard.writeText(textCopy).then(() =>
-              toast.toast("Copied", "success"),
-            )
-          }
-          className="flex-1 rounded-[8px] border border-border-card py-2 text-[13px] text-accent-blue"
-        >
-          Copy as Text
-        </button>
+        {/* ── Actions ── */}
+        {slides.length > 0 && (
+          <div className="mt-4 flex gap-2">
+            <button
+              type="button"
+              onClick={downloadPdf}
+              className="flex-1 text-[13px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
+              style={{ background: "#3B82F6", borderRadius: 8, padding: "11px" }}
+            >
+              Download PDF
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                void navigator.clipboard.writeText(textCopy).then(() => toast.toast("Copied", "success"))
+              }
+              className="flex-1 text-[13px] font-medium active:scale-[0.97] transition-transform duration-100"
+              style={{
+                background: "transparent",
+                border: "0.5px solid rgba(255,255,255,0.15)",
+                color: "#9CA3AF",
+                borderRadius: 8,
+                padding: "11px",
+              }}
+            >
+              Copy as Text
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
