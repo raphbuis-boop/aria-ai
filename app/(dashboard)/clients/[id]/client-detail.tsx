@@ -1,6 +1,7 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { EditClientModal } from "@/components/EditClientModal";
 import { InboxSheet } from "@/components/InboxSheet";
 import { fmtMoney } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
@@ -98,6 +99,7 @@ export function ClientDetail({
 }: ClientDetailProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
   const [gmailThread, setGmailThread] = useState<{
     connected: boolean;
     snippet?: string;
@@ -161,10 +163,11 @@ export function ClientDetail({
         <BackButton />
 
         <div className="flex items-center gap-3">
-          {/* Edit icon — visual only for now */}
+          {/* Edit client */}
           <button
             type="button"
             aria-label="Edit client"
+            onClick={() => setEditOpen(true)}
             className="flex h-9 w-9 items-center justify-center rounded-full active:bg-white/5"
           >
             <Pencil size={18} style={{ color: "#8e8e93" }} />
@@ -552,6 +555,27 @@ export function ClientDetail({
           clientName={name}
           clientEmail={clientEmail}
           onClose={() => setInboxOpen(false)}
+        />
+      )}
+
+      {editOpen && (
+        <EditClientModal
+          client={{
+            id,
+            name: (client.name as string | null) ?? null,
+            phone: (client.phone as string | null) ?? null,
+            email: (client.email as string | null) ?? null,
+            status: (client.status as string | null) ?? null,
+            budget_min: (client.budget_min as number | null) ?? null,
+            budget_max: (client.budget_max as number | null) ?? null,
+            town: (client.town as string | null) ?? null,
+            beds_wanted: (client.beds_wanted as number | null) ?? null,
+            baths_wanted: (client.baths_wanted as number | null) ?? null,
+            lead_score: (client.lead_score as number | null) ?? null,
+            notes: (client.notes as string | null) ?? null,
+            client_role: (client.client_role as string | null) ?? null,
+          }}
+          onClose={() => setEditOpen(false)}
         />
       )}
     </div>
