@@ -11,6 +11,7 @@ import {
   Inbox,
   Lock,
   LogOut,
+  Mail,
   Mic,
   Sparkles,
   Share2,
@@ -43,6 +44,8 @@ function GroupLabel({ label }: { label: string }) {
 type RowProps = {
   icon: React.ElementType;
   label: string;
+  subtitle?: string;
+  connected?: boolean;
   href?: string;
   onPress?: () => void;
   destructive?: boolean;
@@ -50,7 +53,7 @@ type RowProps = {
   isLast?: boolean;
 };
 
-function SettingsRow({ icon: Icon, label, href, onPress, destructive = false, soon = false, isLast = false }: RowProps) {
+function SettingsRow({ icon: Icon, label, subtitle, connected, href, onPress, destructive = false, soon = false, isLast = false }: RowProps) {
   const iconColor = destructive ? "#EF4444" : "#9CA3AF";
   const labelColor = destructive ? "#EF4444" : "#ffffff";
   const labelWeight = destructive ? 500 : 400;
@@ -64,12 +67,25 @@ function SettingsRow({ icon: Icon, label, href, onPress, destructive = false, so
       }}
     >
       <Icon size={20} style={{ color: iconColor, flexShrink: 0 }} />
-      <span
-        className="ml-3 flex-1 text-[16px]"
-        style={{ color: labelColor, fontWeight: labelWeight }}
-      >
-        {label}
-      </span>
+      <div className="ml-3 flex-1 min-w-0">
+        <span
+          className="block text-[16px]"
+          style={{ color: labelColor, fontWeight: labelWeight }}
+        >
+          {label}
+        </span>
+        {subtitle ? (
+          <span className="block text-[12px] mt-0.5 truncate" style={{ color: "#6B7280" }}>
+            {subtitle}
+          </span>
+        ) : null}
+      </div>
+      {connected !== undefined && (
+        <div
+          className="mr-2 h-2 w-2 rounded-full flex-shrink-0"
+          style={{ background: connected ? "#10B981" : "#48484a" }}
+        />
+      )}
       {soon ? (
         <span
           className="text-[9px] font-semibold uppercase"
@@ -120,6 +136,8 @@ export default function SettingsPage() {
   const supabase = createClient();
   const router = useRouter();
   const [profile, setProfile] = useState<Profile>({ full_name: "", email: "" });
+  const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string } | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -137,6 +155,45 @@ export default function SettingsPage() {
     })();
   }, [supabase]);
 
+  // Check Gmail connection status
+  useEffect(() => {
+    void fetch("/api/gmail/status")
+      .then((r) => r.json())
+      .then((d) => setGmailStatus(d))
+      .catch(() => setGmailStatus({ connected: false }));
+  }, []);
+
+  // Handle ?gmail=connected|error callback param
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const gmail = params.get("gmail");
+    if (gmail === "connected") {
+      setToast("Gmail connected!");
+      // Refresh status
+      void fetch("/api/gmail/status")
+        .then((r) => r.json())
+        .then((d) => setGmailStatus(d));
+      window.history.replaceState({}, "", "/settings");
+    } else if (gmail === "error") {
+      setToast("Connection failed — try again");
+      window.history.replaceState({}, "", "/settings");
+    }
+  }, []);
+
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  async function handleGmailDisconnect() {
+    await fetch("/api/gmail/disconnect", { method: "POST" });
+    setGmailStatus({ connected: false });
+    setToast("Gmail disconnected");
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut();
     router.push("/login");
@@ -151,6 +208,23 @@ export default function SettingsPage() {
       className="min-h-screen pb-32"
       style={{ background: "#000000", color: "#ffffff" }}
     >
+      {/* Toast */}
+      {toast && (
+        <div
+          className="fixed left-1/2 z-50 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all"
+          style={{
+            top: "calc(env(safe-area-inset-top) + 12px)",
+            background: "rgba(20,20,22,0.95)",
+            border: "0.5px solid rgba(255,255,255,0.12)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
+          }}
+        >
+          {toast}
+        </div>
+      )}
+
       <div className="px-4 pt-6">
 
         {/* ── Profile card ── */}
@@ -201,7 +275,42 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 2: Workflow ── */}
+        <div style={{ marginTop: 24 }} />
+
+        {/* ── Group 2: Integrations ── */}
+        <GroupLabel label="Integrations" />
+        <SettingsGroup>
+          {gmailStatus?.connected ? (
+            <>
+              <SettingsRow
+                icon={Mail}
+                label="Gmail"
+                subtitle={gmailStatus.email}
+                connected={true}
+                onPress={() => {/* already connected — no-op tap */}}
+              />
+              <SettingsRow
+                icon={Mail}
+                label="Disconnect Gmail"
+                onPress={handleGmailDisconnect}
+                destructive
+                isLast
+              />
+            </>
+          ) : (
+            <SettingsRow
+              icon={Mail}
+              label="Connect Gmail"
+              connected={false}
+              onPress={() => { window.location.href = "/api/auth/google/connect"; }}
+              isLast
+            />
+          )}
+        </SettingsGroup>
+
+        <div style={{ marginTop: 24 }} />
+
+        {/* ── Group 3: Workflow ── */}
         <GroupLabel label="Workflow" />
         <SettingsGroup>
           <SettingsRow icon={BarChart3} label="Pipeline" href="/pipeline" />
@@ -212,7 +321,7 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 3: Business ── */}
+        {/* ── Group 4: Business ── */}
         <GroupLabel label="Business" />
         <SettingsGroup>
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
@@ -222,7 +331,7 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 3: Account ── */}
+        {/* ── Group 5: Account ── */}
         <GroupLabel label="Account" />
         <SettingsGroup>
           <SettingsRow icon={Bell} label="Notifications" soon />

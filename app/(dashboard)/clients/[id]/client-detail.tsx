@@ -1,11 +1,12 @@
 "use client";
 
 import { BackButton } from "@/components/BackButton";
+import { InboxSheet } from "@/components/InboxSheet";
 import { fmtMoney } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { MoreVertical, Pencil } from "lucide-react";
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +97,13 @@ export function ClientDetail({
   recentMatchCount,
 }: ClientDetailProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [inboxOpen, setInboxOpen] = useState(false); // Part 3B stub
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [gmailThread, setGmailThread] = useState<{
+    connected: boolean;
+    snippet?: string;
+    fromFirst?: string;
+    messageCount?: number;
+  } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const id        = String(client.id ?? "");
@@ -108,6 +115,8 @@ export function ClientDetail({
   const beds      = (client.beds_wanted as number | null) ?? null;
   const town      = (client.town as string | null) ?? null;
 
+  const clientEmail = String(client.email ?? "");
+
   const budget    = budgetDisplay(budgetMin, budgetMax);
   const hot       = isHot(status, leadScore);
   const initial   = initialsOf(name);
@@ -116,8 +125,31 @@ export function ClientDetail({
   const subtitle  = [townLabel, budget].filter(Boolean).join(" · ");
   const buyerPill = beds != null ? `${beds}bd Buyer` : "Buyer";
 
-  // suppress unused warning until Part 3B
-  void inboxOpen;
+  // Fetch Gmail thread preview for the inbox tile
+  useEffect(() => {
+    if (!clientEmail) {
+      setGmailThread(null);
+      return;
+    }
+    void fetch(`/api/gmail/threads?clientEmail=${encodeURIComponent(clientEmail)}`)
+      .then((r) => r.json())
+      .then((d: { connected: boolean; messages?: Array<{ from: string; snippet: string }>; totalThreads?: number }) => {
+        if (!d.connected) {
+          setGmailThread({ connected: false });
+          return;
+        }
+        const msgs = d.messages ?? [];
+        const last = msgs[msgs.length - 1];
+        const fromFirst = last ? last.from.split(" ")[0].replace(/[",]/g, "") : undefined;
+        setGmailThread({
+          connected: true,
+          snippet: last?.snippet,
+          fromFirst,
+          messageCount: msgs.length,
+        });
+      })
+      .catch(() => setGmailThread(null));
+  }, [clientEmail]);
 
   return (
     <div
@@ -270,57 +302,81 @@ export function ClientDetail({
             }}
           >
             <div>
-              <div className="flex items-start justify-between">
-                <p
-                  className="text-[11px] font-semibold uppercase"
-                  style={{ color: "#6B7280", letterSpacing: "0.07em" }}
-                >
-                  Inbox
-                </p>
-                {draftCount > 0 && (
-                  <span
-                    className="flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold text-white"
-                    style={{ background: "#EF4444" }}
-                  >
-                    {draftCount}
-                  </span>
-                )}
-              </div>
-
               <p
-                className="mt-3 text-[22px] font-bold leading-none"
-                style={{ color: draftCount > 0 ? "#ffffff" : "#48484a" }}
+                className="text-[11px] font-semibold uppercase"
+                style={{ color: "#6B7280", letterSpacing: "0.07em" }}
               >
-                {draftCount > 0 ? draftCount : "—"}
+                Inbox
               </p>
-              <p className="mt-1 text-[11px]" style={{ color: "#6B7280" }}>
-                {draftCount === 1
-                  ? "draft ready"
-                  : draftCount > 1
-                  ? "drafts ready"
-                  : "no drafts"}
-              </p>
+
+              {/* Gmail not connected */}
+              {gmailThread?.connected === false && (
+                <p className="mt-3 text-[12px] leading-snug" style={{ color: "#6B7280" }}>
+                  Connect Gmail to see emails
+                </p>
+              )}
+
+              {/* No email on file */}
+              {gmailThread === null && !clientEmail && (
+                <p className="mt-3 text-[12px] leading-snug" style={{ color: "#6B7280" }}>
+                  No email on file
+                </p>
+              )}
+
+              {/* Loading */}
+              {gmailThread === null && clientEmail && (
+                <div className="mt-3 h-4 w-4 animate-spin rounded-full"
+                  style={{ border: "2px solid rgba(255,255,255,0.08)", borderTopColor: "#3B82F6" }}
+                />
+              )}
+
+              {/* Connected + has threads */}
+              {gmailThread?.connected && (
+                <>
+                  <p
+                    className="mt-3 text-[22px] font-bold leading-none"
+                    style={{ color: gmailThread.messageCount ? "#ffffff" : "#48484a" }}
+                  >
+                    {gmailThread.messageCount ?? "—"}
+                  </p>
+                  <p className="mt-1 text-[11px]" style={{ color: "#6B7280" }}>
+                    {gmailThread.messageCount === 1
+                      ? "email"
+                      : gmailThread.messageCount
+                      ? "emails"
+                      : "no emails"}
+                  </p>
+                </>
+              )}
             </div>
 
-            {lastDraftBody ? (
+            {gmailThread?.connected && gmailThread.snippet ? (
+              <p
+                className="mt-4 line-clamp-3 text-[12px] leading-[1.5]"
+                style={{ color: "#9CA3AF" }}
+              >
+                {gmailThread.fromFirst ? `Last from ${gmailThread.fromFirst}: ` : ""}
+                {gmailThread.snippet}
+              </p>
+            ) : gmailThread?.connected === false ? (
+              <div className="mt-4">
+                <Link
+                  href="/settings"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[12px] font-semibold"
+                  style={{ color: "#0a7cff" }}
+                >
+                  Go to Settings →
+                </Link>
+              </div>
+            ) : draftCount > 0 ? (
               <p
                 className="mt-4 line-clamp-3 text-[12px] leading-[1.5]"
                 style={{ color: "#9CA3AF" }}
               >
                 &ldquo;{lastDraftBody}&rdquo;
               </p>
-            ) : (
-              <div className="mt-4">
-                <Link
-                  href={`/clients/${id}/inbox`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-[12px] font-semibold"
-                  style={{ color: "#0a7cff" }}
-                >
-                  View inbox →
-                </Link>
-              </div>
-            )}
+            ) : null}
           </button>
 
           {/* Matches tile — top right */}
@@ -490,8 +546,14 @@ export function ClientDetail({
         )}
       </div>
 
-      {/* InboxSheet — Part 3B stub */}
-      {/* {inboxOpen && <InboxSheet clientId={id} onClose={() => setInboxOpen(false)} />} */}
+      {inboxOpen && (
+        <InboxSheet
+          clientId={id}
+          clientName={name}
+          clientEmail={clientEmail}
+          onClose={() => setInboxOpen(false)}
+        />
+      )}
     </div>
   );
 }
