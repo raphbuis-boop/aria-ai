@@ -17,6 +17,7 @@ type Props = {
   items: TodayItem[];
   briefing: Briefing;
   userName: string;
+  hasAnyClients: boolean;
 };
 
 function getGreeting(): string {
@@ -72,16 +73,19 @@ function timingPill(item: TodayItem): { text: string; color: string; weight?: nu
   }
 }
 
-export function TodayClient({ items, briefing, userName }: Props) {
+export function TodayClient({ items, briefing, userName, hasAnyClients }: Props) {
   const router = useRouter();
   const [greeting, setGreeting] = useState("Good morning");
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loadingDrafts, setLoadingDrafts] = useState<Record<string, boolean>>({});
+  const [voicePromptDismissed, setVoicePromptDismissed] = useState(true); // true = hidden until hydrated
 
-  // Hydration-safe greeting
+  // Hydration-safe greeting + voice prompt
   useEffect(() => {
     setGreeting(getGreeting());
+    const dismissed = localStorage.getItem("aria_voice_prompt_dismissed_v1") === "1";
+    setVoicePromptDismissed(dismissed);
   }, []);
 
   // Pre-fetch all text-action drafts in parallel on mount
@@ -159,7 +163,7 @@ export function TodayClient({ items, briefing, userName }: Props) {
             </p>
             <p className="mt-1 text-[18px] font-medium" style={{ color: "#6B7280" }}>
               {n === 0 ? (
-                "All caught up today."
+                hasAnyClients ? "All caught up today." : "Welcome to Aria."
               ) : (
                 <>
                   <span
@@ -182,8 +186,50 @@ export function TodayClient({ items, briefing, userName }: Props) {
           <Bell size={22} style={{ color: "#6B7280", flexShrink: 0, marginTop: 4 }} />
         </div>
 
-        {/* ── Briefing strip ── */}
-        <div
+        {/* ── Voice prompt card ── */}
+        {!voicePromptDismissed && (
+          <div
+            className="flex items-center mb-5"
+            style={{
+              background: "rgba(20,20,22,0.6)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              borderRadius: 14,
+              overflow: "hidden",
+            }}
+          >
+            {/* Purple accent strip */}
+            <div style={{ width: 4, alignSelf: "stretch", background: "#A78BFA", flexShrink: 0 }} />
+            <Link
+              href="/settings/voice"
+              className="flex flex-1 items-center gap-3 px-4 py-3.5 active:opacity-80"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-[16px] font-bold" style={{ color: "#ffffff" }}>
+                  Train Aria to write like you
+                </p>
+                <p className="mt-0.5 text-[13px]" style={{ color: "#9CA3AF" }}>
+                  1-min voice setup makes drafts sound like your actual texts
+                </p>
+              </div>
+              <ArrowRight size={18} style={{ color: "#6B7280", flexShrink: 0 }} />
+            </Link>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => {
+                localStorage.setItem("aria_voice_prompt_dismissed_v1", "1");
+                setVoicePromptDismissed(true);
+              }}
+              className="px-3 py-3.5 active:opacity-60"
+              style={{ color: "#6B7280", fontSize: 18 }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Briefing strip — only shown once agent has clients ── */}
+        {hasAnyClients && <div
           className="grid grid-cols-3 mb-7"
           style={{ gap: 8 }}
         >
@@ -255,16 +301,18 @@ export function TodayClient({ items, briefing, userName }: Props) {
               New MLS
             </p>
           </div>
-        </div>
+        </div>}
 
         {/* ── Empty state ── */}
         {n === 0 && (
           <div className="mt-4">
             <p className="text-[14px]" style={{ color: "#6B7280" }}>
-              No follow-ups, no signatures pending. Enjoy the quiet.
+              {hasAnyClients
+                ? "No follow-ups, no signatures pending. Enjoy the quiet."
+                : "Add your first client to get started."}
             </p>
             <Link
-              href="/clients/new"
+              href="/clients?new=1"
               className="mt-6 inline-block text-[16px] font-semibold"
               style={{ color: "#3B82F6" }}
             >

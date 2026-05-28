@@ -158,11 +158,14 @@ export default async function DashboardPage() {
     (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
     "there";
 
+  const hasAnyClients = clients.length > 0;
+
   return (
     <TodayClientComponent
       items={items}
       briefing={briefing}
       userName={firstName}
+      hasAnyClients={hasAnyClients}
     />
   );
 }

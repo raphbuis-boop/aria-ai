@@ -5,10 +5,12 @@ import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export default function SignupPage() {
   const supabase = createClient();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +22,7 @@ export default function SignupPage() {
     setError(null);
     setNotice(null);
     setLoading(true);
-    const { error: err } = await supabase.auth.signUp({
+    const { data, error: err } = await supabase.auth.signUp({
       email,
       password,
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
@@ -30,8 +32,13 @@ export default function SignupPage() {
       setError(err.message);
       return;
     }
+    // If Supabase auto-confirmed (session returned immediately), go straight to dashboard
+    if (data.session) {
+      router.push("/dashboard");
+      return;
+    }
     setNotice(
-      "Check your email to confirm your account — or sign in below if confirmations are disabled.",
+      "Check your email to confirm your account, then sign in.",
     );
   }
 
