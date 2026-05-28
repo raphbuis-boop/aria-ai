@@ -3,6 +3,7 @@
 import { Drawer } from "vaul";
 import { useEffect, useState, useRef } from "react";
 import type { TodayItem } from "@/lib/today-items";
+import { smsUrl, whatsAppUrl } from "@/lib/messaging-links";
 
 export type DraftSheetProps = {
   item: TodayItem | null;
@@ -37,29 +38,21 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
   const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [sendState, setSendState] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [errorMsg, setErrorMsg] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const isOpen = item !== null;
   const hasPhone = !!item?.clientPhone;
-  const isSending = sendState === "sending";
-  const canSend = hasPhone && draftText.trim().length > 0 && !loading && !isSending;
+  const canSend = hasPhone && draftText.trim().length > 0 && !loading;
 
   // Populate draft when item changes — use prefetched draft if available, otherwise fetch
   useEffect(() => {
     if (!item) {
-      // Reset all state when sheet closes
       setDraftText("");
       setIsEditing(false);
-      setSendState("idle");
-      setErrorMsg("");
       return;
     }
 
     setIsEditing(false);
-    setSendState("idle");
-    setErrorMsg("");
 
     // Use prefetched draft if ready (non-undefined means the prefetch ran)
     if (prefetchedDraft !== undefined) {
@@ -108,39 +101,26 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
     }
   }, [isEditing]);
 
-  async function handleSend() {
+  async function logAndOpen(channel: "sms" | "whatsapp") {
     if (!item || !canSend) return;
     triggerHaptic();
-    setSendState("sending");
-    setErrorMsg("");
 
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: item.clientId,
-          to: item.clientPhone,
-          body: draftText,
-        }),
-      });
-      const data = (await res.json()) as { success?: boolean; error?: string };
+    // Log the activity first (fire-and-forget — don't block native app open)
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: item.clientId, body: draftText, channel }),
+    });
 
-      if (!data.success) {
-        setErrorMsg(data.error ?? "Could not send. Try again.");
-        setSendState("error");
-        return;
-      }
+    const phone = item.clientPhone ?? "";
+    const url = channel === "sms" ? smsUrl(phone, draftText) : whatsAppUrl(phone, draftText);
+    window.location.href = url;
 
-      setSendState("sent");
-      setTimeout(() => {
-        onSent(item.id);
-        onClose();
-      }, 1000);
-    } catch {
-      setErrorMsg("Could not send. Try again.");
-      setSendState("error");
-    }
+    // Mark as sent in the Today list after a brief delay
+    setTimeout(() => {
+      onSent(item.id);
+      onClose();
+    }, 600);
   }
 
   function handleEditToggle() {
@@ -215,31 +195,39 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
               />
             )}
 
-            {/* Error message */}
-            {sendState === "error" && errorMsg && (
-              <p className="mb-3 text-[14px] text-center" style={{ color: "#EF4444" }}>
-                {errorMsg}
+            {/* No phone warning */}
+            {!hasPhone && (
+              <p className="mb-3 text-[13px] text-center" style={{ color: "#6B7280" }}>
+                No phone number on file
               </p>
             )}
 
-            {/* Send button */}
-            <button
-              type="button"
-              onClick={handleSend}
-              disabled={!canSend || sendState === "sent"}
-              className="w-full rounded-[12px] py-[17px] text-[17px] font-semibold text-white mb-3 disabled:opacity-50"
-              style={{
-                background: sendState === "sent" ? "#16a34a" : "#3B82F6",
-                minHeight: "56px",
-                transition: "background 0.2s",
-              }}
-            >
-              {sendState === "sending"
-                ? "Sending…"
-                : sendState === "sent"
-                  ? "Sent ✓"
-                  : "Send"}
-            </button>
+            {/* Messages + WhatsApp buttons */}
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => logAndOpen("sms")}
+                disabled={!canSend}
+                className="flex-1 rounded-[12px] py-[17px] text-[16px] font-semibold text-white disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+                style={{ background: "#3B82F6", minHeight: "56px" }}
+              >
+                Messages
+              </button>
+              <button
+                type="button"
+                onClick={() => logAndOpen("whatsapp")}
+                disabled={!canSend}
+                className="flex-1 rounded-[12px] py-[15px] text-[16px] font-semibold disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+                style={{
+                  background: "transparent",
+                  border: "0.5px solid #25D366",
+                  color: "#25D366",
+                  minHeight: "56px",
+                }}
+              >
+                WhatsApp
+              </button>
+            </div>
 
             {/* Edit toggle */}
             <button
