@@ -37,6 +37,7 @@ function triggerHaptic() {
 export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftSheetProps) {
   const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -53,6 +54,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
     }
 
     setIsEditing(false);
+    setFetchError(false);
 
     // Use prefetched draft if ready (non-undefined means the prefetch ran)
     if (prefetchedDraft !== undefined) {
@@ -77,12 +79,12 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
         skipInsert: true,
       }),
     })
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then((data: { draft?: string }) => {
         if (!cancelled) setDraftText(data.draft ?? "");
       })
       .catch(() => {
-        if (!cancelled) setDraftText("");
+        if (!cancelled) setFetchError(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -176,6 +178,18 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
                 <div className="h-4 rounded animate-pulse" style={{ background: "#1c1c1e", width: "78%" }} />
                 <div className="h-4 rounded animate-pulse" style={{ background: "#1c1c1e", width: "85%" }} />
                 <p className="text-[13px] pt-1" style={{ color: "#6B7280" }}>Drafting in your voice…</p>
+              </div>
+            ) : fetchError ? (
+              <div
+                className="flex flex-col items-center justify-center rounded-[12px] p-6 mb-5 text-center"
+                style={{ background: "#111111", border: "1px solid #222222", minHeight: "120px" }}
+              >
+                <p className="text-[14px] font-medium mb-1" style={{ color: "#EF4444" }}>
+                  Couldn&apos;t load draft
+                </p>
+                <p className="text-[13px]" style={{ color: "#6B7280" }}>
+                  Check your connection and try again.
+                </p>
               </div>
             ) : (
               <textarea

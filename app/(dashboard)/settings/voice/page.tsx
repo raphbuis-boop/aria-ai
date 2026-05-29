@@ -31,40 +31,52 @@ export default function VoiceSettingsPage() {
   }, [supabase]);
 
   async function saveVoice() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-    await supabase
-      .from("agent_profiles")
-      .update({ voice_samples: samples })
-      .eq("id", user.id);
-    const res = await fetch("/api/ai/analyze-tone", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ voiceSamples: samples }),
-    });
-    const data = await res.json();
-    setAnalysis(String(data.analysis ?? ""));
-    await supabase
-      .from("agent_profiles")
-      .update({ tone_analysis: data.analysis })
-      .eq("id", user.id);
-    toast.toast("Saved & analyzed", "success");
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      await supabase
+        .from("agent_profiles")
+        .update({ voice_samples: samples })
+        .eq("id", user.id);
+      const res = await fetch("/api/ai/analyze-tone", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ voiceSamples: samples }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.analysis) throw new Error("No analysis returned");
+      setAnalysis(String(data.analysis));
+      await supabase
+        .from("agent_profiles")
+        .update({ tone_analysis: data.analysis })
+        .eq("id", user.id);
+      toast.toast("Saved & analyzed", "success");
+    } catch {
+      toast.toast("Couldn't save voice training — check connection.", "error");
+    }
   }
 
   async function previewDraft() {
-    const res = await fetch("/api/ai/draft-text", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clientName: "Jordan",
-        context: previewQ,
-        scenario: previewQ,
-        voiceSamples: samples,
-        skipInsert: true,
-      }),
-    });
-    const data = await res.json();
-    setPreviewOut(String(data.draft ?? ""));
+    try {
+      const res = await fetch("/api/ai/draft-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientName: "Jordan",
+          context: previewQ,
+          scenario: previewQ,
+          voiceSamples: samples,
+          skipInsert: true,
+        }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (!data.draft) throw new Error("No draft returned");
+      setPreviewOut(String(data.draft));
+    } catch {
+      toast.toast("Couldn't generate preview — check connection.", "error");
+    }
   }
 
   const inputBg: React.CSSProperties = { background: "#1c1c1e", border: "none", color: "#f0f0f5" };
