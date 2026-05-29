@@ -227,44 +227,47 @@ export default function SettingsPage() {
 
       <div className="px-4 pt-6">
 
-        {/* ── Profile card ── */}
-        <Link href="/settings/profile">
+        {/* ── Profile card — editing coming soon ── */}
+        <div
+          className="mb-7 flex items-center gap-4"
+          style={{
+            background: "rgba(20,20,22,0.6)",
+            borderRadius: 14,
+            border: "0.5px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            padding: 16,
+          }}
+        >
+          {/* Avatar */}
           <div
-            className="mb-7 flex items-center gap-4 active:opacity-80"
+            className="flex shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
             style={{
-              background: "rgba(20,20,22,0.6)",
-              borderRadius: 14,
-              border: "0.5px solid rgba(255,255,255,0.06)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              padding: 16,
+              width: 64,
+              height: 64,
+              background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
             }}
           >
-            {/* Avatar */}
-            <div
-              className="flex shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
-              style={{
-                width: 64,
-                height: 64,
-                background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-              }}
-            >
-              {initial}
-            </div>
-
-            {/* Name + subtitle */}
-            <div className="min-w-0 flex-1">
-              <p className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
-                {profile.full_name || "Your Profile"}
-              </p>
-              <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
-                {profile.email || "Tap to set up your profile"}
-              </p>
-            </div>
-
-            <ChevronRight size={18} style={{ color: "#6B7280", flexShrink: 0 }} />
+            {initial}
           </div>
-        </Link>
+
+          {/* Name + subtitle */}
+          <div className="min-w-0 flex-1">
+            <p className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
+              {profile.full_name || "Your Profile"}
+            </p>
+            <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
+              {profile.email || ""}
+            </p>
+          </div>
+
+          <span
+            className="shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase"
+            style={{ background: "rgba(167,139,250,0.12)", color: "#A78BFA", letterSpacing: "0.06em" }}
+          >
+            Soon
+          </span>
+        </div>
 
         {/* ── Group 1: Aria ── */}
         <GroupLabel label="Aria" />
@@ -272,8 +275,6 @@ export default function SettingsPage() {
           <SettingsRow icon={Mic} label="Mirror My Voice" href="/settings/voice" />
           <SettingsRow icon={Sparkles} label="Ask Aria" href="/voice" isLast />
         </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
 
         <div style={{ marginTop: 24 }} />
 
