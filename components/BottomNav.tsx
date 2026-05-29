@@ -100,7 +100,7 @@ export function BottomNav() {
         <button
           type="button"
           aria-label="Ask Aria"
-          onClick={() => { console.log('aria button tapped'); triggerHaptic(); router.push("/voice"); }}
+          onClick={() => { triggerHaptic(); router.push("/voice"); }}
           className="flex items-center justify-center rounded-full"
           style={{
             width: 48,
