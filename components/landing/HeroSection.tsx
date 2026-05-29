@@ -1,254 +1,360 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+
+function LiveDot() {
+  return (
+    <span className="relative flex h-2 w-2">
+      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+    </span>
+  );
+}
+
+function useCountUp(target: number, duration: number, active: boolean) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!active) return;
+    const start = performance.now();
+    function tick(now: number) {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setValue(parseFloat((eased * target).toFixed(1)));
+      if (progress < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  }, [active, target, duration]);
+  return value;
+}
 
 const containerVariants = {
   hidden: {},
-  visible: { transition: { staggerChildren: 0.1 } },
+  visible: { transition: { staggerChildren: 0.11 } },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 0, y: 22 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] } },
+};
+
+const panelVariants = {
+  hidden: { opacity: 0, y: 36, scale: 0.97 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] },
+    scale: 1,
+    transition: { duration: 0.8, delay: 0.35, ease: [0.22, 1, 0.36, 1] },
   },
 };
 
+function cardVariants(i: number) {
+  return {
+    hidden: { opacity: 0, y: 14 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.55, delay: 0.65 + i * 0.12, ease: [0.22, 1, 0.36, 1] },
+    },
+  };
+}
+
 export default function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [position, setPosition] = useState<number | null>(null);
+  const [countActive, setCountActive] = useState(false);
 
   const { scrollYProgress } = useScroll({
     target: sectionRef,
     offset: ["start start", "end start"],
   });
-  const phoneY = useTransform(scrollYProgress, [0, 1], [0, -50]);
-  const phoneOpacity = useTransform(scrollYProgress, [0, 0.85], [1, 0.5]);
+  const textY = useTransform(scrollYProgress, [0, 1], [0, -70]);
+  const panelY = useTransform(scrollYProgress, [0, 1], [0, -40]);
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!email || status === "loading") return;
-    setStatus("loading");
-    try {
-      const res = await fetch("/api/waitlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Error");
-      setPosition(data.position ?? null);
-      setStatus("success");
-    } catch {
-      setStatus("error");
-    }
-  }
+  useEffect(() => {
+    const t = setTimeout(() => setCountActive(true), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
+  const revenue = useCountUp(3.2, 1800, countActive);
 
   return (
     <section
       ref={sectionRef}
-      className="relative pt-32 pb-0 overflow-hidden"
-      style={{ background: "#FAFAF7" }}
+      className="relative min-h-screen flex items-center overflow-hidden"
+      style={{ background: "#08080A" }}
     >
-      {/* Soft pink radial glow behind phone */}
+      {/* Ambient amber glow */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2"
+        className="pointer-events-none absolute inset-0"
         style={{
-          width: 900,
-          height: 700,
           background:
-            "radial-gradient(ellipse at 50% 15%, rgba(252,217,208,0.75) 0%, rgba(252,217,208,0.2) 42%, transparent 70%)",
+            "radial-gradient(ellipse 80% 60% at 50% 40%, rgba(232,168,50,0.07) 0%, transparent 70%)",
         }}
       />
 
-      <div className="relative max-w-3xl mx-auto px-6 text-center">
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          {/* Eyebrow pill */}
-          <motion.div variants={itemVariants} className="mb-7">
-            <span
-              className="inline-block text-[11px] font-semibold tracking-[0.14em] uppercase px-3.5 py-1.5 rounded-full"
-              style={{ background: "#FCD9D0", color: "#8B3A25" }}
-            >
-              Built for NJ real estate agents
-            </span>
-          </motion.div>
+      <div className="max-w-6xl mx-auto px-6 w-full pt-28 pb-24">
+        <div className="grid lg:grid-cols-2 gap-16 items-center">
 
-          {/* H1 */}
-          <motion.h1
-            variants={itemVariants}
-            className="font-medium leading-[1.04] mb-5"
-            style={{
-              fontSize: "clamp(2.4rem, 6vw, 3.75rem)",
-              letterSpacing: "-0.035em",
-              color: "#0B0B0F",
-            }}
+          {/* Left — text */}
+          <motion.div
+            style={{ y: textY }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
           >
-            Aria writes your client emails{" "}
-            <em className="not-italic" style={{ color: "#B85C43" }}>
-              in your voice.
-            </em>
-          </motion.h1>
-
-          {/* Subhead */}
-          <motion.p
-            variants={itemVariants}
-            className="text-[17px] leading-relaxed max-w-[520px] mx-auto mb-10"
-            style={{ color: "#4A4A52" }}
-          >
-            You&apos;re juggling 20 clients. Aria reads your Gmail, drafts
-            replies in your voice, and flags who&apos;s about to go cold —
-            before you even open your laptop.
-          </motion.p>
-
-          {/* Waitlist form */}
-          <motion.div variants={itemVariants} id="waitlist">
-            {status === "success" ? (
-              <div
-                className="inline-flex flex-col items-center gap-1.5 px-8 py-5 rounded-2xl"
+            {/* Eyebrow */}
+            <motion.div variants={itemVariants} className="flex items-center gap-2 mb-6">
+              <span
+                className="inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full"
                 style={{
-                  background: "#fff",
-                  border: "0.5px solid #EEEBE5",
-                  boxShadow: "0 4px 24px rgba(11,11,15,0.06)",
+                  background: "rgba(232,168,50,0.1)",
+                  color: "#E8A832",
+                  border: "0.5px solid rgba(232,168,50,0.2)",
                 }}
               >
-                <span
-                  className="text-3xl font-semibold"
-                  style={{ color: "#0B0B0F", letterSpacing: "-0.02em" }}
-                >
-                  #{position}
-                </span>
-                <span className="text-[13.5px]" style={{ color: "#4A4A52" }}>
-                  on the early access list. We&apos;ll be in touch.
-                </span>
-              </div>
-            ) : (
-              <form
-                onSubmit={handleSubmit}
-                className="flex gap-2 max-w-[400px] mx-auto flex-wrap justify-center"
-              >
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="your@email.com"
-                  required
-                  className="flex-1 min-w-[180px] text-[14px] px-5 py-3 rounded-full outline-none transition-all"
-                  style={{
-                    background: "#fff",
-                    border: "0.5px solid #E8E4DF",
-                    color: "#0B0B0F",
-                  }}
-                  onFocus={(e) =>
-                    (e.currentTarget.style.border = "0.5px solid #FCD9D0")
-                  }
-                  onBlur={(e) =>
-                    (e.currentTarget.style.border = "0.5px solid #E8E4DF")
-                  }
-                />
-                <button
-                  type="submit"
-                  disabled={status === "loading"}
-                  className="text-[14px] font-medium px-5 py-3 rounded-full whitespace-nowrap transition-opacity"
-                  style={{
-                    background: "#0B0B0F",
-                    color: "#fff",
-                    opacity: status === "loading" ? 0.7 : 1,
-                  }}
-                >
-                  {status === "loading" ? "Joining…" : "Get early access"}
-                </button>
-              </form>
-            )}
+                <LiveDot />
+                AI Revenue Operating System
+              </span>
+            </motion.div>
 
-            {status === "error" && (
-              <p className="text-[12.5px] mt-2" style={{ color: "#B85C43" }}>
-                Something went wrong. Please try again.
-              </p>
-            )}
-
-            <p className="text-[12px] mt-3" style={{ color: "#9A9AA2" }}>
-              No credit card. No setup fees. NJ agents only for now.
-            </p>
-          </motion.div>
-        </motion.div>
-
-        {/* Phone mockup with parallax on scroll */}
-        <motion.div
-          style={{ y: phoneY, opacity: phoneOpacity }}
-          className="mt-16 mx-auto"
-        >
-          <div
-            className="mx-auto"
-            style={{
-              width: 272,
-              background: "#fff",
-              borderRadius: 44,
-              padding: "10px 10px 0",
-              boxShadow:
-                "0 48px 120px -24px rgba(11,11,15,0.2), 0 0 0 0.5px rgba(11,11,15,0.07)",
-            }}
-          >
-            <div
+            {/* Headline */}
+            <motion.h1
+              variants={itemVariants}
+              className="font-semibold leading-[1.05] mb-6"
               style={{
-                borderRadius: "34px 34px 0 0",
-                overflow: "hidden",
-                background: "#F0EDE8",
-                minHeight: 520,
+                fontSize: "clamp(2.6rem, 5.5vw, 4rem)",
+                letterSpacing: "-0.04em",
+                color: "#F2F0EB",
               }}
             >
-              {/* TODO: swap /today-screen-placeholder.png for real Aria Today screenshot */}
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/today-screen-placeholder.png"
-                alt="Aria Today screen"
-                width={252}
-                height={546}
-                style={{ width: "100%", display: "block" }}
-                onError={(e) => {
-                  e.currentTarget.style.display = "none";
-                  const fb = e.currentTarget
-                    .nextElementSibling as HTMLElement | null;
-                  if (fb) fb.style.display = "flex";
-                }}
-              />
-              {/* Fallback shown when screenshot file is missing */}
-              <div
-                aria-hidden
+              Every relationship
+              <br />
+              <span
                 style={{
-                  display: "none",
-                  height: 546,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  background: "#F0EDE8",
-                  flexDirection: "column",
-                  gap: 8,
+                  background: "linear-gradient(135deg, #E8A832 0%, #F0C060 100%)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  backgroundClip: "text",
                 }}
               >
-                <div
+                is revenue.
+              </span>
+            </motion.h1>
+
+            {/* Subhead */}
+            <motion.p
+              variants={itemVariants}
+              className="text-[17px] leading-relaxed mb-10 max-w-md"
+              style={{ color: "rgba(255,255,255,0.45)" }}
+            >
+              Aria surfaces the deals, clients, and moments your business is
+              leaving money on the table — automatically.
+            </motion.p>
+
+            {/* CTAs */}
+            <motion.div variants={itemVariants} className="flex flex-wrap items-center gap-3">
+              <a
+                href="#waitlist"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("waitlist")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="text-[14px] font-semibold px-6 py-3 rounded-full transition-opacity hover:opacity-85"
+                style={{ background: "#E8A832", color: "#0A0A0A" }}
+              >
+                Book a Demo
+              </a>
+              <a
+                href="#features"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("features")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="text-[14px] font-medium px-6 py-3 rounded-full transition-all hover:border-white/25"
+                style={{
+                  color: "rgba(255,255,255,0.55)",
+                  border: "0.5px solid rgba(255,255,255,0.13)",
+                }}
+              >
+                See Aria in Action ↓
+              </a>
+            </motion.div>
+          </motion.div>
+
+          {/* Right — command-center panel */}
+          <motion.div style={{ y: panelY }} variants={panelVariants} initial="hidden" animate="visible">
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{
+                background: "linear-gradient(160deg, #0F0F16 0%, #0C0C13 100%)",
+                border: "0.5px solid rgba(255,255,255,0.07)",
+                boxShadow:
+                  "0 0 0 0.5px rgba(232,168,50,0.08), 0 40px 120px -20px rgba(0,0,0,0.8)",
+              }}
+            >
+              {/* Panel header */}
+              <div
+                className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}
+              >
+                <div className="flex items-center gap-2">
+                  <LiveDot />
+                  <span
+                    className="text-[13px] font-semibold"
+                    style={{ color: "#F2F0EB", letterSpacing: "-0.01em" }}
+                  >
+                    Revenue Intelligence
+                  </span>
+                </div>
+                <span
+                  className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+                  style={{ background: "rgba(52,211,153,0.12)", color: "#34D399" }}
+                >
+                  7 signals active
+                </span>
+              </div>
+
+              {/* Cards grid */}
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+                {/* Sarah Kim — opportunity */}
+                <motion.div
+                  variants={cardVariants(0)}
+                  initial="hidden"
+                  animate="visible"
+                  className="rounded-xl p-3.5"
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    background: "#E8E4DF",
+                    background: "rgba(255,255,255,0.03)",
+                    border: "0.5px solid rgba(255,255,255,0.06)",
                   }}
-                />
-                <span style={{ fontSize: 12, color: "#9A9AA2" }}>
-                  App screenshot
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>
+                        Sarah Kim
+                      </p>
+                      <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        Ready to list · $1.4M
+                      </p>
+                    </div>
+                    <span
+                      className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(232,168,50,0.12)", color: "#E8A832" }}
+                    >
+                      Opportunity
+                    </span>
+                  </div>
+                  <div
+                    className="h-1 rounded-full overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
+                  >
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, #E8A832, #F0C060)" }}
+                      initial={{ width: 0 }}
+                      animate={{ width: "84%" }}
+                      transition={{ duration: 1.2, delay: 0.9, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
+                  <p className="text-[10.5px] mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    84% close probability
+                  </p>
+                </motion.div>
+
+                {/* 24 Sycamore — act now */}
+                <motion.div
+                  variants={cardVariants(1)}
+                  initial="hidden"
+                  animate="visible"
+                  className="rounded-xl p-3.5"
+                  style={{
+                    background: "rgba(255,255,255,0.03)",
+                    border: "0.5px solid rgba(255,255,255,0.06)",
+                  }}
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div>
+                      <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>
+                        24 Sycamore Rdg
+                      </p>
+                      <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        Match for 3 buyers · $775K
+                      </p>
+                    </div>
+                    <span
+                      className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(52,211,153,0.1)", color: "#34D399" }}
+                    >
+                      Act in 2h
+                    </span>
+                  </div>
+                  <div
+                    className="h-1 rounded-full overflow-hidden"
+                    style={{ background: "rgba(255,255,255,0.06)" }}
+                  >
+                    <motion.div
+                      className="h-full rounded-full"
+                      style={{ background: "linear-gradient(90deg, #34D399, #6EE7B7)" }}
+                      initial={{ width: 0 }}
+                      animate={{ width: "62%" }}
+                      transition={{ duration: 1.2, delay: 1.02, ease: [0.22, 1, 0.36, 1] }}
+                    />
+                  </div>
+                  <p className="text-[10.5px] mt-1.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    New to market 4h ago
+                  </p>
+                </motion.div>
+
+                {/* Marcus Johnson — risk */}
+                <motion.div
+                  variants={cardVariants(2)}
+                  initial="hidden"
+                  animate="visible"
+                  className="rounded-xl p-3.5 sm:col-span-2"
+                  style={{
+                    background: "rgba(239,68,68,0.04)",
+                    border: "0.5px solid rgba(239,68,68,0.12)",
+                  }}
+                >
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>
+                        Marcus Johnson
+                      </p>
+                      <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>
+                        9 days silent · $840K buyer
+                      </p>
+                    </div>
+                    <span
+                      className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+                      style={{ background: "rgba(239,68,68,0.12)", color: "#F87171" }}
+                    >
+                      High Risk
+                    </span>
+                  </div>
+                </motion.div>
+              </div>
+
+              {/* Panel footer — revenue count-up */}
+              <div
+                className="px-4 py-3 flex items-center justify-between"
+                style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+              >
+                <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>
+                  Pipeline revenue
+                </span>
+                <span
+                  className="text-[15px] font-semibold tabular-nums"
+                  style={{ color: "#E8A832", letterSpacing: "-0.02em" }}
+                >
+                  ${revenue.toFixed(1)}M ↑ this month
                 </span>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+
+        </div>
       </div>
     </section>
   );
