@@ -153,8 +153,8 @@ export function ClientDetail({
 
   return (
     <div
-      className="min-h-screen pb-28"
-      style={{ background: "#000000", color: "#f0f0f5" }}
+      className="min-h-screen pb-[130px]"
+      style={{ background: "#0a0a0a", color: "#f0f0f5" }}
     >
       {/* ── Header ─────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-5 pt-6 pb-2">

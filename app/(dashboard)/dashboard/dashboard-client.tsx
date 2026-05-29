@@ -221,7 +221,7 @@ export function DashboardClient({
   }, [toast]);
 
   return (
-    <div className="min-h-screen pb-28" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
+    <div className="min-h-screen pb-[130px]" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
 
         {/* ── Header row ── */}

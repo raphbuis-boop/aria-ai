@@ -161,7 +161,7 @@ export function InboxClient({
   }
 
   return (
-    <div className="min-h-screen pb-24 relative" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
+    <div className="min-h-screen pb-[130px] relative" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
         <div className="flex items-center justify-between mb-4">
           <div>
@@ -185,7 +185,7 @@ export function InboxClient({
               onClick={() => setFilter(f)}
               className="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap"
               style={filter === f
-                ? { background: "#0a7cff", color: "#ffffff" }
+                ? { background: "#3B82F6", color: "#ffffff" }
                 : { background: "#1c1c1e", color: "#8e8e93" }
               }
             >
@@ -246,7 +246,7 @@ export function InboxClient({
                       {clientName}
                     </span>
                     {pending ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(10,124,255,0.12)", color: "#0a7cff" }}>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)", color: "#3B82F6" }}>
                         AI DRAFT
                       </span>
                     ) : null}
@@ -295,7 +295,7 @@ export function InboxClient({
         >
           <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5 pb-10" style={{ background: "#1c1c1e" }}
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5" style={{ background: "#1c1c1e", paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-9 h-1 rounded-full mx-auto mb-4" style={{ background: "#3a3a3c" }} />
@@ -320,7 +320,7 @@ export function InboxClient({
               type="button"
               onClick={approveSend}
               disabled={busy}
-              className="w-full text-white font-semibold rounded-full py-3.5 text-sm mb-2.5 disabled:opacity-60" style={{ background: "#0a7cff" }}
+              className="w-full text-white font-semibold rounded-full py-3.5 text-sm mb-2.5 disabled:opacity-60" style={{ background: "#3B82F6" }}
             >
               {busy ? "Sending…" : "Approve & Send"}
             </button>

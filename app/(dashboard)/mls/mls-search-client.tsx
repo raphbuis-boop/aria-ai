@@ -278,19 +278,6 @@ export function MlsSearchClient({
     >
       <div className="mx-auto max-w-lg px-5 pt-6">
 
-        {/* ── Watchlist link (member) ── */}
-        {variant === "member" && (
-          <div className="mb-4 flex justify-end">
-            <Link
-              href="/properties/saved"
-              className="flex items-center gap-1.5 text-[13px] font-medium"
-              style={{ color: "#3B82F6" }}
-            >
-              <Bookmark size={14} /> Watchlist
-            </Link>
-          </div>
-        )}
-
         {/* ── IDX compliance (member) ── */}
         {variant === "member" && (
           <div className="mb-4">
@@ -300,20 +287,39 @@ export function MlsSearchClient({
 
         {/* ── Header ── */}
         <header className="mb-5">
-          <h1
-            className="text-[22px] font-semibold leading-tight"
-            style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
-          >
-            Property Search
-          </h1>
-          <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
-            Live property listings
-          </p>
-          {showingLine && (
-            <p className="mt-1 text-[12px]" style={{ color: "#6B7280" }}>
-              {showingLine}
-            </p>
-          )}
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h1
+                className="text-[22px] font-semibold leading-tight"
+                style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
+              >
+                Property Search
+              </h1>
+              <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
+                Live property listings
+              </p>
+              {showingLine && (
+                <p className="mt-1 text-[12px]" style={{ color: "#6B7280" }}>
+                  {showingLine}
+                </p>
+              )}
+            </div>
+            {variant === "member" && (
+              <Link
+                href="/properties/saved"
+                className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-full"
+                style={{
+                  background: "rgba(59,130,246,0.1)",
+                  color: "#3B82F6",
+                  border: "0.5px solid rgba(59,130,246,0.2)",
+                  marginTop: 2,
+                }}
+              >
+                <Bookmark size={13} />
+                Watchlist
+              </Link>
+            )}
+          </div>
         </header>
 
         {/* ── Search form ── */}
@@ -590,12 +596,9 @@ export function MlsSearchClient({
                   {l.beds} bd · {l.baths} ba · {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
                 </div>
 
-                {/* Brokerage + updated */}
+                {/* Brokerage */}
                 <div className="mt-1 text-[11px]" style={{ color: "#6B7280" }}>
                   {l.listingFirm?.name ?? "N/A"}
-                </div>
-                <div className="mt-0.5 text-[11px]" style={{ color: "#6B7280" }}>
-                  Last updated: {new Date().toLocaleDateString()}
                 </div>
 
                 {/* Days on market pill */}
