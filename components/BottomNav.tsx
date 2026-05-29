@@ -15,7 +15,7 @@ const TABS_LEFT: Tab[] = [
 ];
 
 const TABS_RIGHT: Tab[] = [
-  { href: "/properties", Icon: Building2, activeFor: ["/listings", "/property-search"] },
+  { href: "/listings", Icon: Building2, activeFor: ["/mls", "/properties", "/property-search"] },
   { href: "/settings", Icon: Settings, activeFor: ["/more", "/voice", "/referrals", "/market-pulse"] },
 ];
 
