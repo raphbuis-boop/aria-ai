@@ -1,9 +1,11 @@
-import { redirect } from "next/navigation";
+import LandingNav from "@/components/landing/LandingNav";
+import HeroSection from "@/components/landing/HeroSection";
 
-/**
- * Guests normally never hit this route: middleware rewrites `/` → `/landing.html`.
- * Fallback avoids bouncing through `/landing` (iframe + app chrome).
- */
-export default function HomePage() {
-  redirect("/landing.html");
+export default function LandingPage() {
+  return (
+    <main style={{ background: "#FAFAF7" }}>
+      <LandingNav />
+      <HeroSection />
+    </main>
+  );
 }

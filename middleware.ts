@@ -57,9 +57,8 @@ export async function middleware(request: NextRequest) {
   }
 
   if (!user && path === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/landing.html";
-    return NextResponse.rewrite(url);
+    // Fall through to app/page.tsx (React landing page)
+    return supabaseResponse;
   }
 
   const isPublic =
