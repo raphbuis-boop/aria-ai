@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
-import { callClaude } from "@/lib/ai";
+import { callClaude, sanitizeDraft } from "@/lib/ai";
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +36,17 @@ export async function POST(req: Request) {
   const system = `You are ghostwriting a professional email reply for a New Jersey real estate agent.
 Read the full email thread below and write ONE reply from the agent to ${clientName}.
 Tone: warm, professional, concise. Max 3 short paragraphs.
+Plain text only — no markdown, no bullet points, no "Here is a draft:" preamble.
 Return ONLY the reply body — no subject line, no "Dear", just the message body starting naturally.`;
 
   const userMsg = `Client name: ${clientName}\n\nThread:\n${threadBlock}\n\nWrite the reply now.`;
 
-  const suggestion = await callClaude(system, userMsg, 400);
+  const raw = await callClaude(system, userMsg, 400);
+  const suggestion = sanitizeDraft(raw);
 
-  return NextResponse.json({ suggestion: suggestion.trim() });
+  if (!suggestion) {
+    return NextResponse.json({ error: "Could not generate reply" }, { status: 500 });
+  }
+
+  return NextResponse.json({ suggestion });
 }

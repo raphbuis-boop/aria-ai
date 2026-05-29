@@ -1,4 +1,4 @@
-import { getAnthropic } from "@/lib/ai";
+import { getAnthropic, sanitizeDraft } from "@/lib/ai";
 import { fmtMoney } from "@/lib/utils";
 
 export const INBOX_DRAFT_MODEL = "claude-sonnet-4-20250514";
@@ -60,38 +60,42 @@ export async function generateInboxSmsDraft(
         ? "Short SMS that tees up a follow-up email (the SMS should stand alone and feel personal)"
         : "Day-14 re-engagement text to restart the conversation";
 
-  const system = `You are a top New Jersey real estate agent texting a client from your phone. 
-Write ONE text message only: conversational, warm, concise (max ~320 characters). 
+  const system = `You are a top New Jersey real estate agent texting a client from your phone.
+Write ONE text message only: conversational, warm, concise (max ~320 characters).
 No emojis unless they feel natural. No bullet points. No "Hope this finds you well" fluff.
-Do not mention that you are an AI. Sound human.`;
+Do not mention that you are an AI. Sound human.
+Plain text only — no markdown, no labels like "Draft:" or "SMS:", no bracket placeholders.
+Return ONLY the message text, nothing else.`;
 
-  const user = `Write the SMS.
-
-Scenario: ${scenario}
-Client first name (use naturally): ${first}
-Full name (for context only): ${name}
+  const user = `Scenario: ${scenario}
+Client first name: ${first}
 Pipeline stage: ${stage}
 Preferred town/area: ${town}
-Budget context: ${budgetLine}
+Budget: ${budgetLine}
 Days since last contact: ${days}
 
-Return ONLY the message text, nothing else.`;
+Write ONE text message.`;
 
   const anthropic = getAnthropic();
   if (!anthropic) {
     return `Hey ${first} — been thinking about your search in ${town}. Want to catch up this week? I’ve got a couple new things that might fit ${budgetLine}.`;
   }
 
-  const msg = await anthropic.messages.create({
-    model: INBOX_DRAFT_MODEL,
-    max_tokens: 400,
-    system,
-    messages: [{ role: "user", content: user }],
-  });
-  const block = msg.content[0];
-  const text = block && block.type === "text" ? block.text.trim() : "";
-  if (!text) {
+  try {
+    const msg = await anthropic.messages.create({
+      model: INBOX_DRAFT_MODEL,
+      max_tokens: 400,
+      system,
+      messages: [{ role: "user", content: user }],
+    });
+    const block = msg.content[0];
+    const raw = block && block.type === "text" ? block.text : "";
+    const text = sanitizeDraft(raw);
+    if (!text) {
+      return `Hey ${first} — circling back on ${town}. Still in the market around ${budgetLine}? I can send a few fresh listings if you’re game.`;
+    }
+    return text;
+  } catch {
     return `Hey ${first} — circling back on ${town}. Still in the market around ${budgetLine}? I can send a few fresh listings if you’re game.`;
   }
-  return text;
 }
