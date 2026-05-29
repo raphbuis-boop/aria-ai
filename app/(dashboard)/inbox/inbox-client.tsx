@@ -18,7 +18,7 @@ type Row = {
 
 const FILTERS = [
   "All",
-  "AI Drafts",
+  "Pending",
   "Sent Texts",
   "Calls",
   "Notes",
@@ -46,10 +46,8 @@ function initialsOf(name: string | null | undefined) {
 
 export function InboxClient({
   initial,
-  unread,
 }: {
   initial: Row[];
-  unread: number;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -85,7 +83,7 @@ export function InboxClient({
   const filtered = useMemo(() => {
     return rows.filter((r) => {
       if (filter === "All") return true;
-      if (filter === "AI Drafts") return r.ai_draft && !r.approved;
+      if (filter === "Pending") return r.ai_draft && !r.approved;
       if (filter === "Sent Texts") return r.type === "text" && r.sent;
       if (filter === "Calls") return r.type === "call";
       if (filter === "Notes") return r.type === "note";
@@ -163,17 +161,18 @@ export function InboxClient({
   }
 
   return (
-    <div className="min-h-screen bg-[#080910] text-white pb-24 relative">
+    <div className="min-h-screen pb-24 relative" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
       <div className="px-5 pt-6">
         <div className="flex items-center justify-between mb-4">
-          <h1 className="text-2xl font-semibold">Inbox</h1>
+          <div>
+            <h1 className="text-2xl font-semibold">Follow-ups</h1>
+            <p className="text-xs mt-0.5" style={{ color: "#6b7090" }}>
+              AI drafts &amp; activity log
+            </p>
+          </div>
           {pendingCount > 0 ? (
             <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
-              {pendingCount}
-            </span>
-          ) : unread > 0 ? (
-            <span className="bg-[#3a65f0] text-white text-xs font-bold px-2.5 py-1 rounded-lg">
-              {unread}
+              {pendingCount} pending
             </span>
           ) : null}
         </div>
@@ -184,11 +183,11 @@ export function InboxClient({
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap border transition-colors ${
-                filter === f
-                  ? "bg-[#3a65f0]/15 border-[#3a65f0]/30 text-[#6b8fff]"
-                  : "bg-[#12121e] border-[#1e2230] text-[#9498b0]"
-              }`}
+              className="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap"
+              style={filter === f
+                ? { background: "#0a7cff", color: "#ffffff" }
+                : { background: "#1c1c1e", color: "#8e8e93" }
+              }
             >
               {f}
             </button>
@@ -199,8 +198,26 @@ export function InboxClient({
       <div className="px-5 space-y-2">
         {filtered.length === 0 ? (
           <div className="text-center py-16 text-[#6b7090]">
-            <p className="font-medium">All clear</p>
-            <p className="text-sm mt-1">No messages in this category</p>
+            {filter === "Pending" ? (
+              <>
+                <p className="font-medium">No pending drafts</p>
+                <p className="text-sm mt-1">
+                  Aria will surface follow-up drafts when clients need attention
+                </p>
+              </>
+            ) : filter === "All" ? (
+              <>
+                <p className="font-medium">No activity yet</p>
+                <p className="text-sm mt-1">
+                  Texts you send and AI drafts will appear here
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="font-medium">Nothing here</p>
+                <p className="text-sm mt-1">No {filter.toLowerCase()} logged yet</p>
+              </>
+            )}
           </div>
         ) : null}
 
@@ -215,9 +232,8 @@ export function InboxClient({
               type="button"
             >
               <div
-                className={`bg-[#12121e] border rounded-2xl p-3.5 flex items-start gap-3 transition-colors ${
-                  pending ? "border-[#2a2e40]" : "border-[#1e2230] opacity-70"
-                }`}
+                className={`rounded-2xl p-3.5 flex items-start gap-3 ${pending ? "" : "opacity-70"}`}
+                style={{ background: "#1c1c1e" }}
               >
                 <div
                   className={`w-10 h-10 rounded-[13px] flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
@@ -230,7 +246,7 @@ export function InboxClient({
                       {clientName}
                     </span>
                     {pending ? (
-                      <span className="text-[10px] font-bold bg-[#3a65f0]/12 text-[#6b8fff] px-2 py-0.5 rounded flex-shrink-0">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(10,124,255,0.12)", color: "#0a7cff" }}>
                         AI DRAFT
                       </span>
                     ) : null}
@@ -279,10 +295,10 @@ export function InboxClient({
         >
           <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute bottom-0 left-0 right-0 bg-[#0d0f16] border-t border-[#1e2230] rounded-t-3xl p-5 pb-10"
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5 pb-10" style={{ background: "#1c1c1e" }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-9 h-1 bg-[#2a2e40] rounded-full mx-auto mb-4" />
+            <div className="w-9 h-1 rounded-full mx-auto mb-4" style={{ background: "#3a3a3c" }} />
             <div className="flex items-center gap-3 mb-4">
               <div className="w-11 h-11 rounded-[14px] bg-red-500/20 text-red-400 flex items-center justify-center text-sm font-bold">
                 {initialsOf(selected.clients?.name)}
@@ -297,14 +313,14 @@ export function InboxClient({
             <textarea
               value={draftBody}
               onChange={(e) => setDraftBody(e.target.value)}
-              className="w-full bg-[#0d0f16] border border-[#2a2e40] rounded-2xl p-4 text-sm text-[#e8eaf2] leading-relaxed resize-none outline-none mb-4"
+              className="w-full rounded-2xl p-4 text-sm leading-relaxed resize-none outline-none mb-4" style={{ background: "#2c2c2e", color: "#f0f0f5" }}
               rows={5}
             />
             <button
               type="button"
               onClick={approveSend}
               disabled={busy}
-              className="w-full bg-[#3a65f0] text-white font-semibold rounded-xl py-3.5 text-sm mb-2.5 disabled:opacity-60"
+              className="w-full text-white font-semibold rounded-full py-3.5 text-sm mb-2.5 disabled:opacity-60" style={{ background: "#0a7cff" }}
             >
               {busy ? "Sending…" : "Approve & Send"}
             </button>
@@ -312,7 +328,7 @@ export function InboxClient({
               type="button"
               onClick={dismiss}
               disabled={busy}
-              className="w-full bg-transparent border border-[#2a2e40] text-[#9498b0] font-semibold rounded-xl py-3 text-sm disabled:opacity-60"
+              className="w-full font-semibold rounded-full py-3 text-sm disabled:opacity-60" style={{ background: "rgba(255,255,255,0.06)", color: "#8e8e93" }}
             >
               Dismiss
             </button>

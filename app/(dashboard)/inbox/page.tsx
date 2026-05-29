@@ -28,13 +28,6 @@ export default async function InboxPage() {
     .order("created_at", { ascending: false })
     .limit(200);
 
-  const { count: unread } = await supabase
-    .from("activities")
-    .select("*", { count: "exact", head: true })
-    .eq("agent_id", user.id)
-    .eq("ai_draft", true)
-    .eq("approved", false);
-
   const initial = (rows ?? []).map((r) => {
     const c = r.clients as
       | { name: string | null; phone: string | null }
@@ -44,10 +37,5 @@ export default async function InboxPage() {
     return { ...r, clients: client ?? null };
   });
 
-  return (
-    <InboxClient
-      initial={initial}
-      unread={unread ?? 0}
-    />
-  );
+  return <InboxClient initial={initial} />;
 }
