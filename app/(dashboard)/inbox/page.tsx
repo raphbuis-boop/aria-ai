@@ -1,12 +1,13 @@
 import { createClient } from "@/lib/supabase/server";
 import { InboxClient } from "./inbox-client";
+import { redirect } from "next/navigation";
 
 export default async function InboxPage() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const { data: rows } = await supabase
     .from("activities")

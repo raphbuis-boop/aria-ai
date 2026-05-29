@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { ClientsPageClient } from "./clients-client";
+import { redirect } from "next/navigation";
 
 function normalizePhone(p: string | null | undefined): string {
   return (p ?? "").replace(/\D/g, "");
@@ -26,7 +27,7 @@ export default async function ClientsPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const { data: clients } = await supabase
     .from("clients")

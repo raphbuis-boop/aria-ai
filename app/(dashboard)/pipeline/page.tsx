@@ -1,13 +1,14 @@
 import { PipelineBoard } from "@/components/PipelineBoard";
 import { createClient } from "@/lib/supabase/server";
 import { fmtMoney } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 export default async function PipelinePage() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const { data: clients } = await supabase
     .from("clients")
