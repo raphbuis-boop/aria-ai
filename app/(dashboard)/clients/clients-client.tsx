@@ -415,22 +415,29 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
               />
 
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="Phone"
-                  inputMode="tel"
-                  className={INPUT}
-                  style={INPUT_STYLE}
-                />
-                <input
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Email"
-                  inputMode="email"
-                  className={INPUT}
-                  style={INPUT_STYLE}
-                />
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-semibold uppercase" style={{ color: "#6B7280", letterSpacing: "0.08em" }}>Phone</p>
+                  <input
+                    value={form.phone}
+                    onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                    placeholder="Phone"
+                    inputMode="tel"
+                    className={INPUT}
+                    style={INPUT_STYLE}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className="text-[11px] font-semibold uppercase" style={{ color: "#6B7280", letterSpacing: "0.08em" }}>Email</p>
+                  <input
+                    value={form.email}
+                    onChange={(e) => setForm({ ...form, email: e.target.value })}
+                    placeholder="Email"
+                    inputMode="email"
+                    className={INPUT}
+                    style={INPUT_STYLE}
+                  />
+                  <p className="text-[11px]" style={{ color: "#6B7280" }}>Used to sync Gmail conversations</p>
+                </div>
               </div>
 
               {/* Role toggle */}

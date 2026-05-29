@@ -158,20 +158,27 @@ export function EditClientModal({
             className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
           />
           <div className="flex gap-2">
-            <input
-              value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
-              placeholder="Phone"
-              inputMode="tel"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
-            />
-            <input
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="Email"
-              inputMode="email"
-              className="w-1/2 rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
-            />
+            <div className="flex w-1/2 flex-col gap-1">
+              <p className="text-[11px] font-semibold uppercase" style={{ color: "#6B7280", letterSpacing: "0.08em" }}>Phone</p>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="Phone"
+                inputMode="tel"
+                className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
+              />
+            </div>
+            <div className="flex w-1/2 flex-col gap-1">
+              <p className="text-[11px] font-semibold uppercase" style={{ color: "#6B7280", letterSpacing: "0.08em" }}>Email</p>
+              <input
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="Email"
+                inputMode="email"
+                className="w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40"
+              />
+              <p className="text-[11px]" style={{ color: "#6B7280" }}>Used to sync Gmail conversations</p>
+            </div>
           </div>
 
           <div>
