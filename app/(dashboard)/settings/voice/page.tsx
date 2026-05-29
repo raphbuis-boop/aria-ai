@@ -53,7 +53,7 @@ export default function VoiceSettingsPage() {
         .eq("id", user.id);
       toast.toast("Saved & analyzed", "success");
     } catch {
-      toast.toast("Couldn't save voice training — check connection.", "error");
+      toast.toast("Couldn't save voice training — check connection.", "warn");
     }
   }
 
@@ -75,7 +75,7 @@ export default function VoiceSettingsPage() {
       if (!data.draft) throw new Error("No draft returned");
       setPreviewOut(String(data.draft));
     } catch {
-      toast.toast("Couldn't generate preview — check connection.", "error");
+      toast.toast("Couldn't generate preview — check connection.", "warn");
     }
   }
 
