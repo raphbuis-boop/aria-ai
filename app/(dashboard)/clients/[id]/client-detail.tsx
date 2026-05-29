@@ -5,9 +5,9 @@ import { EditClientModal } from "@/components/EditClientModal";
 import { InboxSheet } from "@/components/InboxSheet";
 import { fmtMoney } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
-import { MoreVertical, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -97,7 +97,6 @@ export function ClientDetail({
   openTaskCount,
   recentMatchCount,
 }: ClientDetailProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [inboxOpen, setInboxOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [gmailThread, setGmailThread] = useState<{
@@ -106,7 +105,6 @@ export function ClientDetail({
     fromFirst?: string;
     messageCount?: number;
   } | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
 
   const id        = String(client.id ?? "");
   const name      = String(client.name ?? "Client");
@@ -173,54 +171,6 @@ export function ClientDetail({
             <Pencil size={18} style={{ color: "#8e8e93" }} />
           </button>
 
-          {/* 3-dot menu */}
-          <div className="relative" ref={menuRef}>
-            <button
-              type="button"
-              aria-label="More options"
-              onClick={() => setMenuOpen((o) => !o)}
-              className="flex h-9 w-9 items-center justify-center rounded-full active:bg-white/5"
-            >
-              <MoreVertical size={18} style={{ color: "#8e8e93" }} />
-            </button>
-
-            {menuOpen && (
-              <>
-                {/* Backdrop to close */}
-                <div
-                  className="fixed inset-0 z-30"
-                  onClick={() => setMenuOpen(false)}
-                />
-                <div
-                  className="absolute right-0 z-40 mt-1 w-48 overflow-hidden rounded-[14px] py-1"
-                  style={{
-                    background: "rgba(28,28,30,0.97)",
-                    border: "0.5px solid rgba(255,255,255,0.10)",
-                    backdropFilter: "blur(20px)",
-                    WebkitBackdropFilter: "blur(20px)",
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center px-4 py-3 text-left text-[14px] active:bg-white/5"
-                    style={{ color: "#f0f0f5" }}
-                  >
-                    Archive client
-                  </button>
-                  <div style={{ borderTop: "0.5px solid rgba(255,255,255,0.08)" }} />
-                  <button
-                    type="button"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center px-4 py-3 text-left text-[14px] active:bg-white/5"
-                    style={{ color: "#EF4444" }}
-                  >
-                    Delete client
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
         </div>
       </div>
 
