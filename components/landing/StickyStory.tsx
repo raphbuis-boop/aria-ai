@@ -1,67 +1,272 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, AnimatePresence } from "framer-motion";
 
-const PHONE_H = 520;
+// ─── Panel data ────────────────────────────────────────────────────────────────
 
 const panels = [
   {
-    eyebrow: "Step 01",
-    headline: "Aria reads\nevery email.",
-    body: "Every thread. Every reply. Every follow-up that fell through the cracks. Aria reads your Gmail overnight so you walk in knowing exactly what happened while you were off the clock.",
-    screen: "/inbox-screen-placeholder.png",
-    label: "Inbox view",
+    step: "01",
+    headline: "Know who's\nready to move.",
+    body: "Aria monitors every client relationship and surfaces the ones about to make a decision — before they call another agent.",
+    panel: <RelationshipPanel />,
   },
   {
-    eyebrow: "Step 02",
-    headline: "Drafts the perfect reply\nin your voice.",
-    body: "Not ChatGPT-generic. Aria learns from the way you actually write — your phrases, your warmth, your sign-offs. Every draft sounds like you on your best day.",
-    screen: "/draft-screen-placeholder.png",
-    label: "Draft view",
+    step: "02",
+    headline: "New listing.\nInstant match.",
+    body: "The moment a property hits the MLS, Aria checks it against every buyer in your pipeline and tells you exactly who to call first.",
+    panel: <MatchPanel />,
   },
   {
-    eyebrow: "Step 03",
-    headline: "Reminds you who's\nabout to slip.",
-    body: "The client who's gone quiet. The offer expiring tomorrow. The follow-up you meant to send Monday. Aria surfaces all of it before a deal walks out the door.",
-    screen: "/today-screen-placeholder.png",
-    label: "Today briefing",
+    step: "03",
+    headline: "See the risk\nbefore it's a loss.",
+    body: "Aria tracks deal momentum and flags the gaps — so you can re-engage before a deal goes quiet and walks out the door.",
+    panel: <PipelinePanel />,
   },
 ] as const;
 
-function ScreenSlot({ src, label }: { src: string; label: string }) {
+// ─── Right-side panels ─────────────────────────────────────────────────────────
+
+function PanelShell({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ height: PHONE_H, background: "#F0EDE8", flexShrink: 0 }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src={src}
-        alt={label}
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-        onError={(e) => {
-          e.currentTarget.style.display = "none";
-          const fb = e.currentTarget.nextElementSibling as HTMLElement | null;
-          if (fb) fb.style.display = "flex";
-        }}
-      />
-      {/* Fallback shown when screenshot file is missing */}
-      <div
-        aria-hidden
-        style={{
-          display: "none",
-          height: PHONE_H,
-          alignItems: "center",
-          justifyContent: "center",
-          background: "#F0EDE8",
-          flexDirection: "column",
-          gap: 8,
-        }}
-      >
-        <div style={{ width: 36, height: 36, borderRadius: "50%", background: "#E8E4DF" }} />
-        <span style={{ fontSize: 12, color: "#9A9AA2" }}>{label}</span>
-      </div>
+    <div
+      className="rounded-2xl overflow-hidden w-full"
+      style={{
+        background: "linear-gradient(160deg, #0F0F16 0%, #0C0C13 100%)",
+        border: "0.5px solid rgba(255,255,255,0.07)",
+        boxShadow:
+          "0 0 0 0.5px rgba(232,168,50,0.06), 0 32px 80px -16px rgba(0,0,0,0.7)",
+      }}
+    >
+      {children}
     </div>
   );
 }
+
+function PanelHeader({ title, badge, badgeColor }: { title: string; badge: string; badgeColor: string }) {
+  return (
+    <div
+      className="flex items-center justify-between px-4 py-3"
+      style={{ borderBottom: "0.5px solid rgba(255,255,255,0.06)" }}
+    >
+      <span className="text-[13px] font-semibold" style={{ color: "#F2F0EB", letterSpacing: "-0.01em" }}>
+        {title}
+      </span>
+      <span
+        className="text-[11px] font-medium px-2 py-0.5 rounded-full"
+        style={{ background: badgeColor + "20", color: badgeColor }}
+      >
+        {badge}
+      </span>
+    </div>
+  );
+}
+
+function RelationshipPanel() {
+  const clients = [
+    { name: "Sarah Kim", note: "Toured 3 homes · active", days: 2, status: "active", pct: 92 },
+    { name: "Marcus Johnson", note: "Last contact 9 days ago", days: 9, status: "risk", pct: 38 },
+    { name: "Linda Torres", note: "Last contact 14 days ago", days: 14, status: "danger", pct: 12 },
+  ];
+
+  const statusColor = { active: "#34D399", risk: "#E8A832", danger: "#F87171" } as const;
+  const statusLabel = { active: "Active", risk: "At risk", danger: "Fading" } as const;
+
+  return (
+    <PanelShell>
+      <PanelHeader title="Relationship Radar" badge="Live" badgeColor="#34D399" />
+      <div className="p-4 space-y-3">
+        {clients.map((c, i) => (
+          <motion.div
+            key={c.name}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.45, delay: i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-xl p-3.5"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: `0.5px solid ${statusColor[c.status as keyof typeof statusColor]}22`,
+            }}
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div>
+                <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>{c.name}</p>
+                <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{c.note}</p>
+              </div>
+              <span
+                className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  background: statusColor[c.status as keyof typeof statusColor] + "18",
+                  color: statusColor[c.status as keyof typeof statusColor],
+                }}
+              >
+                {statusLabel[c.status as keyof typeof statusLabel]}
+              </span>
+            </div>
+            <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.06)" }}>
+              <motion.div
+                className="h-full rounded-full"
+                style={{ background: statusColor[c.status as keyof typeof statusColor] }}
+                initial={{ width: 0 }}
+                animate={{ width: `${c.pct}%` }}
+                transition={{ duration: 1.0, delay: 0.3 + i * 0.12, ease: [0.22, 1, 0.36, 1] }}
+              />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+      >
+        <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>Aria suggestion</span>
+        <span className="text-[12px] font-medium" style={{ color: "#E8A832" }}>
+          Re-engage Marcus →
+        </span>
+      </div>
+    </PanelShell>
+  );
+}
+
+function MatchPanel() {
+  const buyers = [
+    { name: "Jennifer W.", detail: "$850K · wants Montclair", match: true },
+    { name: "David R.", detail: "$800K · Essex County", match: true },
+    { name: "Tom B.", detail: "$900K · 3BR+", match: true },
+  ];
+
+  return (
+    <PanelShell>
+      <PanelHeader title="Live Match Engine" badge="Just listed" badgeColor="#E8A832" />
+      <div className="p-4">
+        {/* Listing card */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="rounded-xl p-3.5 mb-3"
+          style={{
+            background: "rgba(232,168,50,0.06)",
+            border: "0.5px solid rgba(232,168,50,0.18)",
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>
+                42 Elm St, Montclair
+              </p>
+              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>
+                $819K · 4BR · 2,240 sqft
+              </p>
+            </div>
+            <span
+              className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+              style={{ background: "rgba(232,168,50,0.15)", color: "#E8A832" }}
+            >
+              New · 2h ago
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Buyer matches */}
+        <p className="text-[11px] mb-2.5 px-0.5" style={{ color: "rgba(255,255,255,0.3)" }}>
+          3 buyers in your pipeline match
+        </p>
+        <div className="space-y-2">
+          {buyers.map((b, i) => (
+            <motion.div
+              key={b.name}
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.4, delay: 0.2 + i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+              className="flex items-center justify-between rounded-lg px-3 py-2"
+              style={{ background: "rgba(52,211,153,0.05)", border: "0.5px solid rgba(52,211,153,0.1)" }}
+            >
+              <div>
+                <p className="text-[12px] font-semibold" style={{ color: "#F2F0EB" }}>{b.name}</p>
+                <p className="text-[10.5px]" style={{ color: "rgba(255,255,255,0.35)" }}>{b.detail}</p>
+              </div>
+              <span style={{ color: "#34D399", fontSize: 14 }}>✓</span>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+      >
+        <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>Aria drafted 3 messages</span>
+        <span className="text-[12px] font-medium" style={{ color: "#E8A832" }}>
+          Review &amp; send →
+        </span>
+      </div>
+    </PanelShell>
+  );
+}
+
+function PipelinePanel() {
+  const deals = [
+    { name: "Kim listing", stage: "Under contract", status: "healthy", days: 1 },
+    { name: "Torres buyer", stage: "Offer submitted", status: "healthy", days: 3 },
+    { name: "Park buyer", stage: "Touring phase", status: "stalled", days: 6 },
+    { name: "Johnson listing", stage: "Pre-listing prep", status: "danger", days: 11 },
+  ];
+
+  const statusColor = { healthy: "#34D399", stalled: "#E8A832", danger: "#F87171" } as const;
+  const statusLabel = { healthy: "On track", stalled: "Slowing", danger: "At risk" } as const;
+
+  return (
+    <PanelShell>
+      <PanelHeader title="Deal Pulse" badge="4 active" badgeColor="#F2F0EB" />
+      <div className="p-4 space-y-2.5">
+        {deals.map((d, i) => (
+          <motion.div
+            key={d.name}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
+            className="flex items-center justify-between rounded-xl px-3.5 py-2.5"
+            style={{
+              background: "rgba(255,255,255,0.03)",
+              border: `0.5px solid ${statusColor[d.status as keyof typeof statusColor]}20`,
+            }}
+          >
+            <div>
+              <p className="text-[12.5px] font-semibold" style={{ color: "#F2F0EB" }}>{d.name}</p>
+              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.35)" }}>{d.stage}</p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px]" style={{ color: "rgba(255,255,255,0.25)" }}>
+                {d.days}d
+              </span>
+              <span
+                className="text-[10.5px] font-medium px-2 py-0.5 rounded-full"
+                style={{
+                  background: statusColor[d.status as keyof typeof statusColor] + "15",
+                  color: statusColor[d.status as keyof typeof statusColor],
+                }}
+              >
+                {statusLabel[d.status as keyof typeof statusLabel]}
+              </span>
+            </div>
+          </motion.div>
+        ))}
+      </div>
+      <div
+        className="px-4 py-3 flex items-center justify-between"
+        style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
+      >
+        <span className="text-[12px]" style={{ color: "rgba(255,255,255,0.3)" }}>Johnson needs action</span>
+        <span className="text-[12px] font-medium" style={{ color: "#F87171" }}>
+          11 days silent →
+        </span>
+      </div>
+    </PanelShell>
+  );
+}
+
+// ─── Section component ─────────────────────────────────────────────────────────
 
 export default function StickyStory() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -72,13 +277,6 @@ export default function StickyStory() {
     offset: ["start start", "end end"],
   });
 
-  // Slide the phone image strip
-  const stripY = useTransform(
-    scrollYProgress,
-    [0, 1],
-    [0, -(panels.length - 1) * PHONE_H]
-  );
-
   useEffect(() => {
     return scrollYProgress.on("change", (v) => {
       setActiveIndex(Math.min(panels.length - 1, Math.floor(v * panels.length)));
@@ -86,45 +284,47 @@ export default function StickyStory() {
   }, [scrollYProgress]);
 
   return (
-    <section style={{ background: "#FAFAF7", borderTop: "0.5px solid #EEEBE5" }}>
-      {/* ── Mobile: plain stacked panels ── */}
-      <div className="md:hidden px-6 py-16 space-y-20 max-w-md mx-auto">
+    <section
+      id="features"
+      style={{
+        background: "#08080A",
+        borderTop: "0.5px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      {/* ── Mobile: stacked ── */}
+      <div className="md:hidden px-6 py-20 space-y-20 max-w-lg mx-auto">
         {panels.map((panel, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 24 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.35 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-            className="space-y-5"
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="space-y-6"
           >
             <div>
               <span
                 className="text-[10.5px] font-bold tracking-[0.18em] uppercase block mb-3"
-                style={{ color: "#B85C43" }}
+                style={{ color: "rgba(232,168,50,0.7)" }}
               >
-                {panel.eyebrow}
+                {panel.step}
               </span>
               <h2
-                className="text-[1.8rem] font-medium leading-tight mb-3"
-                style={{ color: "#0B0B0F", letterSpacing: "-0.025em", whiteSpace: "pre-line" }}
+                className="font-semibold leading-tight mb-4"
+                style={{
+                  fontSize: "clamp(1.7rem, 5vw, 2.2rem)",
+                  color: "#F2F0EB",
+                  letterSpacing: "-0.03em",
+                  whiteSpace: "pre-line",
+                }}
               >
                 {panel.headline}
               </h2>
-              <p className="text-[15px] leading-relaxed" style={{ color: "#4A4A52" }}>
+              <p className="text-[15px] leading-relaxed" style={{ color: "rgba(255,255,255,0.45)" }}>
                 {panel.body}
               </p>
             </div>
-            <div
-              className="mx-auto overflow-hidden"
-              style={{
-                width: 220,
-                borderRadius: 36,
-                boxShadow: "0 24px 64px -12px rgba(11,11,15,0.18), 0 0 0 0.5px rgba(11,11,15,0.06)",
-              }}
-            >
-              <ScreenSlot src={panel.screen} label={panel.label} />
-            </div>
+            <div>{panel.panel}</div>
           </motion.div>
         ))}
       </div>
@@ -135,36 +335,33 @@ export default function StickyStory() {
         className="hidden md:block relative"
         style={{ height: `${panels.length * 100}vh` }}
       >
-        <div
-          className="sticky top-0 h-screen flex items-center overflow-hidden"
-        >
+        <div className="sticky top-0 h-screen flex items-center overflow-hidden">
           <div className="max-w-5xl mx-auto px-10 w-full grid grid-cols-2 gap-20 items-center">
 
             {/* Left: crossfading text */}
-            <div className="relative" style={{ minHeight: 280 }}>
+            <div className="relative" style={{ minHeight: 300 }}>
               {panels.map((panel, i) => (
                 <div
                   key={i}
                   className="absolute inset-0 transition-all duration-700"
                   style={{
                     opacity: activeIndex === i ? 1 : 0,
-                    transform: `translateY(${
-                      activeIndex === i ? 0 : activeIndex > i ? -20 : 20
-                    }px)`,
+                    transform: `translateY(${activeIndex === i ? 0 : activeIndex > i ? -18 : 18}px)`,
                     pointerEvents: activeIndex === i ? "auto" : "none",
                   }}
                 >
                   <span
                     className="text-[10.5px] font-bold tracking-[0.18em] uppercase block mb-4"
-                    style={{ color: "#B85C43" }}
+                    style={{ color: "rgba(232,168,50,0.7)" }}
                   >
-                    {panel.eyebrow}
+                    {panel.step}
                   </span>
                   <h2
-                    className="text-[2.4rem] font-medium leading-tight mb-5"
+                    className="font-semibold leading-tight mb-5"
                     style={{
-                      color: "#0B0B0F",
-                      letterSpacing: "-0.03em",
+                      fontSize: "clamp(2rem, 3.2vw, 2.8rem)",
+                      color: "#F2F0EB",
+                      letterSpacing: "-0.035em",
                       whiteSpace: "pre-line",
                     }}
                   >
@@ -172,7 +369,7 @@ export default function StickyStory() {
                   </h2>
                   <p
                     className="text-[16px] leading-relaxed"
-                    style={{ color: "#4A4A52", maxWidth: 380 }}
+                    style={{ color: "rgba(255,255,255,0.45)", maxWidth: 380 }}
                   >
                     {panel.body}
                   </p>
@@ -185,7 +382,10 @@ export default function StickyStory() {
                         className="h-[3px] rounded-full transition-all duration-500"
                         style={{
                           width: j === activeIndex ? 28 : 12,
-                          background: j === activeIndex ? "#B85C43" : "#E8E4DF",
+                          background:
+                            j === activeIndex
+                              ? "#E8A832"
+                              : "rgba(255,255,255,0.1)",
                         }}
                       />
                     ))}
@@ -194,34 +394,23 @@ export default function StickyStory() {
               ))}
             </div>
 
-            {/* Right: phone with sliding strip */}
+            {/* Right: crossfading panel */}
             <div className="flex justify-end">
-              <div
-                style={{
-                  width: 252,
-                  background: "#fff",
-                  borderRadius: 44,
-                  padding: "10px 10px 0",
-                  boxShadow:
-                    "0 40px 100px -20px rgba(11,11,15,0.2), 0 0 0 0.5px rgba(11,11,15,0.07)",
-                }}
-              >
-                <div
-                  style={{
-                    borderRadius: "34px 34px 0 0",
-                    overflow: "hidden",
-                    height: PHONE_H,
-                    background: "#F0EDE8",
-                  }}
-                >
-                  <motion.div style={{ y: stripY }}>
-                    {panels.map((panel, i) => (
-                      <ScreenSlot key={i} src={panel.screen} label={panel.label} />
-                    ))}
+              <div className="w-full max-w-[360px]">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeIndex}
+                    initial={{ opacity: 0, y: 16, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: -12, scale: 0.98 }}
+                    transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+                  >
+                    {panels[activeIndex].panel}
                   </motion.div>
-                </div>
+                </AnimatePresence>
               </div>
             </div>
+
           </div>
         </div>
       </div>
