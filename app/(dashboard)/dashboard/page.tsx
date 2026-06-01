@@ -16,6 +16,17 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
+  // Soft onboarding gate — redirect new users to the wizard before the dashboard
+  const { data: onboardCheck } = await supabase
+    .from("agent_profiles")
+    .select("onboarding_complete")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!onboardCheck?.onboarding_complete) {
+    redirect("/onboarding");
+  }
+
   const now = new Date();
   const todayISO = now.toISOString().split("T")[0];
 

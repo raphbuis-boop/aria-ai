@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { makeOAuth2Client } from "@/lib/gmail";
 import { google } from "googleapis";
+import { cookies } from "next/headers";
 
 export const dynamic = "force-dynamic";
 
@@ -62,9 +63,18 @@ export async function GET(req: NextRequest) {
       { onConflict: "agent_id" },
     );
 
-    return NextResponse.redirect(
-      `${process.env.NEXT_PUBLIC_SITE_URL}/settings?gmail=connected`,
-    );
+    // If the user started Gmail connect from the onboarding wizard, return there
+    const cookieStore = cookies();
+    const returnTo = cookieStore.get("aria_return_to")?.value;
+    const base = process.env.NEXT_PUBLIC_SITE_URL;
+    const destination = returnTo === "onboarding"
+      ? `${base}/onboarding?gmail=connected`
+      : `${base}/settings?gmail=connected`;
+
+    const res = NextResponse.redirect(destination);
+    // Clear the cookie
+    res.cookies.set("aria_return_to", "", { path: "/", maxAge: 0 });
+    return res;
   } catch {
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_SITE_URL}/settings?gmail=error`,
