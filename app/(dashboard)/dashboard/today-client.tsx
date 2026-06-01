@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { Bell, ArrowRight } from "lucide-react";
+import { Bell, ArrowRight, Upload } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -80,12 +80,15 @@ export function TodayClient({ items, briefing, userName, hasAnyClients }: Props)
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loadingDrafts, setLoadingDrafts] = useState<Record<string, boolean>>({});
   const [voicePromptDismissed, setVoicePromptDismissed] = useState(true); // true = hidden until hydrated
+  const [importBannerDismissed, setImportBannerDismissed] = useState(true); // true = hidden until hydrated
 
-  // Hydration-safe greeting + voice prompt
+  // Hydration-safe greeting + prompt state
   useEffect(() => {
     setGreeting(getGreeting());
-    const dismissed = localStorage.getItem("aria_voice_prompt_dismissed_v1") === "1";
-    setVoicePromptDismissed(dismissed);
+    const voiceDismissed = localStorage.getItem("aria_voice_prompt_dismissed_v1") === "1";
+    setVoicePromptDismissed(voiceDismissed);
+    const importDismissed = localStorage.getItem("aria_import_banner_dismissed_v1") === "1";
+    setImportBannerDismissed(importDismissed);
   }, []);
 
   // Pre-fetch all text-action drafts in parallel on mount
@@ -219,6 +222,62 @@ export function TodayClient({ items, briefing, userName, hasAnyClients }: Props)
               onClick={() => {
                 localStorage.setItem("aria_voice_prompt_dismissed_v1", "1");
                 setVoicePromptDismissed(true);
+              }}
+              className="px-3 py-3.5 active:opacity-60"
+              style={{ color: "#6B7280", fontSize: 18 }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* ── Import banner — shown when 0 clients and not dismissed ── */}
+        {!hasAnyClients && !importBannerDismissed && (
+          <div
+            className="flex items-center mb-5"
+            style={{
+              background: "rgba(20,20,22,0.6)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              borderRadius: 14,
+              overflow: "hidden",
+            }}
+          >
+            {/* Blue accent strip */}
+            <div style={{ width: 4, alignSelf: "stretch", background: "#3a65f0", flexShrink: 0 }} />
+            <Link
+              href="/settings/import"
+              className="flex flex-1 items-center gap-3 px-4 py-3.5 active:opacity-80"
+            >
+              <div
+                style={{
+                  width: 32,
+                  height: 32,
+                  borderRadius: 8,
+                  background: "rgba(58,101,240,0.14)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  flexShrink: 0,
+                }}
+              >
+                <Upload size={15} color="#3a65f0" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[15px] font-semibold" style={{ color: "#ffffff" }}>
+                  Import your contacts
+                </p>
+                <p className="mt-0.5 text-[13px]" style={{ color: "#9CA3AF" }}>
+                  Upload a CSV to add clients in seconds
+                </p>
+              </div>
+              <ArrowRight size={16} style={{ color: "#6B7280", flexShrink: 0 }} />
+            </Link>
+            <button
+              type="button"
+              aria-label="Dismiss"
+              onClick={() => {
+                localStorage.setItem("aria_import_banner_dismissed_v1", "1");
+                setImportBannerDismissed(true);
               }}
               className="px-3 py-3.5 active:opacity-60"
               style={{ color: "#6B7280", fontSize: 18 }}

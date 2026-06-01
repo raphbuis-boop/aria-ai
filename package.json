@@ -34,6 +34,7 @@
     "import-in-the-middle": "^3.0.1",
     "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
+    "motion": "^12.40.0",
     "next": "^14.2.35",
     "pdf-lib": "^1.17.1",
     "posthog-js": "^1.372.10",
