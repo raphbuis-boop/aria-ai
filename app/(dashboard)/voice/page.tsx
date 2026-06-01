@@ -216,14 +216,10 @@ export default function VoicePage() {
           className="relative flex items-center justify-center outline-none"
           style={{ WebkitTapHighlightColor: "transparent" }}
         >
-          {/* Expanding rings when active */}
-          {isActive && (
-            <>
-              <span className="absolute rounded-full" style={{ width: 280, height: 280, background: `${color}05`, animation: "ring-out 2.4s ease-out infinite" }} />
-              <span className="absolute rounded-full" style={{ width: 230, height: 230, background: `${color}07`, animation: "ring-out 2.4s ease-out infinite 0.6s" }} />
-              <span className="absolute rounded-full" style={{ width: 185, height: 185, background: `${color}09`, animation: "ring-out 2.4s ease-out infinite 1.2s" }} />
-            </>
-          )}
+          {/* Expanding rings — always visible (Shazam style), brighter when active */}
+          <span className="absolute rounded-full" style={{ width: 320, height: 320, background: `${color}${isActive ? "08" : "04"}`, animation: "ring-out 2.8s ease-out infinite" }} />
+          <span className="absolute rounded-full" style={{ width: 260, height: 260, background: `${color}${isActive ? "0a" : "05"}`, animation: "ring-out 2.8s ease-out infinite 0.7s" }} />
+          <span className="absolute rounded-full" style={{ width: 205, height: 205, background: `${color}${isActive ? "0d" : "07"}`, animation: "ring-out 2.8s ease-out infinite 1.4s" }} />
 
           {/* Steady outer ring */}
           <span
@@ -271,11 +267,18 @@ export default function VoicePage() {
                 style={{ width: 28, height: 28, animation: "spin 0.8s linear infinite" }}
               />
             ) : (
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0014 0" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-                <line x1="8" y1="22" x2="16" y2="22" />
+              /* Aria "A" logo */
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="44" height="44">
+                <defs>
+                  <linearGradient id="voice-aria-grad" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+                    <stop offset="100%" stopColor="rgba(255,255,255,0.70)" />
+                  </linearGradient>
+                </defs>
+                <path
+                  d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z"
+                  fill="url(#voice-aria-grad)"
+                />
               </svg>
             )}
           </span>
