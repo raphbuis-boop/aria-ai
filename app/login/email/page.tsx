@@ -1,12 +1,15 @@
 "use client";
 
 import { LoginAmbientBackground } from "@/components/auth/login-ambient-bg";
+import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+const ease = [0.2, 0.8, 0.2, 1] as const;
 
 export default function EmailLoginPage() {
   const router = useRouter();
@@ -36,11 +39,17 @@ export default function EmailLoginPage() {
   return (
     <div className="relative isolate min-h-[100dvh] w-full text-white">
       <LoginAmbientBackground />
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[400px] flex-col px-6 pb-[max(1.75rem,env(safe-area-inset-bottom))] pt-[max(2.75rem,env(safe-area-inset-top)+1.75rem)]">
+      <div
+        className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[400px] flex-col px-6"
+        style={{
+          paddingTop: "max(2.75rem, calc(env(safe-area-inset-top) + 1.75rem))",
+          paddingBottom: "max(1.75rem, env(safe-area-inset-bottom))",
+        }}
+      >
         <motion.div
-          initial={{ opacity: 0, y: 14 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: 0.16, ease }}
           className="mb-8 flex flex-col items-center"
         >
           <Link href="/login" className="transition hover:opacity-80">
@@ -53,41 +62,38 @@ export default function EmailLoginPage() {
               className="mb-5 h-[60px] w-[60px] md:h-[72px] md:w-[72px]"
             />
           </Link>
-          <p className="text-[13px] font-medium text-white/80">Log in with email</p>
+          <p className="text-[13px] font-medium text-white/70">Log in with email</p>
         </motion.div>
 
         <motion.form
-          initial={{ opacity: 0, y: 18 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1], delay: 0.05 }}
+          transition={{ duration: 0.16, ease, delay: 0.04 }}
           onSubmit={(e) => void onSubmit(e)}
           className="flex flex-1 flex-col space-y-4"
         >
-          <input
+          <Input
             type="email"
             autoComplete="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
-            className="w-full rounded-xl border-[0.5px] border-[#2a2a2a] bg-[#111] px-4 py-3.5 text-[15px] text-white placeholder:text-neutral-600 outline-none transition focus:border-[#3B82F6]/60 focus:ring-0"
           />
-          <input
+          <Input
             type="password"
             autoComplete="current-password"
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            className="w-full rounded-xl border-[0.5px] border-[#2a2a2a] bg-[#111] px-4 py-3.5 text-[15px] text-white placeholder:text-neutral-600 outline-none transition focus:border-[#3B82F6]/60 focus:ring-0"
           />
-          {error ? <p className="text-[13px] text-amber-200/90">{error}</p> : null}
+          {error ? <p className="text-[13px] text-accent-red/90">{error}</p> : null}
           <motion.button
             type="submit"
             disabled={loading}
-            whileHover={{ scale: loading ? 1 : 1.01 }}
-            whileTap={{ scale: loading ? 1 : 0.98 }}
-            className="mt-2 w-full rounded-full bg-[#3B82F6] py-3.5 text-[15px] font-semibold text-white transition hover:bg-[#2563EB] disabled:opacity-55"
+            whileTap={{ scale: loading ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
+            className="mt-2 w-full rounded-[8px] bg-accent-blue py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-55"
           >
             {loading ? "Signing in…" : "Log in"}
           </motion.button>

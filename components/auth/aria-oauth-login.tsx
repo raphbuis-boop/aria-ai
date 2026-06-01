@@ -7,16 +7,16 @@ import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
 
-const ease = [0.16, 1, 0.3, 1] as const;
+const ease = [0.2, 0.8, 0.2, 1] as const;
 
 const container = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.08, delayChildren: 0.1 } },
+  show: { opacity: 1, transition: { staggerChildren: 0.06, delayChildren: 0.08 } },
 };
 
 const item = {
-  hidden: { opacity: 0, y: 16 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease } },
+  hidden: { opacity: 0, y: 8 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.16, ease } },
 };
 
 function AppleIcon() {
@@ -60,22 +60,19 @@ export function AriaOAuthLoginExperience() {
   );
 
   return (
-    <div className="relative flex min-h-[100dvh] w-full items-center justify-center overflow-hidden bg-[#050508] px-6 py-10">
-
-      {/* Ambient glow */}
+    <div
+      className="relative flex w-full items-center justify-center overflow-hidden bg-[#050508] px-6"
+      style={{
+        minHeight: "100dvh",
+        paddingTop: "max(2.5rem, env(safe-area-inset-top))",
+        paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
+      }}
+    >
+      {/* Ambient glow — toned down */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: "radial-gradient(ellipse 800px 600px at 50% 0%, rgba(58,101,240,0.10) 0%, transparent 65%)",
-        }}
-      />
-      <div
-        className="pointer-events-none absolute"
-        style={{
-          top: "20%", left: "50%", transform: "translateX(-50%)",
-          width: 280, height: 280,
-          background: "radial-gradient(circle, rgba(58,101,240,0.07) 0%, transparent 70%)",
-          filter: "blur(40px)",
+          background: "radial-gradient(ellipse 700px 500px at 50% 0%, rgba(58,101,240,0.06) 0%, transparent 65%)",
         }}
       />
 
@@ -86,14 +83,12 @@ export function AriaOAuthLoginExperience() {
         animate="show"
       >
         {/* Logo */}
-        <motion.div variants={item} className="mb-11 flex flex-col items-center gap-5">
+        <motion.div variants={item} className="mb-10 flex flex-col items-center gap-5">
           <div className="relative">
-            {/* Logo glow */}
             <div
               className="absolute inset-0 rounded-[22px]"
               style={{
-                boxShadow: "0 0 40px rgba(58,101,240,0.3), 0 0 80px rgba(58,101,240,0.12)",
-                borderRadius: "22px",
+                boxShadow: "0 0 32px rgba(58,101,240,0.18), 0 0 64px rgba(58,101,240,0.08)",
               }}
             />
             <Image
@@ -106,11 +101,11 @@ export function AriaOAuthLoginExperience() {
             />
           </div>
 
-          <div className="flex flex-col items-center gap-1">
-            <span className="text-[42px] font-semibold leading-none tracking-[-0.04em] text-white">
+          <div className="flex flex-col items-center gap-1.5">
+            <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-white">
               Aria
             </span>
-            <span className="text-[12px] tracking-wide text-[#6b7090]">
+            <span className="text-[13px] tracking-wide text-[#6b7090]">
               AI Revenue Operating System
             </span>
           </div>
@@ -119,16 +114,15 @@ export function AriaOAuthLoginExperience() {
         {/* Auth buttons */}
         <motion.div variants={item} className="flex w-full flex-col gap-2.5">
           {error && (
-            <p className="mb-1 text-center text-[12px] text-amber-300/80">{error}</p>
+            <p className="mb-1 text-center text-[12px] text-accent-red/80">{error}</p>
           )}
 
           <motion.button
             type="button"
             disabled={busy !== null}
             onClick={() => void oauth("apple")}
-            whileTap={{ scale: 0.975 }}
-            transition={{ type: "spring", stiffness: 460, damping: 32 }}
-            className="flex w-full items-center justify-center gap-2.5 rounded-full bg-white py-[14px] text-[14px] font-medium text-black transition hover:bg-white/92 disabled:pointer-events-none disabled:opacity-45"
+            whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
+            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] bg-white py-[13px] text-[15px] font-medium text-black transition-colors hover:bg-white/92 disabled:pointer-events-none disabled:opacity-45"
           >
             <AppleIcon />
             Continue with Apple
@@ -138,9 +132,8 @@ export function AriaOAuthLoginExperience() {
             type="button"
             disabled={busy !== null}
             onClick={() => void oauth("google")}
-            whileTap={{ scale: 0.975 }}
-            transition={{ type: "spring", stiffness: 460, damping: 32 }}
-            className="flex w-full items-center justify-center gap-2.5 rounded-full border-[0.5px] border-white/8 bg-white/5 py-[14px] text-[14px] font-medium text-white transition hover:bg-white/8 disabled:pointer-events-none disabled:opacity-45"
+            whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
+            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] border border-border-card bg-bg-card py-[13px] text-[15px] font-medium text-white transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-45"
           >
             <GoogleIcon />
             Continue with Google
@@ -156,16 +149,15 @@ export function AriaOAuthLoginExperience() {
             type="button"
             disabled={busy !== null}
             onClick={() => router.push("/signup")}
-            whileTap={{ scale: 0.975 }}
-            transition={{ type: "spring", stiffness: 460, damping: 32 }}
-            className="w-full rounded-full border-[0.5px] border-white/8 bg-transparent py-[14px] text-[14px] font-medium text-white/80 transition hover:border-white/14 hover:text-white disabled:pointer-events-none disabled:opacity-45"
+            whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
+            className="w-full rounded-[8px] bg-accent-blue py-[13px] text-[15px] font-semibold text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-45"
           >
             Create account
           </motion.button>
 
           <Link
             href="/login/email"
-            className="mt-1 w-full rounded-full py-[14px] text-center text-[13px] font-medium text-[#6b7090] transition hover:text-[#9498b0]"
+            className="mt-1 w-full rounded-[8px] py-[13px] text-center text-[13px] font-medium text-[#6b7090] transition-colors hover:text-[#9498b0]"
           >
             Sign in with email
           </Link>
