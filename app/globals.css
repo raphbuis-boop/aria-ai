@@ -26,19 +26,24 @@ html {
   -webkit-text-size-adjust: 100%;
   /* Overscroll area matches app bg — no white flash */
   background: #0a0a0a;
+  /* Kill 300ms tap delay and double-tap zoom on all interactive elements */
+  touch-action: manipulation;
 }
 
 body {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
+  overflow-y: auto;
   max-width: 100%;
   background: #0a0a0a;
   color: #f0f0f5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Contain overscroll within the app — prevents rubber-band flash */
-  overscroll-behavior-x: none;
+  /* Contain overscroll on both axes — prevents rubber-band flash and pull-to-refresh bleed */
+  overscroll-behavior: contain;
+  /* Dynamic viewport height so body fills the real visible area on mobile (excludes browser chrome) */
+  min-height: 100dvh;
   /* Universal safe area — protects content from notch and home indicator on all pages */
   padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: env(safe-area-inset-bottom, 0px);
@@ -60,6 +65,11 @@ a, button, [role="button"] {
   transition-property: opacity, background-color, border-color, color, box-shadow, transform;
   transition-duration: 100ms;
   transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Global pressed state — buttons and links respond instantly on touch */
+a:active, button:active, [role="button"]:active {
+  opacity: 0.72;
 }
 
 /* Native momentum scroll on scrollable containers */
@@ -142,6 +152,23 @@ select:focus {
   .text-balance {
     text-wrap: balance;
   }
+  .text-pretty {
+    text-wrap: pretty;
+  }
+}
+
+/* ─── Landing page light-theme overrides ──────────────────────────────────── */
+.landing-page {
+  background: #fafaf7;
+  color: #0b0b0f;
+}
+
+/* Override the dark-app input focus ring for landing forms */
+.landing-page input:focus,
+.landing-page input:focus-visible {
+  border-color: rgba(0, 0, 0, 0.15) !important;
+  box-shadow: none !important;
+  outline: none !important;
 }
 
 @keyframes aria-pulse {

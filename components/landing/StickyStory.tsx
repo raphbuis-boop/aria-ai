@@ -34,6 +34,8 @@ const images = [
   { src: "/landing/pipeline.png", label: "Aria client pipeline view" },
 ];
 
+const urlLabels = ["aria.app / today", "aria.app / inbox", "aria.app / pipeline"];
+
 function Step({
   step,
   active,
@@ -45,18 +47,38 @@ function Step({
   return (
     <div
       className="relative pl-6 transition-opacity duration-500"
-      style={{ opacity: active ? 1 : 0.35 }}
+      style={{ opacity: active ? 1 : 0.3 }}
     >
       <span
-        className="absolute left-0 top-1 h-[calc(100%-0.5rem)] w-[3px] origin-top rounded-full bg-[#0b0b0f] transition-transform duration-500"
-        style={{ transform: `scaleY(${active ? 1 : 0})` }}
+        className="absolute left-0 top-1 h-[calc(100%-0.5rem)] w-[2px] origin-top rounded-full transition-all duration-500"
+        style={{
+          background: active ? "#3a65f0" : "rgba(11,18,32,0.12)",
+          transform: `scaleY(${active ? 1 : 0.3})`,
+        }}
         aria-hidden
       />
-      <span className="text-[13px] text-[#6b6b72]">{step.num}</span>
-      <h3 className="mt-2 font-serif text-[32px] italic leading-tight text-[#0b0b0f]">
+      <span
+        className="text-[12px] font-mono font-semibold"
+        style={{ color: active ? "#3a65f0" : "rgba(11,18,32,0.3)" }}
+      >
+        {step.num}
+      </span>
+      <h3
+        className="mt-2 font-bold leading-tight transition-all duration-500"
+        style={{
+          fontSize: active ? "30px" : "26px",
+          color: active ? "#0B1220" : "rgba(11,18,32,0.4)",
+          letterSpacing: "-0.025em",
+        }}
+      >
         {step.title}
       </h3>
-      <p className="mt-3 max-w-[360px] text-[16px] leading-relaxed text-[#6b6b72]">{step.body}</p>
+      <p
+        className="mt-3 max-w-[360px] text-[15px] leading-relaxed"
+        style={{ color: "rgba(11,18,32,0.5)" }}
+      >
+        {step.body}
+      </p>
     </div>
   );
 }
@@ -103,9 +125,24 @@ export function StickyStory() {
   });
 
   return (
-    <section className="bg-[#fafaf7]">
+    <section id="how-it-works" style={{ background: "#FFFFFF" }}>
+      {/* Section header */}
       <div className="mx-auto max-w-6xl px-6 pt-28 text-center">
-        <h2 className="text-balance font-serif text-[40px] leading-tight text-[#0b0b0f] md:text-[64px]">
+        <p
+          className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em]"
+          style={{ color: "#3a65f0" }}
+        >
+          How it works
+        </p>
+        <h2
+          className="text-balance font-bold"
+          style={{
+            fontSize: "clamp(2.2rem, 5vw, 3.75rem)",
+            letterSpacing: "-0.035em",
+            lineHeight: 1.1,
+            color: "#0B1220",
+          }}
+        >
           Aria reads between the lines.
         </h2>
       </div>
@@ -120,24 +157,32 @@ export function StickyStory() {
               ))}
             </div>
 
-            {/* Right: laptop frame */}
+            {/* Right: browser frame — dark mockup on white feels premium */}
             <div
-              className="rounded-2xl p-4"
+              className="rounded-[18px] p-[10px]"
               style={{
-                background: "#F2F0EB",
-                boxShadow: "0 24px 60px rgba(0,0,0,0.08)",
+                background: "#131E35",
+                border: "1px solid rgba(11,18,32,0.1)",
+                boxShadow: "0 24px 60px rgba(11,18,32,0.14), 0 0 0 1px rgba(255,255,255,0.06)",
               }}
             >
-              <div className="mb-3 flex items-center gap-2 px-1">
-                <span className="h-3 w-3 rounded-full bg-[#E8623E]" />
-                <span className="h-3 w-3 rounded-full bg-[#E8A23E]" />
-                <span className="h-3 w-3 rounded-full bg-[#3EA877]" />
-                <span className="mx-auto rounded-full bg-white px-4 py-1 text-[12px] text-[#6b6b72]">
-                  aria.app / today
-                </span>
+              {/* Chrome bar */}
+              <div className="mb-2.5 flex items-center gap-2 px-1">
+                <span className="h-3 w-3 rounded-full" style={{ background: "#1E2D4A" }} />
+                <span className="h-3 w-3 rounded-full" style={{ background: "#1E2D4A" }} />
+                <span className="h-3 w-3 rounded-full" style={{ background: "#1E2D4A" }} />
+                <div
+                  className="mx-auto flex items-center gap-1.5 rounded-full px-3 py-1 transition-all duration-500"
+                  style={{ background: "#0D1828" }}
+                >
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#3a65f0]" />
+                  <span className="text-[11px] transition-all duration-500" style={{ color: "rgba(255,255,255,0.3)" }}>
+                    {urlLabels[active]}
+                  </span>
+                </div>
               </div>
               <div
-                className="relative aspect-[16/10] w-full overflow-hidden rounded-xl bg-white"
+                className="relative aspect-[16/10] w-full overflow-hidden rounded-xl"
                 style={{ willChange: "transform, opacity" }}
               >
                 <CrossfadeImage
