@@ -46,7 +46,7 @@ export default function FinalCta() {
 
       <div className="flex flex-col sm:flex-row items-center gap-3">
         <a
-          href="/setup"
+          href="#signup"
           className="inline-flex items-center justify-center font-semibold text-[14px] rounded-full transition-opacity duration-200 hover:opacity-90 active:scale-[0.98]"
           style={{
             background: "#FFFFFF",
@@ -58,7 +58,7 @@ export default function FinalCta() {
           Get early access
         </a>
         <a
-          href="mailto:hello@getariaai.com"
+          href="mailto:team@getariaai.com"
           className="inline-flex items-center justify-center font-medium text-[14px] rounded-full transition-colors duration-200 hover:bg-white/5"
           style={{
             border: "1px solid rgba(255,255,255,0.12)",

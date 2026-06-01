@@ -86,7 +86,7 @@ export function HeroSection() {
             Get early access
           </a>
           <a
-            href="mailto:hello@getariaai.com"
+            href="mailto:team@getariaai.com"
             className="rounded-full px-7 py-3.5 text-[15px] font-medium transition-colors hover:bg-white/5 active:scale-[0.98]"
             style={{
               border: "1px solid rgba(255,255,255,0.15)",
