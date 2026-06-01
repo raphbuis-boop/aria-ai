@@ -33,16 +33,11 @@ type Props = {
   /** If Gmail was just connected (callback returned ?gmail=connected), start on step 3 */
   initialStep: WizardStep;
   gmailConnected: boolean;
+  /** If Gmail OAuth failed/cancelled, start on step 2 with error banner */
+  gmailError?: boolean;
 };
 
 // ── Progress bar ───────────────────────────────────────────────────────────────
-
-const STEP_LABELS: Record<WizardStep, string> = {
-  1: "Welcome",
-  2: "Gmail",
-  3: "Clients",
-  4: "Done",
-};
 
 function ProgressBar({ step }: { step: WizardStep }) {
   return (
@@ -81,14 +76,15 @@ function SkipButton({ onClick }: { onClick: () => void }) {
 
 // ── Main wizard ────────────────────────────────────────────────────────────────
 
-export function OnboardingWizard({ userId, initialName, initialStep, gmailConnected: initialGmailConnected }: Props) {
+export function OnboardingWizard({ userId, initialName, initialStep, gmailConnected: initialGmailConnected, gmailError: initialGmailError }: Props) {
   const router = useRouter();
   const supabase = createClient();
 
   const [step, setStep] = useState<WizardStep>(initialStep);
   const [name, setName] = useState(initialName);
   const [savingName, setSavingName] = useState(false);
-  const [gmailConnected, setGmailConnected] = useState(initialGmailConnected);
+  const [gmailConnected] = useState(initialGmailConnected);
+  const [gmailError, setGmailError] = useState(initialGmailError ?? false);
 
   // CSV sub-state (step 3)
   const [csvSubStep, setCsvSubStep] = useState<CsvSubStep>("upload");
@@ -126,6 +122,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
   // ── Step 2: Gmail ─────────────────────────────────────────────────────────
 
   function handleGmailConnect() {
+    setGmailError(false);
     // Cookie tells the OAuth callback to return to /onboarding instead of /settings
     document.cookie = "aria_return_to=onboarding; path=/; max-age=600; SameSite=Lax";
     window.location.href = "/api/auth/google/connect";
@@ -266,6 +263,18 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             <p className="mb-8 text-[15px]" style={{ color: "#6B7280" }}>
               Aria reads your inbox so you can reply to clients without leaving the app.
             </p>
+
+            {gmailError && (
+              <div
+                className="mb-4 flex items-center gap-3 rounded-[14px] px-4 py-4"
+                style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.25)" }}
+              >
+                <span style={{ color: "#EF4444", fontSize: 18 }}>✕</span>
+                <p className="text-[13px] leading-snug" style={{ color: "#FCA5A5" }}>
+                  Google connection failed. You can try again or skip for now.
+                </p>
+              </div>
+            )}
 
             {gmailConnected ? (
               <div

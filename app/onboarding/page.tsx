@@ -27,11 +27,12 @@ export default async function OnboardingPage({
   // Already done — send to dashboard
   if (profile?.onboarding_complete) redirect("/dashboard");
 
-  // If Gmail OAuth just returned, start wizard on step 3 (import)
+  // If Gmail OAuth just returned, route to the right step
   const params = await searchParams;
   const gmailResult = params.gmail; // "connected" | "error" | undefined
-  const initialStep = gmailResult === "connected" ? 3 : 1;
+  const initialStep = gmailResult === "connected" ? 3 : gmailResult === "error" ? 2 : 1;
   const gmailConnected = gmailResult === "connected";
+  const gmailError = gmailResult === "error";
 
   const fullName =
     (profile?.full_name as string | undefined) ??
@@ -44,6 +45,7 @@ export default async function OnboardingPage({
       initialName={fullName}
       initialStep={initialStep as 1 | 2 | 3 | 4}
       gmailConnected={gmailConnected}
+      gmailError={gmailError}
     />
   );
 }
