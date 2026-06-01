@@ -1,7 +1,7 @@
 import { LandingNav } from "@/components/landing/LandingNav";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { StickyStory } from "@/components/landing/StickyStory";
-import FeatureSections from "@/components/landing/FeatureSections";
+import { ValueProps } from "@/components/landing/ValueProps";
 import { FeatureGrid } from "@/components/landing/FeatureGrid";
 import { TestimonialSection } from "@/components/landing/TestimonialSection";
 import { SignupCTA } from "@/components/landing/SignupCTA";
@@ -14,7 +14,7 @@ export default function HomePage() {
       <LandingNav />
       <HeroSection />
       <StickyStory />
-      <FeatureSections />
+      <ValueProps />
       <FeatureGrid />
       <TestimonialSection />
       <SignupCTA />

@@ -6,28 +6,16 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const features = [
   {
-    eyebrow: "Mirror my voice",
-    ai: true,
-    title: "Drafts that sound like you",
-    body: "Aria reads how you've written to clients before. Then it writes future replies in the same voice — same humor, same warmth, same brevity.",
-  },
-  {
     eyebrow: "Gmail integration",
     ai: false,
-    title: "Your inbox, finally caught up",
-    body: "Every email read. Every reply suggested. Every thread tracked. Connect Gmail in one tap.",
+    title: "Your inbox, always caught up",
+    body: "Connect Gmail in one tap. Aria reads every thread, flags what needs a reply, and keeps a full history of every client conversation.",
   },
   {
     eyebrow: "Pipeline intelligence",
     ai: true,
     title: "Know who's going cold before they ghost",
-    body: "Aria tracks every signal — days silent, last contact, listing changes — and flags the relationships at risk.",
-  },
-  {
-    eyebrow: "Morning briefings",
-    ai: false,
-    title: "Walk in already caught up",
-    body: "Every morning, Aria summarizes who needs attention, what changed, and your top 3 moves for the day.",
+    body: "Aria tracks every signal — days silent, last contact, listing changes — and flags the relationships at risk before you lose them.",
   },
   {
     eyebrow: "Voice commands",
@@ -39,7 +27,7 @@ const features = [
     eyebrow: "NJ MLS built in",
     ai: false,
     title: "Listings, matches, comps — without leaving Aria",
-    body: "Aria pulls live NJ MLS data so you\u2019re not bouncing between tabs.",
+    body: "Aria pulls live NJ MLS data so you\u2019re not bouncing between tabs when a client asks about a new listing.",
   },
 ];
 
@@ -66,7 +54,7 @@ export function FeatureGrid() {
           Built for how you actually work.
         </h2>
 
-        <div className="mt-14 grid gap-4 md:grid-cols-2">
+        <div className="mt-14 grid gap-4 sm:grid-cols-2">
           {features.map((f, i) => (
             <motion.div
               key={f.eyebrow}
