@@ -16,7 +16,7 @@ const TABS_LEFT: Tab[] = [
 
 const TABS_RIGHT: Tab[] = [
   { href: "/listings", Icon: Building2, activeFor: ["/mls", "/properties", "/property-search"] },
-  { href: "/settings", Icon: Settings, activeFor: ["/more", "/voice", "/referrals", "/market-pulse"] },
+  { href: "/settings", Icon: Settings, activeFor: ["/more", "/referrals", "/market-pulse"] },
 ];
 
 function isTabActive(tab: Tab, pathname: string): boolean {
