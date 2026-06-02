@@ -21,6 +21,13 @@ export function PageShell({ children }: { children: React.ReactNode }) {
     el.classList.add("page-enter");
   }, [pathname]);
 
+  // The page-enter animation uses CSS transform, which creates a new containing
+  // block for fixed-positioned children (browser spec). The voice page renders
+  // fixed inset-0 and must be viewport-relative — skip the wrapper there.
+  if (pathname === "/voice") {
+    return <>{children}</>;
+  }
+
   return (
     <div ref={ref} className="page-enter">
       {children}
