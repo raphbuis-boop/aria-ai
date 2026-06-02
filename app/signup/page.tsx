@@ -34,7 +34,11 @@ export default function SignupPage() {
     });
     setLoading(false);
     if (err) {
-      setError(err.message);
+      setError(
+        /rate.?limit/i.test(err.message)
+          ? "Too many signup emails were requested. Please wait a few minutes before trying again."
+          : err.message,
+      );
       return;
     }
     // Email confirmation disabled — session returned immediately
