@@ -73,7 +73,6 @@ function triggerHaptic() {
 
 // ── Design tokens ─────────────────────────────────────────────────────────────
 
-const BG_PAGE   = "#050508";
 const BG_CARD   = "#0e0e12";
 const BG_CARD2  = "#111116";
 const BORDER    = "rgba(255,255,255,0.07)";
@@ -245,7 +244,7 @@ function NewAgentState({
   return (
     <div
       className="min-h-screen pb-[120px]"
-      style={{ background: BG_PAGE, color: TEXT_1 }}
+      style={{ color: TEXT_1 }}
     >
       <div className="px-5">
 
@@ -442,7 +441,7 @@ function ActiveAgentState({
   return (
     <div
       className="min-h-screen pb-[120px]"
-      style={{ background: BG_PAGE, color: TEXT_1 }}
+      style={{ color: TEXT_1 }}
     >
       <div className="px-5">
 

@@ -20,7 +20,7 @@ export default async function DashboardLayout({
   }
 
   return (
-    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden pb-24" style={{ background: "#0a0a0a" }}>
+    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden pb-24">
       <AutomationRunner />
       <AppHeader />
       <PageShell>{children}</PageShell>
