@@ -103,13 +103,14 @@ export default async function DashboardPage() {
       .select("client_id")
       .eq("agent_id", user.id),  // SCOPE 5
 
-    // 6. Showings today count (briefing strip) [agent_id scoped ✓]
+    // 6. Showings today — full rows for inline schedule [agent_id scoped ✓]
     supabase
       .from("showings")
-      .select("id", { count: "exact", head: true })
+      .select("id, address, showing_date, status, clients(name)")
       .eq("agent_id", user.id)  // SCOPE 6
       .gte("showing_date", `${todayISO}T00:00:00`)
-      .lt("showing_date", `${tomorrowISO}T00:00:00`),
+      .lt("showing_date", `${tomorrowISO}T00:00:00`)
+      .order("showing_date", { ascending: true }),
 
     // 7. Closings this week count (briefing strip) [agent_id scoped ✓]
     supabase
@@ -158,11 +159,28 @@ export default async function DashboardPage() {
     bbaSignedClientIds,
   );
 
+  // Today's showings with client names for inline schedule.
+  // Supabase returns the joined "clients" relation as an array even for to-one FK.
+  type ShowingRow = { id: string; address: string | null; showing_date: string | null; status: string | null; clients: { name: string } | null };
+  const showingsToday = (showingsTodayRes.data ?? []).map((s) => ({
+    id: String(s.id),
+    address: s.address as string | null,
+    showing_date: s.showing_date as string | null,
+    status: s.status as string | null,
+    clients: Array.isArray(s.clients) ? (s.clients[0] as { name: string } ?? null) : s.clients as { name: string } | null,
+  })) as ShowingRow[];
+
   const briefing = {
-    showingsToday: showingsTodayRes.count ?? 0,
+    showingsToday: showingsToday.length,
     closingsThisWeek: closingsThisWeekRes.count ?? 0,
     newMatches: newMatchItems.length,
   };
+
+  // Active clients (non-closed)
+  const activeClients = clients.length;
+  const warmLeads = clients.filter(c => (c.lead_score ?? 0) >= 7 || c.status === "showing").length;
+  const pipelineCount = clients.filter(c => ["offer", "under_contract"].includes(c.status ?? "")).length;
+  const pendingDeals = (transactionsRes.data ?? []).length;
 
   const firstName =
     (profileRes.data?.full_name as string | undefined)?.split(" ")[0] ??
@@ -175,8 +193,10 @@ export default async function DashboardPage() {
     <TodayClientComponent
       items={items}
       briefing={briefing}
+      showingsToday={showingsToday}
       userName={firstName}
       hasAnyClients={hasAnyClients}
+      kpi={{ activeClients, warmLeads, pipelineCount, pendingDeals }}
     />
   );
 }
