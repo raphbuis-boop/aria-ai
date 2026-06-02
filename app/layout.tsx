@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ConditionalComplianceFooter } from "@/components/ConditionalComplianceFooter";
 import { SplashScreen } from "@/components/SplashScreen";
-import { DM_Sans } from "next/font/google";
+import { DM_Sans, Instrument_Serif } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { PostHogProvider } from "./providers";
@@ -11,9 +11,18 @@ const dmSans = DM_Sans({
   weight: ["300", "400", "500", "600", "700"],
 });
 
+const instrumentSerif = Instrument_Serif({
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Aria",
-  description: "Your AI real estate teammate",
+  title: "Aria — Every relationship is revenue",
+  description:
+    "Aria is the AI assistant for NJ real estate agents. It reads your Gmail, drafts replies in your voice, tracks your pipeline, and surfaces every client about to slip.",
 };
 
 export const viewport = {
@@ -28,8 +37,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${dmSans.className} min-h-screen bg-[#0a0a0a] text-[#f0f0f5]`}>
+    <html lang="en" className={instrumentSerif.variable}>
+      <body className={`${dmSans.className} min-h-[100dvh] bg-[#0a0a0a] text-[#f0f0f5]`}>
         <SplashScreen />
         <PostHogProvider>
           <ToastProvider>

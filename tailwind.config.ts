@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
+      },
       colors: {
         // Backgrounds — matte black, cool blue undertone
         "bg-primary":  "#080910",

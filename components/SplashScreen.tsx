@@ -10,6 +10,12 @@ export function SplashScreen() {
   const [fading, setFading] = useState(false);
 
   useEffect(() => {
+    // Only show on Capacitor native app, never on web
+    const isNative =
+      typeof window !== "undefined" &&
+      !!(window as { Capacitor?: { isNative?: boolean } }).Capacitor?.isNative;
+    if (!isNative) return;
+
     try {
       if (sessionStorage.getItem(SPLASH_KEY)) return;
       sessionStorage.setItem(SPLASH_KEY, "1");

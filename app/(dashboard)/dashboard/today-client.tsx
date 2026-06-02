@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, Mic } from "lucide-react";
+import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -58,23 +58,37 @@ function getDateLabel(): string {
 
 function formatShowingTime(iso: string | null): string {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true });
+  return new Date(iso).toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
 }
 
 function triggerHaptic() {
   try {
     if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
-  } catch { /* never let haptic failure break the tap */ }
+  } catch { /* never break on haptic failure */ }
 }
+
+// ── Design tokens ─────────────────────────────────────────────────────────────
+
+const BG_PAGE   = "#050508";
+const BG_CARD   = "#0e0e12";
+const BG_CARD2  = "#111116";
+const BORDER    = "rgba(255,255,255,0.07)";
+const BLUE      = "#3B82F6";
+const TEXT_1    = "#ffffff";
+const TEXT_2    = "rgba(255,255,255,0.50)";
+const TEXT_3    = "rgba(255,255,255,0.25)";
 
 // ── Urgency config ────────────────────────────────────────────────────────────
 
 const URGENCY_DOT: Record<number, { color: string; glow?: string }> = {
-  1: { color: "#EF4444", glow: "0 0 6px rgba(239,68,68,0.5)" },
+  1: { color: "#EF4444", glow: "0 0 6px rgba(239,68,68,0.50)" },
   2: { color: "#F59E0B" },
   3: { color: "#A78BFA" },
-  4: { color: "#3B82F6" },
+  4: { color: BLUE },
   5: { color: "#10B981" },
 };
 
@@ -86,10 +100,10 @@ function timingPill(item: TodayItem): { text: string; color: string; weight?: nu
       return text ? { text, color: "#EF4444", weight: 600, upper: true } : null;
     }
     case 2:
-      return item.clientTown ? { text: item.clientTown, color: "#4B5563" } : null;
+      return item.clientTown ? { text: item.clientTown, color: TEXT_3 } : null;
     case 3: {
       const match = item.reason.match(/(\d+) year/i);
-      return match ? { text: `${match[1]} yr`, color: "#4B5563" } : null;
+      return match ? { text: `${match[1]} yr`, color: TEXT_3 } : null;
     }
     case 4:
       return null;
@@ -100,40 +114,69 @@ function timingPill(item: TodayItem): { text: string; color: string; weight?: nu
   }
 }
 
-// ── Sub-components ────────────────────────────────────────────────────────────
+// ── Shared primitives ─────────────────────────────────────────────────────────
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
     <p
-      className="mb-3 text-[10px] font-semibold uppercase tracking-[0.12em]"
-      style={{ color: "rgba(255,255,255,0.25)" }}
+      className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em]"
+      style={{ color: TEXT_3 }}
     >
       {children}
     </p>
   );
 }
 
-function KpiCard({ value, label, accent }: { value: number; label: string; accent?: string }) {
+function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
     <div
-      className="flex flex-col justify-between"
       style={{
-        background: "#0c0c10",
-        border: "0.5px solid rgba(255,255,255,0.07)",
+        background: BG_CARD,
+        border: `0.5px solid ${BORDER}`,
+        borderRadius: 14,
+        ...style,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ── KPI card ──────────────────────────────────────────────────────────────────
+
+function KpiCard({
+  value,
+  label,
+  accent,
+  placeholder,
+}: {
+  value: number | string;
+  label: string;
+  accent?: string;
+  placeholder?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        background: BG_CARD,
+        border: `0.5px solid ${BORDER}`,
         borderRadius: 12,
-        padding: "14px 14px 12px",
+        padding: "16px 14px 14px",
         minWidth: 0,
       }}
     >
       <p
-        className="text-[26px] font-bold leading-none tabular-nums"
-        style={{ color: accent ?? "#ffffff", letterSpacing: "-0.03em" }}
+        className="text-[28px] font-bold leading-none tabular-nums"
+        style={{
+          color: placeholder ? TEXT_3 : (accent ?? TEXT_1),
+          letterSpacing: "-0.03em",
+        }}
       >
         {value}
       </p>
       <p
         className="mt-2 text-[10px] uppercase leading-tight"
-        style={{ color: "rgba(255,255,255,0.30)", letterSpacing: "0.08em" }}
+        style={{ color: TEXT_3, letterSpacing: "0.08em" }}
       >
         {label}
       </p>
@@ -141,7 +184,515 @@ function KpiCard({ value, label, accent }: { value: number; label: string; accen
   );
 }
 
-// ── Main component ────────────────────────────────────────────────────────────
+// ── Voice entry ───────────────────────────────────────────────────────────────
+
+function VoiceEntry({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 transition-opacity active:opacity-60"
+      style={{
+        background: BG_CARD,
+        border: `0.5px solid rgba(58,101,240,0.22)`,
+        borderRadius: 12,
+        padding: "14px 16px",
+      }}
+    >
+      <div
+        className="flex items-center justify-center rounded-full shrink-0"
+        style={{
+          width: 34,
+          height: 34,
+          background: "rgba(59,130,246,0.10)",
+          border: "0.5px solid rgba(59,130,246,0.22)",
+        }}
+      >
+        <Mic size={15} color={BLUE} />
+      </div>
+      <div className="flex-1 text-left min-w-0">
+        <p className="text-[13px] font-semibold" style={{ color: TEXT_1 }}>
+          Ask Aria
+        </p>
+        <p className="text-[11px]" style={{ color: TEXT_3 }}>
+          Voice assistant · tap to speak
+        </p>
+      </div>
+      <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
+    </button>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// STATE 1 — NEW AGENT (0 clients)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function NewAgentState({
+  userName,
+  onVoice,
+}: {
+  userName: string;
+  onVoice: () => void;
+}) {
+  const [greeting, setGreeting] = useState("Good morning");
+  const [dateLabel, setDateLabel] = useState("");
+
+  useEffect(() => {
+    setGreeting(getGreeting());
+    setDateLabel(getDateLabel());
+  }, []);
+
+  return (
+    <div
+      className="min-h-screen pb-[120px]"
+      style={{ background: BG_PAGE, color: TEXT_1 }}
+    >
+      <div className="px-5">
+
+        {/* ── Header ── */}
+        <div
+          style={{
+            paddingTop: "calc(env(safe-area-inset-top) + 22px)",
+            paddingBottom: 32,
+          }}
+        >
+          <p
+            className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]"
+            style={{ color: TEXT_3 }}
+          >
+            {dateLabel}
+          </p>
+          <h1
+            className="text-[30px] font-bold leading-tight"
+            style={{ color: TEXT_1, letterSpacing: "-0.03em" }}
+          >
+            {greeting}, {userName}.
+          </h1>
+          <p className="mt-2 text-[15px]" style={{ color: TEXT_2, lineHeight: 1.5 }}>
+            Let&apos;s get Aria working for you.
+          </p>
+        </div>
+
+        {/* ── Setup actions ── */}
+        <div className="mb-8">
+          <SectionLabel>Get started</SectionLabel>
+          <Card>
+            {/* Connect Gmail */}
+            <a
+              href="/api/auth/google/connect"
+              className="flex items-center gap-3 transition-opacity active:opacity-60"
+              style={{
+                padding: "16px",
+                borderBottom: `0.5px solid ${BORDER}`,
+              }}
+            >
+              <div
+                className="flex items-center justify-center rounded-[9px] shrink-0"
+                style={{ width: 36, height: 36, background: BG_CARD2, border: `0.5px solid ${BORDER}` }}
+              >
+                <Mail size={16} style={{ color: TEXT_2 }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
+                  Connect Gmail
+                </p>
+                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
+                  Aria reads your thread history to surface follow-ups
+                </p>
+              </div>
+              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
+            </a>
+
+            {/* Import clients */}
+            <Link
+              href="/settings/import"
+              className="flex items-center gap-3 transition-opacity active:opacity-60"
+              style={{
+                padding: "16px",
+                borderBottom: `0.5px solid ${BORDER}`,
+              }}
+            >
+              <div
+                className="flex items-center justify-center rounded-[9px] shrink-0"
+                style={{ width: 36, height: 36, background: BG_CARD2, border: `0.5px solid ${BORDER}` }}
+              >
+                <Upload size={16} style={{ color: TEXT_2 }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
+                  Import clients
+                </p>
+                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
+                  Upload a CSV — Aria maps the columns automatically
+                </p>
+              </div>
+              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
+            </Link>
+
+            {/* Add first client */}
+            <Link
+              href="/clients?new=1"
+              className="flex items-center gap-3 transition-opacity active:opacity-60"
+              style={{ padding: "16px" }}
+            >
+              <div
+                className="flex items-center justify-center rounded-[9px] shrink-0"
+                style={{ width: 36, height: 36, background: "rgba(59,130,246,0.10)", border: `0.5px solid rgba(59,130,246,0.22)` }}
+              >
+                <UserPlus size={16} style={{ color: BLUE }} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
+                  Add first client
+                </p>
+                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
+                  Aria starts finding opportunities immediately
+                </p>
+              </div>
+              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
+            </Link>
+          </Card>
+        </div>
+
+        {/* ── What Aria does ── */}
+        <div className="mb-8">
+          <SectionLabel>Once you&apos;re set up</SectionLabel>
+          <Card style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+            {[
+              { label: "Follow-up nudges", desc: "Know exactly who to reach out to, and when." },
+              { label: "MLS matches", desc: "New listings matched to each client automatically." },
+              { label: "AI drafts", desc: "Ready-to-send texts written in your voice." },
+            ].map(({ label, desc }) => (
+              <div key={label} className="flex items-start gap-3">
+                <div
+                  className="mt-0.5 shrink-0 rounded-full"
+                  style={{ width: 5, height: 5, background: BLUE, marginTop: 6 }}
+                />
+                <div>
+                  <p className="text-[13px] font-semibold" style={{ color: TEXT_1 }}>
+                    {label}
+                  </p>
+                  <p className="text-[12px] mt-0.5" style={{ color: TEXT_3, lineHeight: 1.45 }}>
+                    {desc}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </Card>
+        </div>
+
+        {/* ── KPI placeholders ── */}
+        <div className="mb-8">
+          <SectionLabel>Pipeline</SectionLabel>
+          <div className="grid grid-cols-2 gap-2">
+            <KpiCard value="—" label="Active Clients" placeholder />
+            <KpiCard value="—" label="Warm Leads" placeholder />
+            <KpiCard value="—" label="In Pipeline" placeholder />
+            <KpiCard value="—" label="Pending Deals" placeholder />
+          </div>
+        </div>
+
+        {/* ── Voice entry ── */}
+        <VoiceEntry onClick={onVoice} />
+
+      </div>
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// STATE 2 — ACTIVE AGENT (clients exist)
+// ═════════════════════════════════════════════════════════════════════════════
+
+function ActiveAgentState({
+  items,
+  briefing,
+  showingsToday,
+  userName,
+  kpi,
+  onVoice,
+  activeDraftItem,
+  setActiveDraftItem,
+  drafts,
+  loadingDrafts,
+  handleAction,
+}: {
+  items: TodayItem[];
+  briefing: Briefing;
+  showingsToday: ShowingRow[];
+  userName: string;
+  kpi: KPI;
+  onVoice: () => void;
+  activeDraftItem: TodayItem | null;
+  setActiveDraftItem: (item: TodayItem | null) => void;
+  drafts: Record<string, string>;
+  loadingDrafts: Record<string, boolean>;
+  handleAction: (item: TodayItem) => void;
+}) {
+  const [greeting, setGreeting] = useState("Good morning");
+  const [dateLabel, setDateLabel] = useState("");
+
+  useEffect(() => {
+    setGreeting(getGreeting());
+    setDateLabel(getDateLabel());
+  }, []);
+
+  const n = items.length;
+
+  return (
+    <div
+      className="min-h-screen pb-[120px]"
+      style={{ background: BG_PAGE, color: TEXT_1 }}
+    >
+      <div className="px-5">
+
+        {/* ── 1. MORNING BRIEFING ────────────────────────────────────────── */}
+        <div
+          style={{
+            paddingTop: "calc(env(safe-area-inset-top) + 22px)",
+            paddingBottom: 28,
+            borderBottom: `0.5px solid ${BORDER}`,
+            marginBottom: 28,
+          }}
+        >
+          <p
+            className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]"
+            style={{ color: TEXT_3 }}
+          >
+            {dateLabel}
+          </p>
+          <h1
+            className="text-[30px] font-bold leading-tight"
+            style={{ color: TEXT_1, letterSpacing: "-0.03em" }}
+          >
+            {greeting}, {userName}.
+          </h1>
+          <p className="mt-2 text-[15px]" style={{ color: TEXT_2, lineHeight: 1.5 }}>
+            {n === 0
+              ? "No actions needed. You're on top of it."
+              : `${n} ${n === 1 ? "opportunity" : "opportunities"} need${n === 1 ? "s" : ""} attention.`}
+          </p>
+        </div>
+
+        {/* ── 2. REVENUE OPPORTUNITIES ───────────────────────────────────── */}
+        <div className="mb-8">
+          <SectionLabel>Revenue Opportunities</SectionLabel>
+
+          {n === 0 ? (
+            <Card style={{ padding: "24px 16px", textAlign: "center" }}>
+              <p className="text-[14px] font-semibold" style={{ color: TEXT_2 }}>
+                You&apos;re all caught up
+              </p>
+              <p className="mt-1 text-[12px]" style={{ color: TEXT_3 }}>
+                No follow-ups, closings, or matches right now
+              </p>
+            </Card>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {items.map((item) => {
+                const dot = URGENCY_DOT[item.urgencyRank] ?? URGENCY_DOT[5];
+                const pill = timingPill(item);
+                const isTextItem = item.actionType === "text";
+                const isDraftLoading = isTextItem && loadingDrafts[item.id] !== false;
+                const draftPreview = isTextItem ? (drafts[item.id] ?? "") : "";
+
+                return (
+                  <Card key={item.id} style={{ padding: "16px" }}>
+                    {/* Header: dot + name + timing pill */}
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span
+                        className="shrink-0 rounded-full"
+                        style={{
+                          width: 6,
+                          height: 6,
+                          background: dot.color,
+                          boxShadow: dot.glow ?? "none",
+                          flexShrink: 0,
+                        }}
+                      />
+                      <span
+                        className="text-[15px] font-semibold flex-1 leading-tight"
+                        style={{ color: TEXT_1, letterSpacing: "-0.01em" }}
+                      >
+                        {item.clientName}
+                      </span>
+                      {pill && (
+                        <span
+                          className="shrink-0 text-[10px]"
+                          style={{
+                            color: pill.color,
+                            fontWeight: pill.weight ?? 400,
+                            letterSpacing: pill.upper ? "0.08em" : undefined,
+                            textTransform: pill.upper ? "uppercase" : undefined,
+                          }}
+                        >
+                          {pill.text}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Reason */}
+                    <p
+                      className="text-[13px] mb-3"
+                      style={{ color: TEXT_2, lineHeight: 1.45, paddingLeft: 14 }}
+                    >
+                      {item.reason}
+                    </p>
+
+                    {/* AI draft preview */}
+                    {isTextItem && (
+                      <div style={{ paddingLeft: 14, marginBottom: 12 }}>
+                        {isDraftLoading ? (
+                          <div className="space-y-1.5">
+                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.06)", width: "80%" }} />
+                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.06)", width: "58%" }} />
+                          </div>
+                        ) : draftPreview ? (
+                          <>
+                            <p className="text-[9px] font-semibold uppercase mb-1.5" style={{ color: BLUE, letterSpacing: "0.10em" }}>
+                              Aria suggests
+                            </p>
+                            <p className="text-[12px] italic line-clamp-2" style={{ color: TEXT_2, lineHeight: 1.5 }}>
+                              &ldquo;{draftPreview}&rdquo;
+                            </p>
+                          </>
+                        ) : null}
+                      </div>
+                    )}
+
+                    {/* CTA */}
+                    {isTextItem ? (
+                      <button
+                        type="button"
+                        onClick={() => handleAction(item)}
+                        className="w-full text-[13px] font-semibold text-center transition-opacity active:opacity-70"
+                        style={{
+                          background: BLUE,
+                          color: "#ffffff",
+                          padding: "11px 12px",
+                          borderRadius: 9,
+                          display: "block",
+                        }}
+                      >
+                        {item.actionLabel}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleAction(item)}
+                        className="w-full text-[13px] font-medium flex items-center justify-between transition-opacity active:opacity-70"
+                        style={{
+                          background: "transparent",
+                          color: TEXT_1,
+                          padding: "10px 12px",
+                          borderRadius: 9,
+                          border: `0.5px solid rgba(255,255,255,0.13)`,
+                        }}
+                      >
+                        <span>{item.actionLabel}</span>
+                        <ArrowRight size={13} style={{ color: TEXT_3, flexShrink: 0 }} />
+                      </button>
+                    )}
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* ── 3. TODAY'S SCHEDULE ────────────────────────────────────────── */}
+        <div className="mb-8">
+          <SectionLabel>Today&apos;s Schedule</SectionLabel>
+          {showingsToday.length === 0 ? (
+            <Card style={{ padding: "16px" }}>
+              <p className="text-[13px]" style={{ color: TEXT_3 }}>
+                No showings scheduled today
+              </p>
+            </Card>
+          ) : (
+            <Card>
+              {showingsToday.map((s, i) => (
+                <Link
+                  key={s.id}
+                  href="/showings"
+                  className="flex items-center gap-4 transition-opacity active:opacity-60"
+                  style={{
+                    padding: "14px 16px",
+                    borderBottom: i < showingsToday.length - 1 ? `0.5px solid ${BORDER}` : "none",
+                  }}
+                >
+                  <div style={{ width: 56, flexShrink: 0 }}>
+                    <p className="text-[12px] font-semibold tabular-nums" style={{ color: BLUE }}>
+                      {formatShowingTime(s.showing_date)}
+                    </p>
+                  </div>
+                  <div style={{ width: 0.5, alignSelf: "stretch", background: BORDER, flexShrink: 0 }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-medium truncate" style={{ color: TEXT_1 }}>
+                      {s.clients?.name ?? "Client"}
+                    </p>
+                    <p className="text-[11px] truncate mt-0.5" style={{ color: TEXT_3 }}>
+                      {s.address ?? "Address TBD"}
+                    </p>
+                  </div>
+                  <ChevronRight size={13} style={{ color: TEXT_3, flexShrink: 0 }} />
+                </Link>
+              ))}
+            </Card>
+          )}
+
+          {briefing.closingsThisWeek > 0 && (
+            <Link
+              href="/transactions"
+              className="mt-2 flex items-center justify-between transition-opacity active:opacity-70"
+              style={{
+                background: "rgba(239,68,68,0.06)",
+                border: "0.5px solid rgba(239,68,68,0.20)",
+                borderRadius: 10,
+                padding: "11px 14px",
+              }}
+            >
+              <p className="text-[12px] font-medium" style={{ color: "#EF4444" }}>
+                {briefing.closingsThisWeek} closing{briefing.closingsThisWeek > 1 ? "s" : ""} this week
+              </p>
+              <ChevronRight size={12} style={{ color: "rgba(239,68,68,0.6)", flexShrink: 0 }} />
+            </Link>
+          )}
+        </div>
+
+        {/* ── 4. PIPELINE KPIs ───────────────────────────────────────────── */}
+        <div className="mb-8">
+          <SectionLabel>Pipeline</SectionLabel>
+          <div className="grid grid-cols-2 gap-2">
+            <KpiCard value={kpi.activeClients} label="Active Clients" />
+            <KpiCard value={kpi.warmLeads} label="Warm Leads" accent={kpi.warmLeads > 0 ? "#F59E0B" : undefined} />
+            <KpiCard value={kpi.pipelineCount} label="In Pipeline" accent={kpi.pipelineCount > 0 ? BLUE : undefined} />
+            <KpiCard value={kpi.pendingDeals} label="Pending Deals" accent={kpi.pendingDeals > 0 ? "#10B981" : undefined} />
+          </div>
+        </div>
+
+        {/* ── 5. VOICE ENTRY ─────────────────────────────────────────────── */}
+        <VoiceEntry onClick={onVoice} />
+
+      </div>
+
+      {/* ── Draft sheet ──────────────────────────────────────────────────── */}
+      <DraftSheet
+        item={activeDraftItem}
+        prefetchedDraft={activeDraftItem ? drafts[activeDraftItem.id] : undefined}
+        onClose={() => setActiveDraftItem(null)}
+        onSent={() => {
+          setActiveDraftItem(null);
+          // no state setter here — parent owns drafts
+        }}
+      />
+    </div>
+  );
+}
+
+// ═════════════════════════════════════════════════════════════════════════════
+// ROOT — TodayClient (routes to one of the two states)
+// ═════════════════════════════════════════════════════════════════════════════
 
 export function TodayClient({
   items,
@@ -152,19 +703,11 @@ export function TodayClient({
   kpi,
 }: Props) {
   const router = useRouter();
-  const [greeting, setGreeting] = useState("Good morning");
-  const [dateLabel, setDateLabel] = useState("");
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loadingDrafts, setLoadingDrafts] = useState<Record<string, boolean>>({});
 
-  // Hydration-safe time-of-day values
-  useEffect(() => {
-    setGreeting(getGreeting());
-    setDateLabel(getDateLabel());
-  }, []);
-
-  // Pre-fetch all text-action AI drafts in parallel on mount
+  // Pre-fetch AI drafts for all text-action items in parallel on mount
   useEffect(() => {
     const textItems = items.filter((i) => i.actionType === "text");
     if (textItems.length === 0) return;
@@ -215,386 +758,28 @@ export function TodayClient({
     [router],
   );
 
-  const n = items.length;
+  const handleVoice = useCallback(() => {
+    triggerHaptic();
+    router.push("/voice");
+  }, [router]);
+
+  if (!hasAnyClients) {
+    return <NewAgentState userName={userName} onVoice={handleVoice} />;
+  }
 
   return (
-    <div
-      className="min-h-screen pb-[120px]"
-      style={{ background: "#050508", color: "#ffffff" }}
-    >
-      <div className="px-5">
-
-        {/* ── 1. MORNING BRIEFING ────────────────────────────────────────── */}
-        <div
-          style={{
-            paddingTop: "calc(env(safe-area-inset-top) + 20px)",
-            paddingBottom: 28,
-            borderBottom: "0.5px solid rgba(255,255,255,0.06)",
-            marginBottom: 28,
-          }}
-        >
-          {/* Date */}
-          <p
-            className="mb-1 text-[11px] font-medium uppercase tracking-[0.12em]"
-            style={{ color: "rgba(255,255,255,0.25)" }}
-          >
-            {dateLabel}
-          </p>
-
-          {/* Greeting */}
-          <h1
-            className="text-[28px] font-bold leading-tight"
-            style={{ color: "#ffffff", letterSpacing: "-0.03em" }}
-          >
-            {greeting}, {userName}.
-          </h1>
-
-          {/* Pipeline summary */}
-          <p
-            className="mt-2 text-[14px]"
-            style={{ color: "rgba(255,255,255,0.40)", lineHeight: 1.5 }}
-          >
-            {n === 0
-              ? hasAnyClients
-                ? "No actions needed. You're on top of it."
-                : "Add your first client to get started."
-              : `${n} ${n === 1 ? "opportunity" : "opportunities"} need${n === 1 ? "s" : ""} attention`}
-          </p>
-        </div>
-
-        {/* ── 2. REVENUE OPPORTUNITIES ───────────────────────────────────── */}
-        {n > 0 && (
-          <div className="mb-8">
-            <SectionLabel>Revenue Opportunities</SectionLabel>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {items.map((item) => {
-                const dot = URGENCY_DOT[item.urgencyRank] ?? URGENCY_DOT[5];
-                const pill = timingPill(item);
-                const isTextItem = item.actionType === "text";
-                const isDraftLoading = isTextItem && loadingDrafts[item.id] !== false;
-                const draftPreview = isTextItem ? (drafts[item.id] ?? "") : "";
-
-                return (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: "#0c0c10",
-                      border: "0.5px solid rgba(255,255,255,0.07)",
-                      borderRadius: 14,
-                      padding: "16px",
-                    }}
-                  >
-                    {/* Header row: dot + name + timing pill */}
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span
-                        className="shrink-0 rounded-full"
-                        style={{
-                          width: 5,
-                          height: 5,
-                          background: dot.color,
-                          boxShadow: dot.glow ?? "none",
-                        }}
-                      />
-                      <span
-                        className="text-[15px] font-semibold flex-1 leading-tight"
-                        style={{ color: "#ffffff", letterSpacing: "-0.01em" }}
-                      >
-                        {item.clientName}
-                      </span>
-                      {pill && (
-                        <span
-                          className="shrink-0 text-[10px]"
-                          style={{
-                            color: pill.color,
-                            fontWeight: pill.weight ?? 400,
-                            letterSpacing: pill.upper ? "0.08em" : undefined,
-                            textTransform: pill.upper ? "uppercase" : undefined,
-                          }}
-                        >
-                          {pill.text}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Reason */}
-                    <p
-                      className="text-[13px] mb-3"
-                      style={{ color: "rgba(255,255,255,0.40)", lineHeight: 1.45, paddingLeft: 13 }}
-                    >
-                      {item.reason}
-                    </p>
-
-                    {/* AI draft preview */}
-                    {isTextItem && (
-                      <div style={{ paddingLeft: 13, marginBottom: 12 }}>
-                        {isDraftLoading ? (
-                          <div className="space-y-1.5">
-                            <div
-                              className="h-2.5 rounded"
-                              style={{ background: "rgba(255,255,255,0.06)", width: "82%", animation: "pulse 1.5s ease-in-out infinite" }}
-                            />
-                            <div
-                              className="h-2.5 rounded"
-                              style={{ background: "rgba(255,255,255,0.06)", width: "62%", animation: "pulse 1.5s ease-in-out infinite 0.2s" }}
-                            />
-                          </div>
-                        ) : draftPreview ? (
-                          <>
-                            <p
-                              className="text-[9px] font-semibold uppercase mb-1.5"
-                              style={{ color: "#3B82F6", letterSpacing: "0.10em" }}
-                            >
-                              Aria suggests
-                            </p>
-                            <p
-                              className="text-[12px] italic line-clamp-2"
-                              style={{ color: "rgba(255,255,255,0.55)", lineHeight: 1.5 }}
-                            >
-                              &ldquo;{draftPreview}&rdquo;
-                            </p>
-                          </>
-                        ) : null}
-                      </div>
-                    )}
-
-                    {/* Action button */}
-                    {isTextItem ? (
-                      <button
-                        type="button"
-                        onClick={() => handleAction(item)}
-                        className="w-full text-[13px] font-semibold text-center transition-opacity active:opacity-80"
-                        style={{
-                          background: "#3B82F6",
-                          color: "#ffffff",
-                          padding: "11px 12px",
-                          borderRadius: 8,
-                          display: "block",
-                        }}
-                      >
-                        {item.actionLabel}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => handleAction(item)}
-                        className="w-full text-[13px] font-medium flex items-center justify-between transition-opacity active:opacity-80"
-                        style={{
-                          background: "transparent",
-                          color: "rgba(255,255,255,0.75)",
-                          padding: "10px 12px",
-                          borderRadius: 8,
-                          border: "0.5px solid rgba(255,255,255,0.12)",
-                        }}
-                      >
-                        <span>{item.actionLabel}</span>
-                        <ArrowRight size={13} style={{ color: "rgba(255,255,255,0.30)", flexShrink: 0 }} />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Empty state ── */}
-        {n === 0 && hasAnyClients && (
-          <div
-            className="mb-8 flex flex-col items-center py-10"
-            style={{
-              background: "#0c0c10",
-              border: "0.5px solid rgba(255,255,255,0.06)",
-              borderRadius: 14,
-            }}
-          >
-            <p className="text-[15px] font-semibold" style={{ color: "rgba(255,255,255,0.60)" }}>
-              You&apos;re all caught up
-            </p>
-            <p className="mt-1 text-[12px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-              No follow-ups, closings, or matches right now
-            </p>
-          </div>
-        )}
-
-        {n === 0 && !hasAnyClients && (
-          <div className="mb-8">
-            <Link
-              href="/clients?new=1"
-              className="flex items-center justify-between transition-opacity active:opacity-70"
-              style={{
-                background: "#0c0c10",
-                border: "0.5px solid rgba(255,255,255,0.07)",
-                borderRadius: 14,
-                padding: "18px 16px",
-              }}
-            >
-              <div>
-                <p className="text-[14px] font-semibold" style={{ color: "#ffffff" }}>Add your first client</p>
-                <p className="mt-0.5 text-[12px]" style={{ color: "rgba(255,255,255,0.30)" }}>
-                  Aria starts working the moment you have clients
-                </p>
-              </div>
-              <ArrowRight size={15} style={{ color: "rgba(255,255,255,0.25)", flexShrink: 0 }} />
-            </Link>
-          </div>
-        )}
-
-        {/* ── 3. TODAY'S SCHEDULE ────────────────────────────────────────── */}
-        <div className="mb-8">
-          <SectionLabel>Today&apos;s Schedule</SectionLabel>
-          {showingsToday.length === 0 ? (
-            <div
-              style={{
-                background: "#0c0c10",
-                border: "0.5px solid rgba(255,255,255,0.07)",
-                borderRadius: 12,
-                padding: "16px",
-              }}
-            >
-              <p className="text-[13px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                No showings scheduled today
-              </p>
-            </div>
-          ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-              {showingsToday.map((s, i) => {
-                const isFirst = i === 0;
-                const isLast = i === showingsToday.length - 1;
-                return (
-                  <Link
-                    key={s.id}
-                    href="/showings"
-                    className="flex items-center gap-4 transition-opacity active:opacity-70"
-                    style={{
-                      background: "#0c0c10",
-                      border: "0.5px solid rgba(255,255,255,0.07)",
-                      borderTopLeftRadius: isFirst ? 12 : 4,
-                      borderTopRightRadius: isFirst ? 12 : 4,
-                      borderBottomLeftRadius: isLast ? 12 : 4,
-                      borderBottomRightRadius: isLast ? 12 : 4,
-                      padding: "13px 16px",
-                    }}
-                  >
-                    {/* Time */}
-                    <div style={{ width: 52, flexShrink: 0 }}>
-                      <p className="text-[12px] font-semibold tabular-nums" style={{ color: "#3B82F6" }}>
-                        {formatShowingTime(s.showing_date)}
-                      </p>
-                    </div>
-                    {/* Divider */}
-                    <div style={{ width: 0.5, alignSelf: "stretch", background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />
-                    {/* Details */}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] font-medium truncate" style={{ color: "#ffffff" }}>
-                        {s.clients?.name ?? "Client"}
-                      </p>
-                      <p className="text-[11px] truncate mt-0.5" style={{ color: "rgba(255,255,255,0.35)" }}>
-                        {s.address ?? "Address TBD"}
-                      </p>
-                    </div>
-                    <ArrowRight size={13} style={{ color: "rgba(255,255,255,0.20)", flexShrink: 0 }} />
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-          {/* Closings this week callout */}
-          {briefing.closingsThisWeek > 0 && (
-            <Link
-              href="/transactions"
-              className="mt-2 flex items-center justify-between transition-opacity active:opacity-70"
-              style={{
-                background: "rgba(239,68,68,0.06)",
-                border: "0.5px solid rgba(239,68,68,0.20)",
-                borderRadius: 10,
-                padding: "11px 14px",
-              }}
-            >
-              <p className="text-[12px] font-medium" style={{ color: "#EF4444" }}>
-                {briefing.closingsThisWeek} closing{briefing.closingsThisWeek > 1 ? "s" : ""} this week
-              </p>
-              <ArrowRight size={12} style={{ color: "rgba(239,68,68,0.6)", flexShrink: 0 }} />
-            </Link>
-          )}
-        </div>
-
-        {/* ── 4. KPI CARDS ───────────────────────────────────────────────── */}
-        {hasAnyClients && (
-          <div className="mb-8">
-            <SectionLabel>Pipeline</SectionLabel>
-            <div className="grid grid-cols-2 gap-2">
-              <KpiCard value={kpi.activeClients} label="Active Clients" />
-              <KpiCard
-                value={kpi.warmLeads}
-                label="Warm Leads"
-                accent={kpi.warmLeads > 0 ? "#F59E0B" : undefined}
-              />
-              <KpiCard
-                value={kpi.pipelineCount}
-                label="In Pipeline"
-                accent={kpi.pipelineCount > 0 ? "#3B82F6" : undefined}
-              />
-              <KpiCard
-                value={kpi.pendingDeals}
-                label="Pending Deals"
-                accent={kpi.pendingDeals > 0 ? "#10B981" : undefined}
-              />
-            </div>
-          </div>
-        )}
-
-        {/* ── 5. VOICE ENTRY ─────────────────────────────────────────────── */}
-        <div className="mb-4">
-          <button
-            type="button"
-            onClick={() => { triggerHaptic(); router.push("/voice"); }}
-            className="w-full flex items-center gap-3 transition-opacity active:opacity-70"
-            style={{
-              background: "#0c0c10",
-              border: "0.5px solid rgba(58,101,240,0.20)",
-              borderRadius: 12,
-              padding: "14px 16px",
-            }}
-          >
-            <div
-              className="flex items-center justify-center rounded-full shrink-0"
-              style={{
-                width: 32,
-                height: 32,
-                background: "rgba(58,101,240,0.10)",
-                border: "0.5px solid rgba(58,101,240,0.25)",
-              }}
-            >
-              <Mic size={14} color="#3B82F6" />
-            </div>
-            <div className="flex-1 text-left min-w-0">
-              <p className="text-[13px] font-medium" style={{ color: "rgba(255,255,255,0.75)" }}>
-                Ask Aria
-              </p>
-              <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.25)" }}>
-                Voice assistant
-              </p>
-            </div>
-            <ArrowRight size={13} style={{ color: "rgba(255,255,255,0.20)", flexShrink: 0 }} />
-          </button>
-        </div>
-
-      </div>
-
-      {/* ── Draft sheet modal ─────────────────────────────────────────────── */}
-      <DraftSheet
-        item={activeDraftItem}
-        prefetchedDraft={activeDraftItem ? drafts[activeDraftItem.id] : undefined}
-        onClose={() => setActiveDraftItem(null)}
-        onSent={(itemId) => {
-          setActiveDraftItem(null);
-          setDrafts((prev) => {
-            const next = { ...prev };
-            delete next[itemId];
-            return next;
-          });
-        }}
-      />
-    </div>
+    <ActiveAgentState
+      items={items}
+      briefing={briefing}
+      showingsToday={showingsToday}
+      userName={userName}
+      kpi={kpi}
+      onVoice={handleVoice}
+      activeDraftItem={activeDraftItem}
+      setActiveDraftItem={setActiveDraftItem}
+      drafts={drafts}
+      loadingDrafts={loadingDrafts}
+      handleAction={handleAction}
+    />
   );
 }
