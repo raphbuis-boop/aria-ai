@@ -2,23 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X, AlertCircle, RefreshCw } from "lucide-react";
 
-type VoiceState = "idle" | "listening" | "thinking" | "speaking";
+// ── Types ─────────────────────────────────────────────────────────────────────
 
-const STATE_LABEL: Record<VoiceState, string> = {
-  idle: "Tap to speak",
-  listening: "Listening",
-  thinking: "",
-  speaking: "",
-};
-
-const STATE_COLOR: Record<VoiceState, string> = {
-  idle: "#3a65f0",
-  listening: "#1a9b5e",
-  thinking: "#3a65f0",
-  speaking: "#3a65f0",
-};
+type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
 
 type SpeechRecognitionResult = { transcript: string };
 type SpeechRecognitionEvent = {
@@ -42,43 +30,179 @@ declare global {
   }
 }
 
+const CHIPS = [
+  "What's my pipeline today?",
+  "Any new client matches?",
+  "Showings this week?",
+  "Draft a follow-up SMS",
+  "Market update for NJ?",
+];
+
+// ── Aria "A" logo SVG ─────────────────────────────────────────────────────────
+
+function AriaA({ size = 36 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width={size} height={size} aria-hidden>
+      <defs>
+        <linearGradient id="orb-aria-grad" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+          <stop offset="100%" stopColor="rgba(255,255,255,0.70)" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M100 28 L168 178 L132 178 L122 152 L78 152 L68 178 L32 178 Z M88 128 L112 128 L100 96 Z"
+        fill="url(#orb-aria-grad)"
+      />
+    </svg>
+  );
+}
+
+// ── Orb component ─────────────────────────────────────────────────────────────
+
+function VoiceOrb({
+  state,
+  onTap,
+}: {
+  state: VoiceState;
+  onTap: () => void;
+}) {
+  const isListening = state === "listening";
+  const isSpeaking = state === "speaking";
+  const isThinking = state === "thinking";
+  const isActive = isListening || isSpeaking;
+
+  // Color values
+  const orbColor = isListening ? "#1a9b5e" : "#3a65f0";
+  const glowColor = isListening ? "80,220,120" : "58,101,240";
+
+  return (
+    <button
+      type="button"
+      onClick={onTap}
+      aria-label={state === "idle" ? "Tap to speak" : "Tap to stop"}
+      className="relative flex items-center justify-center outline-none"
+      style={{ WebkitTapHighlightColor: "transparent" }}
+    >
+      {/* Outermost expanding rings — listening & speaking */}
+      {isActive && (
+        <>
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 300, height: 300,
+              background: `rgba(${glowColor},0.04)`,
+              animation: "ring-out 2.6s ease-out infinite",
+            }}
+          />
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 250, height: 250,
+              background: `rgba(${glowColor},0.06)`,
+              animation: "ring-out 2.6s ease-out infinite 0.65s",
+            }}
+          />
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 200, height: 200,
+              background: `rgba(${glowColor},0.09)`,
+              animation: "ring-out 2.6s ease-out infinite 1.3s",
+            }}
+          />
+        </>
+      )}
+
+      {/* Thinking: slow breathing ring */}
+      {isThinking && (
+        <span
+          className="absolute rounded-full"
+          style={{
+            width: 196, height: 196,
+            border: "0.5px solid rgba(58,101,240,0.15)",
+            animation: "breathe 2.2s ease-in-out infinite",
+          }}
+        />
+      )}
+
+      {/* Outer static ring */}
+      <span
+        className="absolute rounded-full transition-all duration-700"
+        style={{
+          width: 180, height: 180,
+          border: `0.5px solid ${orbColor}18`,
+          transform: isActive ? "scale(1.06)" : "scale(1)",
+        }}
+      />
+
+      {/* Mid ring */}
+      <span
+        className="absolute rounded-full transition-all duration-700"
+        style={{
+          width: 158, height: 158,
+          border: `0.5px solid ${orbColor}28`,
+        }}
+      />
+
+      {/* Core orb */}
+      <span
+        className="relative flex items-center justify-center rounded-full transition-all duration-700"
+        style={{
+          width: 132, height: 132,
+          background: isListening
+            ? "radial-gradient(circle at 38% 32%, #a0f4c0, #1a9b5e 55%, #158848)"
+            : "radial-gradient(circle at 38% 32%, #8aacff, #3a65f0 55%, #2a48cc)",
+          boxShadow: isListening
+            ? `0 0 0 1px rgba(80,220,120,0.2), 0 0 60px rgba(80,220,120,0.35), 0 20px 80px rgba(0,0,0,0.6)`
+            : `0 0 0 1px rgba(58,101,240,0.2), 0 0 60px rgba(58,101,240,0.35), 0 20px 80px rgba(0,0,0,0.6)`,
+          transform: isThinking
+            ? "scale(0.88)"
+            : isActive
+            ? "scale(1.07)"
+            : "scale(1)",
+          opacity: isThinking ? 0.75 : 1,
+        }}
+      >
+        {isThinking ? (
+          <span
+            className="block rounded-full border-[1.5px] border-white/25 border-t-white"
+            style={{ width: 30, height: 30, animation: "spin 0.85s linear infinite" }}
+          />
+        ) : (
+          <AriaA size={38} />
+        )}
+      </span>
+    </button>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function VoicePage() {
   const router = useRouter();
   const [voiceState, setVoiceState] = useState<VoiceState>("idle");
   const [supported, setSupported] = useState(true);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string>("");
+  const [lastReply, setLastReply] = useState<string>("");
+
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const gotResultRef = useRef(false);
-  const color = STATE_COLOR[voiceState];
 
-  useEffect(() => {
-    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
-    if (!SR) { setSupported(false); return; }
-    const r = new SR();
-    r.continuous = false;
-    r.interimResults = false;
-    r.lang = "en-US";
+  // Ambient glow color per state
+  const glowRGB =
+    voiceState === "listening" ? "80,220,120"
+    : voiceState === "error" ? "220,60,60"
+    : "58,101,240";
 
-    r.onresult = (e) => {
-      gotResultRef.current = true;
-      const text = e.results[0][0].transcript;
-      handleQuery(text);
-    };
-    r.onerror = () => setVoiceState("idle");
-    r.onend = () => {
-      // If no result was captured (e.g. silence or mic denied), reset to idle
-      if (!gotResultRef.current) setVoiceState("idle");
-      gotResultRef.current = false;
-    };
-    recognitionRef.current = r;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ── Speech recognition setup ────────────────────────────────────────────────
 
   const handleQuery = useCallback(async (text: string) => {
-    console.log("[Aria voice] transcript:", text);
+    setTranscript(text);
     setVoiceState("thinking");
+    setErrorMsg(null);
     try {
       const res = await fetch("/api/ai/voice", {
         method: "POST",
@@ -88,31 +212,60 @@ export default function VoicePage() {
       if (!res.ok) {
         const errText = await res.text();
         console.error("[Aria voice] AI route failed", res.status, errText);
-        setVoiceState("idle");
+        setErrorMsg("Couldn't reach Aria — please try again.");
+        setVoiceState("error");
         return;
       }
       const data = await res.json();
-      console.log("[Aria voice] reply:", data);
       const reply = String(data.reply ?? "");
       if (!reply) {
-        console.error("[Aria voice] empty reply — ANTHROPIC_API_KEY may be missing on Vercel");
-        setVoiceState("idle");
+        setErrorMsg("Aria returned an empty response.");
+        setVoiceState("error");
         return;
       }
+      setLastReply(reply);
       await speak(reply);
     } catch (e) {
       console.error("[Aria voice] handleQuery error", e);
-      setVoiceState("idle");
+      setErrorMsg("Something went wrong. Tap to try again.");
+      setVoiceState("error");
     }
   }, []);
 
+  useEffect(() => {
+    const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
+    if (!SR) {
+      setSupported(false);
+      return;
+    }
+    const r = new SR();
+    r.continuous = false;
+    r.interimResults = false;
+    r.lang = "en-US";
+
+    r.onresult = (e) => {
+      gotResultRef.current = true;
+      const text = e.results[0][0].transcript;
+      void handleQuery(text);
+    };
+    r.onerror = () => {
+      setVoiceState("idle");
+    };
+    r.onend = () => {
+      if (!gotResultRef.current) setVoiceState("idle");
+      gotResultRef.current = false;
+    };
+    recognitionRef.current = r;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── TTS ──────────────────────────────────────────────────────────────────────
+
   async function speak(text: string) {
-    // Stop any current source
     if (sourceRef.current) {
       try { sourceRef.current.stop(); } catch { /* already stopped */ }
       sourceRef.current = null;
     }
-
     try {
       const res = await fetch("/api/tts", {
         method: "POST",
@@ -120,10 +273,7 @@ export default function VoicePage() {
         body: JSON.stringify({ text }),
       });
       if (!res.ok) throw new Error("TTS failed");
-
       const arrayBuffer = await res.arrayBuffer();
-
-      // AudioContext was unlocked on tap — use it to bypass iOS autoplay block
       const ctx = audioCtxRef.current!;
       if (ctx.state === "suspended") await ctx.resume();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
@@ -131,13 +281,11 @@ export default function VoicePage() {
       source.buffer = audioBuffer;
       source.connect(ctx.destination);
       sourceRef.current = source;
-
       setVoiceState("speaking");
       source.onended = () => { setVoiceState("idle"); sourceRef.current = null; };
       source.start(0);
     } catch (e) {
-      console.error("speak error — falling back to browser TTS", e);
-      // Fallback: browser speech synthesis so something always plays
+      console.error("speak error — fallback to browser TTS", e);
       try {
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = 1.1;
@@ -153,8 +301,13 @@ export default function VoicePage() {
     }
   }
 
+  // ── Controls ─────────────────────────────────────────────────────────────────
+
   function startListening() {
     if (!recognitionRef.current) return;
+    setTranscript("");
+    setLastReply("");
+    setErrorMsg(null);
     setVoiceState("listening");
     try { recognitionRef.current.start(); } catch { /* already running */ }
   }
@@ -169,143 +322,172 @@ export default function VoicePage() {
   }
 
   function handleOrbTap() {
-    // Unlock / create AudioContext on first user gesture (required for iOS)
     if (!audioCtxRef.current) {
       audioCtxRef.current = new AudioContext();
     } else if (audioCtxRef.current.state === "suspended") {
-      audioCtxRef.current.resume();
+      void audioCtxRef.current.resume();
     }
-    if (voiceState === "idle") startListening();
+    if (voiceState === "idle" || voiceState === "error") startListening();
     else stopAll();
   }
 
-  const isActive = voiceState === "listening" || voiceState === "speaking";
-  const isThinking = voiceState === "thinking";
+  function handleChip(text: string) {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    }
+    void handleQuery(text);
+  }
+
+  // ── Derived UI ────────────────────────────────────────────────────────────────
+
+  const showChips = voiceState === "idle";
+  const stateHint =
+    voiceState === "idle" ? "Tap to speak"
+    : voiceState === "listening" ? "Listening…"
+    : voiceState === "thinking" ? "Thinking…"
+    : voiceState === "speaking" ? "Speaking"
+    : "Tap to try again";
+
+  // ── Render ────────────────────────────────────────────────────────────────────
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col items-center overflow-hidden select-none"
+      className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden"
       style={{ background: "#040407" }}
     >
-      {/* Full screen ambient */}
+      {/* Ambient background — shifts per state */}
       <div
         className="pointer-events-none absolute inset-0 transition-all duration-1000"
         style={{
-          background: `radial-gradient(ellipse 70% 60% at 50% 50%, ${color}12 0%, transparent 70%)`,
+          background: `radial-gradient(ellipse 65% 55% at 50% 42%, rgba(${glowRGB},0.10) 0%, transparent 68%)`,
         }}
       />
 
-      {/* Close button */}
-      <div className="relative z-10 flex w-full justify-end px-6 pt-14">
+      {/* ── Top bar ────────────────────────────────────────────────────────── */}
+      <div
+        className="relative z-10 flex w-full items-center justify-between px-5"
+        style={{ paddingTop: "calc(env(safe-area-inset-top) + 14px)", paddingBottom: 14 }}
+      >
+        <span className="text-[13px] font-semibold tracking-[0.12em] uppercase text-white/20">
+          Ask Aria
+        </span>
         <button
           type="button"
           onClick={() => { stopAll(); router.back(); }}
-          className="flex h-10 w-10 items-center justify-center rounded-full border-[0.5px] border-white/6 bg-white/3 text-[#555570] transition hover:text-white"
+          className="flex h-9 w-9 items-center justify-center rounded-full text-white/30 transition hover:text-white/60"
+          style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.07)" }}
         >
-          <X size={16} strokeWidth={1.8} />
+          <X size={15} strokeWidth={2} />
         </button>
       </div>
 
-      {/* Main orb — vertically centered */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center gap-0">
+      {/* ── Center: orb zone ───────────────────────────────────────────────── */}
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
 
-        <button
-          type="button"
-          onClick={handleOrbTap}
-          aria-label={STATE_LABEL[voiceState] || "Aria"}
-          className="relative flex items-center justify-center outline-none"
-          style={{ WebkitTapHighlightColor: "transparent" }}
-        >
-          {/* Expanding rings when active */}
-          {isActive && (
-            <>
-              <span className="absolute rounded-full" style={{ width: 280, height: 280, background: `${color}05`, animation: "ring-out 2.4s ease-out infinite" }} />
-              <span className="absolute rounded-full" style={{ width: 230, height: 230, background: `${color}07`, animation: "ring-out 2.4s ease-out infinite 0.6s" }} />
-              <span className="absolute rounded-full" style={{ width: 185, height: 185, background: `${color}09`, animation: "ring-out 2.4s ease-out infinite 1.2s" }} />
-            </>
-          )}
+        {/* Transcript / reply text above orb */}
+        <div className="mb-10 flex min-h-[44px] max-w-[260px] flex-col items-center justify-end gap-1">
+          {transcript && voiceState !== "idle" ? (
+            <p className="text-center text-[13px] font-medium leading-snug text-white/50">
+              &ldquo;{transcript}&rdquo;
+            </p>
+          ) : voiceState === "speaking" && lastReply ? (
+            <p className="text-center text-[13px] font-medium leading-snug text-white/50 line-clamp-2">
+              {lastReply}
+            </p>
+          ) : null}
+        </div>
 
-          {/* Steady outer ring */}
-          <span
-            className="absolute rounded-full"
-            style={{
-              width: 170, height: 170,
-              border: `0.5px solid ${color}20`,
-              transition: "all 700ms cubic-bezier(0.16,1,0.3,1)",
-              transform: isActive ? "scale(1.04)" : "scale(1)",
-            }}
-          />
+        {/* Orb */}
+        <VoiceOrb state={voiceState} onTap={handleOrbTap} />
 
-          {/* Inner ring */}
-          <span
-            className="absolute rounded-full"
-            style={{
-              width: 148, height: 148,
-              border: `0.5px solid ${color}30`,
-              transition: "all 700ms cubic-bezier(0.16,1,0.3,1)",
-            }}
-          />
-
-          {/* Orb */}
-          <span
-            className="relative flex items-center justify-center rounded-full"
-            style={{
-              width: 120, height: 120,
-              background:
-                voiceState === "listening"
-                  ? "radial-gradient(circle at 38% 35%, #80f0a8, #1a9b5e 55%, #28a855)"
-                  : "radial-gradient(circle at 38% 35%, #8aacff, #3a65f0 55%, #2a48cc)",
-              boxShadow:
-                voiceState === "listening"
-                  ? "0 0 0 1px rgba(80,220,120,0.25), 0 20px 80px rgba(80,220,120,0.4)"
-                  : "0 0 0 1px rgba(58,101,240,0.25), 0 20px 80px rgba(58,101,240,0.4)",
-              transition: "all 700ms cubic-bezier(0.16,1,0.3,1)",
-              transform: isThinking ? "scale(0.9)" : isActive ? "scale(1.06)" : "scale(1)",
-              opacity: isThinking ? 0.7 : 1,
-            }}
-          >
-            {/* Thinking spinner inside orb */}
-            {isThinking ? (
-              <span
-                className="block rounded-full border-[1.5px] border-white/20 border-t-white/80"
-                style={{ width: 28, height: 28, animation: "spin 0.8s linear infinite" }}
-              />
-            ) : (
-              <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.85)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5 10a7 7 0 0014 0" />
-                <line x1="12" y1="19" x2="12" y2="22" />
-                <line x1="8" y1="22" x2="16" y2="22" />
-              </svg>
-            )}
-          </span>
-        </button>
-
-        {/* State label below orb */}
+        {/* State hint below orb */}
         <p
-          className="mt-10 text-[13px] font-medium tracking-[0.08em] transition-all duration-500"
-          style={{ color: voiceState === "idle" ? "#33334a" : `${color}cc` }}
+          className="mt-8 text-[12px] font-medium tracking-[0.10em] uppercase transition-all duration-500"
+          style={{
+            color:
+              voiceState === "idle" ? "rgba(255,255,255,0.18)"
+              : voiceState === "error" ? "rgba(220,80,80,0.85)"
+              : voiceState === "listening" ? "rgba(80,220,120,0.75)"
+              : "rgba(100,130,255,0.75)",
+          }}
         >
-          {STATE_LABEL[voiceState] || "\u00a0"}
+          {stateHint}
         </p>
 
-        {/* Unsupported notice */}
+        {/* Unsupported — mic not available */}
         {!supported && (
-          <p className="mt-4 text-[12px] text-[#ff8080]">
-            Use Safari on iPhone for voice
-          </p>
+          <div
+            className="mt-6 flex items-center gap-2 rounded-xl px-4 py-3"
+            style={{ background: "rgba(220,60,60,0.08)", border: "0.5px solid rgba(220,60,60,0.2)" }}
+          >
+            <AlertCircle size={14} className="shrink-0 text-red-400" />
+            <p className="text-[12px] text-red-300">Voice requires Safari on iPhone</p>
+          </div>
         )}
+
+        {/* API / TTS error banner */}
+        {voiceState === "error" && errorMsg && supported && (
+          <div
+            className="mt-6 flex items-center gap-3 rounded-xl px-4 py-3"
+            style={{ background: "rgba(220,60,60,0.07)", border: "0.5px solid rgba(220,60,60,0.18)" }}
+          >
+            <AlertCircle size={14} className="shrink-0 text-red-400" />
+            <p className="flex-1 text-[12px] text-red-300">{errorMsg}</p>
+            <button
+              type="button"
+              onClick={() => { setVoiceState("idle"); setErrorMsg(null); }}
+              className="shrink-0 text-red-400 hover:text-red-200 transition"
+            >
+              <RefreshCw size={13} />
+            </button>
+          </div>
+        )}
+
       </div>
 
-      {/* Bottom wordmark */}
-      <div className="relative z-10 pb-16 text-center">
-        <p className="text-[11px] font-medium tracking-[0.2em] text-[#22222e] uppercase">Aria Voice</p>
+      {/* ── Prompt chips ───────────────────────────────────────────────────── */}
+      <div
+        className="relative z-10 transition-all duration-400"
+        style={{
+          opacity: showChips ? 1 : 0,
+          pointerEvents: showChips ? "auto" : "none",
+          transform: showChips ? "translateY(0)" : "translateY(8px)",
+        }}
+      >
+        <div
+          className="flex gap-2.5 overflow-x-auto px-5 pb-3"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
+          {CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => handleChip(chip)}
+              className="shrink-0 rounded-full px-4 py-2.5 text-[12px] font-medium text-white/60 transition-all active:scale-95 hover:text-white/90"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "0.5px solid rgba(255,255,255,0.10)",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
       </div>
 
+      {/* ── Bottom spacer — clears the floating bottom nav (≈ 88px) ─────── */}
+      <div style={{ height: "calc(env(safe-area-inset-bottom) + 88px)" }} />
+
+      {/* ── Keyframes ─────────────────────────────────────────────────────── */}
       <style>{`
         @keyframes ring-out {
-          0% { transform: scale(1); opacity: 1; }
-          100% { transform: scale(1.9); opacity: 0; }
+          0%   { transform: scale(1);   opacity: 1; }
+          100% { transform: scale(2.0); opacity: 0; }
+        }
+        @keyframes breathe {
+          0%, 100% { transform: scale(1);    opacity: 0.4; }
+          50%       { transform: scale(1.06); opacity: 0.9; }
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
