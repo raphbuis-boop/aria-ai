@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  /* Premium dark palette */
+  /* ── Legacy palette (kept for backward compat — do not remove) ── */
   --c-bg:          #080910;
   --c-card:        #0d0f16;
   --c-elevated:    #121520;
@@ -19,13 +19,44 @@
   --c-amber:       #c47e1a;
   --c-green:       #1a9b5e;
   --c-red:         #c43838;
+
+  /* ── Obsidian Chrome design system ──────────────────────────────
+     Palette: Onyx #0A0A0A · Blue Slate #536878 · Alabaster Grey #E5E4E2
+     To revert: remove everything below this block and the .oc-* classes.
+  ─────────────────────────────────────────────────────────────── */
+
+  /* Base */
+  --oc-onyx:        #0A0A0A;
+  --oc-slate:       #536878;
+  --oc-alabaster:   #E5E4E2;
+
+  /* Surfaces — semi-transparent, sit on the fixed backdrop */
+  --oc-surface-1:   rgba(15, 17, 20, 0.72);
+  --oc-surface-2:   rgba(20, 22, 24, 0.80);
+
+  /* Borders — Blue Slate tinted, barely visible */
+  --oc-border-soft: rgba(83, 104, 120, 0.18);
+  --oc-border-mid:  rgba(83, 104, 120, 0.30);
+
+  /* Text */
+  --oc-text-1:      #E5E4E2;          /* Alabaster — headings, primary */
+  --oc-text-2:      #8A9BAD;          /* Slate-tinted midgrey — subtext  */
+  --oc-text-3:      #536878;          /* Blue Slate — muted, placeholders */
+
+  /* Accent */
+  --oc-blue:        #3B82F6;
+  --oc-blue-dim:    rgba(59, 130, 246, 0.12);
+
+  /* Semantic */
+  --oc-amber:       #C47E1A;
+  --oc-green:       #1A9B5E;
+  --oc-red:         #C43838;
 }
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Overscroll area matches app bg — no white flash */
-  background: #0a0a0a;
-  /* Kill 300ms tap delay and double-tap zoom on all interactive elements */
+  /* Overscroll area = Onyx — no white flash on rubber-band scroll */
+  background: var(--oc-onyx);
   touch-action: manipulation;
 }
 
@@ -35,8 +66,9 @@ body {
   overflow-x: hidden;
   overflow-y: auto;
   max-width: 100%;
-  background: #0a0a0a;
-  color: #f0f0f5;
+  /* transparent — the fixed .oc-backdrop renders beneath all content */
+  background: transparent;
+  color: var(--oc-text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Contain overscroll on both axes — prevents rubber-band flash and pull-to-refresh bleed */
@@ -210,3 +242,56 @@ select:focus {
 .orb-glow-blue { animation: orb-glow 1.4s ease-in-out infinite; }
 .orb-glow-purple { animation: orb-glow 1.2s ease-in-out infinite; }
 .orb-glow-green { animation: orb-glow 1.6s ease-in-out infinite; }
+
+/* ═══════════════════════════════════════════════════════════════════
+   OBSIDIAN CHROME — reusable utility classes
+   To revert entirely: delete this block and the --oc-* vars in :root.
+═══════════════════════════════════════════════════════════════════ */
+
+/*
+  Global backdrop — rendered once in app/layout.tsx as a fixed div.
+  Two radial halations in Blue Slate at very low opacity create depth
+  without banding. 90% Onyx, 10% atmosphere. No glow, no neon.
+*/
+.oc-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-color: var(--oc-onyx);
+  background-image:
+    radial-gradient(
+      ellipse 68% 52% at 14% 18%,
+      rgba(83, 104, 120, 0.14) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 58% 46% at 84% 82%,
+      rgba(83, 104, 120, 0.07) 0%,
+      transparent 100%
+    );
+}
+
+/*
+  Standard card — semi-transparent surface over the backdrop.
+  Apply with className="oc-card" on any container.
+*/
+.oc-card {
+  background: var(--oc-surface-1);
+  backdrop-filter: blur(16px) saturate(160%);
+  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  border: 0.5px solid var(--oc-border-soft);
+  border-radius: 16px;
+}
+
+/*
+  Elevated card — heavier blur for sheets, modals, popovers.
+  Apply with className="oc-card-elevated".
+*/
+.oc-card-elevated {
+  background: var(--oc-surface-2);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  border: 0.5px solid var(--oc-border-mid);
+  border-radius: 16px;
+}

@@ -38,7 +38,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={instrumentSerif.variable}>
-      <body className={`${dmSans.className} min-h-[100dvh] bg-[#0a0a0a] text-[#f0f0f5]`}>
+      {/*
+        body bg is transparent — the .oc-backdrop div renders the
+        Obsidian Chrome canvas. html retains bg-oc-onyx so overscroll
+        rubber-band areas stay Onyx on iOS, not white.
+      */}
+      <body className={`${dmSans.className} min-h-[100dvh] text-oc-alabaster`}>
+        {/* Obsidian Chrome backdrop — fixed, z-index -1, behind all content */}
+        <div aria-hidden="true" className="oc-backdrop" />
         <SplashScreen />
         <PostHogProvider>
           <ToastProvider>
