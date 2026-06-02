@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight, Lock } from "lucide-react";
+import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight, Lock, TrendingUp, MessageSquare, Building2, Bell } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -71,24 +71,28 @@ function triggerHaptic() {
   } catch { /* never break on haptic failure */ }
 }
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ── Design tokens (page-level — do not move to globals.css) ──────────────────
+// Lighter glass surfaces than global oc-card defaults so the dashboard
+// reads airy against the Obsidian Chrome backdrop.
 
-const BG_CARD   = "#0e0e12";
-const BG_CARD2  = "#111116";
-const BORDER    = "rgba(255,255,255,0.07)";
+const BG_CARD   = "rgba(22, 30, 44, 0.64)";    // glass card panel
+const BG_CARD2  = "rgba(12, 18, 30, 0.82)";    // icon bg / inner surface
+const BORDER    = "rgba(83, 104, 120, 0.34)";  // blue-slate border
+const HIGHLIGHT = "inset 0 1px 0 rgba(229, 228, 226, 0.09)"; // glass top-edge
+const BLUR      = "blur(24px) saturate(240%)";
 const BLUE      = "#3B82F6";
-const TEXT_1    = "#ffffff";
-const TEXT_2    = "rgba(255,255,255,0.50)";
-const TEXT_3    = "rgba(255,255,255,0.25)";
+const TEXT_1    = "#E8E6E4";  // alabaster warm-white
+const TEXT_2    = "#B0C4CF";  // slate midtone
+const TEXT_3    = "#7A96A8";  // muted blue-slate
 
 // ── Urgency config ────────────────────────────────────────────────────────────
 
 const URGENCY_DOT: Record<number, { color: string; glow?: string }> = {
-  1: { color: "#EF4444", glow: "0 0 6px rgba(239,68,68,0.50)" },
-  2: { color: "#F59E0B" },
-  3: { color: "#A78BFA" },
-  4: { color: BLUE },
-  5: { color: "#10B981" },
+  1: { color: "#EF4444", glow: "0 0 6px rgba(239,68,68,0.40)" },  // closing — red
+  2: { color: "#F59E0B" },                                          // hot lead — amber
+  3: { color: "#60A5FA" },                                          // anniversary — light blue
+  4: { color: "rgba(83,104,120,0.80)" },                            // BBA — slate
+  5: { color: "#10B981" },                                          // MLS match — green
 };
 
 function timingPill(item: TodayItem): { text: string; color: string; weight?: number; upper?: boolean } | null {
@@ -131,8 +135,11 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
     <div
       style={{
         background: BG_CARD,
+        backdropFilter: BLUR,
+        WebkitBackdropFilter: BLUR,
         border: `0.5px solid ${BORDER}`,
         borderRadius: 14,
+        boxShadow: HIGHLIGHT,
         ...style,
       }}
     >
@@ -157,11 +164,14 @@ function KpiCard({
   return (
     <div
       style={{
-        background: placeholder ? "rgba(14,14,18,0.50)" : BG_CARD,
-        border: `0.5px solid ${placeholder ? "rgba(255,255,255,0.04)" : BORDER}`,
+        background: placeholder ? "rgba(12, 18, 30, 0.46)" : BG_CARD,
+        backdropFilter: BLUR,
+        WebkitBackdropFilter: BLUR,
+        border: `0.5px solid ${placeholder ? "rgba(83,104,120,0.12)" : BORDER}`,
         borderRadius: 12,
         padding: "16px 14px 14px",
         minWidth: 0,
+        boxShadow: placeholder ? "none" : HIGHLIGHT,
       }}
     >
       {placeholder ? (
@@ -235,39 +245,28 @@ function VoiceEntry({ onClick, subtitle }: { onClick: () => void; subtitle?: str
 
 const SETUP_STEPS = [
   {
-    Icon: Mail,
-    title: "Connect Gmail",
-    desc: "Aria reads your thread history and surfaces follow-ups automatically.",
-    badge: "Recommended",
-    primary: true,
-    href: "/api/auth/google/connect",
-    external: true,
-  },
-  {
     Icon: Upload,
     title: "Import clients",
-    desc: "Upload a CSV — Aria maps the columns and imports your entire book instantly.",
+    desc: "Upload a CSV — Aria maps columns and imports your book instantly.",
     badge: "Fastest",
-    primary: false,
     href: "/settings/import",
     external: false,
   },
   {
     Icon: UserPlus,
     title: "Add first client",
-    desc: "Add one client manually and Aria begins finding opportunities right away.",
+    desc: "Add one client manually and Aria starts finding opportunities.",
     badge: "Quickest start",
-    primary: false,
     href: "/clients?new=1",
     external: false,
   },
 ] as const;
 
-const UNLOCKS = [
-  { label: "Follow-up nudges",     desc: "Know exactly who to call and when." },
-  { label: "MLS matches",          desc: "New listings matched to each client, automatically." },
-  { label: "AI drafts",            desc: "Ready-to-send texts written in your voice." },
-  { label: "Revenue opportunities",desc: "Your pipeline surfaced every morning." },
+const FEATURES = [
+  { Icon: TrendingUp,    label: "Revenue Opportunities", desc: "Daily pipeline ranked by urgency" },
+  { Icon: MessageSquare, label: "AI Drafts",             desc: "Ready-to-send texts in your voice" },
+  { Icon: Building2,     label: "MLS Matches",           desc: "New listings matched to each client" },
+  { Icon: Bell,          label: "Follow-up Nudges",      desc: "Know exactly who to call and when" },
 ] as const;
 
 function NewAgentState({
@@ -290,7 +289,7 @@ function NewAgentState({
       <div className="px-5">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
-        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 22px)", paddingBottom: 28 }}>
+        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 24px)", paddingBottom: 24 }}>
           <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
             {dateLabel}
           </p>
@@ -303,154 +302,181 @@ function NewAgentState({
         </div>
 
         {/* ── 1. SETUP MISSION HERO ────────────────────────────────────────── */}
-        <div className="oc-card mb-3" style={{ padding: "18px 16px 16px" }}>
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] mb-1" style={{ color: TEXT_3 }}>
-                Setup mission
-              </p>
-              <p className="text-[22px] font-bold" style={{ color: TEXT_1, letterSpacing: "-0.02em" }}>
-                0 of 3 complete
-              </p>
-            </div>
+        <div
+          style={{
+            background: "rgba(24, 34, 52, 0.72)",
+            backdropFilter: BLUR,
+            WebkitBackdropFilter: BLUR,
+            border: `0.5px solid rgba(83, 104, 120, 0.42)`,
+            borderRadius: 20,
+            boxShadow: "inset 0 1px 0 rgba(229, 228, 226, 0.10)",
+            padding: "22px 18px 18px",
+            marginBottom: 10,
+          }}
+        >
+          {/* Label + count + percent */}
+          <div className="flex items-start justify-between mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
+              Setup mission
+            </p>
             <span
               className="text-[11px] font-semibold tabular-nums"
               style={{
                 color: TEXT_3,
-                background: "rgba(255,255,255,0.05)",
+                background: "rgba(83,104,120,0.14)",
                 border: `0.5px solid ${BORDER}`,
                 borderRadius: 6,
-                padding: "3px 8px",
-                marginTop: 2,
+                padding: "2px 8px",
               }}
             >
               0%
             </span>
           </div>
 
-          {/* Progress — 3 segments, all inactive */}
-          <div className="flex gap-1.5 mb-3">
+          <p
+            className="text-[26px] font-bold leading-tight mb-4"
+            style={{ color: TEXT_1, letterSpacing: "-0.025em" }}
+          >
+            0 of 3 steps complete
+          </p>
+
+          {/* Progress — 3 segments */}
+          <div className="flex gap-1.5 mb-4">
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                style={{ flex: 1, height: 3, borderRadius: 99, background: "rgba(255,255,255,0.09)" }}
+                style={{ flex: 1, height: 3, borderRadius: 99, background: "rgba(83,104,120,0.22)" }}
               />
             ))}
           </div>
 
-          <p className="text-[12px]" style={{ color: TEXT_3, lineHeight: 1.55 }}>
-            Connect your data sources so Aria can start finding revenue opportunities.
+          <p className="text-[13px] mb-5" style={{ color: TEXT_2, lineHeight: 1.55 }}>
+            Connect your inbox and Aria starts finding revenue opportunities from your existing client conversations.
           </p>
+
+          {/* Primary CTA — Connect Gmail */}
+          <a
+            href="/api/auth/google/connect"
+            className="flex items-center justify-center gap-2 transition-opacity active:opacity-70"
+            style={{
+              background: BLUE,
+              color: "#fff",
+              borderRadius: 12,
+              padding: "13px 16px",
+              fontSize: 14,
+              fontWeight: 600,
+              textDecoration: "none",
+            }}
+          >
+            <Mail size={16} />
+            Connect Gmail
+            <ArrowRight size={14} style={{ opacity: 0.75 }} />
+          </a>
         </div>
 
-        {/* ── 2. SETUP ACTION CARDS ────────────────────────────────────────── */}
+        {/* ── 2. SECONDARY SETUP CARDS ─────────────────────────────────────── */}
         <div className="flex flex-col gap-2 mb-8">
-          {SETUP_STEPS.map(({ Icon, title, desc, badge, primary, href, external }) => {
-            const cardStyle: React.CSSProperties = {
-              display: "block",
-              padding: "14px 14px 13px",
-              background: primary ? "rgba(59,130,246,0.06)" : BG_CARD,
-              border: `0.5px solid ${primary ? "rgba(59,130,246,0.18)" : BORDER}`,
-              borderRadius: 14,
-            };
+          {SETUP_STEPS.map(({ Icon, title, desc, badge, href, external }) => {
             const inner = (
-              <>
-                {/* Top row: icon + title + badge */}
-                <div className="flex items-center gap-2.5 mb-2">
-                  <div
-                    className="flex items-center justify-center rounded-[9px] shrink-0"
-                    style={{
-                      width: 34,
-                      height: 34,
-                      background: primary ? "rgba(59,130,246,0.13)" : BG_CARD2,
-                      border: `0.5px solid ${primary ? "rgba(59,130,246,0.26)" : BORDER}`,
-                    }}
-                  >
-                    <Icon size={15} style={{ color: primary ? BLUE : TEXT_2 }} />
-                  </div>
-                  <p className="flex-1 text-[14px] font-semibold" style={{ color: TEXT_1 }}>
+              <div className="flex items-center gap-3">
+                <div
+                  className="flex items-center justify-center rounded-[9px] shrink-0"
+                  style={{ width: 34, height: 34, background: BG_CARD2, border: `0.5px solid ${BORDER}` }}
+                >
+                  <Icon size={15} style={{ color: TEXT_2 }} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-semibold" style={{ color: TEXT_1 }}>
                     {title}
                   </p>
+                  <p className="text-[11px] mt-0.5" style={{ color: TEXT_3, lineHeight: 1.4 }}>
+                    {desc}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
                   <span
-                    className="shrink-0 text-[10px] font-semibold"
                     style={{
-                      color: primary ? BLUE : TEXT_3,
-                      border: `0.5px solid ${primary ? "rgba(59,130,246,0.28)" : "rgba(255,255,255,0.10)"}`,
+                      fontSize: 10,
+                      fontWeight: 600,
+                      color: TEXT_3,
+                      border: `0.5px solid ${BORDER}`,
                       borderRadius: 5,
-                      padding: "2px 7px",
+                      padding: "2px 6px",
                       letterSpacing: "0.03em",
                     }}
                   >
                     {badge}
                   </span>
+                  <ChevronRight size={13} style={{ color: TEXT_3 }} />
                 </div>
-                {/* Bottom row: desc + chevron */}
-                <div className="flex items-end justify-between gap-3">
-                  <p className="text-[12px]" style={{ color: TEXT_3, lineHeight: 1.45 }}>
-                    {desc}
-                  </p>
-                  <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0, marginBottom: 1 }} />
-                </div>
-              </>
+              </div>
             );
-
+            const cardSt: React.CSSProperties = {
+              display: "block",
+              padding: "13px 14px",
+              background: BG_CARD,
+              backdropFilter: BLUR,
+              WebkitBackdropFilter: BLUR,
+              border: `0.5px solid ${BORDER}`,
+              borderRadius: 14,
+              boxShadow: HIGHLIGHT,
+            };
             return external ? (
-              <a key={title} href={href} className="transition-opacity active:opacity-60" style={cardStyle}>
+              <a key={title} href={href} className="transition-opacity active:opacity-60" style={cardSt}>
                 {inner}
               </a>
             ) : (
-              <Link key={title} href={href} className="transition-opacity active:opacity-60" style={cardStyle}>
+              <Link key={title} href={href} className="transition-opacity active:opacity-60" style={cardSt}>
                 {inner}
               </Link>
             );
           })}
         </div>
 
-        {/* ── 3. WHAT ARIA UNLOCKS ─────────────────────────────────────────── */}
+        {/* ── 3. WHAT ARIA UNLOCKS — 2×2 feature grid ─────────────────────── */}
         <div className="mb-8">
           <SectionLabel>What Aria unlocks</SectionLabel>
-          <Card style={{ padding: "4px 0" }}>
-            {UNLOCKS.map(({ label, desc }, i) => (
+          <div className="grid grid-cols-2 gap-2">
+            {FEATURES.map(({ Icon, label, desc }) => (
               <div
                 key={label}
-                className="flex items-start gap-3"
                 style={{
-                  padding: "13px 16px",
-                  borderBottom: i < UNLOCKS.length - 1 ? `0.5px solid ${BORDER}` : "none",
+                  background: BG_CARD,
+                  backdropFilter: BLUR,
+                  WebkitBackdropFilter: BLUR,
+                  border: `0.5px solid ${BORDER}`,
+                  borderRadius: 14,
+                  boxShadow: HIGHLIGHT,
+                  padding: "15px 13px 13px",
                 }}
               >
                 <div
-                  className="shrink-0 rounded-full"
-                  style={{ width: 5, height: 5, background: BLUE, opacity: 0.55, marginTop: 6, flexShrink: 0 }}
-                />
-                <div>
-                  <p className="text-[13px] font-semibold" style={{ color: TEXT_1 }}>
-                    {label}
-                  </p>
-                  <p className="text-[12px] mt-0.5" style={{ color: TEXT_3, lineHeight: 1.45 }}>
-                    {desc}
-                  </p>
+                  style={{
+                    width: 30,
+                    height: 30,
+                    borderRadius: 8,
+                    background: "rgba(59,130,246,0.13)",
+                    border: "0.5px solid rgba(59,130,246,0.24)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginBottom: 10,
+                  }}
+                >
+                  <Icon size={14} style={{ color: BLUE }} />
                 </div>
+                <p className="text-[12px] font-semibold leading-tight mb-1" style={{ color: TEXT_1 }}>
+                  {label}
+                </p>
+                <p className="text-[11px]" style={{ color: TEXT_3, lineHeight: 1.4 }}>
+                  {desc}
+                </p>
               </div>
             ))}
-          </Card>
-        </div>
-
-        {/* ── 4. PIPELINE (locked) ─────────────────────────────────────────── */}
-        <div className="mb-8">
-          <SectionLabel>Pipeline</SectionLabel>
-          <div className="grid grid-cols-2 gap-2">
-            <KpiCard value="—" label="Active Clients" placeholder />
-            <KpiCard value="—" label="Warm Leads" placeholder />
-            <KpiCard value="—" label="In Pipeline" placeholder />
-            <KpiCard value="—" label="Pending Deals" placeholder />
           </div>
-          <p className="mt-2.5 text-center text-[11px]" style={{ color: TEXT_3, opacity: 0.55 }}>
-            Unlocks once you add clients
-          </p>
         </div>
 
-        {/* ── 5. VOICE ENTRY ───────────────────────────────────────────────── */}
+        {/* ── 4. ASK ARIA ──────────────────────────────────────────────────── */}
         <VoiceEntry onClick={onVoice} subtitle="Ask what to do first" />
 
       </div>
@@ -497,47 +523,69 @@ function ActiveAgentState({
 
   const n = items.length;
 
+  // Briefing chips — only shown if count > 0
+  const chips = [
+    briefing.showingsToday > 0 && {
+      key: "s",
+      label: `${briefing.showingsToday} showing${briefing.showingsToday > 1 ? "s" : ""} today`,
+    },
+    briefing.closingsThisWeek > 0 && {
+      key: "c",
+      label: `${briefing.closingsThisWeek} closing${briefing.closingsThisWeek > 1 ? "s" : ""} this week`,
+      alert: true,
+    },
+    briefing.newMatches > 0 && {
+      key: "m",
+      label: `${briefing.newMatches} new match${briefing.newMatches > 1 ? "es" : ""}`,
+    },
+  ].filter(Boolean) as { key: string; label: string; alert?: boolean }[];
+
   return (
-    <div
-      className="min-h-screen pb-[120px]"
-      style={{ color: TEXT_1 }}
-    >
+    <div className="min-h-screen pb-[120px]" style={{ color: TEXT_1 }}>
       <div className="px-5">
 
-        {/* ── 1. MORNING BRIEFING ────────────────────────────────────────── */}
-        <div
-          style={{
-            paddingTop: "calc(env(safe-area-inset-top) + 22px)",
-            paddingBottom: 28,
-            borderBottom: `0.5px solid ${BORDER}`,
-            marginBottom: 28,
-          }}
-        >
-          <p
-            className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]"
-            style={{ color: TEXT_3 }}
-          >
+        {/* ── 1. MORNING BRIEFING ──────────────────────────────────────────── */}
+        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 24px)", paddingBottom: 28 }}>
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
             {dateLabel}
           </p>
-          <h1
-            className="text-[30px] font-bold leading-tight"
-            style={{ color: TEXT_1, letterSpacing: "-0.03em" }}
-          >
+          <h1 className="text-[30px] font-bold leading-tight" style={{ color: TEXT_1, letterSpacing: "-0.03em" }}>
             {greeting}, {userName}.
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: TEXT_2, lineHeight: 1.5 }}>
             {n === 0
-              ? "No actions needed. You're on top of it."
+              ? "No actions needed. You\u2019re on top of it."
               : `${n} ${n === 1 ? "opportunity" : "opportunities"} need${n === 1 ? "s" : ""} attention.`}
           </p>
+
+          {/* Briefing chips */}
+          {chips.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-3">
+              {chips.map(({ key, label, alert }) => (
+                <span
+                  key={key}
+                  className="text-[11px] font-medium"
+                  style={{
+                    color: alert ? "#EF4444" : TEXT_3,
+                    background: alert ? "rgba(239,68,68,0.08)" : "rgba(83,104,120,0.14)",
+                    border: `0.5px solid ${alert ? "rgba(239,68,68,0.20)" : BORDER}`,
+                    borderRadius: 99,
+                    padding: "4px 10px",
+                  }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* ── 2. REVENUE OPPORTUNITIES ───────────────────────────────────── */}
+        {/* ── 2. REVENUE OPPORTUNITIES ─────────────────────────────────────── */}
         <div className="mb-8">
           <SectionLabel>Revenue Opportunities</SectionLabel>
 
           {n === 0 ? (
-            <Card style={{ padding: "24px 16px", textAlign: "center" }}>
+            <Card style={{ padding: "22px 16px", textAlign: "center" }}>
               <p className="text-[14px] font-semibold" style={{ color: TEXT_2 }}>
                 You&apos;re all caught up
               </p>
@@ -546,31 +594,49 @@ function ActiveAgentState({
               </p>
             </Card>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div className="flex flex-col gap-2.5">
               {items.map((item) => {
                 const dot = URGENCY_DOT[item.urgencyRank] ?? URGENCY_DOT[5];
                 const pill = timingPill(item);
                 const isTextItem = item.actionType === "text";
                 const isDraftLoading = isTextItem && loadingDrafts[item.id] !== false;
                 const draftPreview = isTextItem ? (drafts[item.id] ?? "") : "";
+                // Rank-1 (closing) gets a faint red tint
+                const cardBg = item.urgencyRank === 1
+                  ? "rgba(239,68,68,0.07)"
+                  : BG_CARD;
+                const cardBorder = item.urgencyRank === 1
+                  ? "0.5px solid rgba(239,68,68,0.18)"
+                  : `0.5px solid ${BORDER}`;
 
                 return (
-                  <Card key={item.id} style={{ padding: "16px" }}>
-                    {/* Header: dot + name + timing pill */}
-                    <div className="flex items-center gap-2 mb-1.5">
+                  <div
+                    key={item.id}
+                    style={{
+                      background: cardBg,
+                      backdropFilter: BLUR,
+                      WebkitBackdropFilter: BLUR,
+                      border: cardBorder,
+                      borderRadius: 16,
+                      boxShadow: HIGHLIGHT,
+                      padding: "16px",
+                    }}
+                  >
+                    {/* Client name + urgency dot + timing pill */}
+                    <div className="flex items-center gap-2.5 mb-2">
                       <span
                         className="shrink-0 rounded-full"
                         style={{
-                          width: 6,
-                          height: 6,
+                          width: 7,
+                          height: 7,
                           background: dot.color,
                           boxShadow: dot.glow ?? "none",
                           flexShrink: 0,
                         }}
                       />
                       <span
-                        className="text-[15px] font-semibold flex-1 leading-tight"
-                        style={{ color: TEXT_1, letterSpacing: "-0.01em" }}
+                        className="text-[16px] font-bold flex-1 leading-none"
+                        style={{ color: TEXT_1, letterSpacing: "-0.02em" }}
                       >
                         {item.clientName}
                       </span>
@@ -579,8 +645,8 @@ function ActiveAgentState({
                           className="shrink-0 text-[10px]"
                           style={{
                             color: pill.color,
-                            fontWeight: pill.weight ?? 400,
-                            letterSpacing: pill.upper ? "0.08em" : undefined,
+                            fontWeight: pill.weight ?? 500,
+                            letterSpacing: pill.upper ? "0.09em" : undefined,
                             textTransform: pill.upper ? "uppercase" : undefined,
                           }}
                         >
@@ -591,23 +657,34 @@ function ActiveAgentState({
 
                     {/* Reason */}
                     <p
-                      className="text-[13px] mb-3"
-                      style={{ color: TEXT_2, lineHeight: 1.45, paddingLeft: 14 }}
+                      className="text-[13px] mb-1"
+                      style={{ color: TEXT_2, lineHeight: 1.45, paddingLeft: 15 }}
                     >
                       {item.reason}
                     </p>
 
+                    {/* Context (budget · town) */}
+                    {item.context && (
+                      <p
+                        className="text-[11px] mb-3"
+                        style={{ color: TEXT_3, paddingLeft: 15 }}
+                      >
+                        {item.context}
+                      </p>
+                    )}
+                    {!item.context && <div style={{ marginBottom: 12 }} />}
+
                     {/* AI draft preview */}
                     {isTextItem && (
-                      <div style={{ paddingLeft: 14, marginBottom: 12 }}>
+                      <div style={{ paddingLeft: 15, marginBottom: 12 }}>
                         {isDraftLoading ? (
                           <div className="space-y-1.5">
-                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.06)", width: "80%" }} />
-                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(255,255,255,0.06)", width: "58%" }} />
+                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "80%" }} />
+                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "55%" }} />
                           </div>
                         ) : draftPreview ? (
                           <>
-                            <p className="text-[9px] font-semibold uppercase mb-1.5" style={{ color: BLUE, letterSpacing: "0.10em" }}>
+                            <p className="text-[9px] font-bold uppercase mb-1.5" style={{ color: BLUE, letterSpacing: "0.10em" }}>
                               Aria suggests
                             </p>
                             <p className="text-[12px] italic line-clamp-2" style={{ color: TEXT_2, lineHeight: 1.5 }}>
@@ -628,7 +705,7 @@ function ActiveAgentState({
                           background: BLUE,
                           color: "#ffffff",
                           padding: "11px 12px",
-                          borderRadius: 9,
+                          borderRadius: 10,
                           display: "block",
                         }}
                       >
@@ -643,24 +720,25 @@ function ActiveAgentState({
                           background: "transparent",
                           color: TEXT_1,
                           padding: "10px 12px",
-                          borderRadius: 9,
-                          border: `0.5px solid rgba(255,255,255,0.13)`,
+                          borderRadius: 10,
+                          border: `0.5px solid ${BORDER}`,
                         }}
                       >
                         <span>{item.actionLabel}</span>
                         <ArrowRight size={13} style={{ color: TEXT_3, flexShrink: 0 }} />
                       </button>
                     )}
-                  </Card>
+                  </div>
                 );
               })}
             </div>
           )}
         </div>
 
-        {/* ── 3. TODAY'S SCHEDULE ────────────────────────────────────────── */}
+        {/* ── 3. TODAY'S SCHEDULE ──────────────────────────────────────────── */}
         <div className="mb-8">
           <SectionLabel>Today&apos;s Schedule</SectionLabel>
+
           {showingsToday.length === 0 ? (
             <Card style={{ padding: "16px" }}>
               <p className="text-[13px]" style={{ color: TEXT_3 }}>
@@ -673,20 +751,24 @@ function ActiveAgentState({
                 <Link
                   key={s.id}
                   href="/showings"
-                  className="flex items-center gap-4 transition-opacity active:opacity-60"
+                  className="flex items-center gap-3 transition-opacity active:opacity-60"
                   style={{
-                    padding: "14px 16px",
+                    padding: "13px 16px",
                     borderBottom: i < showingsToday.length - 1 ? `0.5px solid ${BORDER}` : "none",
                   }}
                 >
-                  <div style={{ width: 56, flexShrink: 0 }}>
-                    <p className="text-[12px] font-semibold tabular-nums" style={{ color: BLUE }}>
-                      {formatShowingTime(s.showing_date)}
-                    </p>
-                  </div>
+                  {/* Time */}
+                  <p
+                    className="text-[12px] font-bold tabular-nums shrink-0"
+                    style={{ color: BLUE, width: 52 }}
+                  >
+                    {formatShowingTime(s.showing_date)}
+                  </p>
+                  {/* Divider */}
                   <div style={{ width: 0.5, alignSelf: "stretch", background: BORDER, flexShrink: 0 }} />
+                  {/* Client + address */}
                   <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-medium truncate" style={{ color: TEXT_1 }}>
+                    <p className="text-[13px] font-semibold truncate" style={{ color: TEXT_1 }}>
                       {s.clients?.name ?? "Client"}
                     </p>
                     <p className="text-[11px] truncate mt-0.5" style={{ color: TEXT_3 }}>
@@ -699,49 +781,51 @@ function ActiveAgentState({
             </Card>
           )}
 
+          {/* Closing callout */}
           {briefing.closingsThisWeek > 0 && (
             <Link
               href="/transactions"
               className="mt-2 flex items-center justify-between transition-opacity active:opacity-70"
               style={{
-                background: "rgba(239,68,68,0.06)",
+                background: "rgba(239,68,68,0.07)",
+                backdropFilter: BLUR,
+                WebkitBackdropFilter: BLUR,
                 border: "0.5px solid rgba(239,68,68,0.20)",
                 borderRadius: 10,
                 padding: "11px 14px",
               }}
             >
-              <p className="text-[12px] font-medium" style={{ color: "#EF4444" }}>
+              <p className="text-[12px] font-semibold" style={{ color: "#EF4444" }}>
                 {briefing.closingsThisWeek} closing{briefing.closingsThisWeek > 1 ? "s" : ""} this week
               </p>
-              <ChevronRight size={12} style={{ color: "rgba(239,68,68,0.6)", flexShrink: 0 }} />
+              <ChevronRight size={12} style={{ color: "rgba(239,68,68,0.55)", flexShrink: 0 }} />
             </Link>
           )}
         </div>
 
-        {/* ── 4. PIPELINE KPIs ───────────────────────────────────────────── */}
+        {/* ── 4. PIPELINE KPIs ─────────────────────────────────────────────── */}
         <div className="mb-8">
           <SectionLabel>Pipeline</SectionLabel>
           <div className="grid grid-cols-2 gap-2">
-            <KpiCard value={kpi.activeClients} label="Active Clients" />
-            <KpiCard value={kpi.warmLeads} label="Warm Leads" accent={kpi.warmLeads > 0 ? "#F59E0B" : undefined} />
-            <KpiCard value={kpi.pipelineCount} label="In Pipeline" accent={kpi.pipelineCount > 0 ? BLUE : undefined} />
-            <KpiCard value={kpi.pendingDeals} label="Pending Deals" accent={kpi.pendingDeals > 0 ? "#10B981" : undefined} />
+            <KpiCard value={kpi.activeClients} label="Active Clients" accent={kpi.activeClients > 0 ? TEXT_1 : undefined} />
+            <KpiCard value={kpi.warmLeads}    label="Warm Leads"    accent={kpi.warmLeads > 0    ? "#F59E0B" : undefined} />
+            <KpiCard value={kpi.pipelineCount} label="In Pipeline"  accent={kpi.pipelineCount > 0 ? BLUE     : undefined} />
+            <KpiCard value={kpi.pendingDeals}  label="Pending Deals" accent={kpi.pendingDeals > 0 ? "#10B981" : undefined} />
           </div>
         </div>
 
-        {/* ── 5. VOICE ENTRY ─────────────────────────────────────────────── */}
+        {/* ── 5. ASK ARIA ──────────────────────────────────────────────────── */}
         <VoiceEntry onClick={onVoice} />
 
       </div>
 
-      {/* ── Draft sheet ──────────────────────────────────────────────────── */}
+      {/* Draft sheet */}
       <DraftSheet
         item={activeDraftItem}
         prefetchedDraft={activeDraftItem ? drafts[activeDraftItem.id] : undefined}
         onClose={() => setActiveDraftItem(null)}
         onSent={() => {
           setActiveDraftItem(null);
-          // no state setter here — parent owns drafts
         }}
       />
     </div>
