@@ -49,8 +49,9 @@ export async function getGmailClient(agentId: string) {
           })
           .eq("agent_id", agentId);
       }
-    } catch {
-      // Refresh failed — return null so caller can prompt re-auth
+    } catch (err) {
+      // Log the actual reason so it appears in Vercel Function logs
+      console.error("[gmail] token refresh failed for agent", agentId, err);
       return null;
     }
   }

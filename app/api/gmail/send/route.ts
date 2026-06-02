@@ -8,14 +8,14 @@ function buildMimeMessage({
   to,
   subject,
   body,
-  threadId,
 }: {
   to: string;
   subject: string;
   body: string;
-  threadId?: string;
 }): string {
-  const lines = [
+  // Threading is handled by the threadId field in the Gmail API request body,
+  // not by In-Reply-To (which requires an RFC 2822 Message-ID, not a Gmail thread ID).
+  const raw = [
     `To: ${to}`,
     `Subject: ${subject}`,
     "MIME-Version: 1.0",
@@ -23,12 +23,7 @@ function buildMimeMessage({
     "Content-Transfer-Encoding: 7bit",
     "",
     body,
-  ];
-  if (threadId) {
-    // Insert In-Reply-To header to thread correctly
-    lines.splice(2, 0, `In-Reply-To: ${threadId}`);
-  }
-  const raw = lines.join("\r\n");
+  ].join("\r\n");
   return Buffer.from(raw)
     .toString("base64")
     .replace(/\+/g, "-")
@@ -61,21 +56,28 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Gmail not connected" }, { status: 403 });
   }
 
-  const raw = buildMimeMessage({ to, subject, body: messageBody, threadId });
+  // Threading is via threadId in the request body — not In-Reply-To header
+  const raw = buildMimeMessage({ to, subject, body: messageBody });
 
-  const sendRes = await gmail.users.messages.send({
-    userId: "me",
-    requestBody: {
-      raw,
-      ...(threadId ? { threadId } : {}),
-    },
-  });
+  let sendRes;
+  try {
+    sendRes = await gmail.users.messages.send({
+      userId: "me",
+      requestBody: {
+        raw,
+        ...(threadId ? { threadId } : {}),
+      },
+    });
+  } catch (err) {
+    console.error("[gmail/send] messages.send failed:", err);
+    return NextResponse.json({ error: "Send failed" }, { status: 502 });
+  }
 
   const messageId = sendRes.data.id ?? null;
 
   // Log to activities table
   if (clientId) {
-    await supabase.from("activities").insert({
+    const { error: activityError } = await supabase.from("activities").insert({
       client_id: clientId,
       agent_id: user.id,
       type: "email",
@@ -84,6 +86,9 @@ export async function POST(req: Request) {
       approved: true,
       sent: true,
     });
+    if (activityError) {
+      console.error("[gmail/send] activity insert failed:", activityError);
+    }
   }
 
   return NextResponse.json({ sent: true, messageId });

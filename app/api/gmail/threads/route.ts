@@ -23,31 +23,45 @@ export async function GET(req: NextRequest) {
 
   // Search for threads involving this client email
   const query = `from:${clientEmail} OR to:${clientEmail}`;
-  const listRes = await gmail.users.threads.list({
-    userId: "me",
-    q: query,
-    maxResults: 10,
-  });
+
+  let listRes;
+  try {
+    listRes = await gmail.users.threads.list({
+      userId: "me",
+      q: query,
+      maxResults: 10,
+    });
+  } catch (err) {
+    console.error("[gmail/threads] threads.list failed:", err);
+    return NextResponse.json({ connected: true, messages: [], error: "fetch_failed" });
+  }
 
   const threadItems = listRes.data.threads ?? [];
   if (threadItems.length === 0) {
-    return NextResponse.json({ connected: true, threads: [] });
+    return NextResponse.json({ connected: true, messages: [], totalThreads: 0 });
   }
 
   // Fetch full messages for the most recent thread
   const threadId = threadItems[0].id!;
-  const threadRes = await gmail.users.threads.get({
-    userId: "me",
-    id: threadId,
-    format: "full",
-  });
+
+  let threadRes;
+  try {
+    threadRes = await gmail.users.threads.get({
+      userId: "me",
+      id: threadId,
+      format: "full",
+    });
+  } catch (err) {
+    console.error("[gmail/threads] threads.get failed:", err);
+    return NextResponse.json({ connected: true, messages: [], error: "fetch_failed" });
+  }
 
   const messages = (threadRes.data.messages ?? []).map((msg) => {
     const headers = msg.payload?.headers ?? [];
     const get = (name: string) =>
       headers.find((h) => h.name?.toLowerCase() === name.toLowerCase())?.value ?? "";
 
-    // Extract plain text body
+    // Extract plain text body — handle multipart and simple payloads
     let body = "";
     const parts = msg.payload?.parts ?? [];
     const textPart = parts.find((p) => p.mimeType === "text/plain");
@@ -64,7 +78,7 @@ export async function GET(req: NextRequest) {
       subject: get("Subject"),
       date: get("Date"),
       snippet: msg.snippet ?? "",
-      body: body.slice(0, 2000), // cap to avoid massive payloads
+      body: body.slice(0, 2000),
     };
   });
 

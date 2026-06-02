@@ -32,7 +32,8 @@ type Props = {
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 function isOutbound(msg: ThreadMessage, agentEmail: string): boolean {
-  return msg.from.toLowerCase().includes(agentEmail.toLowerCase());
+  // Guard against empty string during load — "".includes("") is always true
+  return agentEmail.length > 0 && msg.from.toLowerCase().includes(agentEmail.toLowerCase());
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -62,6 +63,10 @@ export function InboxSheet({ clientId, clientName, clientEmail, onClose }: Props
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
           }
         }, 100);
+      })
+      .catch((err) => {
+        console.error("[InboxSheet] thread fetch failed:", err);
+        setThreadData({ connected: false });
       });
 
     void fetch("/api/gmail/status")
