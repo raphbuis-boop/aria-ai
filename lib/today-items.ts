@@ -290,13 +290,16 @@ export function buildTodayItems(
     }
   }
 
-  // ── 4. Pending signatures (no BBA) ────────────────────────────────────────
+  // ── 4. Pending signatures (no BBA) — cap at 3 to avoid flooding ─────────
+  let bbaCount = 0;
   for (const client of clients) {
+    if (bbaCount >= 3) break;
     if (client.status === "closed") continue;
     if (items.some((i) => i.clientId === client.id)) continue;
     if (bbaSignedClientIds.includes(client.id)) continue;
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
+    bbaCount++;
     items.push({
       id: `bba-${client.id}`,
       clientId: client.id,

@@ -57,6 +57,7 @@ export default async function DashboardPage() {
     bbaRes,
     showingsTodayRes,
     closingsThisWeekRes,
+    dismissedRes,
   ] = await Promise.all([
     // 0. Agent profile — real name (scoped by id, not agent_id)
     supabase
@@ -119,6 +120,13 @@ export default async function DashboardPage() {
       .eq("agent_id", user.id)  // SCOPE 7
       .gte("closing_date", todayISO)
       .lte("closing_date", plus7ISO),
+
+    // 8. Active dismissals — item IDs snoozed past now [agent_id scoped ✓]
+    supabase
+      .from("dismissed_opportunities")
+      .select("item_id")
+      .eq("agent_id", user.id)
+      .gt("dismiss_until", now.toISOString()),
   ]);
 
   // Log errors without crashing the page
@@ -130,6 +138,7 @@ export default async function DashboardPage() {
   if (bbaRes.error) console.error("[today] buyer_broker_agreements:", bbaRes.error);
   if (showingsTodayRes.error) console.error("[today] showings:", showingsTodayRes.error);
   if (closingsThisWeekRes.error) console.error("[today] closings_week:", closingsThisWeekRes.error);
+  if (dismissedRes.error) console.error("[today] dismissed_opportunities:", dismissedRes.error);
 
   const clients = (clientsRes.data ?? []) as TodayClient[];
   const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
@@ -151,13 +160,28 @@ export default async function DashboardPage() {
     });
   }
 
-  const items = buildTodayItems(
+  const dismissedIds = new Set((dismissedRes.data ?? []).map((r) => String(r.item_id)));
+
+  const allItems = buildTodayItems(
     clients,
     transactions,
     activities,
     newMatchItems,
     bbaSignedClientIds,
   );
+
+  // Filter out snoozed/dismissed items before sending to client
+  const items = allItems.filter((i) => !dismissedIds.has(i.id));
+
+  // Mark shown MLS matches as notified so they don't accumulate forever.
+  // Fire-and-forget — no await, doesn't block page render.
+  if (newMatchItems.length > 0) {
+    void supabase
+      .from("property_matches")
+      .update({ notified: true })
+      .eq("agent_id", user.id)
+      .eq("notified", false);
+  }
 
   // Today's showings with client names for inline schedule.
   // Supabase returns the joined "clients" relation as an array even for to-one FK.

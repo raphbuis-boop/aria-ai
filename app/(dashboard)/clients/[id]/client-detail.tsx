@@ -66,6 +66,7 @@ function relTime(iso: string): string {
 type DotColor = "green" | "amber" | "blue" | "gray";
 
 function activityDot(a: Activity): DotColor {
+  if (a.type === "email" && a.sent) return "blue";
   if (a.type === "text" && a.sent) return "green";
   if (a.type === "text" && a.ai_draft && !a.approved) return "amber";
   if (a.type === "call") return "blue";
@@ -80,6 +81,8 @@ const DOT_COLORS: Record<DotColor, string> = {
 };
 
 function activityLabel(a: Activity): string {
+  if (a.type === "email" && a.sent) return "Email sent";
+  if (a.type === "email") return "Email";
   if (a.type === "text" && a.ai_draft && !a.approved) return "AI draft pending";
   if (a.type === "text" && a.sent) return "Text sent";
   if (a.type === "call") return "Call logged";

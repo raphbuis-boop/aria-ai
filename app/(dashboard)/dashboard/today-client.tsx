@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight, Lock, TrendingUp, MessageSquare, Building2, Bell } from "lucide-react";
+import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight, Lock, TrendingUp, MessageSquare, Building2, Bell, X } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -38,6 +38,14 @@ type Props = {
   hasAnyClients: boolean;
   kpi: KPI;
 };
+
+async function dismissItem(itemId: string): Promise<void> {
+  await fetch("/api/opportunities/dismiss", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ itemId, hours: 24 }),
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -500,6 +508,7 @@ function ActiveAgentState({
   drafts,
   loadingDrafts,
   handleAction,
+  handleDismiss,
 }: {
   items: TodayItem[];
   briefing: Briefing;
@@ -512,6 +521,7 @@ function ActiveAgentState({
   drafts: Record<string, string>;
   loadingDrafts: Record<string, boolean>;
   handleAction: (item: TodayItem) => void;
+  handleDismiss: (item: TodayItem) => void;
 }) {
   const [greeting, setGreeting] = useState("Good morning");
   const [dateLabel, setDateLabel] = useState("");
@@ -594,17 +604,14 @@ function ActiveAgentState({
               </p>
             </Card>
           ) : (
-            <div className="flex flex-col gap-2.5">
+            <div className="flex flex-col gap-2">
               {items.map((item) => {
                 const dot = URGENCY_DOT[item.urgencyRank] ?? URGENCY_DOT[5];
                 const pill = timingPill(item);
                 const isTextItem = item.actionType === "text";
                 const isDraftLoading = isTextItem && loadingDrafts[item.id] !== false;
                 const draftPreview = isTextItem ? (drafts[item.id] ?? "") : "";
-                // Rank-1 (closing) gets a faint red tint
-                const cardBg = item.urgencyRank === 1
-                  ? "rgba(239,68,68,0.07)"
-                  : BG_CARD;
+                const cardBg = item.urgencyRank === 1 ? "rgba(239,68,68,0.07)" : BG_CARD;
                 const cardBorder = item.urgencyRank === 1
                   ? "0.5px solid rgba(239,68,68,0.18)"
                   : `0.5px solid ${BORDER}`;
@@ -617,25 +624,25 @@ function ActiveAgentState({
                       backdropFilter: BLUR,
                       WebkitBackdropFilter: BLUR,
                       border: cardBorder,
-                      borderRadius: 16,
+                      borderRadius: 14,
                       boxShadow: HIGHLIGHT,
-                      padding: "16px",
+                      padding: "12px 14px",
                     }}
                   >
-                    {/* Client name + urgency dot + timing pill */}
-                    <div className="flex items-center gap-2.5 mb-2">
+                    {/* Row 1: dot · client name · pill · dismiss */}
+                    <div className="flex items-center gap-2 mb-1.5">
                       <span
                         className="shrink-0 rounded-full"
                         style={{
-                          width: 7,
-                          height: 7,
+                          width: 6,
+                          height: 6,
                           background: dot.color,
                           boxShadow: dot.glow ?? "none",
                           flexShrink: 0,
                         }}
                       />
                       <span
-                        className="text-[16px] font-bold flex-1 leading-none"
+                        className="text-[14px] font-bold flex-1 leading-none truncate"
                         style={{ color: TEXT_1, letterSpacing: "-0.02em" }}
                       >
                         {item.clientName}
@@ -653,59 +660,62 @@ function ActiveAgentState({
                           {pill.text}
                         </span>
                       )}
+                      {/* Dismiss — snooze 24h */}
+                      <button
+                        type="button"
+                        aria-label="Snooze for 24 hours"
+                        onClick={(e) => { e.stopPropagation(); handleDismiss(item); }}
+                        className="flex items-center justify-center transition-opacity active:opacity-40 shrink-0"
+                        style={{ width: 22, height: 22, marginLeft: 2 }}
+                      >
+                        <X size={12} style={{ color: TEXT_3 }} />
+                      </button>
                     </div>
 
-                    {/* Reason */}
+                    {/* Row 2: reason + context */}
                     <p
-                      className="text-[13px] mb-1"
-                      style={{ color: TEXT_2, lineHeight: 1.45, paddingLeft: 15 }}
+                      className="text-[12px]"
+                      style={{ color: TEXT_2, lineHeight: 1.4, paddingLeft: 14 }}
                     >
                       {item.reason}
+                      {item.context ? (
+                        <span style={{ color: TEXT_3 }}> · {item.context}</span>
+                      ) : null}
                     </p>
-
-                    {/* Context (budget · town) */}
-                    {item.context && (
-                      <p
-                        className="text-[11px] mb-3"
-                        style={{ color: TEXT_3, paddingLeft: 15 }}
-                      >
-                        {item.context}
-                      </p>
-                    )}
-                    {!item.context && <div style={{ marginBottom: 12 }} />}
 
                     {/* AI draft preview */}
                     {isTextItem && (
-                      <div style={{ paddingLeft: 15, marginBottom: 12 }}>
+                      <div style={{ paddingLeft: 14, marginTop: 8, marginBottom: 10 }}>
                         {isDraftLoading ? (
                           <div className="space-y-1.5">
-                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "80%" }} />
-                            <div className="h-2.5 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "55%" }} />
+                            <div className="h-2 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "80%" }} />
+                            <div className="h-2 rounded animate-pulse" style={{ background: "rgba(83,104,120,0.18)", width: "55%" }} />
                           </div>
                         ) : draftPreview ? (
                           <>
-                            <p className="text-[9px] font-bold uppercase mb-1.5" style={{ color: BLUE, letterSpacing: "0.10em" }}>
+                            <p className="text-[9px] font-bold uppercase mb-1" style={{ color: BLUE, letterSpacing: "0.10em" }}>
                               Aria suggests
                             </p>
-                            <p className="text-[12px] italic line-clamp-2" style={{ color: TEXT_2, lineHeight: 1.5 }}>
+                            <p className="text-[11px] italic line-clamp-2" style={{ color: TEXT_2, lineHeight: 1.45 }}>
                               &ldquo;{draftPreview}&rdquo;
                             </p>
                           </>
                         ) : null}
                       </div>
                     )}
+                    {!isTextItem && <div style={{ marginBottom: 10 }} />}
 
                     {/* CTA */}
                     {isTextItem ? (
                       <button
                         type="button"
                         onClick={() => handleAction(item)}
-                        className="w-full text-[13px] font-semibold text-center transition-opacity active:opacity-70"
+                        className="w-full text-[12px] font-semibold text-center transition-opacity active:opacity-70"
                         style={{
                           background: BLUE,
                           color: "#ffffff",
-                          padding: "11px 12px",
-                          borderRadius: 10,
+                          padding: "9px 12px",
+                          borderRadius: 9,
                           display: "block",
                         }}
                       >
@@ -715,17 +725,17 @@ function ActiveAgentState({
                       <button
                         type="button"
                         onClick={() => handleAction(item)}
-                        className="w-full text-[13px] font-medium flex items-center justify-between transition-opacity active:opacity-70"
+                        className="w-full text-[12px] font-medium flex items-center justify-between transition-opacity active:opacity-70"
                         style={{
                           background: "transparent",
                           color: TEXT_1,
-                          padding: "10px 12px",
-                          borderRadius: 10,
+                          padding: "8px 12px",
+                          borderRadius: 9,
                           border: `0.5px solid ${BORDER}`,
                         }}
                       >
                         <span>{item.actionLabel}</span>
-                        <ArrowRight size={13} style={{ color: TEXT_3, flexShrink: 0 }} />
+                        <ArrowRight size={12} style={{ color: TEXT_3, flexShrink: 0 }} />
                       </button>
                     )}
                   </div>
@@ -848,6 +858,10 @@ export function TodayClient({
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [loadingDrafts, setLoadingDrafts] = useState<Record<string, boolean>>({});
+  // Local dismiss set: optimistic removals within this session
+  const [localDismissed, setLocalDismissed] = useState<Set<string>>(new Set());
+
+  const visibleItems = items.filter((i) => !localDismissed.has(i.id));
 
   // Pre-fetch AI drafts for all text-action items in parallel on mount
   useEffect(() => {
@@ -900,6 +914,14 @@ export function TodayClient({
     [router],
   );
 
+  const handleDismiss = useCallback((item: TodayItem) => {
+    triggerHaptic();
+    // Optimistic removal
+    setLocalDismissed((prev) => new Set([...prev, item.id]));
+    // Persist snooze (fire-and-forget)
+    void dismissItem(item.id);
+  }, []);
+
   const handleVoice = useCallback(() => {
     triggerHaptic();
     router.push("/voice");
@@ -911,7 +933,7 @@ export function TodayClient({
 
   return (
     <ActiveAgentState
-      items={items}
+      items={visibleItems}
       briefing={briefing}
       showingsToday={showingsToday}
       userName={userName}
@@ -922,6 +944,7 @@ export function TodayClient({
       drafts={drafts}
       loadingDrafts={loadingDrafts}
       handleAction={handleAction}
+      handleDismiss={handleDismiss}
     />
   );
 }
