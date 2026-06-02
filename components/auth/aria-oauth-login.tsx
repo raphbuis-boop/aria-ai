@@ -48,7 +48,7 @@ export function AriaOAuthLoginExperience() {
     async (provider: "apple" | "google") => {
       setError(null);
       setBusy(provider);
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const redirectTo = `${process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin}/auth/callback`;
       const { error: err } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo },
