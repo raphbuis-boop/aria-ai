@@ -30,18 +30,18 @@
   --oc-slate:       #536878;
   --oc-alabaster:   #E5E4E2;
 
-  /* Surfaces — semi-transparent, sit on the fixed backdrop */
-  --oc-surface-1:   rgba(14, 18, 24, 0.78);   /* cool blue-grey undertone */
-  --oc-surface-2:   rgba(18, 23, 31, 0.84);   /* more opaque for elevated */
+  /* Surfaces — glass panels over the obsidian backdrop */
+  --oc-surface-1:   rgba(20, 27, 38, 0.66);   /* lighter, bluer, more translucent */
+  --oc-surface-2:   rgba(24, 33, 46, 0.74);   /* elevated sheets / modals */
 
-  /* Borders — Blue Slate tinted, now legible */
-  --oc-border-soft: rgba(83, 104, 120, 0.28);
-  --oc-border-mid:  rgba(83, 104, 120, 0.44);
+  /* Borders — Blue Slate, clearly visible */
+  --oc-border-soft: rgba(83, 104, 120, 0.38);
+  --oc-border-mid:  rgba(83, 104, 120, 0.56);
 
   /* Text */
-  --oc-text-1:      #E5E4E2;          /* Alabaster — headings, primary */
-  --oc-text-2:      #8A9BAD;          /* Slate-tinted midgrey — subtext  */
-  --oc-text-3:      #536878;          /* Blue Slate — muted, placeholders */
+  --oc-text-1:      #EEECEA;          /* Alabaster warm-white — bright and clean */
+  --oc-text-2:      #9DB4C2;          /* Slate-grey — readable subtext */
+  --oc-text-3:      #6A8494;          /* Blue Slate — muted but visible */
 
   /* Accent */
   --oc-blue:        #3B82F6;
@@ -259,19 +259,25 @@ select:focus {
   z-index: -1;
   pointer-events: none;
   /*
-    Base: #09090D — obsidian with a cold blue-grey cast rather than pure black.
-    Onyx token (#0A0A0A) stays on html for overscroll; backdrop gets the tint.
+    Base: #0D1018 — reads as dark slate/navy rather than black.
+    Target feel: 70% obsidian · 20% blue slate · 10% alabaster haze.
+    Three gradients — no blobs, all large-spread atmospheric washes.
   */
-  background-color: #09090D;
+  background-color: #0D1018;
   background-image:
     radial-gradient(
-      ellipse 75% 60% at 12% 16%,
-      rgba(83, 104, 120, 0.26) 0%,
+      ellipse 85% 70% at 10% 14%,
+      rgba(83, 104, 120, 0.38) 0%,
       transparent 100%
     ),
     radial-gradient(
-      ellipse 65% 54% at 86% 84%,
-      rgba(83, 104, 120, 0.14) 0%,
+      ellipse 75% 62% at 88% 86%,
+      rgba(83, 104, 120, 0.24) 0%,
+      transparent 100%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 50% -2%,
+      rgba(229, 228, 226, 0.05) 0%,
       transparent 100%
     );
 }
@@ -282,8 +288,8 @@ select:focus {
 */
 .oc-card {
   background: var(--oc-surface-1);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(200%);
+  -webkit-backdrop-filter: blur(20px) saturate(200%);
   border: 0.5px solid var(--oc-border-soft);
   border-radius: 16px;
 }
@@ -294,8 +300,8 @@ select:focus {
 */
 .oc-card-elevated {
   background: var(--oc-surface-2);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(220%);
+  -webkit-backdrop-filter: blur(28px) saturate(220%);
   border: 0.5px solid var(--oc-border-mid);
   border-radius: 16px;
 }
