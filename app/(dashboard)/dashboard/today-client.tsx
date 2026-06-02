@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
-import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight } from "lucide-react";
+import { ArrowRight, Mail, Upload, UserPlus, Mic, ChevronRight, Lock } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 
@@ -157,25 +157,32 @@ function KpiCard({
   return (
     <div
       style={{
-        background: BG_CARD,
-        border: `0.5px solid ${BORDER}`,
+        background: placeholder ? "rgba(14,14,18,0.50)" : BG_CARD,
+        border: `0.5px solid ${placeholder ? "rgba(255,255,255,0.04)" : BORDER}`,
         borderRadius: 12,
         padding: "16px 14px 14px",
         minWidth: 0,
       }}
     >
+      {placeholder ? (
+        <div className="flex items-center gap-2 mb-2">
+          <Lock size={13} style={{ color: TEXT_3, opacity: 0.5 }} />
+          <span className="text-[13px] font-medium" style={{ color: TEXT_3, opacity: 0.5 }}>—</span>
+        </div>
+      ) : (
+        <p
+          className="text-[28px] font-bold leading-none tabular-nums mb-2"
+          style={{
+            color: accent ?? TEXT_1,
+            letterSpacing: "-0.03em",
+          }}
+        >
+          {value}
+        </p>
+      )}
       <p
-        className="text-[28px] font-bold leading-none tabular-nums"
-        style={{
-          color: placeholder ? TEXT_3 : (accent ?? TEXT_1),
-          letterSpacing: "-0.03em",
-        }}
-      >
-        {value}
-      </p>
-      <p
-        className="mt-2 text-[10px] uppercase leading-tight"
-        style={{ color: TEXT_3, letterSpacing: "0.08em" }}
+        className="text-[10px] uppercase leading-tight"
+        style={{ color: TEXT_3, letterSpacing: "0.08em", opacity: placeholder ? 0.5 : 1 }}
       >
         {label}
       </p>
@@ -185,7 +192,7 @@ function KpiCard({
 
 // ── Voice entry ───────────────────────────────────────────────────────────────
 
-function VoiceEntry({ onClick }: { onClick: () => void }) {
+function VoiceEntry({ onClick, subtitle }: { onClick: () => void; subtitle?: string }) {
   return (
     <button
       type="button"
@@ -193,7 +200,7 @@ function VoiceEntry({ onClick }: { onClick: () => void }) {
       className="w-full flex items-center gap-3 transition-opacity active:opacity-60"
       style={{
         background: BG_CARD,
-        border: `0.5px solid rgba(58,101,240,0.22)`,
+        border: `0.5px solid rgba(59,130,246,0.20)`,
         borderRadius: 12,
         padding: "14px 16px",
       }}
@@ -214,7 +221,7 @@ function VoiceEntry({ onClick }: { onClick: () => void }) {
           Ask Aria
         </p>
         <p className="text-[11px]" style={{ color: TEXT_3 }}>
-          Voice assistant · tap to speak
+          {subtitle ?? "Voice assistant · tap to speak"}
         </p>
       </div>
       <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
@@ -225,6 +232,43 @@ function VoiceEntry({ onClick }: { onClick: () => void }) {
 // ═════════════════════════════════════════════════════════════════════════════
 // STATE 1 — NEW AGENT (0 clients)
 // ═════════════════════════════════════════════════════════════════════════════
+
+const SETUP_STEPS = [
+  {
+    Icon: Mail,
+    title: "Connect Gmail",
+    desc: "Aria reads your thread history and surfaces follow-ups automatically.",
+    badge: "Recommended",
+    primary: true,
+    href: "/api/auth/google/connect",
+    external: true,
+  },
+  {
+    Icon: Upload,
+    title: "Import clients",
+    desc: "Upload a CSV — Aria maps the columns and imports your entire book instantly.",
+    badge: "Fastest",
+    primary: false,
+    href: "/settings/import",
+    external: false,
+  },
+  {
+    Icon: UserPlus,
+    title: "Add first client",
+    desc: "Add one client manually and Aria begins finding opportunities right away.",
+    badge: "Quickest start",
+    primary: false,
+    href: "/clients?new=1",
+    external: false,
+  },
+] as const;
+
+const UNLOCKS = [
+  { label: "Follow-up nudges",     desc: "Know exactly who to call and when." },
+  { label: "MLS matches",          desc: "New listings matched to each client, automatically." },
+  { label: "AI drafts",            desc: "Ready-to-send texts written in your voice." },
+  { label: "Revenue opportunities",desc: "Your pipeline surfaced every morning." },
+] as const;
 
 function NewAgentState({
   userName,
@@ -242,29 +286,15 @@ function NewAgentState({
   }, []);
 
   return (
-    <div
-      className="min-h-screen pb-[120px]"
-      style={{ color: TEXT_1 }}
-    >
+    <div className="min-h-screen pb-[120px]" style={{ color: TEXT_1 }}>
       <div className="px-5">
 
-        {/* ── Header ── */}
-        <div
-          style={{
-            paddingTop: "calc(env(safe-area-inset-top) + 22px)",
-            paddingBottom: 32,
-          }}
-        >
-          <p
-            className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]"
-            style={{ color: TEXT_3 }}
-          >
+        {/* ── Header ───────────────────────────────────────────────────────── */}
+        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 22px)", paddingBottom: 28 }}>
+          <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
             {dateLabel}
           </p>
-          <h1
-            className="text-[30px] font-bold leading-tight"
-            style={{ color: TEXT_1, letterSpacing: "-0.03em" }}
-          >
+          <h1 className="text-[30px] font-bold leading-tight" style={{ color: TEXT_1, letterSpacing: "-0.03em" }}>
             {greeting}, {userName}.
           </h1>
           <p className="mt-2 text-[15px]" style={{ color: TEXT_2, lineHeight: 1.5 }}>
@@ -272,100 +302,126 @@ function NewAgentState({
           </p>
         </div>
 
-        {/* ── Setup actions ── */}
-        <div className="mb-8">
-          <SectionLabel>Get started</SectionLabel>
-          <Card>
-            {/* Connect Gmail */}
-            <a
-              href="/api/auth/google/connect"
-              className="flex items-center gap-3 transition-opacity active:opacity-60"
+        {/* ── 1. SETUP MISSION HERO ────────────────────────────────────────── */}
+        <div className="oc-card mb-3" style={{ padding: "18px 16px 16px" }}>
+          <div className="flex items-start justify-between mb-3">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] mb-1" style={{ color: TEXT_3 }}>
+                Setup mission
+              </p>
+              <p className="text-[22px] font-bold" style={{ color: TEXT_1, letterSpacing: "-0.02em" }}>
+                0 of 3 complete
+              </p>
+            </div>
+            <span
+              className="text-[11px] font-semibold tabular-nums"
               style={{
-                padding: "16px",
-                borderBottom: `0.5px solid ${BORDER}`,
+                color: TEXT_3,
+                background: "rgba(255,255,255,0.05)",
+                border: `0.5px solid ${BORDER}`,
+                borderRadius: 6,
+                padding: "3px 8px",
+                marginTop: 2,
               }}
             >
-              <div
-                className="flex items-center justify-center rounded-[9px] shrink-0"
-                style={{ width: 36, height: 36, background: BG_CARD2, border: `0.5px solid ${BORDER}` }}
-              >
-                <Mail size={16} style={{ color: TEXT_2 }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
-                  Connect Gmail
-                </p>
-                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
-                  Aria reads your thread history to surface follow-ups
-                </p>
-              </div>
-              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
-            </a>
+              0%
+            </span>
+          </div>
 
-            {/* Import clients */}
-            <Link
-              href="/settings/import"
-              className="flex items-center gap-3 transition-opacity active:opacity-60"
-              style={{
-                padding: "16px",
-                borderBottom: `0.5px solid ${BORDER}`,
-              }}
-            >
+          {/* Progress — 3 segments, all inactive */}
+          <div className="flex gap-1.5 mb-3">
+            {[0, 1, 2].map((i) => (
               <div
-                className="flex items-center justify-center rounded-[9px] shrink-0"
-                style={{ width: 36, height: 36, background: BG_CARD2, border: `0.5px solid ${BORDER}` }}
-              >
-                <Upload size={16} style={{ color: TEXT_2 }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
-                  Import clients
-                </p>
-                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
-                  Upload a CSV — Aria maps the columns automatically
-                </p>
-              </div>
-              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
-            </Link>
+                key={i}
+                style={{ flex: 1, height: 3, borderRadius: 99, background: "rgba(255,255,255,0.09)" }}
+              />
+            ))}
+          </div>
 
-            {/* Add first client */}
-            <Link
-              href="/clients?new=1"
-              className="flex items-center gap-3 transition-opacity active:opacity-60"
-              style={{ padding: "16px" }}
-            >
-              <div
-                className="flex items-center justify-center rounded-[9px] shrink-0"
-                style={{ width: 36, height: 36, background: "rgba(59,130,246,0.10)", border: `0.5px solid rgba(59,130,246,0.22)` }}
-              >
-                <UserPlus size={16} style={{ color: BLUE }} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-[14px] font-semibold" style={{ color: TEXT_1 }}>
-                  Add first client
-                </p>
-                <p className="text-[12px] mt-0.5" style={{ color: TEXT_3 }}>
-                  Aria starts finding opportunities immediately
-                </p>
-              </div>
-              <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0 }} />
-            </Link>
-          </Card>
+          <p className="text-[12px]" style={{ color: TEXT_3, lineHeight: 1.55 }}>
+            Connect your data sources so Aria can start finding revenue opportunities.
+          </p>
         </div>
 
-        {/* ── What Aria does ── */}
+        {/* ── 2. SETUP ACTION CARDS ────────────────────────────────────────── */}
+        <div className="flex flex-col gap-2 mb-8">
+          {SETUP_STEPS.map(({ Icon, title, desc, badge, primary, href, external }) => {
+            const cardStyle: React.CSSProperties = {
+              display: "block",
+              padding: "14px 14px 13px",
+              background: primary ? "rgba(59,130,246,0.06)" : BG_CARD,
+              border: `0.5px solid ${primary ? "rgba(59,130,246,0.18)" : BORDER}`,
+              borderRadius: 14,
+            };
+            const inner = (
+              <>
+                {/* Top row: icon + title + badge */}
+                <div className="flex items-center gap-2.5 mb-2">
+                  <div
+                    className="flex items-center justify-center rounded-[9px] shrink-0"
+                    style={{
+                      width: 34,
+                      height: 34,
+                      background: primary ? "rgba(59,130,246,0.13)" : BG_CARD2,
+                      border: `0.5px solid ${primary ? "rgba(59,130,246,0.26)" : BORDER}`,
+                    }}
+                  >
+                    <Icon size={15} style={{ color: primary ? BLUE : TEXT_2 }} />
+                  </div>
+                  <p className="flex-1 text-[14px] font-semibold" style={{ color: TEXT_1 }}>
+                    {title}
+                  </p>
+                  <span
+                    className="shrink-0 text-[10px] font-semibold"
+                    style={{
+                      color: primary ? BLUE : TEXT_3,
+                      border: `0.5px solid ${primary ? "rgba(59,130,246,0.28)" : "rgba(255,255,255,0.10)"}`,
+                      borderRadius: 5,
+                      padding: "2px 7px",
+                      letterSpacing: "0.03em",
+                    }}
+                  >
+                    {badge}
+                  </span>
+                </div>
+                {/* Bottom row: desc + chevron */}
+                <div className="flex items-end justify-between gap-3">
+                  <p className="text-[12px]" style={{ color: TEXT_3, lineHeight: 1.45 }}>
+                    {desc}
+                  </p>
+                  <ChevronRight size={14} style={{ color: TEXT_3, flexShrink: 0, marginBottom: 1 }} />
+                </div>
+              </>
+            );
+
+            return external ? (
+              <a key={title} href={href} className="transition-opacity active:opacity-60" style={cardStyle}>
+                {inner}
+              </a>
+            ) : (
+              <Link key={title} href={href} className="transition-opacity active:opacity-60" style={cardStyle}>
+                {inner}
+              </Link>
+            );
+          })}
+        </div>
+
+        {/* ── 3. WHAT ARIA UNLOCKS ─────────────────────────────────────────── */}
         <div className="mb-8">
-          <SectionLabel>Once you&apos;re set up</SectionLabel>
-          <Card style={{ padding: "18px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
-            {[
-              { label: "Follow-up nudges", desc: "Know exactly who to reach out to, and when." },
-              { label: "MLS matches", desc: "New listings matched to each client automatically." },
-              { label: "AI drafts", desc: "Ready-to-send texts written in your voice." },
-            ].map(({ label, desc }) => (
-              <div key={label} className="flex items-start gap-3">
+          <SectionLabel>What Aria unlocks</SectionLabel>
+          <Card style={{ padding: "4px 0" }}>
+            {UNLOCKS.map(({ label, desc }, i) => (
+              <div
+                key={label}
+                className="flex items-start gap-3"
+                style={{
+                  padding: "13px 16px",
+                  borderBottom: i < UNLOCKS.length - 1 ? `0.5px solid ${BORDER}` : "none",
+                }}
+              >
                 <div
-                  className="mt-0.5 shrink-0 rounded-full"
-                  style={{ width: 5, height: 5, background: BLUE, marginTop: 6 }}
+                  className="shrink-0 rounded-full"
+                  style={{ width: 5, height: 5, background: BLUE, opacity: 0.55, marginTop: 6, flexShrink: 0 }}
                 />
                 <div>
                   <p className="text-[13px] font-semibold" style={{ color: TEXT_1 }}>
@@ -380,7 +436,7 @@ function NewAgentState({
           </Card>
         </div>
 
-        {/* ── KPI placeholders ── */}
+        {/* ── 4. PIPELINE (locked) ─────────────────────────────────────────── */}
         <div className="mb-8">
           <SectionLabel>Pipeline</SectionLabel>
           <div className="grid grid-cols-2 gap-2">
@@ -389,10 +445,13 @@ function NewAgentState({
             <KpiCard value="—" label="In Pipeline" placeholder />
             <KpiCard value="—" label="Pending Deals" placeholder />
           </div>
+          <p className="mt-2.5 text-center text-[11px]" style={{ color: TEXT_3, opacity: 0.55 }}>
+            Unlocks once you add clients
+          </p>
         </div>
 
-        {/* ── Voice entry ── */}
-        <VoiceEntry onClick={onVoice} />
+        {/* ── 5. VOICE ENTRY ───────────────────────────────────────────────── */}
+        <VoiceEntry onClick={onVoice} subtitle="Ask what to do first" />
 
       </div>
     </div>
