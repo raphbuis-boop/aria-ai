@@ -6,16 +6,16 @@ const ease = [0.22, 1, 0.36, 1] as const;
 
 const features = [
   {
-    eyebrow: "Gmail integration",
-    ai: false,
-    title: "Your inbox, always caught up",
-    body: "Connect Gmail in one tap. Aria reads every thread, flags what needs a reply, and keeps a full history of every client conversation.",
+    eyebrow: "Revenue opportunities",
+    ai: true,
+    title: "Know who's ready to move — before they slip",
+    body: "Aria watches every signal: days silent, last contact, price drops, showing activity. It surfaces the clients most likely to transact this week and tells you exactly what to do.",
   },
   {
-    eyebrow: "Pipeline intelligence",
+    eyebrow: "AI drafts",
     ai: true,
-    title: "Know who's going cold before they ghost",
-    body: "Aria tracks every signal — days silent, last contact, listing changes — and flags the relationships at risk before you lose them.",
+    title: "Your follow-up, written before you ask",
+    body: "Aria reads the thread, understands the context, and drafts the reply in your voice. Approve in three seconds. Sent from your real number.",
   },
   {
     eyebrow: "Voice commands",
@@ -24,7 +24,13 @@ const features = [
     body: "\u2018Aria, text Mike I\u2019m running 10 minutes late.\u2019 Just say it. Done.",
   },
   {
-    eyebrow: "NJ MLS built in",
+    eyebrow: "Gmail integration",
+    ai: false,
+    title: "Your inbox, always caught up",
+    body: "Connect Gmail in one tap. Aria reads every thread, flags what needs a reply, and keeps a full history of every client conversation.",
+  },
+  {
+    eyebrow: "MLS intelligence",
     ai: false,
     title: "Listings, matches, comps — without leaving Aria",
     body: "Aria pulls live NJ MLS data so you\u2019re not bouncing between tabs when a client asks about a new listing.",
@@ -39,7 +45,7 @@ export function FeatureGrid() {
           className="mb-4 text-center text-[11px] font-semibold uppercase tracking-[0.14em]"
           style={{ color: "#3a65f0" }}
         >
-          Built for agents
+          Everything in one place
         </p>
 
         <h2
@@ -51,7 +57,7 @@ export function FeatureGrid() {
             color: "#0B1220",
           }}
         >
-          Built for how you actually work.
+          Every tool Aria uses to turn relationships into revenue.
         </h2>
 
         <div className="mt-14 grid gap-4 sm:grid-cols-2">
