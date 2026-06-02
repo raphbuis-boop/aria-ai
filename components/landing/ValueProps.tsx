@@ -14,7 +14,7 @@ const props = [
     ),
     eyebrow: "Pipeline intelligence",
     headline: "Know who's ready to move — before they slip",
-    body: "Aria watches every signal: days silent, last contact, price drops, showing activity. It surfaces the clients most likely to transact this week, not buried in a spreadsheet.",
+    body: "Aria weighs conversation recency, response behavior, listing activity, and deal stage — then ranks which clients are most likely to transact this week. Not a gut feeling. A read of everything that actually happened.",
   },
   {
     icon: (
@@ -26,7 +26,7 @@ const props = [
     ),
     eyebrow: "Automatic logging",
     headline: "Every relationship tracked without lifting a finger",
-    body: "Texts, calls, emails, showings, offers — Aria logs and timestamps everything. Your full client history, structured and searchable, without manual entry.",
+    body: "Texts, emails, drafts, showings, and calls are captured from real interactions — not fields you fill in after the fact. Every client history is built automatically from what actually happened.",
   },
   {
     icon: (
@@ -37,7 +37,7 @@ const props = [
     ),
     eyebrow: "Daily priorities",
     headline: "Exactly what to do next — every single morning",
-    body: "Who to follow up with, which deals need attention, what's closing soon. One prioritized list. Zero noise. Zero time wasted figuring out where to start.",
+    body: "Every morning Aria rebuilds your priorities from fresh signals — new emails, days gone quiet, upcoming milestones — instead of showing the same static task list you ignored yesterday.",
   },
 ];
 
@@ -71,7 +71,7 @@ export function ValueProps() {
             lineHeight: 1.1,
           }}
         >
-          The CRM that works while you&apos;re working.
+          Aria working while you&apos;re out showing homes.
         </motion.h2>
 
         <div className="mt-14 grid gap-6 md:grid-cols-3">

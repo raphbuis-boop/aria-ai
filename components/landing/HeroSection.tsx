@@ -39,7 +39,7 @@ export function HeroSection() {
               background: "rgba(58,101,240,0.08)",
             }}
           >
-            AI Revenue OS · New Jersey
+            AI Revenue Operating System for Real Estate Agents
           </span>
         </motion.div>
 
@@ -68,8 +68,9 @@ export function HeroSection() {
           className="mt-6 max-w-[500px] text-pretty text-[17px] leading-relaxed"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Aria reads your Gmail, drafts replies in your voice, and surfaces every
-          client about to slip — so you never lose a deal to a missed follow-up.
+          Aria monitors every signal across your pipeline — emails, activity,
+          days gone quiet — and tells you exactly who to contact, what to say,
+          and when to move. So you close more without working more.
         </motion.p>
 
         {/* CTAs */}
@@ -141,16 +142,73 @@ export function HeroSection() {
             </div>
           </div>
 
-          {/* Screenshot */}
-          <div className="overflow-hidden rounded-[10px]" style={{ aspectRatio: "16/10" }}>
-            <Image
-              src="/landing/today.png"
-              alt="Aria Today view — morning briefing and client priorities"
-              width={1200}
-              height={750}
-              className="w-full object-cover object-top"
-              priority
-            />
+          {/* Screenshot + annotations */}
+          <div className="relative">
+            <div className="overflow-hidden rounded-[10px]" style={{ aspectRatio: "16/10" }}>
+              <Image
+                src="/landing/today.png"
+                alt="Aria Today view — morning briefing and client priorities"
+                width={1200}
+                height={750}
+                className="w-full object-cover object-top"
+                priority
+              />
+            </div>
+
+            {/* Annotation: top-right — opportunity signal */}
+            <motion.div
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.1, ease }}
+              className="absolute right-4 top-4 flex items-center gap-1.5 rounded-full px-3 py-1.5"
+              style={{
+                background: "rgba(10,16,40,0.88)",
+                border: "1px solid rgba(58,101,240,0.35)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-[#3a65f0]" style={{ boxShadow: "0 0 6px rgba(58,101,240,0.8)" }} />
+              <span className="text-[11px] font-semibold text-white" style={{ letterSpacing: "0.01em" }}>
+                Opportunity Detected
+              </span>
+            </motion.div>
+
+            {/* Annotation: mid-left — draft waiting */}
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 1.3, ease }}
+              className="absolute left-4 flex items-center gap-1.5 rounded-full px-3 py-1.5"
+              style={{
+                top: "42%",
+                background: "rgba(10,16,40,0.88)",
+                border: "1px solid rgba(52,211,153,0.3)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" style={{ boxShadow: "0 0 6px rgba(52,211,153,0.7)" }} />
+              <span className="text-[11px] font-semibold text-white" style={{ letterSpacing: "0.01em" }}>
+                AI Draft Ready
+              </span>
+            </motion.div>
+
+            {/* Annotation: bottom-right — closing signal */}
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 1.5, ease }}
+              className="absolute bottom-4 right-4 flex items-center gap-1.5 rounded-full px-3 py-1.5"
+              style={{
+                background: "rgba(10,16,40,0.88)",
+                border: "1px solid rgba(251,191,36,0.3)",
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" style={{ boxShadow: "0 0 6px rgba(251,191,36,0.7)" }} />
+              <span className="text-[11px] font-semibold text-white" style={{ letterSpacing: "0.01em" }}>
+                Closing This Week
+              </span>
+            </motion.div>
           </div>
         </div>
       </motion.div>

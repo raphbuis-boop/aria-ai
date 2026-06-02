@@ -13,25 +13,25 @@ import {
 const steps = [
   {
     num: "01",
-    title: "Walk in already caught up",
-    body: "Aria reads your Gmail overnight. Every thread, every reply, every follow-up that slipped while you were off the clock — surfaced before your first coffee.",
+    title: "Aria sees what you'd miss",
+    body: "Every morning, Aria reads your entire network — emails, texts, days since contact, listing activity — and surfaces who needs your attention today. Not a list of 40. The ones that matter.",
   },
   {
     num: "02",
-    title: "Drafts in your real voice",
-    body: "Aria learns from how you actually write. Your replies don't sound like ChatGPT — they sound like you. Same warmth, same shorthand, same closing.",
+    title: "Draft, approve, send — in your voice",
+    body: "Aria writes the follow-up with the right context, in your tone. Read it, tap approve, and it sends from your real number. The client never knows AI was in the room.",
   },
   {
     num: "03",
-    title: "Send in one tap",
-    body: "Approve in three seconds. Aria sends through your Gmail, your iMessage, or your WhatsApp — from your real number. The client never knows AI was in the room.",
+    title: "Watch every deal move forward",
+    body: "Aria organizes every relationship, every stage, every signal into a live pipeline. You know exactly where every client stands. Nothing slips. Nothing hides.",
   },
 ];
 
 const images = [
-  { src: "/landing/today.png", label: "Aria Today screen" },
-  { src: "/landing/inbox.png", label: "Aria inbox with AI suggested reply" },
-  { src: "/landing/pipeline.png", label: "Aria client pipeline view" },
+  { src: "/landing/today.png", label: "Aria Today screen — morning briefing and client priorities" },
+  { src: "/landing/inbox.png", label: "Aria inbox — AI draft ready to approve and send" },
+  { src: "/landing/pipeline.png", label: "Aria pipeline — every deal tracked in real time" },
 ];
 
 const urlLabels = ["aria.app / today", "aria.app / inbox", "aria.app / pipeline"];
@@ -143,7 +143,7 @@ export function StickyStory() {
             color: "#0B1220",
           }}
         >
-          Aria reads between the lines.
+          From signals to closed deals.
         </h2>
       </div>
 
