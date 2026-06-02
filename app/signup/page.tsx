@@ -28,18 +28,27 @@ export default function SignupPage() {
       options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     });
     setLoading(false);
+
+    if (process.env.NODE_ENV === "development") {
+      console.log("[signup] response:", { user: data.user?.id, session: !!data.session, error: err });
+    }
+
     if (err) {
       setError(err.message);
       return;
     }
-    // If Supabase auto-confirmed (session returned immediately), go straight to dashboard
+    // Email confirmation disabled — session returned immediately
     if (data.session) {
-      router.push("/dashboard");
+      router.push("/onboarding");
       return;
     }
-    setNotice(
-      "Check your email to confirm your account, then sign in.",
-    );
+    // User created but needs email confirmation
+    if (data.user) {
+      setNotice("Check your email to confirm your account, then sign in.");
+      return;
+    }
+    // Supabase returned no user and no error — silent failure (rate limit, blocked domain, etc.)
+    setError("Account creation failed. Please try again in a moment or contact support.");
   }
 
   return (
