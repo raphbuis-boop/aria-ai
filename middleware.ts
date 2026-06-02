@@ -35,6 +35,15 @@ export async function middleware(request: NextRequest) {
 
   const path = request.nextUrl.pathname;
 
+  // Supabase OAuth fallback: when /auth/callback is not in the redirect URL
+  // allowlist, Supabase redirects to the Site URL (/) with ?code=xxx instead.
+  // Forward to the callback route so the code is properly exchanged.
+  if (path === "/" && request.nextUrl.searchParams.get("code")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   if (path === "/crm") {
     const url = request.nextUrl.clone();
     url.pathname = user ? "/dashboard" : "/login";
