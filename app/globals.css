@@ -169,6 +169,18 @@ a:active, button:active, [role="button"]:active {
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
 
+/* ── iOS zoom prevention ──────────────────────────────────────────────────────
+   iOS Safari zooms the viewport when any input has font-size < 16px on focus.
+   This is the primary "feels like a mobile website" tell. Setting a global
+   minimum of 16px here covers every input across the app without needing to
+   touch individual components. Components that want larger text can override.
+*/
+input,
+textarea,
+select {
+  font-size: max(16px, 1em);
+}
+
 /* Input focus — native-feeling highlight */
 input:focus,
 textarea:focus,

@@ -43,8 +43,11 @@ export function AppHeader() {
     <header
       className="sticky top-0 z-30 flex items-center px-3"
       style={{
-        paddingTop: "calc(env(safe-area-inset-top) + 14px)",
-        paddingBottom: "14px",
+        // globals.css body already applies padding-top: env(safe-area-inset-top)
+        // which pushes the layout div — and this sticky header — below the notch.
+        // Adding safe-area-inset-top here again doubles it (wastes ~59px on iPhone 14 Pro).
+        paddingTop: 14,
+        paddingBottom: 14,
         background: "rgba(0,0,0,0.82)",
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
