@@ -9,25 +9,27 @@ export default async function InboxPage() {
   if (!user) return null;
 
   const [{ data: rows }, { data: gmailRow }] = await Promise.all([
+    // Fetch full activity history — no filter exclusion.
+    // The Conversations view groups by client and shows full thread history.
     supabase
       .from("activities")
       .select(
         `
         id,
         type,
+        direction,
         body,
         created_at,
         ai_draft,
         approved,
         sent,
         client_id,
-        clients ( name, phone )
+        clients ( name, phone, email, lead_score )
       `,
       )
       .eq("agent_id", user.id)
-      .or("ai_draft.eq.false,sent.eq.false")
       .order("created_at", { ascending: false })
-      .limit(200),
+      .limit(500),
 
     supabase
       .from("gmail_integrations")
@@ -36,11 +38,15 @@ export default async function InboxPage() {
       .maybeSingle(),
   ]);
 
+  type ClientJoin = {
+    name: string | null;
+    phone: string | null;
+    email: string | null;
+    lead_score: number | null;
+  };
+
   const initial = (rows ?? []).map((r) => {
-    const c = r.clients as
-      | { name: string | null; phone: string | null }
-      | { name: string | null; phone: string | null }[]
-      | null;
+    const c = r.clients as ClientJoin | ClientJoin[] | null;
     const client = Array.isArray(c) ? c[0] : c;
     return { ...r, clients: client ?? null };
   });
