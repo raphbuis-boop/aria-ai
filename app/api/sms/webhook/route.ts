@@ -68,9 +68,13 @@ export async function POST(req: Request) {
   const supabase = createAdminClient();
 
   // ── 4. Look up client by phone ─────────────────────────────────────────────
-  // Find the client whose phone matches the inbound sender.
-  // If multiple agents share a client with this number (edge case),
-  // we take the first match — agents use separate Twilio numbers in practice.
+  // ROUTING LIMITATION: We look up client by phone number alone.
+  // This works correctly today because there is one Twilio number per
+  // deployment. If multi-agent / multi-number routing is added in the future,
+  // this must be updated to also match on `To` (the Twilio number that received
+  // the message) against a per-agent phone number table.
+  // TODO: When multi-agent routing is needed, add a `twilio_numbers` table
+  //       mapping Twilio phone → agent_id and join on `params.To` here.
   const { data: client } = await supabase
     .from("clients")
     .select("id, agent_id")
