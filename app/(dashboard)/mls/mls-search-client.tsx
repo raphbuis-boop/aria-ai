@@ -262,7 +262,7 @@ export function MlsSearchClient({
     return encodeURIComponent(q ? `${base}?${q}` : base);
   }, [searchParams, variant]);
 
-  const listingDetailBase = variant === "public" ? "/property-search" : "/properties";
+  const listingDetailBase = variant === "public" ? "/property-search" : "/listings";
 
   return (
     <div
