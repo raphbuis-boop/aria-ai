@@ -22,9 +22,9 @@ export function PageShell({ children }: { children: React.ReactNode }) {
   }, [pathname]);
 
   // The page-enter animation uses CSS transform, which creates a new containing
-  // block for fixed-positioned children (browser spec). The voice page renders
-  // fixed inset-0 and must be viewport-relative — skip the wrapper there.
-  if (pathname === "/voice") {
+  // block for fixed-positioned children (browser spec). Pages that render
+  // fixed inset-0 overlays must be viewport-relative — skip the wrapper there.
+  if (pathname === "/voice" || pathname === "/inbox") {
     return <>{children}</>;
   }
 

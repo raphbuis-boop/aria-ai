@@ -335,11 +335,14 @@ function ThreadView({
     [conv.activities]
   );
 
-  // Scroll to bottom on open
+  // Scroll to bottom after first paint — rAF ensures the DOM is fully laid out
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    const frame = requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    });
+    return () => cancelAnimationFrame(frame);
   }, []);
 
   function openDraft(row: Row) {
@@ -454,18 +457,20 @@ function ThreadView({
   const canSend = !!conv.clientPhone;
 
   return (
+    // z-[60] sits above AppHeader (z-30) and BottomNav (z-50).
+    // PageShell bypasses /inbox so fixed positioning is viewport-relative.
     <div
-      className="fixed inset-0 z-40 flex flex-col"
+      className="fixed inset-0 z-[60] flex flex-col"
       style={{ background: "#0C0F16", color: "var(--oc-text-1)" }}
     >
-      {/* ── Header ── */}
+      {/* ── Header — compact, single row ── */}
       <div
-        className="flex items-center gap-3 px-4 pt-safe-top"
+        className="flex items-center gap-3 px-4 flex-shrink-0"
         style={{
-          paddingTop: "max(env(safe-area-inset-top), 16px)",
-          paddingBottom: 12,
+          paddingTop: "max(env(safe-area-inset-top), 14px)",
+          paddingBottom: 10,
           borderBottom: "0.5px solid rgba(255,255,255,0.07)",
-          background: "rgba(12,15,22,0.92)",
+          background: "rgba(12,15,22,0.96)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         }}
@@ -473,15 +478,15 @@ function ThreadView({
         <button
           type="button"
           onClick={onBack}
-          className="flex items-center justify-center h-9 w-9 rounded-full active:opacity-60"
-          style={{ background: "rgba(255,255,255,0.06)" }}
+          className="flex items-center justify-center h-8 w-8 rounded-full active:opacity-60 flex-shrink-0"
+          style={{ background: "rgba(255,255,255,0.07)" }}
           aria-label="Back"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
             <path
               d="M15 18l-6-6 6-6"
               stroke="currentColor"
-              strokeWidth="2"
+              strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -490,44 +495,32 @@ function ThreadView({
 
         <div className="flex-1 min-w-0">
           <p
-            className="text-[16px] font-semibold truncate"
+            className="text-[15px] font-semibold truncate leading-tight"
             style={{ color: "var(--oc-text-1)" }}
           >
             {conv.clientName}
           </p>
-          <p className="text-[12px]" style={{ color: "var(--oc-text-3)" }}>
+          <p className="text-[11px] leading-tight mt-0.5" style={{ color: "var(--oc-text-3)" }}>
             {conv.clientPhone ?? conv.clientEmail ?? "No contact info"}
           </p>
         </div>
 
-        {/* Channel indicator */}
-        <div className="flex-shrink-0">
-          {conv.clientPhone && (
-            <span
-              className="text-[11px] font-semibold px-2 py-1 rounded-lg"
-              style={{ background: "rgba(26,155,94,0.14)", color: "#1A9B5E" }}
-            >
-              SMS
-            </span>
-          )}
-          {conv.clientEmail && (
-            <span
-              className="text-[11px] font-semibold px-2 py-1 rounded-lg ml-1.5"
-              style={{
-                background: "rgba(59,130,246,0.14)",
-                color: "var(--oc-blue)",
-              }}
-            >
-              Email
-            </span>
-          )}
-        </div>
+        {/* Compact channel badge */}
+        {conv.clientPhone && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+            style={{ background: "rgba(26,155,94,0.14)", color: "#1A9B5E" }}
+          >
+            SMS
+          </span>
+        )}
       </div>
 
       {/* ── Messages scroll area ── */}
+      {/* min-h-0 is required: without it, flex-1 children can overflow the flex parent */}
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-4"
+        className="flex-1 min-h-0 overflow-y-auto px-4 pt-4 pb-4"
         style={{ scrollbarWidth: "none" }}
       >
         {chronological.map((row, idx) => {
@@ -653,24 +646,27 @@ function ThreadView({
           );
         })}
 
-        {/* Empty state */}
+        {/* Empty state — min-h fills the scroll container */}
         {chronological.length === 0 && (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex flex-col items-center justify-center min-h-full gap-2">
+            <p className="text-[14px] font-medium" style={{ color: "var(--oc-text-2)" }}>
+              No conversation yet
+            </p>
             <p className="text-[13px]" style={{ color: "var(--oc-text-3)" }}>
-              No messages yet. Start the conversation below.
+              Send the first message below.
             </p>
           </div>
         )}
       </div>
 
-      {/* ── Composer ── */}
+      {/* ── Composer — flex-shrink-0 keeps it anchored at bottom ── */}
       <div
-        className="px-4 pb-safe-bottom"
+        className="flex-shrink-0 px-4"
         style={{
-          paddingBottom: "max(env(safe-area-inset-bottom), 24px)",
-          paddingTop: 12,
+          paddingTop: 10,
+          paddingBottom: "max(env(safe-area-inset-bottom), 20px)",
           borderTop: "0.5px solid rgba(255,255,255,0.07)",
-          background: "rgba(12,15,22,0.94)",
+          background: "rgba(12,15,22,0.96)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         }}
