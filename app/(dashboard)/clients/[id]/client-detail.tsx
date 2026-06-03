@@ -1,7 +1,6 @@
 "use client";
 
 import { EditClientModal } from "@/components/EditClientModal";
-import { InboxSheet } from "@/components/InboxSheet";
 import { fmtMoney } from "@/lib/utils";
 import { differenceInDays, formatDistanceToNow } from "date-fns";
 import {
@@ -332,7 +331,6 @@ export function ClientDetail({
   matchedProperties,
 }: ClientDetailProps) {
   const router = useRouter();
-  const [inboxOpen, setInboxOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
@@ -354,8 +352,6 @@ export function ClientDetail({
   const email       = (client.email as string | null) ?? null;
   const notes       = (client.notes as string | null) ?? null;
   const source      = (client.source as string | null) ?? null;
-  const clientEmail = email ?? "";
-
   const budget    = budgetDisplay(budgetMin, budgetMax);
   const initial   = initialsOf(name);
   const lastActivity = recentActivities[0];
@@ -444,7 +440,7 @@ export function ClientDetail({
   // ── Action handlers ──
   function handlePrimaryAction() {
     if (nextAction.primaryType === "inbox" || nextAction.primaryType === "draft") {
-      setInboxOpen(true);
+      router.push(`/inbox?clientId=${id}`);
     } else if (nextAction.primaryType === "edit") {
       setEditOpen(true);
     } else if (nextAction.primaryType === "showing") {
@@ -461,7 +457,7 @@ export function ClientDetail({
     } else if (sec === "Call" && phone) {
       window.location.href = `tel:${phone.replace(/\D/g, "")}`;
     } else if (sec === "Draft Message") {
-      setInboxOpen(true);
+      router.push(`/inbox?clientId=${id}`);
     }
   }
 
@@ -941,16 +937,6 @@ export function ClientDetail({
 
         </div>
       </div>
-
-      {/* ── InboxSheet ── */}
-      {inboxOpen && (
-        <InboxSheet
-          clientId={id}
-          clientName={name}
-          clientEmail={clientEmail}
-          onClose={() => setInboxOpen(false)}
-        />
-      )}
 
       {/* ── EditClientModal ── */}
       {editOpen && (

@@ -1,7 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { InboxClient } from "./inbox-client";
 
-export default async function InboxPage() {
+export default async function InboxPage({
+  searchParams,
+}: {
+  searchParams: { clientId?: string };
+}) {
   const supabase = createClient();
   const {
     data: { user },
@@ -55,5 +59,13 @@ export default async function InboxPage() {
     ? { connected: true, email: gmailRow.email as string | null }
     : { connected: false, email: null };
 
-  return <InboxClient initial={initial} gmailStatus={gmailStatus} />;
+  const initialClientId = searchParams.clientId ?? null;
+
+  return (
+    <InboxClient
+      initial={initial}
+      gmailStatus={gmailStatus}
+      initialClientId={initialClientId}
+    />
+  );
 }

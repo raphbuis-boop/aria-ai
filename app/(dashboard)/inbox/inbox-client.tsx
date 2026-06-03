@@ -808,13 +808,16 @@ function ThreadView({
 export function InboxClient({
   initial,
   gmailStatus,
+  initialClientId = null,
 }: {
   initial: Row[];
   gmailStatus: GmailStatus;
+  initialClientId?: string | null;
 }) {
   const router = useRouter();
   const [rows, setRows] = useState<Row[]>(initial);
-  const [openClientId, setOpenClientId] = useState<string | null>(null);
+  // Seed from ?clientId= query param — allows deep-linking to a thread
+  const [openClientId, setOpenClientId] = useState<string | null>(initialClientId);
   const [filter, setFilter] = useState<FilterKey>("All");
 
   useEffect(() => {

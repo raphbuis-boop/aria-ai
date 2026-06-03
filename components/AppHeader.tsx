@@ -10,7 +10,7 @@ const TITLE_BY_PATH: Record<string, string> = {
   "/properties":   "Properties",
   "/mls":          "MLS Search",
   "/listings":     "MLS Search",
-  "/inbox":        "Follow-ups",
+  "/inbox":        "Conversations",
   "/pipeline":     "Pipeline",
   "/showings":     "Showings",
   "/transactions": "Transactions",

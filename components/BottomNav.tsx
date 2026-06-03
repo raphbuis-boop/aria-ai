@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Home, Users, Building2, Settings, type LucideIcon } from "lucide-react";
+import { Home, MessageSquare, Users, Settings, type LucideIcon } from "lucide-react";
 
 type Tab = {
   href: string;
@@ -11,11 +11,11 @@ type Tab = {
 
 const TABS_LEFT: Tab[] = [
   { href: "/dashboard", Icon: Home },
-  { href: "/people", Icon: Users, activeFor: ["/clients", "/inbox", "/pipeline"] },
+  { href: "/people", Icon: Users, activeFor: ["/clients", "/pipeline"] },
 ];
 
 const TABS_RIGHT: Tab[] = [
-  { href: "/listings", Icon: Building2, activeFor: ["/mls", "/properties", "/property-search"] },
+  { href: "/inbox", Icon: MessageSquare, activeFor: ["/inbox"] },
   { href: "/settings", Icon: Settings, activeFor: ["/more", "/referrals", "/market-pulse"] },
 ];
 
