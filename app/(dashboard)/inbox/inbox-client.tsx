@@ -1,5 +1,11 @@
 "use client";
 
+// Architecture note: This inbox is designed to unify SMS, Gmail, and Outlook
+// conversations. Each activity row carries a `type` field. As additional
+// channels are connected (Gmail threads, Outlook messages), they will appear
+// here as first-class conversation threads grouped by client. The filter tabs
+// and channel badge system below are pre-wired for this expansion.
+
 import { useToast } from "@/components/ToastProvider";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -16,22 +22,19 @@ type Row = {
   clients: { name: string | null; phone: string | null } | null;
 };
 
+type GmailStatus = {
+  connected: boolean;
+  email: string | null;
+};
+
 const FILTERS = [
   "All",
   "Pending",
-  "Sent Texts",
+  "SMS",
   "Calls",
   "Notes",
   "Showings",
 ] as const;
-
-const AVATAR_COLORS = [
-  "bg-red-500/20 text-red-400",
-  "bg-blue-500/20 text-blue-400",
-  "bg-purple-500/20 text-purple-400",
-  "bg-green-500/20 text-green-400",
-  "bg-amber-500/20 text-amber-400",
-];
 
 function initialsOf(name: string | null | undefined) {
   return (
@@ -44,10 +47,75 @@ function initialsOf(name: string | null | undefined) {
   );
 }
 
+// Channel badge for each activity type — ready for Gmail, Outlook expansion
+function ChannelBadge({ type, isDraft }: { type: string; isDraft: boolean }) {
+  if (isDraft) {
+    return (
+      <span
+        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+        style={{ background: "rgba(59,130,246,0.14)", color: "var(--oc-blue)" }}
+      >
+        AI DRAFT
+      </span>
+    );
+  }
+  if (type === "showing") {
+    return (
+      <span
+        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+        style={{ background: "rgba(26,155,94,0.14)", color: "#1A9B5E" }}
+      >
+        SHOWING
+      </span>
+    );
+  }
+  if (type === "call") {
+    return (
+      <span
+        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+        style={{ background: "rgba(196,126,26,0.14)", color: "#C47E1A" }}
+      >
+        CALL
+      </span>
+    );
+  }
+  if (type === "note") {
+    return (
+      <span
+        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+        style={{ background: "rgba(83,104,120,0.22)", color: "var(--oc-text-2)" }}
+      >
+        NOTE
+      </span>
+    );
+  }
+  if (type === "email") {
+    return (
+      <span
+        className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+        style={{ background: "rgba(59,130,246,0.14)", color: "var(--oc-blue)" }}
+      >
+        EMAIL
+      </span>
+    );
+  }
+  // SMS — default for type === "text"
+  return (
+    <span
+      className="text-[10px] font-bold px-2 py-0.5 rounded-md flex-shrink-0"
+      style={{ background: "rgba(26,155,94,0.14)", color: "#1A9B5E" }}
+    >
+      SMS
+    </span>
+  );
+}
+
 export function InboxClient({
   initial,
+  gmailStatus,
 }: {
   initial: Row[];
+  gmailStatus: GmailStatus;
 }) {
   const router = useRouter();
   const toast = useToast();
@@ -84,7 +152,7 @@ export function InboxClient({
     return rows.filter((r) => {
       if (filter === "All") return true;
       if (filter === "Pending") return r.ai_draft && !r.approved;
-      if (filter === "Sent Texts") return r.type === "text" && r.sent;
+      if (filter === "SMS") return r.type === "text";
       if (filter === "Calls") return r.type === "call";
       if (filter === "Notes") return r.type === "note";
       if (filter === "Showings") return r.type === "showing";
@@ -93,6 +161,12 @@ export function InboxClient({
   }, [rows, filter]);
 
   const pendingCount = rows.filter((r) => r.ai_draft && !r.approved).length;
+
+  // Unique clients in current view — conversation count
+  const uniqueClients = useMemo(
+    () => new Set(rows.map((r) => r.client_id)).size,
+    [rows]
+  );
 
   function openDraft(r: Row) {
     if (!(r.ai_draft && !r.approved)) return;
@@ -161,111 +235,214 @@ export function InboxClient({
   }
 
   return (
-    <div className="min-h-screen pb-[130px] relative" style={{ background: "#0a0a0a", color: "#f0f0f5" }}>
+    <div
+      className="min-h-screen pb-[130px] relative"
+      style={{ background: "#0C0F16", color: "var(--oc-text-1)" }}
+    >
       <div className="px-5 pt-6">
-        <div className="flex items-center justify-between mb-4">
+
+        {/* ── Header ── */}
+        <div className="flex items-start justify-between mb-4">
           <div>
-            <h1 className="text-2xl font-semibold">Follow-ups</h1>
-            <p className="text-xs mt-0.5" style={{ color: "#6b7090" }}>
-              AI drafts &amp; activity log
+            <h1 className="text-[22px] font-bold" style={{ letterSpacing: "-0.02em" }}>
+              Follow-ups
+            </h1>
+            <p className="text-[13px] mt-0.5" style={{ color: "var(--oc-text-3)" }}>
+              {uniqueClients > 0
+                ? `${uniqueClients} client conversation${uniqueClients !== 1 ? "s" : ""}`
+                : "AI drafts & activity log"}
             </p>
           </div>
-          {pendingCount > 0 ? (
-            <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-lg">
+          {pendingCount > 0 && (
+            <span
+              className="rounded-xl px-2.5 py-1 text-[12px] font-bold text-white"
+              style={{ background: "#C43838" }}
+            >
               {pendingCount} pending
             </span>
-          ) : null}
+          )}
         </div>
 
-        <div className="flex gap-2 overflow-x-auto pb-1 mb-4">
+        {/* ── Gmail status banner ── */}
+        {gmailStatus.connected ? (
+          <div
+            className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4"
+            style={{
+              background: "rgba(26,155,94,0.10)",
+              border: "0.5px solid rgba(26,155,94,0.28)",
+            }}
+          >
+            <span
+              className="h-2 w-2 rounded-full flex-shrink-0"
+              style={{ background: "#1A9B5E" }}
+            />
+            <div className="min-w-0 flex-1">
+              <span className="text-[13px] font-medium" style={{ color: "#1A9B5E" }}>
+                Gmail connected
+              </span>
+              {gmailStatus.email && (
+                <span className="text-[12px] ml-2" style={{ color: "var(--oc-text-3)" }}>
+                  {gmailStatus.email}
+                </span>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4"
+            style={{
+              background: "rgba(196,126,26,0.10)",
+              border: "0.5px solid rgba(196,126,26,0.28)",
+            }}
+          >
+            <span
+              className="h-2 w-2 rounded-full flex-shrink-0"
+              style={{ background: "#C47E1A" }}
+            />
+            <span className="text-[13px] font-medium flex-1" style={{ color: "#C47E1A" }}>
+              Gmail not connected
+            </span>
+            <a
+              href="/settings"
+              className="text-[12px] font-semibold"
+              style={{ color: "var(--oc-blue)" }}
+            >
+              Connect →
+            </a>
+          </div>
+        )}
+
+        {/* ── Filter pills ── */}
+        <div className="flex gap-2 overflow-x-auto pb-1 mb-4" style={{ scrollbarWidth: "none" }}>
           {FILTERS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className="px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap"
-              style={filter === f
-                ? { background: "#3B82F6", color: "#ffffff" }
-                : { background: "#1c1c1e", color: "#8e8e93" }
+              className="px-3.5 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap"
+              style={
+                filter === f
+                  ? { background: "var(--oc-blue)", color: "#ffffff" }
+                  : {
+                      background: "var(--oc-surface-1)",
+                      color: "var(--oc-text-3)",
+                      border: "0.5px solid var(--oc-border-soft)",
+                    }
               }
             >
               {f}
+              {f === "Pending" && pendingCount > 0 && ` (${pendingCount})`}
+            </button>
+          ))}
+          {/* Future channels — non-interactive placeholders */}
+          {["Gmail", "Outlook"].map((ch) => (
+            <button
+              key={ch}
+              type="button"
+              disabled
+              className="px-3.5 py-1.5 rounded-full text-[12px] font-medium whitespace-nowrap opacity-35 cursor-not-allowed"
+              style={{
+                background: "var(--oc-surface-1)",
+                color: "var(--oc-text-3)",
+                border: "0.5px solid var(--oc-border-soft)",
+              }}
+            >
+              {ch}
             </button>
           ))}
         </div>
       </div>
 
+      {/* ── List ── */}
       <div className="px-5 space-y-2">
         {filtered.length === 0 ? (
-          <div className="text-center py-16 text-[#6b7090]">
+          <div
+            className="rounded-3xl px-6 py-10 text-center"
+            style={{
+              background: "var(--oc-surface-1)",
+              border: "0.5px solid var(--oc-border-soft)",
+            }}
+          >
             {filter === "Pending" ? (
               <>
-                <p className="font-medium">No pending drafts</p>
-                <p className="text-sm mt-1">
-                  Aria will surface follow-up drafts when clients need attention
+                <p className="text-[15px] font-semibold mb-1" style={{ color: "var(--oc-text-1)" }}>
+                  No pending drafts
+                </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--oc-text-3)" }}>
+                  Aria surfaces follow-up drafts when a client needs attention.
+                  Check back after your next MLS match run.
                 </p>
               </>
             ) : filter === "All" ? (
               <>
-                <p className="font-medium">No activity yet</p>
-                <p className="text-sm mt-1">
-                  Texts you send and AI drafts will appear here
+                <p className="text-[15px] font-semibold mb-1" style={{ color: "var(--oc-text-1)" }}>
+                  Aria is watching
+                </p>
+                <p className="text-[13px] leading-relaxed" style={{ color: "var(--oc-text-3)" }}>
+                  When clients need follow-up, Aria drafts a message and surfaces
+                  it here. SMS sent, calls logged, and notes appear here too.
                 </p>
               </>
             ) : (
               <>
-                <p className="font-medium">Nothing here</p>
-                <p className="text-sm mt-1">No {filter.toLowerCase()} logged yet</p>
+                <p className="text-[15px] font-semibold mb-1" style={{ color: "var(--oc-text-1)" }}>
+                  Nothing here
+                </p>
+                <p className="text-[13px]" style={{ color: "var(--oc-text-3)" }}>
+                  No {filter.toLowerCase()} logged yet.
+                </p>
               </>
             )}
           </div>
         ) : null}
 
-        {filtered.map((item, i) => {
+        {filtered.map((item) => {
           const pending = !!item.ai_draft && !item.approved;
           const clientName = item.clients?.name ?? "Client";
           return (
             <button
               key={item.id}
               onClick={() => openDraft(item)}
-              className="w-full text-left"
+              className="w-full text-left active:opacity-80"
               type="button"
             >
               <div
-                className={`rounded-2xl p-3.5 flex items-start gap-3 ${pending ? "" : "opacity-70"}`}
-                style={{ background: "#1c1c1e" }}
+                className="rounded-2xl p-4 flex items-start gap-3"
+                style={{
+                  background: pending
+                    ? "rgba(59,130,246,0.06)"
+                    : "var(--oc-surface-1)",
+                  border: pending
+                    ? "0.5px solid rgba(59,130,246,0.22)"
+                    : "0.5px solid var(--oc-border-soft)",
+                  backdropFilter: "blur(24px) saturate(240%)",
+                  WebkitBackdropFilter: "blur(24px) saturate(240%)",
+                }}
               >
+                {/* Avatar */}
                 <div
-                  className={`w-10 h-10 rounded-[13px] flex items-center justify-center text-xs font-bold flex-shrink-0 ${AVATAR_COLORS[i % AVATAR_COLORS.length]}`}
+                  className="h-10 w-10 rounded-[13px] flex items-center justify-center text-[12px] font-bold flex-shrink-0"
+                  style={{
+                    background: "rgba(59,130,246,0.16)",
+                    color: "var(--oc-blue)",
+                  }}
                 >
                   {initialsOf(clientName)}
                 </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-semibold text-[#e8eaf2] truncate">
+                    <span
+                      className="text-[14px] font-semibold truncate"
+                      style={{ color: "var(--oc-text-1)" }}
+                    >
                       {clientName}
                     </span>
-                    {pending ? (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded flex-shrink-0" style={{ background: "rgba(59,130,246,0.12)", color: "#3B82F6" }}>
-                        AI DRAFT
-                      </span>
-                    ) : null}
-                    {item.type === "showing" ? (
-                      <span className="text-[10px] font-bold bg-green-500/10 text-green-400 px-2 py-0.5 rounded flex-shrink-0">
-                        SHOWING
-                      </span>
-                    ) : null}
-                    {item.type === "call" ? (
-                      <span className="text-[10px] font-bold bg-amber-500/10 text-amber-400 px-2 py-0.5 rounded flex-shrink-0">
-                        CALL
-                      </span>
-                    ) : null}
-                    {item.type === "note" ? (
-                      <span className="text-[10px] font-bold bg-purple-500/10 text-purple-400 px-2 py-0.5 rounded flex-shrink-0">
-                        NOTE
-                      </span>
-                    ) : null}
-                    <span className="text-xs text-[#6b7090] ml-auto flex-shrink-0">
+                    <ChannelBadge type={item.type} isDraft={pending} />
+                    <span
+                      className="text-[12px] ml-auto flex-shrink-0"
+                      style={{ color: "var(--oc-text-3)" }}
+                    >
                       {new Date(item.created_at).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -273,9 +450,8 @@ export function InboxClient({
                     </span>
                   </div>
                   <p
-                    className={`text-sm leading-relaxed line-clamp-2 ${
-                      pending ? "text-[#e8eaf2]" : "text-[#9498b0]"
-                    }`}
+                    className="text-[13px] leading-relaxed line-clamp-2"
+                    style={{ color: pending ? "var(--oc-text-2)" : "var(--oc-text-3)" }}
                   >
                     {item.body || "No content"}
                   </p>
@@ -286,6 +462,7 @@ export function InboxClient({
         })}
       </div>
 
+      {/* ── Draft review sheet ── */}
       {selected ? (
         <div
           className="fixed inset-0 z-50"
@@ -293,34 +470,61 @@ export function InboxClient({
             if (!busy) setSelected(null);
           }}
         >
-          <div className="absolute inset-0 bg-black/60" />
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5" style={{ background: "#1c1c1e", paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
+            className="absolute inset-0"
+            style={{ background: "rgba(0,0,0,0.65)", backdropFilter: "blur(6px)" }}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-t-3xl p-5"
+            style={{
+              background: "var(--oc-surface-2)",
+              backdropFilter: "blur(32px) saturate(260%)",
+              WebkitBackdropFilter: "blur(32px) saturate(260%)",
+              border: "0.5px solid var(--oc-border-mid)",
+              paddingBottom: "calc(env(safe-area-inset-bottom) + 24px)",
+            }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-9 h-1 rounded-full mx-auto mb-4" style={{ background: "#3a3a3c" }} />
+            <div
+              className="h-1 w-9 rounded-full mx-auto mb-5"
+              style={{ background: "var(--oc-border-mid)" }}
+            />
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-11 h-11 rounded-[14px] bg-red-500/20 text-red-400 flex items-center justify-center text-sm font-bold">
+              <div
+                className="h-11 w-11 rounded-[14px] flex items-center justify-center text-[13px] font-bold"
+                style={{
+                  background: "rgba(59,130,246,0.16)",
+                  color: "var(--oc-blue)",
+                }}
+              >
                 {initialsOf(selected.clients?.name)}
               </div>
               <div>
-                <p className="text-base font-semibold text-[#e8eaf2]">
+                <p className="text-[15px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
                   {selected.clients?.name ?? "Client"}
                 </p>
-                <p className="text-xs text-[#6b7090]">AI matched your tone</p>
+                <p className="text-[12px]" style={{ color: "var(--oc-text-3)" }}>
+                  Aria matched your tone · SMS
+                </p>
               </div>
             </div>
             <textarea
               value={draftBody}
               onChange={(e) => setDraftBody(e.target.value)}
-              className="w-full rounded-2xl p-4 text-sm leading-relaxed resize-none outline-none mb-4" style={{ background: "#2c2c2e", color: "#f0f0f5" }}
+              className="w-full rounded-2xl p-4 text-[13px] leading-relaxed resize-none outline-none mb-4"
+              style={{
+                background: "rgba(255,255,255,0.05)",
+                border: "0.5px solid var(--oc-border-soft)",
+                color: "var(--oc-text-1)",
+              }}
               rows={5}
             />
             <button
               type="button"
               onClick={approveSend}
               disabled={busy}
-              className="w-full text-white font-semibold rounded-full py-3.5 text-sm mb-2.5 disabled:opacity-60" style={{ background: "#3B82F6" }}
+              className="w-full text-white font-semibold rounded-2xl py-3.5 text-[14px] mb-2.5 disabled:opacity-60 active:opacity-80"
+              style={{ background: "var(--oc-blue)" }}
             >
               {busy ? "Sending…" : "Approve & Send"}
             </button>
@@ -328,7 +532,11 @@ export function InboxClient({
               type="button"
               onClick={dismiss}
               disabled={busy}
-              className="w-full font-semibold rounded-full py-3 text-sm disabled:opacity-60" style={{ background: "rgba(255,255,255,0.06)", color: "#8e8e93" }}
+              className="w-full font-semibold rounded-2xl py-3 text-[14px] disabled:opacity-60 active:opacity-70"
+              style={{
+                background: "rgba(255,255,255,0.06)",
+                color: "var(--oc-text-2)",
+              }}
             >
               Dismiss
             </button>

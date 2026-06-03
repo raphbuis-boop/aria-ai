@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   Phone,
   Sparkles,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -49,7 +50,6 @@ type ClientDetailProps = {
   recentActivities: Activity[];
   draftCount: number;
   lastDraftBody: string | null;
-  openTaskCount: number;
   recentMatchCount: number;
   matchedProperties: MatchedProperty[];
 };
@@ -82,7 +82,11 @@ function relTime(iso: string): string {
   }
 }
 
-// ── Readiness score ───────────────────────────────────────────────────────────
+// ── Readiness scoring ─────────────────────────────────────────────────────────
+//
+// Contact recency is the dominant signal (55 pts). No recent contact = cannot
+// be HOT. Profile completeness and match activity contribute up to 45 pts,
+// so even a perfectly profiled client with no contact maxes out at WARM.
 
 function computeReadiness(
   daysSinceContact: number | null,
@@ -90,40 +94,93 @@ function computeReadiness(
   hasBudget: boolean,
   hasTown: boolean,
   hasBeds: boolean,
-): { score: number; label: string; color: string; signals: string[] } {
+): { score: number; label: string; color: string; why: string } {
   let score = 0;
-  const signals: string[] = [];
 
+  // Contact recency — 55 pts max. Dominant factor.
   if (daysSinceContact === null) {
-    signals.push("No contact yet");
+    score += 0;
   } else if (daysSinceContact <= 3) {
-    score += 30;
-    signals.push(`Active · ${daysSinceContact}d ago`);
+    score += 55;
   } else if (daysSinceContact <= 7) {
-    score += 20;
-    signals.push(`Contacted ${daysSinceContact}d ago`);
+    score += 42;
   } else if (daysSinceContact <= 14) {
-    score += 10;
-    signals.push(`Last contact ${daysSinceContact}d ago`);
+    score += 28;
+  } else if (daysSinceContact <= 30) {
+    score += 14;
+  } else if (daysSinceContact <= 60) {
+    score += 5;
   } else {
-    signals.push(`Quiet · ${daysSinceContact}d ago`);
+    score += 0; // 60+ days → no contact credit
   }
 
-  if (recentMatchCount > 0) {
-    score += Math.min(recentMatchCount * 7, 20);
-    signals.push(`${recentMatchCount} new match${recentMatchCount !== 1 ? "es" : ""}`);
-  }
+  // Recent matches — 20 pts max
+  score += Math.min(recentMatchCount * 5, 20);
 
-  if (hasBudget) { score += 20; signals.push("Budget set"); }
-  if (hasTown)   { score += 15; signals.push("Area set"); }
-  if (hasBeds)   { score += 10; signals.push("Prefs set"); }
+  // Profile completeness — 25 pts max
+  if (hasBudget) score += 12;
+  if (hasTown)   score += 8;
+  if (hasBeds)   score += 5;
 
   score = Math.min(score, 100);
 
-  const label = score >= 75 ? "HOT" : score >= 45 ? "WARM" : "COLD";
-  const color = score >= 75 ? "#1A9B5E" : score >= 45 ? "#C47E1A" : "#C43838";
+  // ≥75 HOT · 40–74 WARM · <40 COLD
+  const label = score >= 75 ? "HOT" : score >= 40 ? "WARM" : "COLD";
+  const color = score >= 75 ? "#1A9B5E" : score >= 40 ? "#C47E1A" : "#C43838";
 
-  return { score, label, color, signals };
+  const whyParts: string[] = [];
+  if (daysSinceContact === null)       whyParts.push("no contact yet");
+  else if (daysSinceContact <= 3)      whyParts.push("active today");
+  else if (daysSinceContact <= 14)     whyParts.push(`${daysSinceContact}d since contact`);
+  else                                 whyParts.push(`${daysSinceContact}d of silence`);
+  if (recentMatchCount > 0)            whyParts.push(`${recentMatchCount} new matches`);
+  if (!hasBudget)                      whyParts.push("no budget");
+
+  const why = whyParts.slice(0, 2).join(" · ");
+
+  return { score, label, color, why };
+}
+
+// ── Attention signals ("Why Aria is paying attention") ────────────────────────
+
+function computeAttentionSignals(
+  daysSinceContact: number | null,
+  recentMatchCount: number,
+  hasBudget: boolean,
+  hasTown: boolean,
+  recentActivities: Activity[],
+): string[] {
+  const signals: string[] = [];
+
+  if (daysSinceContact === null) {
+    signals.push("No contact on record");
+  } else if (daysSinceContact > 14) {
+    signals.push(`${daysSinceContact} days since last contact`);
+  }
+
+  if (recentMatchCount > 0) {
+    signals.push(`${recentMatchCount} matching listing${recentMatchCount !== 1 ? "s" : ""}`);
+  }
+
+  if (!hasBudget) {
+    signals.push("No budget on file");
+  }
+
+  if (!hasTown) {
+    signals.push("No search area defined");
+  }
+
+  const showingCount = recentActivities.filter((a) => a.type === "showing").length;
+  if (showingCount > 0) {
+    signals.push(`${showingCount} showing${showingCount !== 1 ? "s" : ""} in history`);
+  }
+
+  const draftCount = recentActivities.filter((a) => a.ai_draft && !a.approved).length;
+  if (draftCount > 0) {
+    signals.push(`${draftCount} AI draft${draftCount !== 1 ? "s" : ""} pending`);
+  }
+
+  return signals;
 }
 
 // ── Next best action ──────────────────────────────────────────────────────────
@@ -154,7 +211,7 @@ function computeNextAction(
   if (!hasBudget) {
     return {
       title: "Capture budget",
-      reason: `No budget on file — matching is less accurate. Ask ${firstName} what range feels right.`,
+      reason: `No budget means Aria can't match properties accurately. Ask ${firstName} what range feels comfortable.`,
       primary: "Edit Profile",
       primaryType: "edit",
     };
@@ -162,7 +219,7 @@ function computeNextAction(
   if (matchedCount > 0 && (daysSinceContact === null || daysSinceContact > 3)) {
     return {
       title: "Send property update",
-      reason: `${matchedCount} listing${matchedCount > 1 ? "s" : ""} match — ${firstName} hasn't seen them yet.`,
+      reason: `${matchedCount} listing${matchedCount > 1 ? "s" : ""} match ${firstName}'s criteria — they haven't seen them yet.`,
       primary: "Draft Message",
       secondary: "Schedule Showing",
       primaryType: "draft",
@@ -171,7 +228,7 @@ function computeNextAction(
   if (daysSinceContact === null || daysSinceContact > 14) {
     return {
       title: "Check in",
-      reason: `No contact${daysSinceContact ? ` for ${daysSinceContact} days` : ""}. A quick text keeps the relationship warm.`,
+      reason: `${daysSinceContact ? `${daysSinceContact} days without contact` : "No contact on record"}. A short text keeps the relationship warm.`,
       primary: "Draft Message",
       secondary: "Call",
       primaryType: "draft",
@@ -179,7 +236,7 @@ function computeNextAction(
   }
   return {
     title: "Schedule a showing",
-    reason: `${firstName} is engaged — move them forward with an in-person tour.`,
+    reason: `${firstName} is engaged — the next step is an in-person tour.`,
     primary: "Schedule Showing",
     secondary: "Draft Message",
     primaryType: "showing",
@@ -208,6 +265,7 @@ function activityLabel(a: Activity): string {
   if (a.type === "text" && a.sent) return "Text sent";
   if (a.type === "call") return "Call logged";
   if (a.type === "note") return "Note";
+  if (a.type === "showing") return "Showing";
   return a.type ?? "Activity";
 }
 
@@ -219,7 +277,9 @@ function ScoreRing({ score, color, label }: { score: number; color: string; labe
   const [offset, setOffset] = useState(circumference);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => setOffset(circumference * (1 - score / 100)));
+    const id = requestAnimationFrame(() =>
+      setOffset(circumference * (1 - score / 100))
+    );
     return () => cancelAnimationFrame(id);
   }, [score, circumference]);
 
@@ -268,7 +328,6 @@ export function ClientDetail({
   recentActivities,
   draftCount,
   lastDraftBody: _lastDraftBody, // eslint-disable-line @typescript-eslint/no-unused-vars
-  openTaskCount: _openTaskCount, // eslint-disable-line @typescript-eslint/no-unused-vars
   recentMatchCount,
   matchedProperties,
 }: ClientDetailProps) {
@@ -297,15 +356,14 @@ export function ClientDetail({
   const source      = (client.source as string | null) ?? null;
   const clientEmail = email ?? "";
 
-  const budget = budgetDisplay(budgetMin, budgetMax);
-  const initial = initialsOf(name);
+  const budget    = budgetDisplay(budgetMin, budgetMax);
+  const initial   = initialsOf(name);
   const lastActivity = recentActivities[0];
+  const hasBudget = !!(budgetMin || budgetMax);
 
   const daysSinceContact = lastActivity
     ? differenceInDays(new Date(), new Date(lastActivity.created_at))
     : null;
-
-  const hasBudget = !!(budgetMin || budgetMax);
 
   const readiness = computeReadiness(
     daysSinceContact,
@@ -313,6 +371,14 @@ export function ClientDetail({
     hasBudget,
     !!town,
     !!bedsWanted,
+  );
+
+  const attentionSignals = computeAttentionSignals(
+    daysSinceContact,
+    recentMatchCount,
+    hasBudget,
+    !!town,
+    recentActivities,
   );
 
   const nextAction = computeNextAction(
@@ -324,22 +390,29 @@ export function ClientDetail({
   );
 
   // ── AI summary fetch ──
+  // Prompt is structured to produce: who they are · budget · location ·
+  // engagement status · recent activity · opportunities · recommended action.
+  // It must describe the CLIENT, never address or answer the agent directly.
   useEffect(() => {
     if (summaryFetched.current) return;
     summaryFetched.current = true;
 
-    const context = [
-      `Client: ${name}`,
-      status ? `Status: ${status}` : null,
-      budget ? `Budget: ${budget}` : null,
-      town ? `Looking in: ${town}` : null,
-      bedsWanted ? `Wants ${bedsWanted}bd` : null,
-      lastActivity ? `Last contact ${relTime(lastActivity.created_at)}` : "No prior contact",
-      recentMatchCount > 0 ? `${recentMatchCount} new property matches` : null,
-      draftCount > 0 ? `${draftCount} AI draft pending` : null,
+    const ctx = [
+      `Name: ${name}`,
+      status    ? `Buyer status: ${status}` : null,
+      budget    ? `Budget: ${budget}` : "Budget: not set",
+      town      ? `Target area: ${town}` : "Target area: not defined",
+      bedsWanted ? `Beds wanted: ${bedsWanted}` : null,
+      bathsWanted ? `Baths wanted: ${bathsWanted}` : null,
+      lastActivity
+        ? `Last contact: ${relTime(lastActivity.created_at)} (${lastActivity.type ?? "unknown"})`
+        : "Last contact: never",
+      recentMatchCount > 0 ? `New property matches: ${recentMatchCount}` : "New matches: none",
+      draftCount > 0 ? `Pending AI drafts: ${draftCount}` : null,
+      `Activity count: ${recentActivities.length}`,
     ]
       .filter(Boolean)
-      .join(". ");
+      .join("\n");
 
     void fetch("/api/ai", {
       method: "POST",
@@ -348,7 +421,13 @@ export function ClientDetail({
         messages: [
           {
             role: "user",
-            content: `You are a briefing assistant for a real estate agent. Write 2 short sentences about this client — their situation and what the agent should do next. Be direct and specific. Context: ${context}`,
+            content:
+              `You are Aria, a real estate intelligence system. Write a 3-sentence client brief for the agent's eyes only.\n` +
+              `Sentence 1: Who this client is — their name, what they are looking for, budget, and target location.\n` +
+              `Sentence 2: Their engagement status and recent contact history — are they active, quiet, or cold?\n` +
+              `Sentence 3: The most important opportunity or risk right now, and the single recommended action.\n` +
+              `Rules: Be specific and use numbers. Do not use filler phrases. Do not address the agent ("you should…"). Describe the client in third person.\n\n` +
+              `Client data:\n${ctx}`,
           },
         ],
       }),
@@ -357,7 +436,10 @@ export function ClientDetail({
       .then((d: { reply?: string }) => setSummary(d.reply ?? ""))
       .catch(() => setSummary(""))
       .finally(() => setSummaryLoading(false));
-  }, [name, status, budget, town, bedsWanted, lastActivity, recentMatchCount, draftCount]);
+  }, [
+    name, status, budget, town, bedsWanted, bathsWanted,
+    lastActivity, recentMatchCount, draftCount, recentActivities.length,
+  ]);
 
   // ── Action handlers ──
   function handlePrimaryAction() {
@@ -455,7 +537,7 @@ export function ClientDetail({
               <p className="text-[13px]" style={{ color: "var(--oc-text-3)" }}>
                 {[town?.split(",")[0]?.trim(), budget].filter(Boolean).join(" · ")}
                 {lastActivity && (
-                  <> · Last contact {relTime(lastActivity.created_at)}</>
+                  <> · {relTime(lastActivity.created_at)}</>
                 )}
               </p>
             </div>
@@ -470,54 +552,88 @@ export function ClientDetail({
             />
             <div className="min-w-0 flex-1">
               <p
-                className="text-[11px] font-semibold uppercase mb-3"
+                className="text-[11px] font-semibold uppercase mb-1"
                 style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
               >
-                Readiness
+                Transaction Readiness
               </p>
-              <div className="flex flex-wrap gap-1.5">
-                {readiness.signals.map((s) => (
-                  <span
-                    key={s}
-                    className="rounded-full px-2.5 py-1 text-[11px] font-medium"
-                    style={{
-                      background: "rgba(255,255,255,0.06)",
-                      color: "var(--oc-text-2)",
-                      border: "0.5px solid var(--oc-border-soft)",
-                    }}
-                  >
-                    {s}
-                  </span>
+              <p className="text-[12px] mb-3" style={{ color: "var(--oc-text-3)" }}>
+                {readiness.why}
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {/* Scoring breakdown */}
+                {[
+                  {
+                    label: daysSinceContact === null
+                      ? "No contact yet"
+                      : daysSinceContact <= 3
+                      ? "Active this week"
+                      : daysSinceContact <= 14
+                      ? `${daysSinceContact}d since contact`
+                      : `${daysSinceContact}d — needs attention`,
+                    active: daysSinceContact !== null && daysSinceContact <= 14,
+                    key: "contact",
+                  },
+                  {
+                    label: hasBudget ? "Budget defined" : "No budget on file",
+                    active: hasBudget,
+                    key: "budget",
+                  },
+                  {
+                    label: !!town ? "Search area set" : "No target area",
+                    active: !!town,
+                    key: "town",
+                  },
+                  ...(recentMatchCount > 0
+                    ? [{ label: `${recentMatchCount} new match${recentMatchCount !== 1 ? "es" : ""}`, active: true, key: "matches" }]
+                    : []),
+                ].map(({ label, active, key }) => (
+                  <div key={key} className="flex items-center gap-2">
+                    <span
+                      className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+                      style={{ background: active ? readiness.color : "rgba(83,104,120,0.4)" }}
+                    />
+                    <span
+                      className="text-[12px]"
+                      style={{ color: active ? "var(--oc-text-2)" : "var(--oc-text-3)" }}
+                    >
+                      {label}
+                    </span>
+                  </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* ── 2. Aria Summary ── */}
+          {/* ── 2. Aria Intelligence Brief ── */}
           <div className="oc-card px-4 py-4 mb-3">
-            <div className="flex items-center gap-2 mb-2.5">
+            <div className="flex items-center gap-2 mb-3">
               <Sparkles size={13} style={{ color: "var(--oc-blue)" }} />
               <span
                 className="text-[11px] font-semibold uppercase"
                 style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
               >
-                Aria
+                Aria Intelligence
               </span>
             </div>
             {summaryLoading ? (
               <div className="space-y-2">
                 <div
                   className="h-3 rounded-full animate-pulse"
-                  style={{ background: "rgba(255,255,255,0.07)", width: "90%" }}
+                  style={{ background: "rgba(255,255,255,0.07)", width: "95%" }}
                 />
                 <div
                   className="h-3 rounded-full animate-pulse"
-                  style={{ background: "rgba(255,255,255,0.07)", width: "68%" }}
+                  style={{ background: "rgba(255,255,255,0.07)", width: "85%" }}
+                />
+                <div
+                  className="h-3 rounded-full animate-pulse"
+                  style={{ background: "rgba(255,255,255,0.07)", width: "65%" }}
                 />
               </div>
             ) : (
-              <p className="text-[13px] leading-relaxed italic" style={{ color: "var(--oc-text-2)" }}>
-                {summary || "No summary available."}
+              <p className="text-[13.5px] leading-[1.65] italic" style={{ color: "var(--oc-text-2)" }}>
+                {summary || "Aria could not generate a brief for this client."}
               </p>
             )}
           </div>
@@ -629,7 +745,37 @@ export function ClientDetail({
             </div>
           )}
 
-          {/* ── 5. Timeline ── */}
+          {/* ── 5a. Why Aria is paying attention ── */}
+          {attentionSignals.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center gap-2 mb-2.5">
+                <Zap size={13} style={{ color: "var(--oc-amber)" }} />
+                <p
+                  className="text-[11px] font-semibold uppercase"
+                  style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
+                >
+                  Why Aria is paying attention
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {attentionSignals.map((sig) => (
+                  <span
+                    key={sig}
+                    className="rounded-full px-3 py-1.5 text-[12px] font-medium"
+                    style={{
+                      background: "rgba(196,126,26,0.12)",
+                      color: "#C47E1A",
+                      border: "0.5px solid rgba(196,126,26,0.28)",
+                    }}
+                  >
+                    {sig}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── 5b. Timeline ── */}
           {recentActivities.length > 0 && (
             <div className="mb-3">
               <div className="flex items-center justify-between mb-2.5">
@@ -692,10 +838,7 @@ export function ClientDetail({
               onClick={() => setProfileOpen((o) => !o)}
               className="flex w-full items-center justify-between px-4 py-3.5 active:opacity-70"
             >
-              <span
-                className="text-[13px] font-semibold"
-                style={{ color: "var(--oc-text-1)" }}
-              >
+              <span className="text-[13px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
                 Profile Details
               </span>
               {profileOpen
@@ -786,10 +929,7 @@ export function ClientDetail({
                     onClick={() => setEditOpen(true)}
                     className="flex w-full items-center justify-between px-4 py-3 active:opacity-70"
                   >
-                    <span
-                      className="text-[13px] font-medium"
-                      style={{ color: "var(--oc-blue)" }}
-                    >
+                    <span className="text-[13px] font-medium" style={{ color: "var(--oc-blue)" }}>
                       Edit Profile
                     </span>
                     <ChevronRight size={14} style={{ color: "var(--oc-text-3)" }} />

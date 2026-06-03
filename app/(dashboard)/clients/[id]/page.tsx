@@ -26,7 +26,6 @@ export default async function ClientDetailPage({
 
   const [
     { data: activities },
-    { data: tasks },
     { data: matches },
     { data: matchedPropertyRows },
   ] = await Promise.all([
@@ -37,13 +36,6 @@ export default async function ClientDetailPage({
       .eq("client_id", params.id)
       .eq("agent_id", user.id)
       .order("created_at", { ascending: false }),
-
-    // Open tasks
-    supabase
-      .from("tasks")
-      .select("id, done")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id),
 
     // Property matches — recent (last 24h, unnotified) for badge count
     supabase
@@ -65,7 +57,6 @@ export default async function ClientDetailPage({
   ]);
 
   const allActivities = activities ?? [];
-  const allTasks = tasks ?? [];
   const allMatches = matches ?? [];
 
   const draftCount = allActivities.filter(
@@ -76,7 +67,6 @@ export default async function ClientDetailPage({
     (allActivities.find((a) => a.ai_draft && !a.approved && !a.sent)
       ?.body as string | null) ?? null;
 
-  const openTaskCount = allTasks.filter((t) => !t.done).length;
   const recentMatchCount = allMatches.length;
   const recentActivities = allActivities.slice(0, 5);
 
@@ -126,7 +116,6 @@ export default async function ClientDetailPage({
       recentActivities={recentActivities}
       draftCount={draftCount}
       lastDraftBody={lastDraftBody}
-      openTaskCount={openTaskCount}
       recentMatchCount={recentMatchCount}
       matchedProperties={matchedProperties}
     />
