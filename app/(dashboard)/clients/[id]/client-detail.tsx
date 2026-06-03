@@ -3,23 +3,25 @@
 import { EditClientModal } from "@/components/EditClientModal";
 import { InboxSheet } from "@/components/InboxSheet";
 import { fmtMoney } from "@/lib/utils";
-import { formatDistanceToNow, differenceInDays } from "date-fns";
+import { differenceInDays, formatDistanceToNow } from "date-fns";
 import {
   ArrowLeft,
-  Calendar,
-  CheckSquare,
+  CalendarDays,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
+  FileText,
   Mail,
   MessageSquare,
-  Pencil,
+  MoreHorizontal,
+  Phone,
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
-// ── Types ────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
 
 type Activity = {
   id: string;
@@ -52,7 +54,7 @@ type ClientDetailProps = {
   matchedProperties: MatchedProperty[];
 };
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 function initialsOf(name: string | null | undefined): string {
   return (
@@ -80,26 +82,128 @@ function relTime(iso: string): string {
   }
 }
 
-type DotColor = "green" | "amber" | "blue" | "gray";
+// ── Readiness score ───────────────────────────────────────────────────────────
 
-function activityDot(a: Activity): DotColor {
-  if (a.type === "email" && a.sent) return "blue";
-  if (a.type === "text" && a.sent) return "green";
-  if (a.type === "text" && a.ai_draft && !a.approved) return "amber";
-  if (a.type === "call") return "blue";
-  return "gray";
+function computeReadiness(
+  daysSinceContact: number | null,
+  recentMatchCount: number,
+  hasBudget: boolean,
+  hasTown: boolean,
+  hasBeds: boolean,
+): { score: number; label: string; color: string; signals: string[] } {
+  let score = 0;
+  const signals: string[] = [];
+
+  if (daysSinceContact === null) {
+    signals.push("No contact yet");
+  } else if (daysSinceContact <= 3) {
+    score += 30;
+    signals.push(`Active · ${daysSinceContact}d ago`);
+  } else if (daysSinceContact <= 7) {
+    score += 20;
+    signals.push(`Contacted ${daysSinceContact}d ago`);
+  } else if (daysSinceContact <= 14) {
+    score += 10;
+    signals.push(`Last contact ${daysSinceContact}d ago`);
+  } else {
+    signals.push(`Quiet · ${daysSinceContact}d ago`);
+  }
+
+  if (recentMatchCount > 0) {
+    score += Math.min(recentMatchCount * 7, 20);
+    signals.push(`${recentMatchCount} new match${recentMatchCount !== 1 ? "es" : ""}`);
+  }
+
+  if (hasBudget) { score += 20; signals.push("Budget set"); }
+  if (hasTown)   { score += 15; signals.push("Area set"); }
+  if (hasBeds)   { score += 10; signals.push("Prefs set"); }
+
+  score = Math.min(score, 100);
+
+  const label = score >= 75 ? "HOT" : score >= 45 ? "WARM" : "COLD";
+  const color = score >= 75 ? "#1A9B5E" : score >= 45 ? "#C47E1A" : "#C43838";
+
+  return { score, label, color, signals };
 }
 
-const DOT_COLORS: Record<DotColor, string> = {
-  green: "#22c55e",
-  amber: "#f59e0b",
-  blue:  "#3B82F6",
-  gray:  "#48484a",
+// ── Next best action ──────────────────────────────────────────────────────────
+
+type NextAction = {
+  title: string;
+  reason: string;
+  primary: string;
+  secondary?: string;
+  primaryType: "draft" | "showing" | "inbox" | "edit";
 };
+
+function computeNextAction(
+  firstName: string,
+  daysSinceContact: number | null,
+  matchedCount: number,
+  hasBudget: boolean,
+  draftCount: number,
+): NextAction {
+  if (draftCount > 0) {
+    return {
+      title: "Review AI draft",
+      reason: `${draftCount} message${draftCount > 1 ? "s" : ""} from Aria awaiting your approval.`,
+      primary: "Open Draft",
+      primaryType: "inbox",
+    };
+  }
+  if (!hasBudget) {
+    return {
+      title: "Capture budget",
+      reason: `No budget on file — matching is less accurate. Ask ${firstName} what range feels right.`,
+      primary: "Edit Profile",
+      primaryType: "edit",
+    };
+  }
+  if (matchedCount > 0 && (daysSinceContact === null || daysSinceContact > 3)) {
+    return {
+      title: "Send property update",
+      reason: `${matchedCount} listing${matchedCount > 1 ? "s" : ""} match — ${firstName} hasn't seen them yet.`,
+      primary: "Draft Message",
+      secondary: "Schedule Showing",
+      primaryType: "draft",
+    };
+  }
+  if (daysSinceContact === null || daysSinceContact > 14) {
+    return {
+      title: "Check in",
+      reason: `No contact${daysSinceContact ? ` for ${daysSinceContact} days` : ""}. A quick text keeps the relationship warm.`,
+      primary: "Draft Message",
+      secondary: "Call",
+      primaryType: "draft",
+    };
+  }
+  return {
+    title: "Schedule a showing",
+    reason: `${firstName} is engaged — move them forward with an in-person tour.`,
+    primary: "Schedule Showing",
+    secondary: "Draft Message",
+    primaryType: "showing",
+  };
+}
+
+// ── Activity icon map ─────────────────────────────────────────────────────────
+
+const ACTIVITY_ICON_MAP: Record<string, { bg: string; color: string; icon: React.ReactNode }> = {
+  email:   { bg: "rgba(59,130,246,0.18)",  color: "#3B82F6", icon: <Mail size={14} /> },
+  text:    { bg: "rgba(26,155,94,0.18)",   color: "#1A9B5E", icon: <MessageSquare size={14} /> },
+  call:    { bg: "rgba(26,155,94,0.18)",   color: "#1A9B5E", icon: <Phone size={14} /> },
+  note:    { bg: "rgba(196,126,26,0.18)",  color: "#C47E1A", icon: <FileText size={14} /> },
+  showing: { bg: "rgba(59,130,246,0.18)",  color: "#3B82F6", icon: <CalendarDays size={14} /> },
+};
+
+function activityIconConfig(type: string | null) {
+  return ACTIVITY_ICON_MAP[type ?? ""] ?? {
+    bg: "rgba(83,104,120,0.18)", color: "#7A96A8", icon: <FileText size={14} />,
+  };
+}
 
 function activityLabel(a: Activity): string {
   if (a.type === "email" && a.sent) return "Email sent";
-  if (a.type === "email") return "Email";
   if (a.type === "text" && a.ai_draft && !a.approved) return "AI draft pending";
   if (a.type === "text" && a.sent) return "Text sent";
   if (a.type === "call") return "Call logged";
@@ -107,110 +211,64 @@ function activityLabel(a: Activity): string {
   return a.type ?? "Activity";
 }
 
-/** Compute a 0–100 readiness score from available data. */
-function computeReadiness(
-  client: Record<string, unknown>,
-  lastActivity: Activity | undefined,
-): { score: number; label: string; color: string; subLabel: string } {
-  let score = 35; // baseline
+// ── Score Ring ────────────────────────────────────────────────────────────────
 
-  // Budget defined
-  if (client.budget_min || client.budget_max) score += 20;
-  // Town defined
-  if (client.town) score += 15;
-  // Beds defined
-  if (client.beds_wanted) score += 10;
+function ScoreRing({ score, color, label }: { score: number; color: string; label: string }) {
+  const r = 46;
+  const circumference = 2 * Math.PI * r;
+  const [offset, setOffset] = useState(circumference);
 
-  // Contact recency
-  const daysSince = lastActivity
-    ? differenceInDays(new Date(), new Date(lastActivity.created_at))
-    : 999;
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setOffset(circumference * (1 - score / 100)));
+    return () => cancelAnimationFrame(id);
+  }, [score, circumference]);
 
-  if (daysSince <= 3) score += 20;
-  else if (daysSince <= 7) score += 15;
-  else if (daysSince <= 14) score += 8;
-
-  score = Math.min(100, score);
-
-  let label = "Cold";
-  let color = "#6B7280";
-  if (score >= 80) { label = "Hot"; color = "#22c55e"; }
-  else if (score >= 60) { label = "Warm"; color = "#f59e0b"; }
-  else if (score >= 45) { label = "Active"; color = "#60A5FA"; }
-
-  const subLabel = lastActivity
-    ? `Last contact ${relTime(lastActivity.created_at)}`
-    : "No contact yet";
-
-  return { score, label, color, subLabel };
+  return (
+    <div className="relative flex items-center justify-center" style={{ width: 116, height: 116 }}>
+      <svg width="116" height="116" style={{ transform: "rotate(-90deg)" }}>
+        <circle
+          cx={58} cy={58} r={r}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+          strokeWidth={8}
+        />
+        <circle
+          cx={58} cy={58} r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={8}
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          style={{ transition: "stroke-dashoffset 1s cubic-bezier(0.34,1.56,0.64,1)" }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span
+          className="text-[30px] font-bold leading-none"
+          style={{ color: "var(--oc-text-1)", letterSpacing: "-0.03em" }}
+        >
+          {score}
+        </span>
+        <span
+          className="text-[10px] font-bold mt-0.5"
+          style={{ color, letterSpacing: "0.10em" }}
+        >
+          {label}
+        </span>
+      </div>
+    </div>
+  );
 }
 
-/** Determine the single most important next action. */
-function nextBestAction(opts: {
-  draftCount: number;
-  openTaskCount: number;
-  recentMatchCount: number;
-  lastActivity: Activity | undefined;
-  clientName: string;
-}): { icon: React.ReactNode; title: string; subtitle: string; href?: string; action?: string } {
-  const { draftCount, openTaskCount, recentMatchCount, lastActivity, clientName } = opts;
-  const daysSince = lastActivity
-    ? differenceInDays(new Date(), new Date(lastActivity.created_at))
-    : 999;
-
-  if (draftCount > 0) {
-    return {
-      icon: <Sparkles size={18} style={{ color: "#A78BFA" }} />,
-      title: "Review AI draft",
-      subtitle: `Aria drafted a message for ${clientName}`,
-      action: "inbox",
-    };
-  }
-
-  if (recentMatchCount > 0) {
-    return {
-      icon: <Mail size={18} style={{ color: "#3B82F6" }} />,
-      title: "Send property update",
-      subtitle: `${recentMatchCount} new match${recentMatchCount !== 1 ? "es" : ""} in the last 24h`,
-      action: "inbox",
-    };
-  }
-
-  if (daysSince >= 14) {
-    return {
-      icon: <MessageSquare size={18} style={{ color: "#22c55e" }} />,
-      title: `Check in with ${clientName}`,
-      subtitle: `Last contact was ${daysSince} days ago`,
-      action: "inbox",
-    };
-  }
-
-  if (openTaskCount > 0) {
-    return {
-      icon: <CheckSquare size={18} style={{ color: "#f59e0b" }} />,
-      title: `Complete ${openTaskCount} open task${openTaskCount !== 1 ? "s" : ""}`,
-      subtitle: "Stay on top of next steps",
-      action: "tasks",
-    };
-  }
-
-  return {
-    icon: <Calendar size={18} style={{ color: "#9CA3AF" }} />,
-    title: "Schedule a showing",
-    subtitle: "Keep the momentum going",
-    href: "/showings",
-  };
-}
-
-// ── Component ─────────────────────────────────────────────────────────────────
+// ── Component ──────────────────────────────────────────────────────────────────
 
 export function ClientDetail({
   client,
   recentActivities,
   draftCount,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  lastDraftBody: _lastDraft,
-  openTaskCount,
+  lastDraftBody: _lastDraftBody, // eslint-disable-line @typescript-eslint/no-unused-vars
+  openTaskCount: _openTaskCount, // eslint-disable-line @typescript-eslint/no-unused-vars
   recentMatchCount,
   matchedProperties,
 }: ClientDetailProps) {
@@ -224,34 +282,48 @@ export function ClientDetail({
   const [summaryLoading, setSummaryLoading] = useState(true);
   const summaryFetched = useRef(false);
 
-  const id         = String(client.id ?? "");
-  const name       = String(client.name ?? "Client");
-  const status     = (client.status as string | null) ?? null;
-  const budgetMin  = (client.budget_min as number | null) ?? null;
-  const budgetMax  = (client.budget_max as number | null) ?? null;
-  const bedsWanted = (client.beds_wanted as number | null) ?? null;
+  const id          = String(client.id ?? "");
+  const name        = String(client.name ?? "Client");
+  const firstName   = name.split(" ")[0];
+  const status      = (client.status as string | null) ?? null;
+  const budgetMin   = (client.budget_min as number | null) ?? null;
+  const budgetMax   = (client.budget_max as number | null) ?? null;
+  const bedsWanted  = (client.beds_wanted as number | null) ?? null;
   const bathsWanted = (client.baths_wanted as number | null) ?? null;
-  const town       = (client.town as string | null) ?? null;
-  const phone      = (client.phone as string | null) ?? null;
-  const email      = (client.email as string | null) ?? null;
-  const notes      = (client.notes as string | null) ?? null;
-  const tags       = (client.tags as string[] | null) ?? [];
+  const town        = (client.town as string | null) ?? null;
+  const phone       = (client.phone as string | null) ?? null;
+  const email       = (client.email as string | null) ?? null;
+  const notes       = (client.notes as string | null) ?? null;
+  const source      = (client.source as string | null) ?? null;
   const clientEmail = email ?? "";
 
-  const budget     = budgetDisplay(budgetMin, budgetMax);
-  const initial    = initialsOf(name);
+  const budget = budgetDisplay(budgetMin, budgetMax);
+  const initial = initialsOf(name);
   const lastActivity = recentActivities[0];
 
-  const readiness  = computeReadiness(client, lastActivity);
-  const nba        = nextBestAction({
-    draftCount,
-    openTaskCount,
-    recentMatchCount,
-    lastActivity,
-    clientName: name,
-  });
+  const daysSinceContact = lastActivity
+    ? differenceInDays(new Date(), new Date(lastActivity.created_at))
+    : null;
 
-  // Fetch AI summary on mount
+  const hasBudget = !!(budgetMin || budgetMax);
+
+  const readiness = computeReadiness(
+    daysSinceContact,
+    recentMatchCount,
+    hasBudget,
+    !!town,
+    !!bedsWanted,
+  );
+
+  const nextAction = computeNextAction(
+    firstName,
+    daysSinceContact,
+    matchedProperties.length,
+    hasBudget,
+    draftCount,
+  );
+
+  // ── AI summary fetch ──
   useEffect(() => {
     if (summaryFetched.current) return;
     summaryFetched.current = true;
@@ -261,13 +333,10 @@ export function ClientDetail({
       status ? `Status: ${status}` : null,
       budget ? `Budget: ${budget}` : null,
       town ? `Looking in: ${town}` : null,
-      bedsWanted ? `Wants: ${bedsWanted}bd` : null,
-      lastActivity
-        ? `Last contact: ${relTime(lastActivity.created_at)}`
-        : "No prior contact",
-      recentMatchCount > 0
-        ? `${recentMatchCount} new property match${recentMatchCount !== 1 ? "es" : ""} today`
-        : null,
+      bedsWanted ? `Wants ${bedsWanted}bd` : null,
+      lastActivity ? `Last contact ${relTime(lastActivity.created_at)}` : "No prior contact",
+      recentMatchCount > 0 ? `${recentMatchCount} new property matches` : null,
+      draftCount > 0 ? `${draftCount} AI draft pending` : null,
     ]
       .filter(Boolean)
       .join(". ");
@@ -279,520 +348,458 @@ export function ClientDetail({
         messages: [
           {
             role: "user",
-            content: `Write a 2-sentence agent briefing about this client. Be specific, factual, and actionable. No filler. Context: ${context}`,
+            content: `You are a briefing assistant for a real estate agent. Write 2 short sentences about this client — their situation and what the agent should do next. Be direct and specific. Context: ${context}`,
           },
         ],
       }),
     })
       .then((r) => r.json())
-      .then((d: { reply?: string }) => {
-        setSummary(d.reply ?? "");
-      })
+      .then((d: { reply?: string }) => setSummary(d.reply ?? ""))
       .catch(() => setSummary(""))
       .finally(() => setSummaryLoading(false));
-  }, [name, status, budget, town, bedsWanted, lastActivity, recentMatchCount]);
+  }, [name, status, budget, town, bedsWanted, lastActivity, recentMatchCount, draftCount]);
 
-  // ── NBA action handler ───────────────────────────────────────────────────
-  function handleNba() {
-    if (nba.action === "inbox") { setInboxOpen(true); return; }
-    if (nba.action === "tasks") { router.push(`/clients/${id}/tasks`); return; }
-    if (nba.href) router.push(nba.href);
+  // ── Action handlers ──
+  function handlePrimaryAction() {
+    if (nextAction.primaryType === "inbox" || nextAction.primaryType === "draft") {
+      setInboxOpen(true);
+    } else if (nextAction.primaryType === "edit") {
+      setEditOpen(true);
+    } else if (nextAction.primaryType === "showing") {
+      const addr = matchedProperties[0]?.address ?? "";
+      router.push(`/showings?new=1${addr ? `&address=${encodeURIComponent(addr)}` : ""}`);
+    }
   }
 
-  // ── Render ────────────────────────────────────────────────────────────────
+  function handleSecondaryAction() {
+    const sec = nextAction.secondary;
+    if (sec === "Schedule Showing") {
+      const addr = matchedProperties[0]?.address ?? "";
+      router.push(`/showings?new=1${addr ? `&address=${encodeURIComponent(addr)}` : ""}`);
+    } else if (sec === "Call" && phone) {
+      window.location.href = `tel:${phone.replace(/\D/g, "")}`;
+    } else if (sec === "Draft Message") {
+      setInboxOpen(true);
+    }
+  }
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="min-h-screen pb-[130px]"
-      style={{ background: "#0a0a0b", color: "#f0f0f5" }}
-    >
-      {/* ── Sticky top nav ── */}
-      <div
-        className="sticky top-0 z-30 flex items-center gap-3 px-4 py-3"
-        style={{
-          background: "rgba(10,10,11,0.88)",
-          backdropFilter: "blur(20px)",
-          WebkitBackdropFilter: "blur(20px)",
-          borderBottom: "0.5px solid rgba(255,255,255,0.06)",
-        }}
-      >
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex h-9 w-9 items-center justify-center rounded-full active:bg-white/10"
-          aria-label="Back"
-        >
-          <ArrowLeft size={20} style={{ color: "#9CA3AF" }} />
-        </button>
-        <p
-          className="flex-1 truncate text-[15px] font-semibold"
-          style={{ color: "#ffffff" }}
-        >
-          {name}
-        </p>
-        <button
-          type="button"
-          onClick={() => setEditOpen(true)}
-          className="flex h-9 w-9 items-center justify-center rounded-full active:bg-white/10"
-          aria-label="Edit client"
-        >
-          <Pencil size={17} style={{ color: "#9CA3AF" }} />
-        </button>
-      </div>
+    <>
+      <div className="min-h-screen pb-[120px]" style={{ color: "var(--oc-text-1)" }}>
 
-      <div className="mx-auto max-w-lg px-5 pt-5">
+        {/* ── Sticky nav ── */}
+        <div
+          className="sticky top-0 z-30 flex items-center justify-between px-4 py-3"
+          style={{
+            background: "rgba(12,15,22,0.85)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderBottom: "0.5px solid var(--oc-border-soft)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => router.back()}
+            className="flex h-9 w-9 items-center justify-center rounded-full active:opacity-70"
+            aria-label="Back"
+          >
+            <ArrowLeft size={20} style={{ color: "var(--oc-text-2)" }} />
+          </button>
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            className="flex h-9 w-9 items-center justify-center rounded-full active:opacity-70"
+            aria-label="More options"
+          >
+            <MoreHorizontal size={20} style={{ color: "var(--oc-text-2)" }} />
+          </button>
+        </div>
 
-        {/* ── Hero ── */}
-        <div className="mb-5 flex items-center gap-4">
-          {/* Avatar with readiness ring */}
-          <div className="relative flex-shrink-0">
-            <svg
-              width="68"
-              height="68"
-              viewBox="0 0 68 68"
-              className="absolute inset-0"
-              style={{ transform: "rotate(-90deg)" }}
-              aria-hidden="true"
-            >
-              <circle cx="34" cy="34" r="30" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3.5" />
-              <circle
-                cx="34"
-                cy="34"
-                r="30"
-                fill="none"
-                stroke={readiness.color}
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                strokeDasharray={`${(readiness.score / 100) * 188} 188`}
-                style={{ opacity: 0.7 }}
-              />
-            </svg>
+        <div className="px-4 pt-5">
+
+          {/* ── Identity header ── */}
+          <div className="flex items-center gap-4 mb-6">
             <div
-              className="flex h-[68px] w-[68px] items-center justify-center rounded-full text-[22px] font-bold text-white"
+              className="flex-shrink-0 flex items-center justify-center rounded-full text-[22px] font-bold"
               style={{
-                background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
+                width: 64,
+                height: 64,
+                background: "rgba(59,130,246,0.16)",
+                color: "var(--oc-blue)",
+                border: "0.5px solid rgba(59,130,246,0.28)",
               }}
             >
               {initial}
             </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
-            <h1
-              className="text-[20px] font-bold leading-tight"
-              style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
-            >
-              {name}
-            </h1>
-            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <div className="min-w-0 flex-1">
+              <h1
+                className="text-[22px] font-bold leading-tight mb-1"
+                style={{ color: "var(--oc-text-1)", letterSpacing: "-0.02em" }}
+              >
+                {name}
+              </h1>
               {status && (
                 <span
-                  className="rounded-full px-2.5 py-0.5 text-[11px] font-semibold capitalize"
+                  className="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase mb-1.5"
                   style={{
-                    background: "rgba(255,255,255,0.08)",
-                    color: "#9CA3AF",
+                    background: "rgba(83,104,120,0.22)",
+                    color: "var(--oc-text-2)",
+                    letterSpacing: "0.08em",
                   }}
                 >
-                  {status}
+                  {status.replace(/_/g, " ")}
                 </span>
               )}
-              {(town || budget) && (
-                <span
-                  className="text-[12px]"
-                  style={{ color: "#6B7280" }}
-                >
-                  {[town?.split(",")[0]?.trim(), budget].filter(Boolean).join(" · ")}
-                </span>
-              )}
-            </div>
-            {/* Readiness */}
-            <div className="mt-1.5 flex items-center gap-1.5">
-              <span
-                className="text-[12px] font-semibold"
-                style={{ color: readiness.color }}
-              >
-                {readiness.label}
-              </span>
-              <span className="text-[11px]" style={{ color: "#4B5563" }}>·</span>
-              <span className="text-[11px]" style={{ color: "#6B7280" }}>
-                {readiness.subLabel}
-              </span>
+              <p className="text-[13px]" style={{ color: "var(--oc-text-3)" }}>
+                {[town?.split(",")[0]?.trim(), budget].filter(Boolean).join(" · ")}
+                {lastActivity && (
+                  <> · Last contact {relTime(lastActivity.created_at)}</>
+                )}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* ── AI Summary ── */}
-        <div
-          className="mb-4 rounded-2xl p-4"
-          style={{
-            background: "rgba(167,139,250,0.07)",
-            border: "0.5px solid rgba(167,139,250,0.18)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-2">
-            {/* Aria logo */}
-            <svg viewBox="0 0 200 200" width="14" height="14" aria-hidden="true">
-              <defs>
-                <linearGradient id="cd-aria-grad" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#A78BFA" />
-                  <stop offset="100%" stopColor="#7C3AED" />
-                </linearGradient>
-              </defs>
-              <path
-                d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z"
-                fill="url(#cd-aria-grad)"
-              />
-            </svg>
-            <span
-              className="text-[11px] font-semibold uppercase"
-              style={{ color: "#A78BFA", letterSpacing: "0.06em" }}
-            >
-              Aria Summary
-            </span>
-          </div>
-          {summaryLoading ? (
-            <div className="space-y-2">
-              <div
-                className="h-3.5 rounded-full animate-pulse"
-                style={{ background: "rgba(255,255,255,0.08)", width: "92%" }}
-              />
-              <div
-                className="h-3.5 rounded-full animate-pulse"
-                style={{ background: "rgba(255,255,255,0.08)", width: "76%" }}
-              />
-            </div>
-          ) : summary ? (
-            <p
-              className="text-[13px] italic leading-relaxed"
-              style={{ color: "#C4B5FD" }}
-            >
-              {summary}
-            </p>
-          ) : (
-            <p className="text-[13px]" style={{ color: "#6B7280" }}>
-              No summary available.
-            </p>
-          )}
-        </div>
-
-        {/* ── Next Best Action ── */}
-        <button
-          type="button"
-          onClick={handleNba}
-          className="mb-4 w-full text-left rounded-2xl p-4 active:opacity-80 transition-opacity"
-          style={{
-            background: "rgba(255,255,255,0.04)",
-            border: "0.5px solid rgba(255,255,255,0.10)",
-          }}
-        >
-          <p
-            className="mb-2 text-[11px] font-semibold uppercase"
-            style={{ color: "#6B7280", letterSpacing: "0.08em" }}
-          >
-            Next Best Action
-          </p>
-          <div className="flex items-center gap-3">
-            <div
-              className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-              style={{ background: "rgba(255,255,255,0.07)" }}
-            >
-              {nba.icon}
-            </div>
+          {/* ── 1. Readiness Score ── */}
+          <div className="oc-card-elevated mb-3 px-5 py-5 flex items-center gap-5">
+            <ScoreRing
+              score={readiness.score}
+              color={readiness.color}
+              label={readiness.label}
+            />
             <div className="min-w-0 flex-1">
               <p
-                className="text-[14px] font-semibold"
-                style={{ color: "#ffffff" }}
+                className="text-[11px] font-semibold uppercase mb-3"
+                style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
               >
-                {nba.title}
+                Readiness
               </p>
-              <p className="mt-0.5 text-[12px]" style={{ color: "#9CA3AF" }}>
-                {nba.subtitle}
-              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {readiness.signals.map((s) => (
+                  <span
+                    key={s}
+                    className="rounded-full px-2.5 py-1 text-[11px] font-medium"
+                    style={{
+                      background: "rgba(255,255,255,0.06)",
+                      color: "var(--oc-text-2)",
+                      border: "0.5px solid var(--oc-border-soft)",
+                    }}
+                  >
+                    {s}
+                  </span>
+                ))}
+              </div>
             </div>
-            <ChevronRight size={18} style={{ color: "#4B5563", flexShrink: 0 }} />
           </div>
-        </button>
 
-        {/* ── Matched Properties ── */}
-        {matchedProperties.length > 0 && (
-          <div className="mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <p
+          {/* ── 2. Aria Summary ── */}
+          <div className="oc-card px-4 py-4 mb-3">
+            <div className="flex items-center gap-2 mb-2.5">
+              <Sparkles size={13} style={{ color: "var(--oc-blue)" }} />
+              <span
                 className="text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
               >
-                Matched Properties
-              </p>
-              <Link
-                href="/properties"
-                className="text-[12px] font-medium"
-                style={{ color: "#3B82F6" }}
-              >
-                See all →
-              </Link>
+                Aria
+              </span>
             </div>
-            <div
-              className="flex gap-3 overflow-x-auto pb-1"
-              style={{ scrollbarWidth: "none" }}
-            >
-              {matchedProperties.map((prop) => (
-                <Link
-                  key={prop.id}
-                  href={`/properties/${prop.id}`}
-                  className="flex-shrink-0 rounded-xl p-3 active:opacity-80"
-                  style={{
-                    width: 160,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "0.5px solid rgba(255,255,255,0.10)",
-                  }}
+            {summaryLoading ? (
+              <div className="space-y-2">
+                <div
+                  className="h-3 rounded-full animate-pulse"
+                  style={{ background: "rgba(255,255,255,0.07)", width: "90%" }}
+                />
+                <div
+                  className="h-3 rounded-full animate-pulse"
+                  style={{ background: "rgba(255,255,255,0.07)", width: "68%" }}
+                />
+              </div>
+            ) : (
+              <p className="text-[13px] leading-relaxed italic" style={{ color: "var(--oc-text-2)" }}>
+                {summary || "No summary available."}
+              </p>
+            )}
+          </div>
+
+          {/* ── 3. Next Best Action ── */}
+          <div
+            className="oc-card-elevated mb-3 overflow-hidden"
+            style={{ borderLeft: "2.5px solid var(--oc-blue)" }}
+          >
+            <div className="px-4 py-4">
+              <p
+                className="text-[11px] font-semibold uppercase mb-1.5"
+                style={{ color: "var(--oc-text-3)", letterSpacing: "0.08em" }}
+              >
+                Next Best Action
+              </p>
+              <p
+                className="text-[17px] font-bold mb-1"
+                style={{ color: "var(--oc-text-1)", letterSpacing: "-0.01em" }}
+              >
+                {nextAction.title}
+              </p>
+              <p className="text-[13px] leading-snug mb-4" style={{ color: "var(--oc-text-2)" }}>
+                {nextAction.reason}
+              </p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={handlePrimaryAction}
+                  className="flex-1 rounded-2xl py-3 text-[14px] font-semibold text-white active:opacity-80"
+                  style={{ background: "var(--oc-blue)" }}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  {nextAction.primary}
+                </button>
+                {nextAction.secondary && (
+                  <button
+                    type="button"
+                    onClick={handleSecondaryAction}
+                    className="flex-1 rounded-2xl py-3 text-[14px] font-semibold active:opacity-70"
+                    style={{
+                      background: "rgba(255,255,255,0.07)",
+                      color: "var(--oc-text-1)",
+                      border: "0.5px solid var(--oc-border-soft)",
+                    }}
+                  >
+                    {nextAction.secondary}
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* ── 4. Matched Properties ── */}
+          {matchedProperties.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-[13px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
+                  Matched Properties
+                </p>
+                <Link
+                  href="/listings"
+                  className="text-[13px] font-medium"
+                  style={{ color: "var(--oc-blue)" }}
+                >
+                  See all →
+                </Link>
+              </div>
+              <div
+                className="flex gap-3 overflow-x-auto pb-1"
+                style={{ scrollbarWidth: "none" }}
+              >
+                {matchedProperties.map((prop) => (
+                  <Link
+                    key={prop.id}
+                    href={`/properties/${prop.id}`}
+                    className="flex-shrink-0 oc-card active:opacity-70"
+                    style={{ width: 168, display: "block", padding: 14 }}
+                  >
                     <span
-                      className="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                      className="inline-block rounded-full px-2 py-0.5 text-[11px] font-semibold mb-2"
                       style={{
-                        background:
-                          prop.score >= 80
-                            ? "rgba(34,197,94,0.15)"
-                            : "rgba(234,179,8,0.15)",
-                        color: prop.score >= 80 ? "#22c55e" : "#eab308",
+                        background: prop.score >= 80
+                          ? "rgba(26,155,94,0.18)"
+                          : "rgba(196,126,26,0.16)",
+                        color: prop.score >= 80 ? "#1A9B5E" : "#C47E1A",
                       }}
                     >
-                      {prop.score}
+                      {prop.score}% match
                     </span>
-                  </div>
-                  <p
-                    className="text-[13px] font-semibold leading-tight mb-1 line-clamp-2"
-                    style={{ color: "#ffffff" }}
-                  >
-                    {prop.address ?? "Property"}
-                  </p>
-                  {prop.price && (
-                    <p className="text-[12px] font-medium" style={{ color: "#3B82F6" }}>
-                      {fmtMoney(prop.price)}
+                    <p
+                      className="text-[13px] font-semibold leading-tight mb-1 line-clamp-2"
+                      style={{ color: "var(--oc-text-1)" }}
+                    >
+                      {prop.address ?? "Property"}
                     </p>
-                  )}
-                  <p className="mt-0.5 text-[11px]" style={{ color: "#6B7280" }}>
-                    {[prop.beds && `${prop.beds}bd`, prop.baths && `${prop.baths}ba`]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                </Link>
-              ))}
+                    {prop.price && (
+                      <p className="text-[12px] font-semibold" style={{ color: "var(--oc-blue)" }}>
+                        {fmtMoney(prop.price)}
+                      </p>
+                    )}
+                    <p className="mt-0.5 text-[11px]" style={{ color: "var(--oc-text-3)" }}>
+                      {[prop.beds && `${prop.beds} bd`, prop.baths && `${prop.baths} ba`]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </p>
+                  </Link>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* ── Timeline ── */}
-        {recentActivities.length > 0 && (
-          <div className="mb-5">
-            <div className="flex items-center justify-between mb-3">
-              <p
-                className="text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
-              >
-                Timeline
-              </p>
-              <Link
-                href={`/clients/${id}/activity`}
-                className="text-[12px] font-medium"
-                style={{ color: "#3B82F6" }}
-              >
-                View all →
-              </Link>
-            </div>
-            <div
-              className="rounded-2xl overflow-hidden"
-              style={{
-                background: "rgba(255,255,255,0.03)",
-                border: "0.5px solid rgba(255,255,255,0.08)",
-              }}
-            >
-              {recentActivities.map((a, i) => {
-                const dot   = activityDot(a);
-                const label = activityLabel(a);
-                const time  = relTime(a.created_at);
-                return (
-                  <div
-                    key={a.id}
-                    className="flex items-start gap-3 px-4 py-3"
-                    style={
-                      i > 0
-                        ? { borderTop: "0.5px solid rgba(255,255,255,0.06)" }
-                        : {}
-                    }
-                  >
+          {/* ── 5. Timeline ── */}
+          {recentActivities.length > 0 && (
+            <div className="mb-3">
+              <div className="flex items-center justify-between mb-2.5">
+                <p className="text-[13px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
+                  Timeline
+                </p>
+                <Link
+                  href={`/clients/${id}/activity`}
+                  className="text-[13px] font-medium"
+                  style={{ color: "var(--oc-blue)" }}
+                >
+                  View all →
+                </Link>
+              </div>
+              <div className="oc-card overflow-hidden">
+                {recentActivities.slice(0, 5).map((a, i) => {
+                  const cfg = activityIconConfig(a.type);
+                  return (
                     <div
-                      className="mt-[5px] h-2 w-2 flex-shrink-0 rounded-full"
-                      style={{ background: DOT_COLORS[dot] }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-baseline justify-between gap-2">
+                      key={a.id}
+                      className="flex items-center gap-3 px-4 py-3"
+                      style={i > 0 ? { borderTop: "0.5px solid var(--oc-border-soft)" } : {}}
+                    >
+                      <div
+                        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+                        style={{ background: cfg.bg, color: cfg.color }}
+                      >
+                        {cfg.icon}
+                      </div>
+                      <div className="min-w-0 flex-1">
                         <p
                           className="text-[13px] font-medium"
-                          style={{ color: "#e0e0e5" }}
+                          style={{ color: "var(--oc-text-1)" }}
                         >
-                          {label}
+                          {activityLabel(a)}
                         </p>
-                        {time && (
-                          <p
-                            className="flex-shrink-0 text-[11px]"
-                            style={{ color: "#4B5563" }}
-                          >
-                            {time}
+                        {a.body && (
+                          <p className="text-[12px] truncate" style={{ color: "var(--oc-text-3)" }}>
+                            {a.body.slice(0, 60)}
                           </p>
                         )}
                       </div>
-                      {a.body && (
-                        <p
-                          className="mt-0.5 line-clamp-1 text-[12px] leading-relaxed"
-                          style={{ color: "#6B7280" }}
-                        >
-                          {a.body}
-                        </p>
-                      )}
+                      <span
+                        className="text-[11px] flex-shrink-0"
+                        style={{ color: "var(--oc-text-3)" }}
+                      >
+                        {relTime(a.created_at)}
+                      </span>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {/* ── Stat tiles ── */}
-        <div className="mb-5 grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setInboxOpen(true)}
-            className="text-left rounded-2xl p-4 active:opacity-80"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <p
-              className="text-[11px] font-semibold uppercase mb-2"
-              style={{ color: "#6B7280", letterSpacing: "0.07em" }}
-            >
-              Inbox
-            </p>
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full mb-1"
-              style={{ background: "rgba(59,130,246,0.12)" }}
-            >
-              <Mail size={16} style={{ color: "#3B82F6" }} />
-            </div>
-            <p className="text-[12px]" style={{ color: "#9CA3AF" }}>
-              {clientEmail ? "Open thread →" : "No email"}
-            </p>
-          </button>
-
-          <Link
-            href={`/clients/${id}/tasks`}
-            className="rounded-2xl p-4 active:opacity-80"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <p
-              className="text-[11px] font-semibold uppercase mb-2"
-              style={{ color: "#6B7280", letterSpacing: "0.07em" }}
-            >
-              Tasks
-            </p>
-            <p
-              className="text-[28px] font-bold leading-none mb-0.5"
-              style={{ color: openTaskCount > 0 ? "#f59e0b" : "#48484a" }}
-            >
-              {openTaskCount > 0 ? openTaskCount : "—"}
-            </p>
-            <p className="text-[12px]" style={{ color: "#6B7280" }}>
-              {openTaskCount === 1 ? "open" : openTaskCount > 1 ? "open" : "all done"}
-            </p>
-          </Link>
-        </div>
-
-        {/* ── Profile details (collapsible) ── */}
-        <div
-          className="mb-5 rounded-2xl overflow-hidden"
-          style={{
-            background: "rgba(255,255,255,0.03)",
-            border: "0.5px solid rgba(255,255,255,0.08)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => setProfileOpen((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-4 active:bg-white/5"
-          >
-            <p
-              className="text-[13px] font-semibold"
-              style={{ color: "#ffffff" }}
-            >
-              Profile Details
-            </p>
-            <ChevronDown
-              size={16}
-              style={{
-                color: "#6B7280",
-                transform: profileOpen ? "rotate(180deg)" : "rotate(0deg)",
-                transition: "transform 200ms",
-              }}
-            />
-          </button>
-
-          {profileOpen && (
-            <div
-              className="px-4 pb-4 space-y-3"
-              style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)" }}
-            >
-              {[
-                { label: "Budget", value: budget || "—" },
-                { label: "Town", value: town || "—" },
-                { label: "Bedrooms", value: bedsWanted ? `${bedsWanted} bd` : "—" },
-                { label: "Bathrooms", value: bathsWanted ? `${bathsWanted} ba` : "—" },
-                { label: "Email", value: email || "—" },
-                { label: "Phone", value: phone || "—" },
-              ].map(({ label, value }) => (
-                <div key={label} className="flex items-baseline justify-between gap-4 pt-3"
-                  style={{ borderTop: "0.5px solid rgba(255,255,255,0.05)" }}
-                >
-                  <p className="text-[12px]" style={{ color: "#6B7280" }}>{label}</p>
-                  <p className="text-[13px] font-medium text-right" style={{ color: "#e0e0e5" }}>
-                    {value}
-                  </p>
-                </div>
-              ))}
-              {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5 pt-3"
-                  style={{ borderTop: "0.5px solid rgba(255,255,255,0.05)" }}
-                >
-                  {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="rounded-full px-2.5 py-0.5 text-[11px] font-medium"
-                      style={{
-                        background: "rgba(255,255,255,0.07)",
-                        color: "#9CA3AF",
-                      }}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              {notes && (
-                <div className="pt-3" style={{ borderTop: "0.5px solid rgba(255,255,255,0.05)" }}>
-                  <p className="text-[11px] mb-1" style={{ color: "#6B7280" }}>Notes</p>
-                  <p className="text-[13px] leading-relaxed" style={{ color: "#9CA3AF" }}>
-                    {notes}
-                  </p>
-                </div>
-              )}
+                  );
+                })}
+              </div>
             </div>
           )}
-        </div>
 
+          {/* ── 6. Profile Details (collapsed) ── */}
+          <div className="oc-card mb-3 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setProfileOpen((o) => !o)}
+              className="flex w-full items-center justify-between px-4 py-3.5 active:opacity-70"
+            >
+              <span
+                className="text-[13px] font-semibold"
+                style={{ color: "var(--oc-text-1)" }}
+              >
+                Profile Details
+              </span>
+              {profileOpen
+                ? <ChevronUp size={16} style={{ color: "var(--oc-text-3)" }} />
+                : <ChevronDown size={16} style={{ color: "var(--oc-text-3)" }} />
+              }
+            </button>
+
+            {profileOpen && (
+              <>
+                {(
+                  [
+                    email
+                      ? { label: "Email", value: email, href: `mailto:${email}`, blue: true }
+                      : null,
+                    phone
+                      ? { label: "Phone", value: phone, href: `tel:${phone.replace(/\D/g, "")}`, blue: true }
+                      : null,
+                    town
+                      ? { label: "Location", value: town, href: null, blue: false }
+                      : null,
+                    budget
+                      ? { label: "Budget", value: budget, href: null, blue: false }
+                      : null,
+                    bedsWanted || bathsWanted
+                      ? {
+                          label: "Beds / Baths",
+                          value: [
+                            bedsWanted ? `${bedsWanted} bd` : null,
+                            bathsWanted ? `${bathsWanted}+ ba` : null,
+                          ]
+                            .filter(Boolean)
+                            .join(" · "),
+                          href: null,
+                          blue: false,
+                        }
+                      : null,
+                    source
+                      ? { label: "Source", value: source, href: null, blue: false }
+                      : null,
+                    notes
+                      ? {
+                          label: "Notes",
+                          value: notes.slice(0, 80) + (notes.length > 80 ? "…" : ""),
+                          href: null,
+                          blue: false,
+                        }
+                      : null,
+                  ] as Array<{
+                    label: string;
+                    value: string;
+                    href: string | null;
+                    blue: boolean;
+                  } | null>
+                )
+                  .filter((r): r is NonNullable<typeof r> => r !== null)
+                  .map(({ label, value, href, blue }) => (
+                    <div
+                      key={label}
+                      className="flex items-start justify-between px-4 py-3"
+                      style={{ borderTop: "0.5px solid var(--oc-border-soft)" }}
+                    >
+                      <span className="text-[13px]" style={{ color: "var(--oc-text-3)" }}>
+                        {label}
+                      </span>
+                      {href ? (
+                        <a
+                          href={href}
+                          className="text-[13px] font-medium text-right max-w-[60%] break-all"
+                          style={{ color: blue ? "var(--oc-blue)" : "var(--oc-text-1)" }}
+                        >
+                          {value}
+                        </a>
+                      ) : (
+                        <span
+                          className="text-[13px] text-right max-w-[60%]"
+                          style={{ color: "var(--oc-text-1)" }}
+                        >
+                          {value}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+
+                <div style={{ borderTop: "0.5px solid var(--oc-border-soft)" }}>
+                  <button
+                    type="button"
+                    onClick={() => setEditOpen(true)}
+                    className="flex w-full items-center justify-between px-4 py-3 active:opacity-70"
+                  >
+                    <span
+                      className="text-[13px] font-medium"
+                      style={{ color: "var(--oc-blue)" }}
+                    >
+                      Edit Profile
+                    </span>
+                    <ChevronRight size={14} style={{ color: "var(--oc-text-3)" }} />
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+        </div>
       </div>
 
       {/* ── InboxSheet ── */}
@@ -811,21 +818,21 @@ export function ClientDetail({
           client={{
             id,
             name: (client.name as string | null) ?? null,
-            phone: (client.phone as string | null) ?? null,
-            email: (client.email as string | null) ?? null,
-            status: (client.status as string | null) ?? null,
-            budget_min: (client.budget_min as number | null) ?? null,
-            budget_max: (client.budget_max as number | null) ?? null,
-            town: (client.town as string | null) ?? null,
-            beds_wanted: (client.beds_wanted as number | null) ?? null,
-            baths_wanted: (client.baths_wanted as number | null) ?? null,
+            phone,
+            email,
+            status,
+            budget_min: budgetMin,
+            budget_max: budgetMax,
+            town,
+            beds_wanted: bedsWanted,
+            baths_wanted: bathsWanted,
             lead_score: (client.lead_score as number | null) ?? null,
-            notes: (client.notes as string | null) ?? null,
+            notes,
             client_role: (client.client_role as string | null) ?? null,
           }}
           onClose={() => setEditOpen(false)}
         />
       )}
-    </div>
+    </>
   );
 }
