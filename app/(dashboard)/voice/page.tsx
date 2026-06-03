@@ -1,12 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertCircle, ArrowLeft, Mic, MicOff, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { X, AlertCircle, RefreshCw } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
+type Mode = "chat" | "voice" | "live";
 type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
+type Msg = { role: "user" | "assistant"; content: string; id: string };
 
 type SpeechRecognitionResult = { transcript: string };
 type SpeechRecognitionEvent = {
@@ -30,149 +34,275 @@ declare global {
   }
 }
 
-const CHIPS = [
-  "What's my pipeline today?",
-  "Any new client matches?",
-  "Showings this week?",
-  "Draft a follow-up SMS",
-  "Market update for NJ?",
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const BAR_COUNT = 32;
+const DEFAULT_CHIPS = [
+  "What should I do today?",
+  "Who's my hottest lead?",
+  "Any showings this week?",
+  "Summarize my pipeline",
 ];
 
-// ── Aria "A" logo SVG ─────────────────────────────────────────────────────────
+// ── Aria spark icon — 4-point star in blue gradient ───────────────────────────
 
-function AriaA({ size = 36 }: { size?: number }) {
+function AriaSpark({ size = 40 }: { size?: number }) {
   return (
-    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width={size} height={size} aria-hidden>
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      aria-hidden
+    >
       <defs>
-        <linearGradient id="orb-aria-grad" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-          <stop offset="100%" stopColor="rgba(255,255,255,0.70)" />
+        <linearGradient id="spark-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#60A5FA" />
+          <stop offset="100%" stopColor="#3B82F6" />
         </linearGradient>
       </defs>
+      {/* 4-point star */}
       <path
-        d="M100 28 L168 178 L132 178 L122 152 L78 152 L68 178 L32 178 Z M88 128 L112 128 L100 96 Z"
-        fill="url(#orb-aria-grad)"
+        d="M20 2 L22.5 17.5 L38 20 L22.5 22.5 L20 38 L17.5 22.5 L2 20 L17.5 17.5 Z"
+        fill="url(#spark-grad)"
       />
     </svg>
   );
 }
 
-// ── Orb component ─────────────────────────────────────────────────────────────
+// ── Waveform bars ─────────────────────────────────────────────────────────────
 
-function VoiceOrb({
-  state,
-  onTap,
+function WaveformBars({
+  voiceState,
+  color,
 }: {
-  state: VoiceState;
-  onTap: () => void;
+  voiceState: VoiceState;
+  color: string;
 }) {
-  const isListening = state === "listening";
-  const isSpeaking = state === "speaking";
-  const isThinking = state === "thinking";
-  const isActive = isListening || isSpeaking;
+  const [heights, setHeights] = useState<number[]>(Array(BAR_COUNT).fill(4));
+  const frameRef = useRef<number>(0);
+  const tickRef = useRef(0);
 
-  // Color values
-  const orbColor = isListening ? "#1a9b5e" : "#3a65f0";
-  const glowColor = isListening ? "80,220,120" : "58,101,240";
+  useEffect(() => {
+    let intervalId: ReturnType<typeof setInterval>;
+
+    if (voiceState === "idle") {
+      intervalId = setInterval(() => {
+        tickRef.current += 0.08;
+        setHeights(
+          Array.from({ length: BAR_COUNT }, (_, i) =>
+            4 + 2 * Math.abs(Math.sin(tickRef.current + i * 0.35))
+          )
+        );
+      }, 80);
+    } else if (voiceState === "listening") {
+      intervalId = setInterval(() => {
+        setHeights(
+          Array.from({ length: BAR_COUNT }, (_, i) => {
+            const center = Math.abs(i - BAR_COUNT / 2);
+            const envelope = 1 - center / (BAR_COUNT / 2) * 0.4;
+            return 5 + Math.random() * 38 * envelope;
+          })
+        );
+      }, 70);
+    } else if (voiceState === "thinking") {
+      intervalId = setInterval(() => {
+        tickRef.current += 0.06;
+        setHeights(
+          Array.from({ length: BAR_COUNT }, (_, i) =>
+            6 + 16 * Math.abs(Math.sin(tickRef.current + i * 0.28))
+          )
+        );
+      }, 60);
+    } else if (voiceState === "speaking") {
+      intervalId = setInterval(() => {
+        setHeights(
+          Array.from({ length: BAR_COUNT }, (_, i) => {
+            const center = Math.abs(i - BAR_COUNT / 2);
+            const envelope = 1 - center / (BAR_COUNT / 2) * 0.25;
+            return 4 + Math.random() * 28 * envelope;
+          })
+        );
+      }, 75);
+    } else {
+      // error — flat
+      setHeights(Array(BAR_COUNT).fill(4));
+    }
+
+    const frameSnapshot = frameRef.current;
+    return () => {
+      clearInterval(intervalId);
+      cancelAnimationFrame(frameSnapshot);
+    };
+  }, [voiceState]);
 
   return (
-    <button
-      type="button"
-      onClick={onTap}
-      aria-label={state === "idle" ? "Tap to speak" : "Tap to stop"}
-      className="relative flex items-center justify-center outline-none"
-      style={{ WebkitTapHighlightColor: "transparent" }}
-    >
-      {/* Outermost expanding rings — listening & speaking */}
-      {isActive && (
-        <>
-          <span
-            className="absolute rounded-full"
-            style={{
-              width: 300, height: 300,
-              background: `rgba(${glowColor},0.04)`,
-              animation: "ring-out 2.6s ease-out infinite",
-            }}
-          />
-          <span
-            className="absolute rounded-full"
-            style={{
-              width: 250, height: 250,
-              background: `rgba(${glowColor},0.06)`,
-              animation: "ring-out 2.6s ease-out infinite 0.65s",
-            }}
-          />
-          <span
-            className="absolute rounded-full"
-            style={{
-              width: 200, height: 200,
-              background: `rgba(${glowColor},0.09)`,
-              animation: "ring-out 2.6s ease-out infinite 1.3s",
-            }}
-          />
-        </>
-      )}
-
-      {/* Thinking: slow breathing ring */}
-      {isThinking && (
-        <span
-          className="absolute rounded-full"
+    <div className="flex items-center justify-center gap-[3px]" style={{ height: 64 }}>
+      {heights.map((h, i) => (
+        <motion.div
+          key={i}
+          animate={{ height: h }}
+          transition={{ type: "spring", stiffness: 280, damping: 18, mass: 0.6 }}
           style={{
-            width: 196, height: 196,
-            border: "0.5px solid rgba(58,101,240,0.15)",
-            animation: "breathe 2.2s ease-in-out infinite",
+            width: 3,
+            borderRadius: 3,
+            background: color,
+            flexShrink: 0,
           }}
         />
+      ))}
+    </div>
+  );
+}
+
+// ── Chat bubble ───────────────────────────────────────────────────────────────
+
+function ChatBubble({ msg }: { msg: Msg }) {
+  const isUser = msg.role === "user";
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10, scale: 0.97 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ type: "spring", stiffness: 340, damping: 26 }}
+      className={`flex ${isUser ? "justify-end" : "justify-start"}`}
+    >
+      {!isUser && (
+        <div
+          className="h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
+          style={{ background: "rgba(59,130,246,0.16)" }}
+        >
+          <AriaSpark size={16} />
+        </div>
       )}
+      <div
+        className="max-w-[80%] rounded-[18px] px-4 py-2.5 text-[14px] leading-relaxed"
+        style={
+          isUser
+            ? {
+                background: "var(--oc-blue)",
+                color: "#fff",
+                borderBottomRightRadius: 4,
+              }
+            : {
+                background: "var(--oc-surface-1)",
+                border: "0.5px solid var(--oc-border-soft)",
+                color: "var(--oc-text-1)",
+                borderBottomLeftRadius: 4,
+              }
+        }
+      >
+        {msg.content}
+      </div>
+    </motion.div>
+  );
+}
 
-      {/* Outer static ring */}
-      <span
-        className="absolute rounded-full transition-all duration-700"
-        style={{
-          width: 180, height: 180,
-          border: `0.5px solid ${orbColor}18`,
-          transform: isActive ? "scale(1.06)" : "scale(1)",
-        }}
-      />
+// ── Live mode (design shell) ──────────────────────────────────────────────────
 
-      {/* Mid ring */}
-      <span
-        className="absolute rounded-full transition-all duration-700"
-        style={{
-          width: 158, height: 158,
-          border: `0.5px solid ${orbColor}28`,
-        }}
-      />
+function LiveMode({ onExit }: { onExit: () => void }) {
+  const [elapsed, setElapsed] = useState(0);
 
-      {/* Core orb */}
-      <span
-        className="relative flex items-center justify-center rounded-full transition-all duration-700"
+  useEffect(() => {
+    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
+  const ss = String(elapsed % 60).padStart(2, "0");
+
+  return (
+    <motion.div
+      key="live"
+      initial={{ opacity: 0, scale: 0.97 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      transition={{ duration: 0.2 }}
+      className="flex flex-1 flex-col items-center justify-center px-5"
+    >
+      {/* Session card */}
+      <div
+        className="w-full max-w-sm rounded-3xl px-6 py-6 mb-8"
         style={{
-          width: 132, height: 132,
-          background: isListening
-            ? "radial-gradient(circle at 38% 32%, #a0f4c0, #1a9b5e 55%, #158848)"
-            : "radial-gradient(circle at 38% 32%, #8aacff, #3a65f0 55%, #2a48cc)",
-          boxShadow: isListening
-            ? `0 0 0 1px rgba(80,220,120,0.2), 0 0 60px rgba(80,220,120,0.35), 0 20px 80px rgba(0,0,0,0.6)`
-            : `0 0 0 1px rgba(58,101,240,0.2), 0 0 60px rgba(58,101,240,0.35), 0 20px 80px rgba(0,0,0,0.6)`,
-          transform: isThinking
-            ? "scale(0.88)"
-            : isActive
-            ? "scale(1.07)"
-            : "scale(1)",
-          opacity: isThinking ? 0.75 : 1,
+          background: "var(--oc-surface-2)",
+          border: "0.5px solid var(--oc-border-mid)",
+          backdropFilter: "blur(32px) saturate(260%)",
+          WebkitBackdropFilter: "blur(32px) saturate(260%)",
         }}
       >
-        {isThinking ? (
+        <div className="flex items-center gap-3 mb-4">
+          <div
+            className="h-10 w-10 rounded-full flex items-center justify-center"
+            style={{ background: "rgba(59,130,246,0.16)" }}
+          >
+            <AriaSpark size={22} />
+          </div>
+          <div>
+            <p className="text-[15px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
+              Live with Aria
+            </p>
+            <p className="text-[13px] font-mono" style={{ color: "var(--oc-text-3)" }}>
+              {mm}:{ss}
+            </p>
+          </div>
+          {/* Coming soon badge */}
           <span
-            className="block rounded-full border-[1.5px] border-white/25 border-t-white"
-            style={{ width: 30, height: 30, animation: "spin 0.85s linear infinite" }}
-          />
-        ) : (
-          <AriaA size={38} />
-        )}
-      </span>
-    </button>
+            className="ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold uppercase"
+            style={{
+              background: "rgba(196,126,26,0.16)",
+              color: "#C47E1A",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Soon
+          </span>
+        </div>
+
+        <p className="text-[13px] leading-relaxed" style={{ color: "var(--oc-text-3)" }}>
+          Always-on Aria will monitor your business in real time — surfaces
+          opportunities, notifies you on showings, and answers instantly.
+        </p>
+      </div>
+
+      {/* Control pill buttons — Gemini Live inspired */}
+      <div className="flex items-center gap-3">
+        {[
+          { icon: "📷", label: "Camera", disabled: true },
+          { icon: "⬆", label: "Share", disabled: true },
+          { icon: "🎙", label: "Mic", disabled: true },
+        ].map(({ icon, label }) => (
+          <button
+            key={label}
+            type="button"
+            disabled
+            className="flex flex-col items-center gap-1.5 cursor-not-allowed opacity-35"
+          >
+            <div
+              className="h-14 w-14 rounded-2xl flex items-center justify-center text-[20px]"
+              style={{
+                background: "var(--oc-surface-1)",
+                border: "0.5px solid var(--oc-border-soft)",
+              }}
+            >
+              {icon}
+            </div>
+            <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>{label}</span>
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={onExit}
+          className="flex flex-col items-center gap-1.5 active:opacity-70"
+        >
+          <div
+            className="h-14 w-14 rounded-2xl flex items-center justify-center"
+            style={{ background: "#C43838" }}
+          >
+            <X size={22} color="#fff" />
+          </div>
+          <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>End</span>
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
@@ -180,62 +310,120 @@ function VoiceOrb({
 
 export default function VoicePage() {
   const router = useRouter();
-  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
-  const [supported, setSupported] = useState(true);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [transcript, setTranscript] = useState<string>("");
-  const [lastReply, setLastReply] = useState<string>("");
+  const supabase = createClient();
 
+  // ── Mode & voice state ──
+  const [mode, setMode] = useState<Mode>("chat");
+  const [voiceState, setVoiceState] = useState<VoiceState>("idle");
+
+  // ── Chat ──
+  const [messages, setMessages] = useState<Msg[]>([]);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // ── Voice ──
+  const [transcript, setTranscript] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [micSupported, setMicSupported] = useState(true);
+
+  // ── Agent context ──
+  const [agentName, setAgentName] = useState<string>("");
+  const [chips, setChips] = useState<string[]>(DEFAULT_CHIPS);
+
+  // ── Refs ──
   const recognitionRef = useRef<SpeechRecognitionType | null>(null);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const sourceRef = useRef<AudioBufferSourceNode | null>(null);
   const gotResultRef = useRef(false);
+  const historyRef = useRef<Msg[]>([]);
 
-  // Ambient glow color per state
-  const glowRGB =
-    voiceState === "listening" ? "80,220,120"
-    : voiceState === "error" ? "220,60,60"
-    : "58,101,240";
+  // Keep historyRef in sync with messages
+  useEffect(() => {
+    historyRef.current = messages;
+  }, [messages]);
 
-  // ── Speech recognition setup ────────────────────────────────────────────────
+  // Scroll chat to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  const handleQuery = useCallback(async (text: string) => {
-    setTranscript(text);
-    setVoiceState("thinking");
-    setErrorMsg(null);
-    try {
-      const res = await fetch("/api/ai/voice", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: text }),
-      });
-      if (!res.ok) {
-        const errText = await res.text();
-        console.error("[Aria voice] AI route failed", res.status, errText);
-        setErrorMsg("Couldn't reach Aria — please try again.");
-        setVoiceState("error");
-        return;
+  // ── Fetch agent context on mount ──────────────────────────────────────────
+  useEffect(() => {
+    void (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const [profileRes, clientsRes, showingsRes, draftsRes] = await Promise.allSettled([
+          supabase
+            .from("agent_profiles")
+            .select("full_name")
+            .eq("id", user.id)
+            .maybeSingle(),
+          supabase
+            .from("clients")
+            .select("name, lead_score, town")
+            .eq("agent_id", user.id)
+            .order("lead_score", { ascending: false })
+            .limit(3),
+          supabase
+            .from("showings")
+            .select("address")
+            .eq("agent_id", user.id)
+            .eq("status", "scheduled")
+            .gte("showing_date", new Date().toISOString())
+            .limit(1),
+          supabase
+            .from("activities")
+            .select("id", { count: "exact" })
+            .eq("agent_id", user.id)
+            .eq("ai_draft", true)
+            .eq("approved", false)
+            .eq("sent", false),
+        ]);
+
+        if (profileRes.status === "fulfilled" && profileRes.value.data?.full_name) {
+          setAgentName(profileRes.value.data.full_name.split(" ")[0]);
+        }
+
+        const topClients =
+          clientsRes.status === "fulfilled" ? clientsRes.value.data ?? [] : [];
+        const nextShowing =
+          showingsRes.status === "fulfilled" ? showingsRes.value.data?.[0] : null;
+        const draftCount =
+          draftsRes.status === "fulfilled"
+            ? (draftsRes.value.count ?? draftsRes.value.data?.length ?? 0)
+            : 0;
+
+        // Generate context-aware chips
+        const dynamic: string[] = ["What should I do today?"];
+        if (draftCount > 0) dynamic.push("Review my pending drafts");
+        if (topClients[0]) dynamic.push(`Any updates on ${(topClients[0].name as string).split(" ")[0]}?`);
+        if (nextShowing?.address) dynamic.push(`Prep for ${nextShowing.address as string}`);
+        if (topClients.length > 1) dynamic.push("Who's my hottest lead?");
+        dynamic.push("Summarize my pipeline");
+
+        setChips(dynamic.slice(0, 5));
+      } catch {
+        // Non-fatal — keep default chips
       }
-      const data = await res.json();
-      const reply = String(data.reply ?? "");
-      if (!reply) {
-        setErrorMsg("Aria returned an empty response.");
-        setVoiceState("error");
-        return;
-      }
-      setLastReply(reply);
-      await speak(reply);
-    } catch (e) {
-      console.error("[Aria voice] handleQuery error", e);
-      setErrorMsg("Something went wrong. Tap to try again.");
-      setVoiceState("error");
-    }
+    })();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Greeting text ─────────────────────────────────────────────────────────
+  const greeting = (() => {
+    const h = new Date().getHours();
+    const time = h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";
+    return agentName ? `${time}, ${agentName}.` : "What's on your mind?";
+  })();
+
+  // ── Speech recognition init ───────────────────────────────────────────────
   useEffect(() => {
     const SR = window.SpeechRecognition ?? window.webkitSpeechRecognition;
     if (!SR) {
-      setSupported(false);
+      setMicSupported(false);
       return;
     }
     const r = new SR();
@@ -246,11 +434,9 @@ export default function VoicePage() {
     r.onresult = (e) => {
       gotResultRef.current = true;
       const text = e.results[0][0].transcript;
-      void handleQuery(text);
+      void handleVoiceQuery(text);
     };
-    r.onerror = () => {
-      setVoiceState("idle");
-    };
+    r.onerror = () => setVoiceState("idle");
     r.onend = () => {
       if (!gotResultRef.current) setVoiceState("idle");
       gotResultRef.current = false;
@@ -259,11 +445,10 @@ export default function VoicePage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── TTS ──────────────────────────────────────────────────────────────────────
-
-  async function speak(text: string) {
+  // ── TTS ───────────────────────────────────────────────────────────────────
+  const speak = useCallback(async (text: string) => {
     if (sourceRef.current) {
-      try { sourceRef.current.stop(); } catch { /* already stopped */ }
+      try { sourceRef.current.stop(); } catch { /* stopped */ }
       sourceRef.current = null;
     }
     try {
@@ -273,24 +458,24 @@ export default function VoicePage() {
         body: JSON.stringify({ text }),
       });
       if (!res.ok) throw new Error("TTS failed");
-      const arrayBuffer = await res.arrayBuffer();
+      const buf = await res.arrayBuffer();
       const ctx = audioCtxRef.current!;
       if (ctx.state === "suspended") await ctx.resume();
-      const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+      const audioBuf = await ctx.decodeAudioData(buf);
       const source = ctx.createBufferSource();
-      source.buffer = audioBuffer;
+      source.buffer = audioBuf;
       source.connect(ctx.destination);
       sourceRef.current = source;
       setVoiceState("speaking");
       source.onended = () => { setVoiceState("idle"); sourceRef.current = null; };
       source.start(0);
-    } catch (e) {
-      console.error("speak error — fallback to browser TTS", e);
+    } catch {
+      // Browser TTS fallback
       try {
         const utt = new SpeechSynthesisUtterance(text);
         utt.rate = 1.1;
         const voices = speechSynthesis.getVoices();
-        const fem = voices.find(v => /female|samantha|karen|victoria/i.test(v.name));
+        const fem = voices.find((v) => /female|samantha|karen|victoria/i.test(v.name));
         if (fem) utt.voice = fem;
         setVoiceState("speaking");
         utt.onend = () => setVoiceState("idle");
@@ -299,14 +484,95 @@ export default function VoicePage() {
         setVoiceState("idle");
       }
     }
-  }
+  }, []);
 
-  // ── Controls ─────────────────────────────────────────────────────────────────
+  // ── Call assistant route ──────────────────────────────────────────────────
+  const callAssistant = useCallback(
+    async (question: string, mode: "chat" | "voice"): Promise<string> => {
+      const res = await fetch("/api/ai/assistant", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          question,
+          mode,
+          history: historyRef.current
+            .slice(-6)
+            .map((m) => ({ role: m.role, content: m.content })),
+        }),
+      });
+      if (!res.ok) throw new Error(`Assistant error ${res.status}`);
+      const data = (await res.json()) as { reply?: string };
+      return String(data.reply ?? "");
+    },
+    []
+  );
+
+  // ── Chat: send message ────────────────────────────────────────────────────
+  const sendChat = useCallback(
+    async (text?: string) => {
+      const q = (text ?? input).trim();
+      if (!q || isLoading) return;
+      setInput("");
+      setIsLoading(true);
+      const userMsg: Msg = { role: "user", content: q, id: crypto.randomUUID() };
+      setMessages((prev) => [...prev, userMsg]);
+      try {
+        const reply = await callAssistant(q, "chat");
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: reply, id: crypto.randomUUID() },
+        ]);
+      } catch {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: "Something went wrong reaching Aria. Try again.",
+            id: crypto.randomUUID(),
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [input, isLoading, callAssistant]
+  );
+
+  // ── Voice: handle transcribed query ──────────────────────────────────────
+  const handleVoiceQuery = useCallback(
+    async (text: string) => {
+      setTranscript(text);
+      setVoiceState("thinking");
+      setErrorMsg(null);
+      try {
+        const reply = await callAssistant(text, "voice");
+        if (!reply) {
+          setErrorMsg("Aria returned an empty response.");
+          setVoiceState("error");
+          return;
+        }
+        await speak(reply);
+      } catch {
+        setErrorMsg("Couldn't reach Aria — tap to try again.");
+        setVoiceState("error");
+      }
+    },
+    [callAssistant, speak]
+  );
+
+  // ── Voice controls ────────────────────────────────────────────────────────
+  function ensureAudioCtx() {
+    if (!audioCtxRef.current) {
+      audioCtxRef.current = new AudioContext();
+    } else if (audioCtxRef.current.state === "suspended") {
+      void audioCtxRef.current.resume();
+    }
+  }
 
   function startListening() {
     if (!recognitionRef.current) return;
+    ensureAudioCtx();
     setTranscript("");
-    setLastReply("");
     setErrorMsg(null);
     setVoiceState("listening");
     try { recognitionRef.current.start(); } catch { /* already running */ }
@@ -315,184 +581,414 @@ export default function VoicePage() {
   function stopAll() {
     recognitionRef.current?.stop();
     if (sourceRef.current) {
-      try { sourceRef.current.stop(); } catch { /* already stopped */ }
+      try { sourceRef.current.stop(); } catch { /* stopped */ }
       sourceRef.current = null;
     }
     setVoiceState("idle");
   }
 
-  function handleOrbTap() {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext();
-    } else if (audioCtxRef.current.state === "suspended") {
-      void audioCtxRef.current.resume();
-    }
+  function handleVoiceTap() {
     if (voiceState === "idle" || voiceState === "error") startListening();
     else stopAll();
   }
 
-  function handleChip(text: string) {
-    if (!audioCtxRef.current) {
-      audioCtxRef.current = new AudioContext();
-    }
-    void handleQuery(text);
+  // ── Mic from chat composer — jump to voice mode ───────────────────────────
+  function handleComposerMic() {
+    ensureAudioCtx();
+    setMode("voice");
+    setTimeout(startListening, 150);
   }
 
-  // ── Derived UI ────────────────────────────────────────────────────────────────
+  // ── Mode tab colors ───────────────────────────────────────────────────────
+  const waveColor =
+    voiceState === "listening" ? "#1A9B5E"
+    : voiceState === "error" ? "#C43838"
+    : "var(--oc-blue)";
 
-  const showChips = voiceState === "idle";
-  const stateHint =
+  const stateLabel =
     voiceState === "idle" ? "Tap to speak"
     : voiceState === "listening" ? "Listening…"
     : voiceState === "thinking" ? "Thinking…"
     : voiceState === "speaking" ? "Speaking"
     : "Tap to try again";
 
-  // ── Render ────────────────────────────────────────────────────────────────────
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden"
-      style={{ background: "#040407" }}
+      style={{ background: "#0C0F16", color: "var(--oc-text-1)" }}
     >
-      {/* Ambient background — shifts per state */}
+      {/* Atmospheric glow — shifts blue at bottom */}
       <div
-        className="pointer-events-none absolute inset-0 transition-all duration-1000"
+        className="pointer-events-none absolute inset-0"
         style={{
-          background: `radial-gradient(ellipse 65% 55% at 50% 42%, rgba(${glowRGB},0.10) 0%, transparent 68%)`,
+          background:
+            "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(59,130,246,0.12) 0%, transparent 70%)",
         }}
       />
 
-      {/* ── Top bar ────────────────────────────────────────────────────────── */}
+      {/* ── Top bar ── */}
       <div
-        className="relative z-10 flex w-full items-center justify-between px-5"
+        className="relative z-10 flex w-full items-center justify-between px-5 shrink-0"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 14px)", paddingBottom: 14 }}
       >
-        <span className="text-[13px] font-semibold tracking-[0.12em] uppercase text-white/20">
-          Ask Aria
-        </span>
         <button
           type="button"
           onClick={() => { stopAll(); router.back(); }}
-          className="flex h-9 w-9 items-center justify-center rounded-full text-white/30 transition hover:text-white/60"
-          style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.07)" }}
-        >
-          <X size={15} strokeWidth={2} />
-        </button>
-      </div>
-
-      {/* ── Center: orb zone ───────────────────────────────────────────────── */}
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center">
-
-        {/* Transcript / reply text above orb */}
-        <div className="mb-10 flex min-h-[44px] max-w-[260px] flex-col items-center justify-end gap-1">
-          {transcript && voiceState !== "idle" ? (
-            <p className="text-center text-[13px] font-medium leading-snug text-white/50">
-              &ldquo;{transcript}&rdquo;
-            </p>
-          ) : voiceState === "speaking" && lastReply ? (
-            <p className="text-center text-[13px] font-medium leading-snug text-white/50 line-clamp-2">
-              {lastReply}
-            </p>
-          ) : null}
-        </div>
-
-        {/* Orb */}
-        <VoiceOrb state={voiceState} onTap={handleOrbTap} />
-
-        {/* State hint below orb */}
-        <p
-          className="mt-8 text-[12px] font-medium tracking-[0.10em] uppercase transition-all duration-500"
+          className="flex h-9 w-9 items-center justify-center rounded-full active:opacity-70"
           style={{
-            color:
-              voiceState === "idle" ? "rgba(255,255,255,0.18)"
-              : voiceState === "error" ? "rgba(220,80,80,0.85)"
-              : voiceState === "listening" ? "rgba(80,220,120,0.75)"
-              : "rgba(100,130,255,0.75)",
+            background: "rgba(255,255,255,0.06)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
+          }}
+          aria-label="Close"
+        >
+          <ArrowLeft size={16} style={{ color: "var(--oc-text-2)" }} />
+        </button>
+
+        {/* Mode switcher pill */}
+        <div
+          className="flex gap-0.5 rounded-full p-0.5"
+          style={{
+            background: "rgba(255,255,255,0.06)",
+            border: "0.5px solid rgba(255,255,255,0.08)",
           }}
         >
-          {stateHint}
-        </p>
-
-        {/* Unsupported — mic not available */}
-        {!supported && (
-          <div
-            className="mt-6 flex items-center gap-2 rounded-xl px-4 py-3"
-            style={{ background: "rgba(220,60,60,0.08)", border: "0.5px solid rgba(220,60,60,0.2)" }}
-          >
-            <AlertCircle size={14} className="shrink-0 text-red-400" />
-            <p className="text-[12px] text-red-300">Voice requires Safari on iPhone</p>
-          </div>
-        )}
-
-        {/* API / TTS error banner */}
-        {voiceState === "error" && errorMsg && supported && (
-          <div
-            className="mt-6 flex items-center gap-3 rounded-xl px-4 py-3"
-            style={{ background: "rgba(220,60,60,0.07)", border: "0.5px solid rgba(220,60,60,0.18)" }}
-          >
-            <AlertCircle size={14} className="shrink-0 text-red-400" />
-            <p className="flex-1 text-[12px] text-red-300">{errorMsg}</p>
+          {(["chat", "voice", "live"] as Mode[]).map((m) => (
             <button
+              key={m}
               type="button"
-              onClick={() => { setVoiceState("idle"); setErrorMsg(null); }}
-              className="shrink-0 text-red-400 hover:text-red-200 transition"
-            >
-              <RefreshCw size={13} />
-            </button>
-          </div>
-        )}
-
-      </div>
-
-      {/* ── Prompt chips ───────────────────────────────────────────────────── */}
-      <div
-        className="relative z-10 transition-all duration-400"
-        style={{
-          opacity: showChips ? 1 : 0,
-          pointerEvents: showChips ? "auto" : "none",
-          transform: showChips ? "translateY(0)" : "translateY(8px)",
-        }}
-      >
-        <div
-          className="flex gap-2.5 overflow-x-auto px-5 pb-3"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-        >
-          {CHIPS.map((chip) => (
-            <button
-              key={chip}
-              type="button"
-              onClick={() => handleChip(chip)}
-              className="shrink-0 rounded-full px-4 py-2.5 text-[12px] font-medium text-white/60 transition-all active:scale-95 hover:text-white/90"
-              style={{
-                background: "rgba(255,255,255,0.05)",
-                border: "0.5px solid rgba(255,255,255,0.10)",
-                whiteSpace: "nowrap",
+              onClick={() => {
+                if (m !== "voice") stopAll();
+                setMode(m);
               }}
+              className="rounded-full px-3.5 py-1.5 text-[12px] font-medium capitalize transition-all duration-200"
+              style={
+                mode === m
+                  ? { background: "var(--oc-blue)", color: "#fff" }
+                  : { color: "var(--oc-text-3)" }
+              }
             >
-              {chip}
+              {m}
             </button>
           ))}
         </div>
+
+        <div style={{ width: 36 }} /> {/* spacer to balance top bar */}
       </div>
 
-      {/* ── Bottom spacer — clears the floating bottom nav (≈ 88px) ─────── */}
-      <div style={{ height: "calc(env(safe-area-inset-bottom) + 88px)" }} />
+      {/* ── Mode content ── */}
+      <div className="relative z-10 flex flex-1 flex-col overflow-hidden">
+        <AnimatePresence mode="wait">
 
-      {/* ── Keyframes ─────────────────────────────────────────────────────── */}
-      <style>{`
-        @keyframes ring-out {
-          0%   { transform: scale(1);   opacity: 1; }
-          100% { transform: scale(2.0); opacity: 0; }
-        }
-        @keyframes breathe {
-          0%, 100% { transform: scale(1);    opacity: 0.4; }
-          50%       { transform: scale(1.06); opacity: 0.9; }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+          {/* ══ CHAT MODE ══════════════════════════════════════════════════════ */}
+          {mode === "chat" && (
+            <motion.div
+              key="chat"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-1 flex-col overflow-hidden"
+            >
+              {messages.length === 0 ? (
+                /* ── Empty state: greeting + chips ── */
+                <div className="flex flex-1 flex-col items-center justify-center px-6">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ type: "spring", stiffness: 280, damping: 22, delay: 0.05 }}
+                    className="mb-5"
+                  >
+                    <AriaSpark size={44} />
+                  </motion.div>
+
+                  <motion.h1
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="text-[28px] font-bold text-center mb-1"
+                    style={{ letterSpacing: "-0.02em", color: "var(--oc-text-1)" }}
+                  >
+                    {greeting}
+                  </motion.h1>
+                  <motion.p
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3, delay: 0.15 }}
+                    className="text-[15px] text-center mb-8"
+                    style={{ color: "var(--oc-text-3)" }}
+                  >
+                    What&apos;s on your mind?
+                  </motion.p>
+
+                  {/* Context-aware chips */}
+                  <div className="w-full max-w-sm space-y-2">
+                    {chips.map((chip, i) => (
+                      <motion.button
+                        key={chip}
+                        type="button"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25, delay: 0.18 + i * 0.06 }}
+                        onClick={() => void sendChat(chip)}
+                        className="w-full text-left rounded-2xl px-4 py-3 text-[14px] active:opacity-70"
+                        style={{
+                          background: "var(--oc-surface-1)",
+                          border: "0.5px solid var(--oc-border-soft)",
+                          backdropFilter: "blur(24px) saturate(240%)",
+                          WebkitBackdropFilter: "blur(24px) saturate(240%)",
+                          color: "var(--oc-text-2)",
+                        }}
+                      >
+                        {chip}
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                /* ── Conversation ── */
+                <div className="flex-1 overflow-y-auto px-4 py-2" style={{ scrollbarWidth: "none" }}>
+                  <div className="space-y-3 pb-2">
+                    {messages.map((m) => (
+                      <ChatBubble key={m.id} msg={m} />
+                    ))}
+                    {isLoading && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="flex justify-start"
+                      >
+                        <div
+                          className="rounded-[18px] rounded-bl-[4px] px-4 py-3"
+                          style={{
+                            background: "var(--oc-surface-1)",
+                            border: "0.5px solid var(--oc-border-soft)",
+                          }}
+                        >
+                          {/* Typing dots */}
+                          <div className="flex gap-1.5 items-center h-4">
+                            {[0, 1, 2].map((i) => (
+                              <motion.div
+                                key={i}
+                                animate={{ y: [0, -4, 0] }}
+                                transition={{
+                                  duration: 0.6,
+                                  repeat: Infinity,
+                                  delay: i * 0.15,
+                                }}
+                                className="h-1.5 w-1.5 rounded-full"
+                                style={{ background: "var(--oc-text-3)" }}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+                </div>
+              )}
+
+              {/* ── Bottom composer ── */}
+              <div
+                className="shrink-0 px-4"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)", paddingTop: 12 }}
+              >
+                <div
+                  className="flex items-center gap-2 rounded-full px-4 py-2"
+                  style={{
+                    background: "var(--oc-surface-1)",
+                    border: "0.5px solid var(--oc-border-soft)",
+                    backdropFilter: "blur(24px) saturate(240%)",
+                    WebkitBackdropFilter: "blur(24px) saturate(240%)",
+                  }}
+                >
+                  <input
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        void sendChat();
+                      }
+                    }}
+                    placeholder="Ask Aria…"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none"
+                    style={{
+                      color: "var(--oc-text-1)",
+                    }}
+                    autoComplete="off"
+                    autoCorrect="off"
+                  />
+
+                  {/* Mic button — switches to voice mode */}
+                  {!input.trim() && micSupported && (
+                    <button
+                      type="button"
+                      onClick={handleComposerMic}
+                      className="h-9 w-9 flex items-center justify-center rounded-full flex-shrink-0 active:opacity-70"
+                      style={{ background: "rgba(255,255,255,0.08)" }}
+                      aria-label="Voice input"
+                    >
+                      <Mic size={16} style={{ color: "var(--oc-text-2)" }} />
+                    </button>
+                  )}
+
+                  {/* Send button */}
+                  {input.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => void sendChat()}
+                      disabled={isLoading}
+                      className="h-9 w-9 flex items-center justify-center rounded-full flex-shrink-0 disabled:opacity-40 active:opacity-80"
+                      style={{ background: "var(--oc-blue)" }}
+                      aria-label="Send"
+                    >
+                      <Send size={15} color="#fff" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* ══ VOICE MODE ═════════════════════════════════════════════════════ */}
+          {mode === "voice" && (
+            <motion.div
+              key="voice"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2 }}
+              className="flex flex-1 flex-col items-center"
+            >
+              {/* Transcript card — slides up when present */}
+              <div className="w-full px-5 mb-4" style={{ minHeight: 72 }}>
+                <AnimatePresence>
+                  {(transcript || voiceState === "speaking") && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 8 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                      className="rounded-2xl px-4 py-3 text-[13px] leading-relaxed text-center"
+                      style={{
+                        background: "var(--oc-surface-1)",
+                        border: "0.5px solid var(--oc-border-soft)",
+                        color: "var(--oc-text-2)",
+                        backdropFilter: "blur(24px) saturate(240%)",
+                        WebkitBackdropFilter: "blur(24px) saturate(240%)",
+                      }}
+                    >
+                      {transcript}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Waveform + tap target */}
+              <div className="flex flex-1 flex-col items-center justify-center">
+                <button
+                  type="button"
+                  onClick={handleVoiceTap}
+                  className="flex flex-col items-center gap-6 outline-none active:opacity-80"
+                  aria-label={voiceState === "idle" ? "Tap to speak" : "Tap to stop"}
+                  style={{ WebkitTapHighlightColor: "transparent" }}
+                >
+                  <WaveformBars voiceState={voiceState} color={waveColor} />
+
+                  {/* State label */}
+                  <motion.p
+                    key={voiceState}
+                    initial={{ opacity: 0, y: 4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="text-[12px] font-medium tracking-[0.10em] uppercase"
+                    style={{ color: waveColor === "var(--oc-blue)" ? "rgba(255,255,255,0.22)" : waveColor }}
+                  >
+                    {stateLabel}
+                  </motion.p>
+                </button>
+              </div>
+
+              {/* Error banner */}
+              <AnimatePresence>
+                {voiceState === "error" && errorMsg && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    className="mx-5 mb-4 flex items-center gap-3 rounded-2xl px-4 py-3"
+                    style={{
+                      background: "rgba(196,56,56,0.08)",
+                      border: "0.5px solid rgba(196,56,56,0.22)",
+                    }}
+                  >
+                    <AlertCircle size={14} color="#C43838" className="shrink-0" />
+                    <p className="flex-1 text-[13px]" style={{ color: "#C43838" }}>
+                      {errorMsg}
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Unsupported mic warning */}
+              {!micSupported && (
+                <div
+                  className="mx-5 mb-4 flex items-center gap-2 rounded-2xl px-4 py-3"
+                  style={{
+                    background: "rgba(196,56,56,0.08)",
+                    border: "0.5px solid rgba(196,56,56,0.2)",
+                  }}
+                >
+                  <MicOff size={14} color="#C43838" className="shrink-0" />
+                  <p className="text-[13px]" style={{ color: "#C43838" }}>
+                    Voice requires Safari on iPhone
+                  </p>
+                </div>
+              )}
+
+              {/* Voice controls */}
+              <div
+                className="shrink-0 flex items-center justify-center gap-4 pb-4"
+                style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+              >
+                <button
+                  type="button"
+                  onClick={() => { stopAll(); setMode("chat"); }}
+                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-medium active:opacity-70"
+                  style={{
+                    background: "var(--oc-surface-1)",
+                    border: "0.5px solid var(--oc-border-soft)",
+                    color: "var(--oc-text-2)",
+                  }}
+                >
+                  <ArrowLeft size={14} />
+                  Chat
+                </button>
+
+                {(voiceState === "listening" || voiceState === "speaking") && (
+                  <button
+                    type="button"
+                    onClick={stopAll}
+                    className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-medium active:opacity-70"
+                    style={{ background: "rgba(196,56,56,0.14)", color: "#C43838" }}
+                  >
+                    Stop
+                  </button>
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {/* ══ LIVE MODE ══════════════════════════════════════════════════════ */}
+          {mode === "live" && (
+            <LiveMode key="live" onExit={() => setMode("chat")} />
+          )}
+
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
