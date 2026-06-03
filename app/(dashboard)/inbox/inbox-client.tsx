@@ -461,6 +461,7 @@ function ThreadView({
   const router = useRouter();
   const toast = useToast();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Default to SMS if phone exists, Email if only email, else SMS
   const defaultChannel: ThreadChannel =
@@ -492,7 +493,58 @@ function ThreadView({
     return [];
   }, [allChronological, activeChannel]);
 
-  // Scroll to bottom on open and channel switch
+  // ── iOS viewport management ────────────────────────────────────────────────
+  //
+  // Three problems with naive `position: fixed; height: 100dvh` on iOS Safari:
+  //
+  // 1. Body scroll: globals.css sets `overflow-y: auto` on the body, so when
+  //    iOS focuses an input inside a fixed overlay, it scrolls the underlying
+  //    document to bring the input into view. This shifts the layout viewport
+  //    and makes the fixed container appear displaced. Fix: lock body scroll.
+  //
+  // 2. dvh lag: `100dvh` is resolved at paint time, not during the keyboard
+  //    animation. The container stays full-height for the entire animation
+  //    while the keyboard slides up, hiding the composer. Fix: listen to
+  //    window.visualViewport "resize" which fires *during* the animation.
+  //
+  // 3. offsetTop drift: `position: fixed; top: 0` is relative to the layout
+  //    viewport, not the visual viewport. When iOS scrolls the layout viewport
+  //    (problem 1), top: 0 no longer aligns with what the user sees. Fix: set
+  //    container top = visualViewport.offsetTop explicitly.
+  //
+  useEffect(() => {
+    // Lock body scroll for the lifetime of the thread view.
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    function syncToViewport() {
+      const vv = window.visualViewport;
+      const el = containerRef.current;
+      if (!el || !vv) return;
+      // Align container to the exact visual viewport rectangle.
+      // This corrects for both keyboard appearance and any layout scroll drift.
+      el.style.top = `${vv.offsetTop}px`;
+      el.style.height = `${vv.height}px`;
+      // Keep last message visible after keyboard appears.
+      requestAnimationFrame(() => {
+        if (scrollRef.current) {
+          scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+        }
+      });
+    }
+
+    window.visualViewport?.addEventListener("resize", syncToViewport);
+    window.visualViewport?.addEventListener("scroll", syncToViewport);
+    syncToViewport(); // Set immediately so initial render is correct
+
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.visualViewport?.removeEventListener("resize", syncToViewport);
+      window.visualViewport?.removeEventListener("scroll", syncToViewport);
+    };
+  }, []);
+
+  // Scroll to bottom on open and when switching channels
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
       if (scrollRef.current) {
@@ -608,10 +660,13 @@ function ThreadView({
   return (
     // z-[60] above AppHeader (z-30) and BottomNav (z-50).
     // PageShell bypasses /inbox — fixed positioning is viewport-relative.
-    // height: 100dvh = dynamic viewport height; shrinks when iOS keyboard opens.
+    // Initial height: 100dvh is the SSR/paint fallback.
+    // The visualViewport useEffect above updates top + height in real time,
+    // tracking keyboard appearance and layout viewport drift on iOS Safari.
     <div
-      className="fixed top-0 left-0 right-0 z-[60] flex flex-col overflow-hidden"
-      style={{ height: "100dvh", background: "#0C0F16", color: "var(--oc-text-1)" }}
+      ref={containerRef}
+      className="fixed left-0 right-0 z-[60] flex flex-col overflow-hidden"
+      style={{ top: 0, height: "100dvh", background: "#0C0F16", color: "var(--oc-text-1)" }}
     >
       {/* ── Header + channel tabs ── */}
       <div
@@ -691,10 +746,12 @@ function ThreadView({
       </div>
 
       {/* ── Messages scroll area ── */}
+      {/* overscrollBehavior: none — prevents iOS rubber-band on the page behind  */}
+      {/* the thread, which is the key "feels like a website" tell.               */}
       <div
         ref={scrollRef}
         className="flex-1 min-h-0 overflow-y-auto px-4 pt-4"
-        style={{ scrollbarWidth: "none", paddingBottom: 12 }}
+        style={{ scrollbarWidth: "none", paddingBottom: 16, overscrollBehavior: "none" }}
       >
         {/* WhatsApp — external deep link only */}
         {activeChannel === "whatsapp" ? (
