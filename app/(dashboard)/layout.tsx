@@ -1,7 +1,7 @@
-import { AppHeader } from "@/components/AppHeader";
-import { AutomationRunner } from "@/components/AutomationRunner";
-import { BottomNav } from "@/components/BottomNav";
-import { PageShell } from "@/components/PageShell";
+// Dashboard layout — auth gate only.
+// All structural chrome (header, nav, page shell) lives in AppShell.
+
+import { AppShell } from "@/components/AppShell";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 
@@ -19,12 +19,5 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  return (
-    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden pb-24">
-      <AutomationRunner />
-      <AppHeader />
-      <PageShell>{children}</PageShell>
-      <BottomNav />
-    </div>
-  );
+  return <AppShell>{children}</AppShell>;
 }

@@ -1,12 +1,19 @@
 "use client";
 
+// PageShell — replays the page-enter fade on every route change.
+//
+// Previously this animation used transform: translateY(6px), which created a
+// CSS containing block. Any fixed-positioned child (full-screen overlays, chat
+// thread views, voice screen) was positioned relative to this shell instead of
+// the viewport — causing broken layouts on /inbox and /voice.
+//
+// The fix: page-enter now uses opacity only (see globals.css). Opacity does NOT
+// create a containing block, so fixed children are always viewport-relative.
+// The /voice and /inbox bypass list has been removed — no longer needed.
+
 import { usePathname } from "next/navigation";
 import { useEffect, useRef } from "react";
 
-/**
- * Wraps page content and replays the page-enter animation on every route change.
- * This gives tab switches the native "slide up + fade in" feel without a router library.
- */
 export function PageShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const ref = useRef<HTMLDivElement>(null);
@@ -14,19 +21,10 @@ export function PageShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    // Force re-animation by removing and re-adding the class
     el.classList.remove("page-enter");
-    // Trigger reflow
-    void el.offsetWidth;
+    void el.offsetWidth; // force reflow so the animation replays
     el.classList.add("page-enter");
   }, [pathname]);
-
-  // The page-enter animation uses CSS transform, which creates a new containing
-  // block for fixed-positioned children (browser spec). Pages that render
-  // fixed inset-0 overlays must be viewport-relative — skip the wrapper there.
-  if (pathname === "/voice" || pathname === "/inbox") {
-    return <>{children}</>;
-  }
 
   return (
     <div ref={ref} className="page-enter">

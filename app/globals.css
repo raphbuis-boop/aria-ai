@@ -58,6 +58,10 @@ html {
   /* Overscroll area = Onyx — no white flash on rubber-band scroll */
   background: var(--oc-onyx);
   touch-action: manipulation;
+  /* Global horizontal overflow safeguard — prevents any element from widening
+     the page and causing a horizontal scrollbar or content clip on mobile. */
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -141,16 +145,15 @@ a:active, button:active, [role="button"]:active {
   opacity: 0.82;
 }
 
-/* Page enter animation — plays on every route mount */
+/* Page enter animation — plays on every route mount.
+   Uses opacity only — NOT transform.
+   Reason: any CSS transform on a parent creates a new containing block,
+   which breaks fixed-positioned children (they clip to the transformed
+   ancestor instead of the viewport). Opacity does not have this side effect.
+   The /voice and /inbox bypass list in PageShell has been removed. */
 @keyframes page-enter {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
 .page-enter {
