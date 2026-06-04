@@ -180,10 +180,9 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
       style={{
         background: `
           radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
-          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent),
-          #000000
+          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent)
         `,
-        color: "#ffffff",
+        color: "var(--oc-text-1)",
       }}
     >
       <div className="px-5 pt-6">
