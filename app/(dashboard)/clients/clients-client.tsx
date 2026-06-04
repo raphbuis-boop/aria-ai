@@ -55,9 +55,11 @@ function initialsOf(name: string | null | undefined) {
   );
 }
 
-// Shared input style for the Add sheet
+// Shared input style for the Add sheet.
+// No text-[14px] — globals.css enforces font-size: max(16px, 1em) !important
+// on all inputs/textareas, preventing iOS Safari auto-zoom on focus.
 const INPUT =
-  "w-full rounded-[13px] px-4 py-3 text-[14px] outline-none placeholder-[#4B5563]";
+  "w-full rounded-[13px] px-4 py-3 outline-none placeholder-[#4B5563]";
 const INPUT_STYLE = {
   background: "rgba(255,255,255,0.06)",
   border: "0.5px solid rgba(255,255,255,0.08)",
@@ -228,7 +230,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent text-[14px] outline-none placeholder-[#4B5563]"
+            className="flex-1 bg-transparent outline-none placeholder-[#4B5563]"
             style={{ color: "#ffffff" }}
           />
           {search && (
@@ -530,7 +532,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none p-4 text-[14px] outline-none placeholder-[#4B5563]"
+                className="w-full resize-none p-4 outline-none placeholder-[#4B5563]"
                 style={{
                   borderRadius: 13,
                   background: "rgba(255,255,255,0.06)",

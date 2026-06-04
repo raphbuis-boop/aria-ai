@@ -1,17 +1,17 @@
 // PageContainer — standard page content wrapper.
 //
-// Responsibilities:
-//   - Prevents horizontal overflow on any page
-//   - Adds correct bottom clearance for the fixed BottomNav pill
+// Use this on every page's outermost content div.
+// It handles:
+//   - No horizontal overflow
+//   - Bottom clearance above the fixed BottomNav pill
 //
 // Bottom clearance math:
-//   body padding-bottom: env(safe-area-inset-bottom) — absorbs home indicator
-//   BottomNav pill bottom: calc(env(safe-area-inset-bottom) + 12px) from viewport
-//   Pill height: ~68px  →  top of pill = ~80px from body bottom edge
-//   pb-24 (96px) keeps all content above the pill with 16px breathing room.
+//   body has padding-bottom: env(safe-area-inset-bottom)
+//   BottomNav pill: bottom = env(safe-area-inset-bottom) + 16px, height ~68px
+//   Top of pill ~84px above body bottom → pb-28 (112px) gives ~28px breathing room.
 //
-// Phase 1: created but not yet applied to individual pages (Phase 2).
-// Phase 2: each *-client.tsx drops its own outer padding div and wraps in this.
+// Phase 2: each *-client.tsx wraps its outermost div in this instead of
+// inventing per-page pb-[130px] / pb-24 / min-h-screen hacks.
 
 import { cn } from "@/lib/utils";
 
@@ -23,7 +23,7 @@ export function PageContainer({
   className?: string;
 }) {
   return (
-    <div className={cn("w-full max-w-full overflow-x-hidden pb-24", className)}>
+    <div className={cn("w-full max-w-full overflow-x-hidden pb-28", className)}>
       {children}
     </div>
   );

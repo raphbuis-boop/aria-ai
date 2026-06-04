@@ -1,33 +1,28 @@
-// AppShell — single structural wrapper for all authenticated dashboard pages.
+// AppShell — authenticated dashboard wrapper.
 //
-// Replaces the ad-hoc div in app/(dashboard)/layout.tsx.
-// Contains all persistent chrome: header, page animation shell, bottom nav.
+// Deliberately minimal. Renders only:
+//   - Background automation tasks (invisible)
+//   - Page fade animation shell
+//   - Fixed bottom navigation
 //
-// Layout contract:
-//   - Outer div: min-h-[100dvh] w-full max-w-full overflow-x-hidden
-//     This is the one place that enforces no-horizontal-overflow globally.
-//   - pb-24: baseline bottom clearance for the BottomNav pill.
-//     Individual pages may increase this but should not go below 96px.
-//   - Body owns padding-top: env(safe-area-inset-top) (globals.css).
-//     Nothing inside AppShell touches safe-area-inset-top.
-//   - BottomNav owns bottom: calc(env(safe-area-inset-bottom) + 12px).
-//     Nothing inside AppShell touches safe-area-inset-bottom.
+// Each page owns its own title, header area, and top spacing.
+// There is no global website-style header.
+//
+// Safe-area contract (single source of truth):
+//   body (globals.css) — padding-top: env(safe-area-inset-top)
+//   BottomNav          — bottom: calc(env(safe-area-inset-bottom) + 12px)
+//   Pages              — pb-28 via PageContainer (clears nav pill)
+//   Nothing else touches safe-area insets.
 
 import { AutomationRunner } from "@/components/AutomationRunner";
-import { MobileHeader } from "@/components/MobileHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { PageShell } from "@/components/PageShell";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden pb-24">
-      {/* Background automation tasks — no UI */}
+    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden">
       <AutomationRunner />
-      {/* Sticky top header — reads pathname internally */}
-      <MobileHeader />
-      {/* Fade animation wrapper on every route change */}
       <PageShell>{children}</PageShell>
-      {/* Fixed floating pill nav */}
       <BottomNav />
     </div>
   );

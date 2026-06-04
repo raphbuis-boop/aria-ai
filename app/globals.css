@@ -181,7 +181,10 @@ a:active, button:active, [role="button"]:active {
 input,
 textarea,
 select {
-  font-size: max(16px, 1em);
+  /* !important required: Tailwind arbitrary-value classes (text-[14px]) have
+     higher specificity than element selectors and would otherwise win.
+     This ensures 16px minimum everywhere, preventing iOS Safari auto-zoom. */
+  font-size: max(16px, 1em) !important;
 }
 
 /* Input focus — native-feeling highlight */
