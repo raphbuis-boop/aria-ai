@@ -6,11 +6,19 @@
 // Icons only — no labels. Active = white, inactive = #5A5A6E.
 // Icon size 26px on regular tabs, center Aria button 48px circle.
 //
+// Active indicator: a motion.div with layoutId="aria-active-pill" renders
+// inside whichever NavIcon is currently active. Framer Motion animates it
+// between DOM positions with a spring — producing the Instagram-style
+// sliding background that glides from tab to tab.
+//
+// The center Aria button is excluded from this system — it has its own
+// elevated blue-glow circle treatment.
+//
 // Safe-area contract:
 //   bottom = env(safe-area-inset-bottom) + 16px
 //   Nothing else inside this component touches safe areas.
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { Home, Users, MessageSquare, UserCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -30,6 +38,10 @@ const TABS_RIGHT: Tab[] = [
   { key: "conversations", href: "/inbox",   Icon: MessageSquare, activeFor: ["/inbox"] },
   { key: "profile",       href: "/profile", Icon: UserCircle,    activeFor: ["/more", "/settings", "/referrals", "/market-pulse"] },
 ];
+
+// Spring shared by the sliding active pill and the tap scale.
+const PILL_SPRING = { type: "spring", stiffness: 420, damping: 32, mass: 0.7 } as const;
+const TAP_SPRING  = { type: "spring", stiffness: 500, damping: 28 } as const;
 
 function isActive(href: string, activeFor: string[] | undefined, pathname: string): boolean {
   if (pathname === href) return true;
@@ -51,16 +63,37 @@ function NavIcon({ tab, pathname }: { tab: Tab; pathname: string }) {
     <motion.button
       type="button"
       aria-label={tab.key}
-      whileTap={{ scale: 0.82 }}
-      transition={{ type: "spring", stiffness: 500, damping: 28 }}
+      whileTap={{ scale: 0.92 }}
+      transition={TAP_SPRING}
       onClick={() => { triggerHaptic(); router.push(tab.href); }}
-      className="flex items-center justify-center"
+      // position: relative so the absolute sliding pill is contained here
+      className="relative flex items-center justify-center"
       style={{ padding: "6px 10px", background: "none", border: "none" }}
     >
+      {/* Sliding active pill — only mounted when this tab is active.
+          layoutId causes Framer Motion to animate it between whichever
+          NavIcon last held it and whichever one claims it now. */}
+      <AnimatePresence>
+        {active && (
+          <motion.div
+            layoutId="aria-active-pill"
+            transition={PILL_SPRING}
+            style={{
+              position: "absolute",
+              inset: 0,
+              borderRadius: 14,
+              background: "rgba(255, 255, 255, 0.10)",
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Icon — rendered on top of the pill */}
       <tab.Icon
         size={26}
         strokeWidth={active ? 2.1 : 1.6}
         color={active ? "#ffffff" : "#5A5A6E"}
+        style={{ position: "relative", zIndex: 1 }}
       />
     </motion.button>
   );
@@ -70,7 +103,6 @@ export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Conversations → /voice
   const ariaActive = pathname === "/voice" || pathname.startsWith("/voice/") || pathname === "/ai";
 
   return (
@@ -100,12 +132,12 @@ export function BottomNav() {
           <NavIcon key={tab.key} tab={tab} pathname={pathname} />
         ))}
 
-        {/* Center — Aria button */}
+        {/* Center — Aria button (excluded from the sliding pill system) */}
         <motion.button
           type="button"
           aria-label="Aria"
           whileTap={{ scale: 0.86 }}
-          transition={{ type: "spring", stiffness: 460, damping: 24 }}
+          transition={TAP_SPRING}
           onClick={() => { triggerHaptic(); router.push("/voice"); }}
           className="flex items-center justify-center rounded-full flex-shrink-0"
           style={{

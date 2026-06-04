@@ -75,8 +75,10 @@ body {
   color: var(--oc-text-1);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Contain overscroll on both axes — prevents rubber-band flash and pull-to-refresh bleed */
-  overscroll-behavior: contain;
+  /* Vertical overscroll: contain (body bounces but doesn't chain to html/viewport).
+     Horizontal overscroll: none (eliminates any sideways rubber-band — wrong on a mobile app). */
+  overscroll-behavior-y: contain;
+  overscroll-behavior-x: none;
   /* Dynamic viewport height so body fills the real visible area on mobile (excludes browser chrome) */
   min-height: 100dvh;
   /* Universal safe area — protects content from notch and home indicator on all pages */
