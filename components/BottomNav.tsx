@@ -81,8 +81,11 @@ function NavIcon({ tab, pathname }: { tab: Tab; pathname: string }) {
             style={{
               position: "absolute",
               inset: 0,
-              borderRadius: 14,
-              background: "rgba(255, 255, 255, 0.10)",
+              borderRadius: 12,
+              background: "rgba(255, 255, 255, 0.13)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              backdropFilter: "blur(8px)",
+              WebkitBackdropFilter: "blur(8px)",
             }}
           />
         )}

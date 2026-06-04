@@ -55,8 +55,9 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Overscroll area = Onyx — no white flash on rubber-band scroll */
-  background: var(--oc-onyx);
+  /* Overscroll area = backdrop base — matches .oc-backdrop exactly so rubber-band
+     zones don't expose a different color band above or below the page. */
+  background: #0C0F16;
   touch-action: manipulation;
   /* Global horizontal overflow safeguard — prevents any element from widening
      the page and causing a horizontal scrollbar or content clip on mobile. */

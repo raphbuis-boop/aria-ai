@@ -20,7 +20,7 @@ import { PageShell } from "@/components/PageShell";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-[100dvh] w-full max-w-full overflow-x-hidden">
+    <div className="min-h-[100dvh] w-full max-w-full">
       <AutomationRunner />
       <PageShell>{children}</PageShell>
       <BottomNav />
