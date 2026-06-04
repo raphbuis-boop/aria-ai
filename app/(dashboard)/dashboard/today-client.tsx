@@ -293,11 +293,11 @@ function NewAgentState({
   }, []);
 
   return (
-    <div className="min-h-screen pb-[120px]" style={{ color: TEXT_1 }}>
+    <div className="min-h-[100dvh] pb-[120px]" style={{ color: TEXT_1 }}>
       <div className="px-5">
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
-        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 24px)", paddingBottom: 24 }}>
+        <div style={{ paddingTop: 24, paddingBottom: 24 }}>
           <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
             {dateLabel}
           </p>
@@ -551,11 +551,11 @@ function ActiveAgentState({
   ].filter(Boolean) as { key: string; label: string; alert?: boolean }[];
 
   return (
-    <div className="min-h-screen pb-[120px]" style={{ color: TEXT_1 }}>
+    <div className="min-h-[100dvh] pb-[120px]" style={{ color: TEXT_1 }}>
       <div className="px-5">
 
         {/* ── 1. MORNING BRIEFING ──────────────────────────────────────────── */}
-        <div style={{ paddingTop: "calc(env(safe-area-inset-top) + 24px)", paddingBottom: 28 }}>
+        <div style={{ paddingTop: 24, paddingBottom: 28 }}>
           <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.14em]" style={{ color: TEXT_3 }}>
             {dateLabel}
           </p>

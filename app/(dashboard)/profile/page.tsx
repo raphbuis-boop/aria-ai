@@ -169,7 +169,7 @@ export default function ProfilePage() {
   return (
     <div
       className="min-h-[100dvh] pb-32"
-      style={{ background: "#0A0A0C", color: "#E8E6E4" }}
+      style={{ color: "var(--oc-text-1)" }}
     >
       {/* ── Large title ── */}
       <div className="px-5 pb-2 pt-8">

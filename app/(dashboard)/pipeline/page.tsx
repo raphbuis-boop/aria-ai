@@ -20,7 +20,7 @@ export default async function PipelinePage() {
 
   return (
     <div
-      className="min-h-screen w-full pb-[130px]"
+      className="min-h-[100dvh] w-full pb-[130px]"
       style={{
         background: `
           radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),

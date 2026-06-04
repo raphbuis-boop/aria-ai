@@ -72,8 +72,8 @@ export default function VoiceSettingsPage() {
 
   return (
     <div
-      className="min-h-screen pb-32 pt-6"
-      style={{ background: "#0a0a0a", color: "#f0f0f5" }}
+      className="min-h-[100dvh] pb-32 pt-6"
+      style={{ color: "var(--oc-text-1)" }}
     >
       <div className="px-5">
         <BackButton className="mb-5" />

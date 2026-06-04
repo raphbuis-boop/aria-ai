@@ -205,8 +205,8 @@ export default function SettingsPage() {
 
   return (
     <div
-      className="min-h-screen pb-32"
-      style={{ background: "#000000", color: "#ffffff" }}
+      className="min-h-[100dvh] pb-32"
+      style={{ color: "var(--oc-text-1)" }}
     >
       {/* Toast */}
       {toast && (

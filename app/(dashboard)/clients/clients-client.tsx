@@ -176,7 +176,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
   return (
     <div
-      className="min-h-screen pb-[130px]"
+      className="min-h-[100dvh] pb-[130px]"
       style={{
         background: `
           radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),

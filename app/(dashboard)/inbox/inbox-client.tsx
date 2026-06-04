@@ -1224,8 +1224,8 @@ export function InboxClient({
   // ── Conversation list ──────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen pb-[130px]"
-      style={{ background: "#0C0F16", color: "var(--oc-text-1)" }}
+      className="min-h-[100dvh] pb-[130px]"
+      style={{ color: "var(--oc-text-1)" }}
     >
       {/* ── Header ── */}
       <div className="px-5 pt-6 pb-3">

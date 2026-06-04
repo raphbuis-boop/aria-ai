@@ -465,7 +465,7 @@ export function ClientDetail({
 
   return (
     <>
-      <div className="min-h-screen pb-[120px]" style={{ color: "var(--oc-text-1)" }}>
+      <div className="min-h-[100dvh] pb-[120px]" style={{ color: "var(--oc-text-1)" }}>
 
         {/* ── Sticky nav ── */}
         <div

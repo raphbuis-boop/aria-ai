@@ -220,8 +220,8 @@ export function ListingRevenueClient({
   return (
     <>
       <div
-        className="min-h-screen pb-[100px]"
-        style={{ background: "#0a0a0b", color: "#ffffff" }}
+        className="min-h-[100dvh] pb-[100px]"
+        style={{ color: "var(--oc-text-1)" }}
       >
         {/* ── Top nav bar ── */}
         <div

@@ -71,8 +71,8 @@ export default async function ClientActivityPage({
 
   return (
     <div
-      className="min-h-screen pb-[130px]"
-      style={{ background: "#0a0a0a", color: "#f0f0f5" }}
+      className="min-h-[100dvh] pb-[130px]"
+      style={{ color: "var(--oc-text-1)" }}
     >
       {/* Header */}
       <div className="flex items-center gap-3 px-5 pt-6 pb-4">
