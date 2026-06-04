@@ -32,6 +32,7 @@ export interface ISmsService {
 }
 
 export const SmsService: ISmsService = {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async send(params) {
     // TODO: Phase 2 — extract lib/sms.ts from app/api/sms/send/route.ts so
     // this can call the pure function directly (server-side) rather than going

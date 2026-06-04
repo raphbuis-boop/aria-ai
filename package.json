@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:ios": "cp next.config.mjs next.config.web.bak && cp next.config.mobile.mjs next.config.mjs && next build; mv next.config.web.bak next.config.mjs",
     "ios:sync": "npm run build:ios && npx cap sync ios",
     "ios:open": "npx cap open ios"
@@ -57,10 +59,12 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-signature-canvas": "^1.0.7",
+    "@vitest/coverage-v8": "^4.1.8",
     "eslint": "^8",
     "eslint-config-next": "^14.2.35",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }
