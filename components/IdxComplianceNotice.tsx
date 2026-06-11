@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+// TODO(Phase 2): accept an agentProfile prop and call getIdxDisclaimerForAgent()
+//   instead of getIdxDisclaimerText() so per-agent brokerage branding is shown
+//   on each agent's shareable public link.
 import { getIdxDisclaimerText, AGENT_NAME, AGENT_LICENSE, EQUAL_HOUSING_DISCLOSURE } from "@/lib/compliance";
 
 export function IdxComplianceNotice({

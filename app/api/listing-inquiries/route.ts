@@ -91,17 +91,21 @@ export async function POST(req: Request) {
 
   try {
     const admin = createAdminClient();
-    const { error } = await admin.from("idx_listing_inquiries").insert({
-      intent,
-      visitor_name,
-      visitor_email,
-      visitor_phone: visitor_phone || null,
-      message: message || null,
-      listing_id,
-      listing_address: listing_address || null,
-      mls_number: mls_number || null,
-      listing_price,
-    });
+    const { data: inserted, error } = await admin
+      .from("idx_listing_inquiries")
+      .insert({
+        intent,
+        visitor_name,
+        visitor_email,
+        visitor_phone: visitor_phone || null,
+        message: message || null,
+        listing_id,
+        listing_address: listing_address || null,
+        mls_number: mls_number || null,
+        listing_price,
+      })
+      .select("id")
+      .single();
     if (error) {
       console.error("[listing-inquiries]", error);
       return NextResponse.json(
@@ -110,19 +114,37 @@ export async function POST(req: Request) {
       );
     }
 
-    // Notify all agents about the new inquiry (fire-and-forget)
+    // Notify ALL agents that a new unclaimed inquiry entered the pool.
+    // Uses a paginated loop so agents beyond the first 10 are not silently skipped.
+    // dedup_key prevents double-notifying if this block ever re-runs for the same inquiry.
+    // TODO(Phase 2): consider opt-out preferences, town-based filtering, or digest mode
+    //   to reduce notification volume as agent count grows.
     try {
-      const { data: agentList } = await admin.auth.admin.listUsers({ perPage: 10 });
-      for (const agent of agentList?.users ?? []) {
-        await insertNotification(admin, {
-          agent_id: agent.id,
-          kind: "inquiry_received",
-          title: `New inquiry: ${visitor_name}`,
-          body: listing_address
-            ? `${intent === "showing" ? "Showing request" : "Info request"} · ${listing_address}`
-            : `${intent === "showing" ? "Showing request" : "Info request"}`,
-          related_listing_id: listing_id,
+      const inquiryId = inserted.id as string;
+      const notifTitle = `New inquiry: ${visitor_name}`;
+      const notifBody = listing_address
+        ? `${intent === "showing" ? "Showing request" : "Info request"} · ${listing_address}`
+        : `${intent === "showing" ? "Showing request" : "Info request"}`;
+
+      let page = 1;
+      while (true) {
+        const { data: batch } = await admin.auth.admin.listUsers({
+          page,
+          perPage: 1000,
         });
+        const users = batch?.users ?? [];
+        for (const agent of users) {
+          await insertNotification(admin, {
+            agent_id: agent.id,
+            kind: "inquiry_received",
+            title: notifTitle,
+            body: notifBody,
+            related_listing_id: listing_id,
+            dedup_key: `inquiry_received::${inquiryId}::${agent.id}`,
+          });
+        }
+        if (users.length < 1000) break;
+        page++;
       }
     } catch (e) {
       console.error("[listing-inquiries] notification failed", e);

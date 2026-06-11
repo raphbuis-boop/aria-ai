@@ -299,12 +299,16 @@ export function PropertyPageClient({
     >
       <BackButton href={backHref} label="Back" className="mb-4" />
 
-      <div className="mb-4">
-        <IdxComplianceNotice
-          brokerageName={listing.listingFirm?.name ?? null}
-          logoSize={viewerContext === "public" ? "prominent" : "default"}
-        />
-      </div>
+      {/* Agent view: disclaimer near top so it's visible before listing content. */}
+      {/* Public view: disclaimer moved to bottom — see end of this component.  */}
+      {viewerContext === "agent" && (
+        <div className="mb-4">
+          <IdxComplianceNotice
+            brokerageName={listing.listingFirm?.name ?? null}
+            logoSize="default"
+          />
+        </div>
+      )}
 
       {mode === "internal" && listing.mlsNumber ? (
         <Link
@@ -562,6 +566,17 @@ export function PropertyPageClient({
               Contact Agent
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Public view: IDX disclaimer at the bottom per NJMLS requirement       */}
+      {/* (Candice feedback). Agent view rendered it at the top above.          */}
+      {viewerContext === "public" && (
+        <div className="mt-6 mb-2">
+          <IdxComplianceNotice
+            brokerageName={listing.listingFirm?.name ?? null}
+            logoSize="prominent"
+          />
         </div>
       )}
 

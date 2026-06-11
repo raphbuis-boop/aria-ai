@@ -1,3 +1,6 @@
+// TODO(Phase 2): accept an agentProfile prop and replace AGENT_*/BROKERAGE_*
+//   constants with values from agent_profiles so each agent's own brokerage
+//   identity is shown on their shareable public links (NJMLS Section 13.1).
 import {
   AGENT_LICENSE,
   AGENT_NAME,
