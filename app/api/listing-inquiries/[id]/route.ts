@@ -71,7 +71,7 @@ export async function POST(
     return NextResponse.json({ error: "Missing id." }, { status: 400 });
   }
 
-  const { error, count } = await supabase
+  const { error, data } = await supabase
     .from("idx_listing_inquiries")
     .update({
       claimed_by_agent_id: user.id,
@@ -79,14 +79,14 @@ export async function POST(
     })
     .eq("id", id)
     .is("claimed_by_agent_id", null)
-    .select("id", { count: "exact", head: true });
+    .select("id");
 
   if (error) {
     console.error("[listing-inquiries claim]", error);
     return NextResponse.json({ error: "Claim failed." }, { status: 500 });
   }
 
-  if (count === 0) {
+  if (!data || data.length === 0) {
     return NextResponse.json(
       { error: "Inquiry already claimed or not found." },
       { status: 409 },
