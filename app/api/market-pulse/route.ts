@@ -76,10 +76,16 @@ export async function GET() {
       status: "Active",
       limit: "200",
     });
-    const res = await fetch(`${base}/properties?${params}`, {
-      headers: { Authorization: auth, Accept: "application/json" },
-      cache: "no-store",
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${base}/properties?${params}`, {
+        signal: AbortSignal.timeout(10_000),
+        headers: { Authorization: auth, Accept: "application/json" },
+        cache: "no-store",
+      });
+    } catch {
+      return [];
+    }
     if (!res.ok) return [];
     const data = await res.json();
     return parseListingsPayload(data) as Record<string, unknown>[];

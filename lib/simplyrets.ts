@@ -230,13 +230,19 @@ export async function fetchMlsListingsForClient(opts: {
     base,
   });
 
-  const res = await fetch(`${base}/properties?${params}`, {
-    headers: {
-      Authorization: getSimplyRetsAuthHeader(),
-      Accept: "application/json",
-    },
-    cache: "no-store",
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${base}/properties?${params}`, {
+      signal: AbortSignal.timeout(10_000),
+      headers: {
+        Authorization: getSimplyRetsAuthHeader(),
+        Accept: "application/json",
+      },
+      cache: "no-store",
+    });
+  } catch {
+    return [];
+  }
   if (!res.ok) return [];
   const data = (await res.json()) as unknown;
   const rawListings = Array.isArray(data)
@@ -503,6 +509,7 @@ export async function fetchSimplyRetsSingleProperty(
   let response: Response;
   try {
     response = await fetch(endpoint, {
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Authorization: getSimplyRetsAuthHeader(),
         Accept: "application/json",

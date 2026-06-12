@@ -5,7 +5,7 @@ const MODEL = "claude-sonnet-4-20250514";
 export function getAnthropic(): Anthropic | null {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || key === "your_anthropic_api_key") return null;
-  return new Anthropic({ apiKey: key });
+  return new Anthropic({ apiKey: key, timeout: 25_000 });
 }
 
 export async function callClaude(

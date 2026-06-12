@@ -96,6 +96,7 @@ export async function GET(req: Request) {
   let response: Response;
   try {
     response = await fetch(endpoint, {
+      signal: AbortSignal.timeout(10_000),
       headers: {
         Authorization: getSimplyRetsAuthHeader(),
         Accept: "application/json",
