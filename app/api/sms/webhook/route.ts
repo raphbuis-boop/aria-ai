@@ -14,6 +14,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { validateRequest } from "twilio/lib/webhooks/webhooks";
 import { formatPhoneE164 } from "@/lib/utils";
+import { redactPhone } from "@/lib/redact";
 
 export const dynamic = "force-dynamic";
 
@@ -84,7 +85,7 @@ export async function POST(req: Request) {
 
   if (!client) {
     // Unknown number — log and acknowledge. Do not create a ghost record.
-    console.info("[sms/webhook] Inbound SMS from unknown number:", normalized);
+    console.info("[sms/webhook] Inbound SMS from unknown number:", redactPhone(normalized));
     return new Response(TWIML_OK, { status: 200, headers: XML_HEADERS });
   }
 
