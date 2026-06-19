@@ -17,7 +17,8 @@ export function LandingNav() {
       initial={{ opacity: 0, y: -16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed inset-x-0 top-5 z-50 flex justify-center px-4"
+      className="fixed inset-x-0 z-50 flex justify-center px-4"
+      style={{ top: "calc(20px + env(safe-area-inset-top, 0px))" }}
     >
       <nav className="w-full max-w-3xl">
         <div

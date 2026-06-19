@@ -59,9 +59,14 @@ html {
      zones don't expose a different color band above or below the page. */
   background: #0C0F16;
   touch-action: manipulation;
-  /* Global horizontal overflow safeguard — prevents any element from widening
-     the page and causing a horizontal scrollbar or content clip on mobile. */
-  overflow-x: hidden;
+  /* clip vs hidden: overflow-x:hidden on <html> implicitly promotes overflow-y
+     to auto on the root element, creating a second scroll container alongside
+     body. This makes html and body compete as scroll parents — page scroll
+     breaks in Safari, and framer-motion useScroll() mis-fires because
+     window.scrollY stops updating. overflow-x:clip prevents horizontal overflow
+     without creating a scroll container, so the viewport stays the sole scroll
+     owner. */
+  overflow-x: clip;
   max-width: 100%;
 }
 
@@ -69,7 +74,10 @@ body {
   scrollbar-width: none;
   -ms-overflow-style: none;
   overflow-x: hidden;
-  overflow-y: auto;
+  /* overflow-y intentionally omitted — the browser default (visible on body,
+     which the viewport promotes to auto) is what we want. Explicit
+     overflow-y:auto here was pairing with the former html overflow-x:hidden
+     to create two competing scroll containers, breaking page scroll. */
   max-width: 100%;
   /* transparent — the fixed .oc-backdrop renders beneath all content */
   background: transparent;
