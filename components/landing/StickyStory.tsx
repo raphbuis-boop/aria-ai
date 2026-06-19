@@ -126,28 +126,36 @@ export function StickyStory() {
 
   return (
     <section id="how-it-works" style={{ background: "#FFFFFF" }}>
-      {/* Section header */}
-      <div className="mx-auto max-w-6xl px-6 pt-28 text-center">
-        <p
-          className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em]"
-          style={{ color: "#3a65f0" }}
-        >
-          How it works
-        </p>
-        <h2
-          className="text-balance font-bold"
-          style={{
-            fontSize: "clamp(2.2rem, 5vw, 3.75rem)",
-            letterSpacing: "-0.035em",
-            lineHeight: 1.1,
-            color: "#0B1220",
-          }}
-        >
-          From signals to closed deals.
-        </h2>
-      </div>
+      {/*
+        sectionRef wraps the heading + the 300vh scroll spacer together so that
+        useScroll begins tracking from when the heading first reaches the
+        viewport top. Previously the heading was a sibling above sectionRef,
+        meaning scroll progress was already non-zero by the time the sticky
+        panel became visible — causing the animation to start mid-sequence.
+      */}
+      <div ref={sectionRef} className="relative mx-auto max-w-6xl px-6">
+        {/* Section header — inside sectionRef */}
+        <div className="pt-28 pb-4 text-center">
+          <p
+            className="mb-4 text-[11px] font-semibold uppercase tracking-[0.14em]"
+            style={{ color: "#3a65f0" }}
+          >
+            How it works
+          </p>
+          <h2
+            className="text-balance font-bold"
+            style={{
+              fontSize: "clamp(2.2rem, 5vw, 3.75rem)",
+              letterSpacing: "-0.035em",
+              lineHeight: 1.1,
+              color: "#0B1220",
+            }}
+          >
+            From signals to closed deals.
+          </h2>
+        </div>
 
-      <div ref={sectionRef} className="relative mx-auto h-[300vh] max-w-6xl px-6">
+        <div className="relative h-[300vh]">
         <div className="sticky top-0 flex h-screen items-center">
           <div className="grid w-full items-center gap-12 lg:grid-cols-[40%_60%]">
             {/* Left: steps */}
@@ -207,7 +215,8 @@ export function StickyStory() {
             </div>
           </div>
         </div>
-      </div>
+        </div>{/* h-[300vh] scroll spacer */}
+      </div>{/* sectionRef */}
     </section>
   );
 }
