@@ -3,13 +3,10 @@
 import { createClient } from "@/lib/supabase/client";
 import {
   BarChart3,
-  Bell,
   CalendarDays,
   ChevronRight,
   FileText,
-  Globe,
   Inbox,
-  Lock,
   LogOut,
   Mail,
   Mic,
@@ -325,8 +322,7 @@ export default function SettingsPage() {
         <GroupLabel label="Business" />
         <SettingsGroup>
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
-          <SettingsRow icon={TrendingUp} label="Market Pulse" href="/market-pulse" />
-          <SettingsRow icon={Globe} label="Client Portal" soon isLast />
+          <SettingsRow icon={TrendingUp} label="Market Pulse" href="/market-pulse" isLast />
         </SettingsGroup>
 
         <div style={{ marginTop: 24 }} />
@@ -334,8 +330,6 @@ export default function SettingsPage() {
         {/* ── Group 5: Account ── */}
         <GroupLabel label="Account" />
         <SettingsGroup>
-          <SettingsRow icon={Bell} label="Notifications" soon />
-          <SettingsRow icon={Lock} label="Privacy" soon />
           <SettingsRow
             icon={LogOut}
             label="Sign out"

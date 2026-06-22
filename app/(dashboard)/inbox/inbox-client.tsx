@@ -463,9 +463,8 @@ function ThreadView({
   const scrollRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Default to SMS if phone exists, Email if only email, else SMS
-  const defaultChannel: ThreadChannel =
-    conv.clientPhone ? "sms" : conv.clientEmail ? "email" : "sms";
+  // Default to SMS (email send not yet available)
+  const defaultChannel: ThreadChannel = "sms";
   const [activeChannel, setActiveChannel] = useState<ThreadChannel>(defaultChannel);
 
   const [composerText, setComposerText] = useState("");
@@ -653,7 +652,6 @@ function ThreadView({
 
   const CHANNELS: { key: ThreadChannel; label: string }[] = [
     { key: "sms", label: "SMS" },
-    { key: "email", label: "Email" },
     { key: "whatsapp", label: "WhatsApp" },
   ];
 

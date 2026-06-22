@@ -10,10 +10,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import {
-  Bell,
   ChevronRight,
-  CreditCard,
-  HelpCircle,
   LogOut,
   Mail,
   MessageSquare,
@@ -224,30 +221,9 @@ export default function ProfilePage() {
           href="/voice"
         />
         <Row
-          icon={Bell}
-          label="Notifications"
-          unavailable
-        />
-        <Row
           icon={Settings}
           label="Settings"
           href="/settings"
-          isLast
-        />
-      </RowGroup>
-
-      {/* ── Billing & Support ── */}
-      <SectionLabel label="Billing & Support" />
-      <RowGroup>
-        <Row
-          icon={CreditCard}
-          label="Billing"
-          unavailable
-        />
-        <Row
-          icon={HelpCircle}
-          label="Support"
-          unavailable
           isLast
         />
       </RowGroup>

@@ -2,13 +2,13 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Mic, MicOff, Send, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, Mic, MicOff, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = "chat" | "voice" | "live";
+type Mode = "chat" | "voice";
 type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
 type Msg = { role: "user" | "assistant"; content: string; id: string };
 
@@ -192,115 +192,6 @@ function ChatBubble({ msg }: { msg: Msg }) {
         }
       >
         {msg.content}
-      </div>
-    </motion.div>
-  );
-}
-
-// ── Live mode (design shell) ──────────────────────────────────────────────────
-
-function LiveMode({ onExit }: { onExit: () => void }) {
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
-  const ss = String(elapsed % 60).padStart(2, "0");
-
-  return (
-    <motion.div
-      key="live"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-1 flex-col items-center justify-center px-5"
-    >
-      {/* Session card */}
-      <div
-        className="w-full max-w-sm rounded-3xl px-6 py-6 mb-8"
-        style={{
-          background: "var(--oc-surface-2)",
-          border: "0.5px solid var(--oc-border-mid)",
-          backdropFilter: "blur(32px) saturate(260%)",
-          WebkitBackdropFilter: "blur(32px) saturate(260%)",
-        }}
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div
-            className="h-10 w-10 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(59,130,246,0.16)" }}
-          >
-            <AriaSpark size={22} />
-          </div>
-          <div>
-            <p className="text-[15px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
-              Live with Aria
-            </p>
-            <p className="text-[13px] font-mono" style={{ color: "var(--oc-text-3)" }}>
-              {mm}:{ss}
-            </p>
-          </div>
-          {/* Coming soon badge */}
-          <span
-            className="ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold uppercase"
-            style={{
-              background: "rgba(196,126,26,0.16)",
-              color: "#C47E1A",
-              letterSpacing: "0.06em",
-            }}
-          >
-            Soon
-          </span>
-        </div>
-
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--oc-text-3)" }}>
-          Always-on Aria will monitor your business in real time — surfaces
-          opportunities, notifies you on showings, and answers instantly.
-        </p>
-      </div>
-
-      {/* Control pill buttons — Gemini Live inspired */}
-      <div className="flex items-center gap-3">
-        {[
-          { icon: "📷", label: "Camera", disabled: true },
-          { icon: "⬆", label: "Share", disabled: true },
-          { icon: "🎙", label: "Mic", disabled: true },
-        ].map(({ icon, label }) => (
-          <button
-            key={label}
-            type="button"
-            disabled
-            className="flex flex-col items-center gap-1.5 cursor-not-allowed opacity-35"
-          >
-            <div
-              className="h-14 w-14 rounded-2xl flex items-center justify-center text-[20px]"
-              style={{
-                background: "var(--oc-surface-1)",
-                border: "0.5px solid var(--oc-border-soft)",
-              }}
-            >
-              {icon}
-            </div>
-            <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>{label}</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex flex-col items-center gap-1.5 active:opacity-70"
-        >
-          <div
-            className="h-14 w-14 rounded-2xl flex items-center justify-center"
-            style={{ background: "#C43838" }}
-          >
-            <X size={22} color="#fff" />
-          </div>
-          <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>End</span>
-        </button>
       </div>
     </motion.div>
   );
@@ -654,7 +545,7 @@ export default function VoicePage() {
             border: "0.5px solid rgba(255,255,255,0.08)",
           }}
         >
-          {(["chat", "voice", "live"] as Mode[]).map((m) => (
+          {(["chat", "voice"] as Mode[]).map((m) => (
             <button
               key={m}
               type="button"
@@ -980,11 +871,6 @@ export default function VoicePage() {
                 )}
               </div>
             </motion.div>
-          )}
-
-          {/* ══ LIVE MODE ══════════════════════════════════════════════════════ */}
-          {mode === "live" && (
-            <LiveMode key="live" onExit={() => setMode("chat")} />
           )}
 
         </AnimatePresence>
