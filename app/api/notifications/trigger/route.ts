@@ -20,6 +20,11 @@ function verifyCron(req: Request): boolean {
   return auth === `Bearer ${secret}`;
 }
 
+// Vercel cron jobs invoke via GET. POST is kept for manual/test calls.
+export async function GET(req: Request) {
+  return POST(req);
+}
+
 export async function POST(req: Request) {
   if (!verifyCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -60,7 +65,7 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
   for (const s of showings) agentIdSet.add(s.agent_id);
   const agentIds = Array.from(agentIdSet);
   const { data: agentRows } = await supabase
-    .from("profiles")
+    .from("agent_profiles")
     .select("id, email, full_name")
     .in("id", agentIds);
   const agentMap = new Map(
@@ -201,7 +206,7 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
       if (staleByAgent.size > 0) {
         const agentIds = Array.from(staleByAgent.keys());
         const { data: agentRows } = await supabase
-          .from("profiles")
+          .from("agent_profiles")
           .select("id, email, full_name")
           .in("id", agentIds);
 

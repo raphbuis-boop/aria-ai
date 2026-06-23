@@ -45,10 +45,16 @@ export async function POST(req: Request) {
   }
 
   // ── 2. Validate Twilio signature ───────────────────────────────────────────
-  // Skip in development or if auth token isn't configured.
+  // Skip only in development. In production, a missing auth token is a
+  // misconfiguration — fail closed rather than silently skipping validation.
   const isDev = process.env.NODE_ENV === "development";
 
-  if (!isDev && authToken) {
+  if (!isDev) {
+    if (!authToken) {
+      console.error("[sms/webhook] TWILIO_AUTH_TOKEN is not set — rejecting request");
+      return new Response(TWIML_OK, { status: 403, headers: XML_HEADERS });
+    }
+
     const signature = req.headers.get("x-twilio-signature") ?? "";
     const webhookUrl = `${siteUrl}/api/sms/webhook`;
 
