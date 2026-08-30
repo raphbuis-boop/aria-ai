@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { buildTodayItems } from "@/lib/today-items";
+import { buildTodayItems, activityVerb } from "@/lib/today-items";
 import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem } from "@/lib/today-items";
 import { TodayClient as TodayClientComponent } from "./today-client";
+import { initials } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -58,6 +59,8 @@ export default async function DashboardPage() {
     showingsTodayRes,
     closingsThisWeekRes,
     dismissedRes,
+    tasksDueRes,
+    dealsMovingRes,
   ] = await Promise.all([
     // 0. Agent profile — real name (scoped by id, not agent_id)
     supabase
@@ -84,7 +87,7 @@ export default async function DashboardPage() {
     // 3. Activities — last 30 days, most recent first [agent_id scoped ✓]
     supabase
       .from("activities")
-      .select("client_id, created_at")
+      .select("client_id, created_at, type, direction, clients(name)")
       .eq("agent_id", user.id)  // SCOPE 3
       .gte("created_at", minus30ISO)
       .order("created_at", { ascending: false }),
@@ -127,6 +130,23 @@ export default async function DashboardPage() {
       .select("item_id")
       .eq("agent_id", user.id)
       .gt("dismiss_until", now.toISOString()),
+
+    // 9. Tasks due today or overdue, not done [agent_id scoped ✓]
+    supabase
+      .from("tasks")
+      .select("id, client_id, title, due_at, done, clients(name)")
+      .eq("agent_id", user.id)  // SCOPE 9
+      .eq("done", false)
+      .lt("due_at", tomorrowISO)
+      .order("due_at", { ascending: true }),
+
+    // 10. Deals moving — all active transactions, nearest closing first [agent_id scoped ✓]
+    supabase
+      .from("transactions")
+      .select("id, client_id, address, closing_date, status, clients(name)")
+      .eq("agent_id", user.id)  // SCOPE 10
+      .eq("status", "active")
+      .order("closing_date", { ascending: true }),
   ]);
 
   // Log errors without crashing the page
@@ -139,6 +159,8 @@ export default async function DashboardPage() {
   if (showingsTodayRes.error) console.error("[today] showings:", showingsTodayRes.error);
   if (closingsThisWeekRes.error) console.error("[today] closings_week:", closingsThisWeekRes.error);
   if (dismissedRes.error) console.error("[today] dismissed_opportunities:", dismissedRes.error);
+  if (tasksDueRes.error) console.error("[today] tasks:", tasksDueRes.error);
+  if (dealsMovingRes.error) console.error("[today] deals_moving:", dealsMovingRes.error);
 
   const clients = (clientsRes.data ?? []) as TodayClient[];
   const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
@@ -173,6 +195,38 @@ export default async function DashboardPage() {
   // Filter out snoozed/dismissed items before sending to client
   const items = allItems.filter((i) => !dismissedIds.has(i.id));
 
+  // Hero insight — "N clients likely to move this week, ~$X in projected commission."
+  // "Likely to move" = urgencyRank 1–2 (closing at risk + quiet hot leads), deduped by client,
+  // same bucket + same 2.5% commission convention the rest of the app already uses.
+  const seenForInsight = new Set<string>();
+  const likelyToMove = items.filter((i) => {
+    if (i.urgencyRank > 2) return false;
+    if (seenForInsight.has(i.clientId)) return false;
+    seenForInsight.add(i.clientId);
+    return true;
+  });
+  const insight = {
+    count: likelyToMove.length,
+    commissionEst: likelyToMove.reduce((sum, i) => sum + (i.commissionEst ?? 0), 0),
+  };
+
+  // Recent activity feed — real logged activities only, most recent first.
+  type ActivityFeedRow = { client_id: string; created_at: string; type: string | null; direction: string | null; clients: { name: string } | { name: string }[] | null };
+  const activityFeed = ((activitiesRes.data ?? []) as ActivityFeedRow[])
+    .map((a) => {
+      const verb = activityVerb(a.type, a.direction);
+      if (!verb) return null;
+      const client = Array.isArray(a.clients) ? a.clients[0] : a.clients;
+      return {
+        id: `${a.client_id}-${a.created_at}`,
+        clientName: client?.name ?? "A client",
+        verb,
+        createdAt: a.created_at,
+      };
+    })
+    .filter((r): r is { id: string; clientName: string; verb: string; createdAt: string } => r !== null)
+    .slice(0, 8);
+
   // Mark shown MLS matches as notified so they don't accumulate forever.
   // Fire-and-forget — no await, doesn't block page render.
   if (newMatchItems.length > 0) {
@@ -200,16 +254,39 @@ export default async function DashboardPage() {
     newMatches: newMatchItems.length,
   };
 
+  // Tasks due today or overdue, not done — secondary "what do I do next" section.
+  const tasksDue = (tasksDueRes.data ?? []).map((t) => ({
+    id: String(t.id),
+    clientId: t.client_id ? String(t.client_id) : null,
+    clientName: Array.isArray(t.clients) ? (t.clients[0] as { name: string } | undefined)?.name ?? null : (t.clients as { name: string } | null)?.name ?? null,
+    title: t.title as string,
+    dueAt: t.due_at as string | null,
+  }));
+
+  // Deals moving — active transactions not already surfaced as an urgent hero item.
+  const heroTransactionIds = new Set(items.map((i) => i.transactionId).filter(Boolean));
+  const dealsMoving = (dealsMovingRes.data ?? [])
+    .filter((d) => !heroTransactionIds.has(String(d.id)))
+    .map((d) => ({
+      id: String(d.id),
+      clientId: String(d.client_id),
+      clientName: Array.isArray(d.clients) ? (d.clients[0] as { name: string } | undefined)?.name ?? "Client" : (d.clients as { name: string } | null)?.name ?? "Client",
+      address: d.address as string | null,
+      closingDate: d.closing_date as string | null,
+    }));
+
   // Active clients (non-closed)
   const activeClients = clients.length;
   const warmLeads = clients.filter(c => (c.lead_score ?? 0) >= 7 || c.status === "showing").length;
   const pipelineCount = clients.filter(c => ["offer", "under_contract"].includes(c.status ?? "")).length;
   const pendingDeals = (transactionsRes.data ?? []).length;
 
-  const firstName =
-    (profileRes.data?.full_name as string | undefined)?.split(" ")[0] ??
-    (user.user_metadata?.full_name as string | undefined)?.split(" ")[0] ??
-    "there";
+  const fullName =
+    (profileRes.data?.full_name as string | undefined) ??
+    (user.user_metadata?.full_name as string | undefined) ??
+    null;
+  const firstName = fullName?.split(" ")[0] ?? "there";
+  const agentInitials = initials(fullName);
 
   const hasAnyClients = clients.length > 0;
 
@@ -218,7 +295,12 @@ export default async function DashboardPage() {
       items={items}
       briefing={briefing}
       showingsToday={showingsToday}
+      tasksDue={tasksDue}
+      dealsMoving={dealsMoving}
+      insight={insight}
+      activityFeed={activityFeed}
       userName={firstName}
+      agentInitials={agentInitials}
       hasAnyClients={hasAnyClients}
       kpi={{ activeClients, warmLeads, pipelineCount, pendingDeals }}
     />

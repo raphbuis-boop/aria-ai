@@ -10,9 +10,68 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
+        // Instrument Serif — DO NOT repoint. Live on the landing page
+        // (HeroFloatingCards, Testimonial, TestimonialSection).
         serif: ["var(--font-instrument-serif)", "Georgia", "serif"],
+        // Aria V2 — warm editorial direction. "heading"/"display" are opt-in
+        // names (not "sans") so they never bleed into existing screens,
+        // which render body text via DM Sans's own class.
+        heading: ["var(--font-fraunces)", "Georgia", "serif"],
+        display: ["var(--font-work-sans)", "ui-sans-serif", "system-ui", "sans-serif"],
+      },
+      fontSize: {
+        // Aria V2 type scale — see design system notes.
+        caption: ["12px", { lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500" }],
+        body: ["14px", { lineHeight: "21px" }],
+        "body-lg": ["15px", { lineHeight: "22px" }],
+        title: ["17px", { lineHeight: "24px", fontWeight: "600" }],
+        section: ["13px", { lineHeight: "16px", letterSpacing: "0.06em", fontWeight: "600" }],
+        display: ["32px", { lineHeight: "38px" }],
+      },
+      borderRadius: {
+        lg: "var(--radius)",
+        md: "calc(var(--radius) - 4px)",
+        sm: "calc(var(--radius) - 8px)",
       },
       colors: {
+        // ── Aria V2 — shadcn semantic tokens (see globals.css) ──
+        border: "var(--border)",
+        input: "var(--input)",
+        ring: "var(--ring)",
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        primary: {
+          DEFAULT: "var(--primary)",
+          foreground: "var(--primary-foreground)",
+        },
+        secondary: {
+          DEFAULT: "var(--secondary)",
+          foreground: "var(--secondary-foreground)",
+        },
+        destructive: {
+          DEFAULT: "var(--destructive)",
+          foreground: "var(--destructive-foreground)",
+        },
+        muted: {
+          DEFAULT: "var(--muted)",
+          foreground: "var(--muted-foreground)",
+        },
+        accent: {
+          DEFAULT: "var(--accent)",
+          foreground: "var(--accent-foreground)",
+        },
+        popover: {
+          DEFAULT: "var(--popover)",
+          foreground: "var(--popover-foreground)",
+        },
+        card: {
+          DEFAULT: "var(--card)",
+          foreground: "var(--card-foreground)",
+        },
+        hot: "var(--hot)",
+        warm: "var(--warm)",
+        violet: "var(--violet)",
+
         // ── Legacy tokens (kept for backward compat — do not remove) ──
         "bg-primary":  "#080910",
         "bg-card":     "#0d0f16",

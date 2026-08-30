@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ClientDetail } from "./client-detail";
+import { buildClientBrief } from "@/lib/client-brief";
 
 export default async function ClientDetailPage({
   params,
@@ -26,18 +27,19 @@ export default async function ClientDetailPage({
 
   const [
     { data: activities },
-    { data: matches },
+    { data: recentMatches },
     { data: matchedPropertyRows },
+    { data: transactions },
   ] = await Promise.all([
-    // All activities for this client, newest first
+    // Full activity history for this client, newest first — the timeline.
     supabase
       .from("activities")
-      .select("id, type, body, ai_draft, approved, sent, created_at")
+      .select("id, type, direction, body, ai_draft, approved, sent, created_at")
       .eq("client_id", params.id)
       .eq("agent_id", user.id)
       .order("created_at", { ascending: false }),
 
-    // Property matches — recent (last 24h, unnotified) for badge count
+    // Property matches — recent (last 24h, unnotified), feeds the briefing.
     supabase
       .from("property_matches")
       .select("id, created_at, notified")
@@ -54,10 +56,18 @@ export default async function ClientDetailPage({
       .eq("agent_id", user.id)
       .order("match_score", { ascending: false })
       .limit(3),
+
+    // Transactions for this client — deal value, closing date, status.
+    supabase
+      .from("transactions")
+      .select("id, status, closing_date, contract_price")
+      .eq("client_id", params.id)
+      .eq("agent_id", user.id),
   ]);
 
   const allActivities = activities ?? [];
-  const allMatches = matches ?? [];
+  const allMatches = recentMatches ?? [];
+  const allTransactions = transactions ?? [];
 
   const draftCount = allActivities.filter(
     (a) => a.ai_draft && !a.approved && !a.sent,
@@ -68,7 +78,22 @@ export default async function ClientDetailPage({
       ?.body as string | null) ?? null;
 
   const recentMatchCount = allMatches.length;
-  const recentActivities = allActivities.slice(0, 5);
+
+  const brief = buildClientBrief(
+    {
+      name: client.name as string,
+      phone: client.phone as string | null,
+      status: client.status as string | null,
+      clientRole: client.client_role as string | null,
+      budgetMin: client.budget_min as number | null,
+      budgetMax: client.budget_max as number | null,
+      town: client.town as string | null,
+      leadScore: client.lead_score as number | null,
+    },
+    allActivities,
+    allTransactions,
+    allMatches,
+  );
 
   // Normalise the property_matches join (Supabase returns the FK join as
   // a single object or null, but TypeScript types it as array or object)
@@ -113,11 +138,12 @@ export default async function ClientDetailPage({
   return (
     <ClientDetail
       client={client}
-      recentActivities={recentActivities}
+      activities={allActivities}
       draftCount={draftCount}
       lastDraftBody={lastDraftBody}
       recentMatchCount={recentMatchCount}
       matchedProperties={matchedProperties}
+      brief={brief}
     />
   );
 }

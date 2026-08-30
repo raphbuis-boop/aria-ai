@@ -2,69 +2,27 @@
 
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
-import { fmtMoney, formatPhoneE164 } from "@/lib/utils";
-import { useToast } from "@/components/ToastProvider";
-import { ChevronRight, Search, Users } from "lucide-react";
+import { fmtMoney, formatPhoneE164, initials } from "@/lib/utils";
+import { heatFromScore } from "@/lib/today-items";
+import { statusLabel } from "@/lib/client-brief";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Toaster, toast } from "@/components/ui/sonner";
+import { ChevronRight, Search, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-const STATUS_FILTERS = [
-  "All",
-  "Hot",
-  "Follow Up",
-  "Showing",
-  "Under Contract",
-  "Closed",
-] as const;
+const STATUS_FILTERS = ["All", "Hot", "Follow Up", "Showing", "Under Contract", "Closed"] as const;
 
-// Locked avatar palette — hash-based, all from design system
-const AVATAR_PALETTE = [
-  { bg: "rgba(59,130,246,0.15)", text: "#3B82F6" },   // blue
-  { bg: "rgba(167,139,250,0.15)", text: "#A78BFA" },  // purple
-  { bg: "rgba(6,182,212,0.15)", text: "#06B6D4" },    // cyan
-  { bg: "rgba(16,185,129,0.15)", text: "#10B981" },   // green
-  { bg: "rgba(245,158,11,0.15)", text: "#F59E0B" },   // amber
-];
-
-function avatarColors(name: string) {
-  let hash = 0;
-  for (let i = 0; i < name.length; i++) hash = (hash + name.charCodeAt(i)) % AVATAR_PALETTE.length;
-  return AVATAR_PALETTE[hash];
-}
-
-// Semantic status badge styles
-const STATUS_STYLE: Record<string, { bg: string; text: string; label: string }> = {
-  new:            { bg: "rgba(59,130,246,0.15)",  text: "#3B82F6", label: "New" },
-  contacted:      { bg: "rgba(167,139,250,0.15)", text: "#A78BFA", label: "Contacted" },
-  showing:        { bg: "rgba(245,158,11,0.15)",  text: "#F59E0B", label: "Showing" },
-  offer:          { bg: "rgba(167,139,250,0.15)", text: "#A78BFA", label: "Offer" },
-  under_contract: { bg: "rgba(59,130,246,0.15)",  text: "#3B82F6", label: "Under Contract" },
-  closed:         { bg: "rgba(16,185,129,0.15)",  text: "#10B981", label: "Closed" },
-  dead:           { bg: "rgba(255,255,255,0.06)", text: "#6B7280", label: "Archived" },
+const HEAT_DOT_COLOR: Record<"hot" | "warm", { fill: string; ring: string }> = {
+  hot: { fill: "var(--hot)", ring: "rgba(184, 75, 51, 0.15)" },
+  warm: { fill: "var(--warm)", ring: "rgba(184, 132, 46, 0.15)" },
 };
 
-function initialsOf(name: string | null | undefined) {
-  return (
-    (name ?? "")
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .slice(0, 2)
-      .toUpperCase() || "?"
-  );
-}
-
-// Shared input style for the Add sheet.
-// No text-[14px] — globals.css enforces font-size: max(16px, 1em) !important
-// on all inputs/textareas, preventing iOS Safari auto-zoom on focus.
+// Shared input style — ivory design system.
 const INPUT =
-  "w-full rounded-[13px] px-4 py-3 outline-none placeholder-[#4B5563]";
-const INPUT_STYLE = {
-  background: "rgba(255,255,255,0.06)",
-  border: "0.5px solid rgba(255,255,255,0.08)",
-  color: "#ffffff",
-};
+  "w-full rounded-xl px-4 py-3 outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60 bg-secondary border border-transparent focus:border-input";
 
 type Row = {
   id: string;
@@ -80,14 +38,68 @@ type Row = {
   baths_wanted?: number | null;
   notes?: string | null;
   client_role?: string | null;
+  dealValue: number | null;
+  dealValueIsReal: boolean;
+  commissionEst: number | null;
 };
 
-export function ClientsPageClient({ initial }: { initial: Record<string, unknown>[] }) {
+function HeatDot({ score }: { score: number | null }) {
+  const heat = heatFromScore(score);
+  if (heat === "cold") return null;
+  const c = HEAT_DOT_COLOR[heat];
+  return (
+    <span
+      className="size-2 shrink-0 rounded-full"
+      style={{ background: c.fill, boxShadow: `0 0 0 3px ${c.ring}` }}
+      aria-hidden="true"
+    />
+  );
+}
+
+function ClientRow({ client }: { client: Row }) {
+  return (
+    <Link
+      href={`/clients/${client.id}`}
+      className="flex items-center gap-4 px-5 py-4 hover:bg-accent/50 transition-colors"
+    >
+      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-caption font-semibold text-foreground">
+        {initials(client.name)}
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="font-display text-body-lg font-semibold text-foreground truncate">{client.name}</p>
+          <HeatDot score={client.lead_score} />
+        </div>
+        <p className="font-display text-caption text-muted-foreground mt-0.5 truncate">
+          {client.town ?? "No town on file"} · {statusLabel(client.status)}
+        </p>
+      </div>
+
+      <div className="flex items-center gap-3 shrink-0">
+        {client.dealValue ? (
+          <div className="text-right">
+            <p className="font-display text-body font-semibold text-primary">{fmtMoney(client.dealValue)}</p>
+            {client.commissionEst && (
+              <p className="font-display text-[11px] text-muted-foreground/70">
+                ~{fmtMoney(client.commissionEst)} comm.
+              </p>
+            )}
+          </div>
+        ) : (
+          <p className="font-display text-caption text-muted-foreground/50">No value on file</p>
+        )}
+        <ChevronRight className="size-4 text-muted-foreground/50" />
+      </div>
+    </Link>
+  );
+}
+
+export function ClientsPageClient({ initial }: { initial: Row[] }) {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const toast = useToast();
-  const rows = initial as unknown as Row[];
+  const rows = initial;
 
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
@@ -141,7 +153,7 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   async function saveClient() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
-    if (!form.name.trim()) { toast.toast("Name is required", "warn"); return; }
+    if (!form.name.trim()) { toast.warning("Name is required"); return; }
     const phoneE164 = form.phone.trim() ? formatPhoneE164(form.phone) : null;
     const townJoined = form.towns.length > 0 ? form.towns.join(", ") : null;
 
@@ -163,11 +175,11 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
 
     const { data: created, error } = await supabase
       .from("clients").insert(payload).select("id").single();
-    if (error) { toast.toast(error.message, "warn"); return; }
+    if (error) { toast.warning(error.message); return; }
 
     setOpen(false);
     setForm({ name: "", phone: "", email: "", budget_min: "", budget_max: "", towns: [], beds: "", baths: "", client_role: "buyer", notes: "" });
-    toast.toast("Client created", "success");
+    toast.success("Client created");
     router.push(`/clients/${created.id}`);
     router.refresh();
   }
@@ -175,93 +187,49 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
-    <div
-      className="min-h-[100dvh] pb-[130px]"
-      style={{
-        background: `
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
-          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent)
-        `,
-        color: "var(--oc-text-1)",
-      }}
-    >
-      <div className="px-5 pt-6">
-
-        {/* ── Header ── */}
-        <div className="mb-5 flex items-end justify-between">
+    <div className="min-h-[100dvh] bg-background text-foreground pb-[130px]">
+      <div className="mx-auto max-w-2xl px-5 pt-10 sm:px-8">
+        {/* Header */}
+        <div className="mb-6 flex items-end justify-between">
           <div>
-            <h1
-              className="text-[26px] font-semibold leading-tight"
-              style={{ letterSpacing: "-0.025em" }}
-            >
-              Clients
-            </h1>
-            <p className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+            <h1 className="font-heading text-[34px] leading-tight text-foreground">Clients</h1>
+            <p className="font-display text-caption text-muted-foreground mt-1">
               {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={() => setOpen(true)}
-            className="text-[13px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-            style={{
-              background: "#3B82F6",
-              padding: "8px 16px",
-              borderRadius: 8,
-            }}
-          >
+          <Button onClick={() => setOpen(true)} className="rounded-full h-9 px-4 text-caption font-semibold">
             + Add
-          </button>
+          </Button>
         </div>
 
-        {/* ── Search ── */}
-        <div
-          className="mb-3 flex items-center gap-3 px-4 py-3"
-          style={{
-            borderRadius: 13,
-            background: "rgba(20,20,22,0.6)",
-            border: "0.5px solid rgba(255,255,255,0.06)",
-          }}
-        >
-          <Search size={14} strokeWidth={1.8} style={{ color: "#6B7280", flexShrink: 0 }} />
+        {/* Search */}
+        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+          <Search className="size-3.5 text-muted-foreground shrink-0" />
           <input
             type="text"
             placeholder="Search by name or town…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent outline-none placeholder-[#4B5563]"
-            style={{ color: "#ffffff" }}
+            className="flex-1 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
           />
           {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              className="text-[14px]"
-              style={{ color: "#6B7280" }}
-            >
-              ×
+            <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
+              <X className="size-3.5 text-muted-foreground" />
             </button>
           )}
         </div>
 
-        {/* ── Filters ── */}
-        <div className="mb-4 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+        {/* Filters */}
+        <div className="mb-6 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
           {STATUS_FILTERS.map((f) => (
             <button
               key={f}
               type="button"
               onClick={() => setFilter(f)}
-              className="whitespace-nowrap text-[12px] font-medium active:scale-[0.97] transition-transform duration-100"
-              style={
+              className={
                 filter === f
-                  ? { background: "#3B82F6", color: "#ffffff", padding: "7px 14px", borderRadius: 20 }
-                  : {
-                      background: "rgba(20,20,22,0.6)",
-                      color: "#6B7280",
-                      padding: "7px 14px",
-                      borderRadius: 20,
-                      border: "0.5px solid rgba(255,255,255,0.06)",
-                    }
+                  ? "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-primary text-primary-foreground transition-colors"
+                  : "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-secondary text-muted-foreground border border-transparent hover:border-input transition-colors"
               }
             >
               {f}
@@ -269,142 +237,39 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
           ))}
         </div>
 
-        {/* ── List ── */}
+        {/* List */}
         {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-center">
-            <div
-              className="mb-4 flex h-11 w-11 items-center justify-center rounded-full"
-              style={{ background: "rgba(255,255,255,0.05)" }}
-            >
-              <Users size={20} style={{ color: "#6B7280" }} />
+          <div className="rounded-2xl border border-dashed border-border px-6 py-16 text-center">
+            <div className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-secondary">
+              <Users className="size-4 text-muted-foreground" />
             </div>
-            <p
-              className="mb-1 text-[11px] font-semibold uppercase"
-              style={{ color: "#6B7280", letterSpacing: "0.08em" }}
-            >
-              No Results
-            </p>
-            <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
-              {rows.length === 0
-                ? "No clients yet — tap Add to get started"
-                : "Try adjusting your search or filters"}
+            <p className="font-display text-body text-muted-foreground/70">
+              {rows.length === 0 ? "No clients yet — tap Add to get started" : "Try adjusting your search or filters"}
             </p>
             {rows.length === 0 && (
-              <button
-                type="button"
-                onClick={() => setOpen(true)}
-                className="mt-6 text-[14px] font-semibold active:scale-[0.97] transition-transform duration-100"
-                style={{
-                  background: "#3B82F6",
-                  color: "#ffffff",
-                  padding: "10px 20px",
-                  borderRadius: 8,
-                }}
-              >
+              <Button onClick={() => setOpen(true)} className="mt-6 rounded-full h-10 px-5 text-body font-semibold">
                 + Add your first client
-              </button>
+              </Button>
             )}
           </div>
         ) : (
-          <div>
-            {filtered.map((client, idx) => {
-              const statusStyle = STATUS_STYLE[client.status ?? ""] ?? null;
-              const score = client.lead_score ?? 0;
-              const hot = score >= 7;
-              const colors = avatarColors(client.name);
-              const isLast = idx === filtered.length - 1;
-
-              return (
-                <Link
-                  key={client.id}
-                  href={`/clients/${client.id}`}
-                  className="flex items-center active:bg-white/[0.03]"
-                  style={{
-                    padding: "14px 0",
-                    borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-                  }}
-                >
-                  {/* Avatar */}
-                  <div
-                    className="mr-3 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[12px] font-bold"
-                    style={{ background: colors.bg, color: colors.text }}
-                  >
-                    {initialsOf(client.name)}
-                  </div>
-
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p
-                        className="truncate text-[15px] font-semibold"
-                        style={{ color: "#ffffff", letterSpacing: "-0.01em" }}
-                      >
-                        {client.name}
-                      </p>
-                      {hot && (
-                        <span
-                          className="h-[5px] w-[5px] shrink-0 rounded-full"
-                          style={{ background: "#3B82F6" }}
-                        />
-                      )}
-                    </div>
-                    <p className="mt-px truncate text-[12px]" style={{ color: "#6B7280" }}>
-                      {client.town ?? "—"}
-                      {client.budget_max ? ` · Up to ${fmtMoney(client.budget_max)}` : ""}
-                    </p>
-                  </div>
-
-                  {/* Right meta */}
-                  <div className="ml-3 flex shrink-0 items-center gap-2">
-                    {statusStyle && (
-                      <span
-                        className="text-[10px] font-semibold uppercase"
-                        style={{
-                          background: statusStyle.bg,
-                          color: statusStyle.text,
-                          padding: "2px 7px",
-                          borderRadius: 4,
-                          letterSpacing: "0.04em",
-                        }}
-                      >
-                        {statusStyle.label}
-                      </span>
-                    )}
-                    <ChevronRight size={14} style={{ color: "#4B5563" }} />
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          <Card className="divide-y divide-border overflow-hidden">
+            {filtered.map((client) => (
+              <ClientRow key={client.id} client={client} />
+            ))}
+          </Card>
         )}
       </div>
 
-      {/* ── Add client sheet ── */}
+      {/* Add client sheet */}
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div
-            className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
-            style={{
-              background: "rgba(20,20,22,0.95)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-              borderBottom: "none",
-            }}
-          >
-            {/* Drag handle */}
-            <div
-              className="mx-auto mb-5 h-1 w-9 rounded-full"
-              style={{ background: "rgba(255,255,255,0.15)" }}
-            />
+          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-card border border-border border-b-0 px-5 pb-10 pt-4">
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-border" />
 
-            <p className="mb-0.5 text-[17px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.02em" }}>
-              New client
-            </p>
-            <p className="mb-5 text-[13px]" style={{ color: "#6B7280" }}>
-              Saved to your clients table.
-            </p>
+            <p className="font-heading text-[22px] text-foreground mb-0.5">New client</p>
+            <p className="font-display text-caption text-muted-foreground mb-5">Saved to your clients table.</p>
 
             <div className="space-y-3">
               <input
@@ -412,7 +277,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Full name *"
                 className={INPUT}
-                style={INPUT_STYLE}
               />
 
               <div className="grid grid-cols-2 gap-2">
@@ -422,7 +286,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Phone"
                   inputMode="tel"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
                 <input
                   value={form.email}
@@ -430,24 +293,20 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Email"
                   inputMode="email"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
               </div>
 
-              {/* Role toggle */}
               <div className="flex gap-2">
                 {(["buyer", "seller"] as const).map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => setForm({ ...form, client_role: r })}
-                    className="flex-1 py-2.5 text-[13px] font-semibold capitalize active:scale-[0.97] transition-transform duration-100"
-                    style={{
-                      borderRadius: 10,
-                      ...(form.client_role === r
-                        ? { background: "#3B82F6", color: "#ffffff" }
-                        : { background: "rgba(255,255,255,0.06)", color: "#6B7280", border: "0.5px solid rgba(255,255,255,0.08)" }),
-                    }}
+                    className={
+                      form.client_role === r
+                        ? "flex-1 rounded-xl py-2.5 font-display text-body font-semibold capitalize bg-primary text-primary-foreground transition-colors"
+                        : "flex-1 rounded-xl py-2.5 font-display text-body font-semibold capitalize bg-secondary text-muted-foreground transition-colors"
+                    }
                   >
                     {r}
                   </button>
@@ -461,7 +320,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Budget min"
                   inputMode="numeric"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
                 <input
                   value={form.budget_max}
@@ -469,7 +327,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Budget max"
                   inputMode="numeric"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
               </div>
 
@@ -480,7 +337,6 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Beds"
                   inputMode="numeric"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
                 <input
                   value={form.baths}
@@ -488,36 +344,23 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                   placeholder="Baths"
                   inputMode="decimal"
                   className={INPUT}
-                  style={INPUT_STYLE}
                 />
               </div>
 
-              {/* Town picker */}
               <div>
-                <p
-                  className="mb-2 text-[11px] font-semibold uppercase"
-                  style={{ color: "#6B7280", letterSpacing: "0.08em" }}
-                >
+                <p className="font-display text-caption uppercase tracking-[0.06em] text-muted-foreground mb-2">
                   Preferred towns
                 </p>
-                <div
-                  className="flex max-h-36 flex-wrap gap-1 overflow-y-auto p-2.5"
-                  style={{
-                    borderRadius: 12,
-                    background: "rgba(255,255,255,0.04)",
-                    border: "0.5px solid rgba(255,255,255,0.06)",
-                  }}
-                >
+                <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-xl bg-secondary p-2.5">
                   {NJ_TOWN_OPTIONS.map((t) => (
                     <button
                       key={t}
                       type="button"
                       onClick={() => toggleTown(t)}
-                      className="rounded-full px-2 py-[4px] text-[10px] font-medium active:scale-[0.97] transition-transform duration-100"
-                      style={
+                      className={
                         form.towns.includes(t)
-                          ? { background: "#3B82F6", color: "#ffffff" }
-                          : { background: "rgba(255,255,255,0.06)", color: "#6B7280" }
+                          ? "rounded-full px-2.5 py-1 font-display text-[11px] font-medium bg-primary text-primary-foreground transition-colors"
+                          : "rounded-full px-2.5 py-1 font-display text-[11px] font-medium bg-card text-muted-foreground transition-colors"
                       }
                     >
                       {t}
@@ -531,34 +374,18 @@ export function ClientsPageClient({ initial }: { initial: Record<string, unknown
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none p-4 outline-none placeholder-[#4B5563]"
-                style={{
-                  borderRadius: 13,
-                  background: "rgba(255,255,255,0.06)",
-                  border: "0.5px solid rgba(255,255,255,0.08)",
-                  color: "#ffffff",
-                }}
+                className="w-full resize-none rounded-xl bg-secondary p-4 outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
               />
             </div>
 
-            <div className="mt-5">
-              <button
-                type="button"
-                onClick={saveClient}
-                className="w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-                style={{
-                  background: "#3B82F6",
-                  padding: "14px",
-                  borderRadius: 10,
-                }}
-              >
-                Save client
-              </button>
-            </div>
+            <Button onClick={saveClient} className="w-full h-12 rounded-xl mt-5 text-body-lg font-semibold">
+              Save client
+            </Button>
           </div>
         </div>
       ) : null}
 
+      <Toaster />
     </div>
   );
 }

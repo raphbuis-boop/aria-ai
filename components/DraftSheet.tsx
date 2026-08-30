@@ -10,6 +10,8 @@ export type DraftSheetProps = {
   prefetchedDraft?: string;
   onClose: () => void;
   onSent: (itemId: string) => void;
+  /** Optional — when passed, shows a "Skip for today" link alongside Cancel. */
+  onSkip?: (itemId: string) => void;
 };
 
 function formatPhone(raw: string | null): string {
@@ -34,7 +36,7 @@ function triggerHaptic() {
   }
 }
 
-export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftSheetProps) {
+export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: DraftSheetProps) {
   const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -131,33 +133,23 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
   return (
     <Drawer.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Drawer.Portal>
-        <Drawer.Overlay
-          className="fixed inset-0 z-40"
-          style={{ background: "rgba(0,0,0,0.6)" }}
-        />
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[2px]" />
         <Drawer.Content
-          className="fixed bottom-0 left-0 right-0 z-50 flex flex-col outline-none"
-          style={{
-            background: "#0a0a0a",
-            borderRadius: "20px 20px 0 0",
-            maxHeight: "88vh",
-          }}
+          className="fixed bottom-0 left-0 right-0 z-50 flex flex-col outline-none bg-card border border-border border-b-0 rounded-t-[28px]"
+          style={{ maxHeight: "88vh" }}
         >
           {/* Drag handle */}
           <div className="flex justify-center pt-3 pb-1">
-            <div
-              className="h-1 w-10 rounded-full"
-              style={{ background: "#3a3a3c" }}
-            />
+            <div className="h-1 w-10 rounded-full bg-border" />
           </div>
 
           <div className="flex flex-col px-6 pb-10 overflow-y-auto flex-1">
             {/* Header */}
             <div className="mt-4 mb-5">
-              <h2 className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
+              <h2 className="font-heading text-[22px] leading-tight text-foreground">
                 {item?.actionLabel ?? ""}
               </h2>
-              <p className="mt-1 text-[14px]" style={{ color: item?.clientPhone ? "#9CA3AF" : "#EF4444" }}>
+              <p className={`mt-1 font-display text-body ${item?.clientPhone ? "text-muted-foreground" : "text-destructive"}`}>
                 {item?.clientPhone
                   ? formatPhone(item.clientPhone)
                   : "No phone number on file"}
@@ -165,17 +157,15 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
             </div>
 
             {/* Voice indicator */}
-            <p className="mb-2 text-[12px]" style={{ color: "#6B7280" }}>
-              Written in your voice
-            </p>
+            <p className="mb-2 font-display text-caption text-muted-foreground">Written in your voice</p>
 
             {/* Draft textarea */}
             {loading ? (
               <div className="space-y-2 mb-5">
-                <div className="h-4 rounded animate-pulse" style={{ background: "#1c1c1e", width: "92%" }} />
-                <div className="h-4 rounded animate-pulse" style={{ background: "#1c1c1e", width: "78%" }} />
-                <div className="h-4 rounded animate-pulse" style={{ background: "#1c1c1e", width: "85%" }} />
-                <p className="text-[13px] pt-1" style={{ color: "#6B7280" }}>Drafting in your voice…</p>
+                <div className="h-4 rounded animate-pulse bg-secondary" style={{ width: "92%" }} />
+                <div className="h-4 rounded animate-pulse bg-secondary" style={{ width: "78%" }} />
+                <div className="h-4 rounded animate-pulse bg-secondary" style={{ width: "85%" }} />
+                <p className="font-display text-caption text-muted-foreground pt-1">Drafting in your voice…</p>
               </div>
             ) : (
               <textarea
@@ -184,46 +174,35 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
                 onChange={(e) => setDraftText(e.target.value)}
                 readOnly={!isEditing}
                 rows={5}
-                className="w-full rounded-[12px] p-4 text-[17px] leading-relaxed resize-none outline-none mb-5"
-                style={{
-                  background: "#111111",
-                  border: "1px solid #222222",
-                  color: "#ffffff",
-                  minHeight: "160px",
-                  opacity: isEditing ? 1 : 0.9,
-                }}
+                className="w-full rounded-xl p-4 font-display text-body-lg leading-relaxed resize-none outline-none mb-5 bg-secondary border border-transparent focus:border-input text-foreground"
+                style={{ minHeight: "160px" }}
               />
             )}
 
             {/* No phone warning */}
             {!hasPhone && (
-              <p className="mb-3 text-[13px] text-center" style={{ color: "#6B7280" }}>
+              <p className="mb-3 font-display text-caption text-center text-muted-foreground">
                 No phone number on file
               </p>
             )}
 
-            {/* Messages + WhatsApp buttons */}
+            {/* Send + WhatsApp buttons */}
             <div className="flex gap-2 mb-3">
               <button
                 type="button"
                 onClick={() => logAndOpen("sms")}
                 disabled={!canSend}
-                className="flex-1 rounded-[12px] py-[17px] text-[16px] font-semibold text-white disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
-                style={{ background: "#3B82F6", minHeight: "56px" }}
+                className="flex-1 rounded-xl py-[17px] font-display text-body-lg font-semibold bg-primary text-primary-foreground disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+                style={{ minHeight: "56px" }}
               >
-                Messages
+                Send
               </button>
               <button
                 type="button"
                 onClick={() => logAndOpen("whatsapp")}
                 disabled={!canSend}
-                className="flex-1 rounded-[12px] py-[15px] text-[16px] font-semibold disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
-                style={{
-                  background: "transparent",
-                  border: "0.5px solid #25D366",
-                  color: "#25D366",
-                  minHeight: "56px",
-                }}
+                className="flex-1 rounded-xl py-[15px] font-display text-body-lg font-semibold border disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+                style={{ minHeight: "56px", borderColor: "#25D366", color: "#25D366", background: "transparent" }}
               >
                 WhatsApp
               </button>
@@ -234,22 +213,26 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent }: DraftShee
               type="button"
               onClick={handleEditToggle}
               disabled={loading}
-              className="w-full rounded-[12px] py-[15px] text-[16px] font-semibold mb-3 disabled:opacity-40"
-              style={{
-                background: "#1c1c1e",
-                color: "#aeaeb2",
-              }}
+              className="w-full rounded-xl py-[15px] font-display text-body-lg font-semibold mb-3 bg-secondary text-foreground disabled:opacity-40"
             >
               {isEditing ? "Done editing" : "Edit"}
             </button>
 
-            {/* Cancel */}
-            <div className="text-center pt-1">
+            {/* Skip / Cancel */}
+            <div className="flex items-center justify-center gap-5 pt-1">
+              {onSkip && item && (
+                <button
+                  type="button"
+                  onClick={() => onSkip(item.id)}
+                  className="font-display text-caption text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Skip for today
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}
-                className="text-[14px]"
-                style={{ color: "#6B7280" }}
+                className="font-display text-caption text-muted-foreground/60 hover:text-muted-foreground transition-colors"
               >
                 Cancel
               </button>

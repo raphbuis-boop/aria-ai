@@ -16,17 +16,16 @@ import { Toaster as SonnerToaster, toast } from "sonner";
 export function Toaster() {
   return (
     <SonnerToaster
-      position="top-right"
+      position="top-center"
       theme="dark"
-      richColors
       closeButton
       toastOptions={{
         classNames: {
           toast:
-            "group toast border border-border-card bg-bg-card text-text-primary shadow-lg",
-          description: "text-text-muted",
-          actionButton: "bg-accent-blue text-white",
-          cancelButton: "bg-bg-deep text-text-muted",
+            "group toast border border-border bg-popover text-popover-foreground font-[family-name:var(--font-sans)] shadow-none",
+          description: "text-muted-foreground",
+          actionButton: "bg-primary text-primary-foreground",
+          cancelButton: "bg-secondary text-secondary-foreground",
         },
       }}
     />

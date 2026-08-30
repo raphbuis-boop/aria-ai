@@ -1,71 +1,94 @@
 import { createClient } from "@/lib/supabase/server";
-import { InboxClient } from "./inbox-client";
+import { redirect } from "next/navigation";
+import { buildTodayItems } from "@/lib/today-items";
+import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem } from "@/lib/today-items";
+import { FollowUpsClient } from "./followups-client";
 
-export default async function InboxPage({
-  searchParams,
-}: {
-  searchParams: { clientId?: string };
-}) {
+export const dynamic = "force-dynamic";
+
+// Follow-ups / Messages — the core-loop screen (VISION.md #4).
+// Reuses the exact same "who needs contact" logic as Home (lib/today-items.ts),
+// ranked by value instead of urgency, with every item treated as a message to
+// draft, edit, and send.
+export default async function FollowUpsPage() {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
 
-  const [{ data: rows }, { data: gmailRow }] = await Promise.all([
-    // Fetch full activity history — no filter exclusion.
-    // The Conversations view groups by client and shows full thread history.
-    supabase
-      .from("activities")
-      .select(
-        `
-        id,
-        type,
-        direction,
-        body,
-        created_at,
-        ai_draft,
-        approved,
-        sent,
-        client_id,
-        clients ( name, phone, email, lead_score )
-      `,
-      )
-      .eq("agent_id", user.id)
-      .order("created_at", { ascending: false })
-      .limit(500),
+  if (!user) redirect("/login");
 
-    supabase
-      .from("gmail_integrations")
-      .select("email")
-      .eq("agent_id", user.id)
-      .maybeSingle(),
-  ]);
+  const now = new Date();
+  const todayISO = now.toISOString().split("T")[0];
+  const plus3 = new Date(now);
+  plus3.setDate(plus3.getDate() + 3);
+  const plus3ISO = plus3.toISOString().split("T")[0];
+  const minus30ISO = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
+  const minus24hISO = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
-  type ClientJoin = {
-    name: string | null;
-    phone: string | null;
-    email: string | null;
-    lead_score: number | null;
-  };
+  const [clientsRes, transactionsRes, activitiesRes, mlsMatchesRes, bbaRes, dismissedRes] =
+    await Promise.all([
+      supabase
+        .from("clients")
+        .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
+        .eq("agent_id", user.id)
+        .neq("status", "closed"),
 
-  const initial = (rows ?? []).map((r) => {
-    const c = r.clients as ClientJoin | ClientJoin[] | null;
-    const client = Array.isArray(c) ? c[0] : c;
-    return { ...r, clients: client ?? null };
-  });
+      supabase
+        .from("transactions")
+        .select("id, client_id, address, closing_date, status")
+        .eq("agent_id", user.id)
+        .gte("closing_date", todayISO)
+        .lte("closing_date", plus3ISO),
 
-  const gmailStatus = gmailRow
-    ? { connected: true, email: gmailRow.email as string | null }
-    : { connected: false, email: null };
+      supabase
+        .from("activities")
+        .select("client_id, created_at, type, direction")
+        .eq("agent_id", user.id)
+        .gte("created_at", minus30ISO)
+        .order("created_at", { ascending: false }),
 
-  const initialClientId = searchParams.clientId ?? null;
+      supabase
+        .from("property_matches")
+        .select("client_id, match_score, properties(address)")
+        .eq("agent_id", user.id)
+        .eq("notified", false)
+        .gte("created_at", minus24hISO)
+        .order("match_score", { ascending: false }),
 
-  return (
-    <InboxClient
-      initial={initial}
-      gmailStatus={gmailStatus}
-      initialClientId={initialClientId}
-    />
-  );
+      supabase.from("buyer_broker_agreements").select("client_id").eq("agent_id", user.id),
+
+      supabase
+        .from("dismissed_opportunities")
+        .select("item_id")
+        .eq("agent_id", user.id)
+        .gt("dismiss_until", now.toISOString()),
+    ]);
+
+  const clients = (clientsRes.data ?? []) as TodayClient[];
+  const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
+  const activities = (activitiesRes.data ?? []) as TodayActivity[];
+  const bbaSignedClientIds = (bbaRes.data ?? []).map((r) => String(r.client_id));
+
+  const seen = new Set<string>();
+  const newMatchItems: NewMatchItem[] = [];
+  for (const row of mlsMatchesRes.data ?? []) {
+    const clientId = String(row.client_id);
+    if (seen.has(clientId)) continue;
+    seen.add(clientId);
+    const props = row.properties as unknown as { address: string } | null;
+    newMatchItems.push({ clientId, propertyAddress: props?.address ?? null });
+  }
+
+  const dismissedIds = new Set((dismissedRes.data ?? []).map((r) => String(r.item_id)));
+
+  const allItems = buildTodayItems(clients, transactions, activities, newMatchItems, bbaSignedClientIds);
+  const items = allItems
+    .filter((i) => !dismissedIds.has(i.id))
+    // Ranked by value — highest commission at stake first.
+    .sort((a, b) => (b.commissionEst ?? 0) - (a.commissionEst ?? 0));
+
+  const totalCommission = items.reduce((sum, i) => sum + (i.commissionEst ?? 0), 0);
+
+  return <FollowUpsClient items={items} totalCommission={totalCommission} />;
 }

@@ -32,6 +32,8 @@ export type TodayTransaction = {
 export type TodayActivity = {
   client_id: string;
   created_at: string;
+  type: string | null;
+  direction: string | null;
 };
 
 export type NewMatchItem = {
@@ -42,6 +44,8 @@ export type NewMatchItem = {
 // ─── Output type ─────────────────────────────────────────────────────────────
 
 export type ActionType = "text" | "navigate";
+
+export type LeadHeat = "hot" | "warm" | "cold";
 
 export type TodayItem = {
   id: string;
@@ -59,6 +63,14 @@ export type TodayItem = {
   urgencyRank: number;
   transactionId?: string;
   propertyAddress?: string | null;
+  /** 0–10 readiness score straight from clients.lead_score — the real signal behind the heat badge. */
+  leadScore: number | null;
+  /** hot ≥8, warm ≥5, else cold. Null score reads as cold (nothing to base "hot" on). */
+  leadHeat: LeadHeat;
+  /** Plain-English label for the client's most recent logged activity, e.g. "Replied to your text 2 days ago". Null when there's no activity history. */
+  activitySignal: string | null;
+  /** Projected commission at 2.5% of budget max — same convention used elsewhere in the app. Null when no budget on file. */
+  commissionEst: number | null;
 };
 
 // ─── Label helpers ────────────────────────────────────────────────────────────
@@ -156,6 +168,57 @@ function daysSinceContact(clientId: string, activities: TodayActivity[]): number
   return differenceInCalendarDays(new Date(), new Date(latest.created_at));
 }
 
+export function heatFromScore(score: number | null): LeadHeat {
+  if (score == null) return "cold";
+  if (score >= 8) return "hot";
+  if (score >= 5) return "warm";
+  return "cold";
+}
+
+/**
+ * Plain-English verb for an activity type + direction — the single source of
+ * truth for both the per-card activity signal and the recent-activity feed.
+ * Returns null for types that aren't a meaningful client-facing "signal"
+ * (internal notes, automation runs) rather than inventing one.
+ */
+export function activityVerb(type: string | null, direction: string | null): string | null {
+  const inbound = direction === "inbound";
+  switch (type) {
+    case "text":
+      return inbound ? "Replied to your text" : "You texted";
+    case "call":
+      return "Phone call logged";
+    case "email":
+      return inbound ? "Replied to your email" : "You emailed";
+    case "showing":
+      return "Toured a property with you";
+    case "offer":
+      return "Submitted an offer";
+    default:
+      return null;
+  }
+}
+
+/** Short, honest label for a client's most recent activity — built only from real logged rows, never invented. */
+function mostRecentActivityLabel(clientId: string, activities: TodayActivity[]): string | null {
+  const clientActivities = activities.filter((a) => a.client_id === clientId);
+  if (clientActivities.length === 0) return null;
+  const latest = clientActivities.reduce((a, b) =>
+    new Date(a.created_at) > new Date(b.created_at) ? a : b,
+  );
+  const verb = activityVerb(latest.type, latest.direction);
+  if (!verb) return null;
+
+  const days = differenceInCalendarDays(new Date(), new Date(latest.created_at));
+  const when = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
+  return `${verb} · ${when}`;
+}
+
+export function commissionFor(budgetMax: number | null): number | null {
+  if (!budgetMax) return null;
+  return Math.round(budgetMax * 0.025);
+}
+
 // ─── Main export ─────────────────────────────────────────────────────────────
 
 /**
@@ -199,6 +262,10 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
+      leadScore: client.lead_score,
+      leadHeat: heatFromScore(client.lead_score),
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: commissionFor(client.budget_max),
       reason,
       context: client.town ?? null,
       actionLabel: closingLabel(client.name),
@@ -230,6 +297,10 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
+      leadScore: client.lead_score,
+      leadHeat: heatFromScore(client.lead_score),
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: commissionFor(client.budget_max),
       reason: daysPhrase,
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
       actionLabel: `Text ${textRecipient(client.name)}`,
@@ -264,6 +335,10 @@ export function buildTodayItems(
         clientTown: client.town,
         clientBudgetMax: client.budget_max,
         clientStatus: client.status,
+        leadScore: client.lead_score,
+        leadHeat: heatFromScore(client.lead_score),
+        activitySignal: mostRecentActivityLabel(client.id, activities),
+        commissionEst: commissionFor(client.budget_max),
         reason: `Home purchase anniversary${yearLabel}`,
         context: client.town ?? null,
         actionLabel: `Send anniversary text to ${textRecipient(client.name)}`,
@@ -280,6 +355,10 @@ export function buildTodayItems(
         clientTown: client.town,
         clientBudgetMax: client.budget_max,
         clientStatus: client.status,
+        leadScore: client.lead_score,
+        leadHeat: heatFromScore(client.lead_score),
+        activitySignal: mostRecentActivityLabel(client.id, activities),
+        commissionEst: commissionFor(client.budget_max),
         reason: "Today is their birthday",
         context: client.town ?? null,
         actionLabel: `Send birthday text to ${textRecipient(client.name)}`,
@@ -308,6 +387,10 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
+      leadScore: client.lead_score,
+      leadHeat: heatFromScore(client.lead_score),
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: commissionFor(client.budget_max),
       reason: "Hasn't signed the buyer agreement yet",
       context: client.town ?? null,
       actionLabel: `Remind ${client.name.split(" ")[0]} to sign`,
@@ -338,6 +421,10 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
+      leadScore: client.lead_score,
+      leadHeat: heatFromScore(client.lead_score),
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: commissionFor(client.budget_max),
       reason: "New listing just hit MLS that fits what they want",
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
       actionLabel: addrLabel,

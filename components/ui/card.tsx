@@ -2,8 +2,11 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Card — surface primitive matching Aria's dashboard cards
- * (bg-card + border-card with subtle rounding).
+ * Card — Aria V2 surface primitive.
+ * Soft white surface, warm-tinted shadow (not pure black) for real but
+ * gentle depth against the ivory canvas, hairline border. Restraint
+ * comes from color: the surface stays quiet so the one accent-colored
+ * element inside it (the action button) reads as the thing that matters.
  *
  * Compose with: <Card>, <CardHeader>, <CardTitle>, <CardDescription>,
  * <CardContent>, <CardFooter>.
@@ -15,7 +18,8 @@ const Card = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-[14px] border border-border-card bg-bg-card text-text-primary shadow-sm",
+      "rounded-lg border border-border bg-card text-card-foreground",
+      "shadow-[0_1px_2px_rgba(43,36,25,0.04),0_20px_36px_-24px_rgba(43,36,25,0.16)]",
       className,
     )}
     {...props}
@@ -29,7 +33,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex flex-col space-y-1.5 p-5", className)}
+    className={cn("flex flex-col gap-1.5 p-6", className)}
     {...props}
   />
 ));
@@ -41,10 +45,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "text-base font-semibold leading-none tracking-tight",
-      className,
-    )}
+    className={cn("font-display text-title text-foreground", className)}
     {...props}
   />
 ));
@@ -56,7 +57,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("text-sm text-text-muted", className)}
+    className={cn("font-display text-body text-muted-foreground", className)}
     {...props}
   />
 ));
@@ -66,7 +67,7 @@ const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
-  <div ref={ref} className={cn("p-5 pt-0", className)} {...props} />
+  <div ref={ref} className={cn("p-6 pt-0", className)} {...props} />
 ));
 CardContent.displayName = "CardContent";
 
@@ -76,7 +77,7 @@ const CardFooter = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("flex items-center p-5 pt-0", className)}
+    className={cn("flex items-center p-6 pt-0", className)}
     {...props}
   />
 ));

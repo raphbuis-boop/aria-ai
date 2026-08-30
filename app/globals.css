@@ -1,3 +1,5 @@
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -347,4 +349,62 @@ select:focus {
   border-radius: 16px;
   /* stronger inner highlight for elevated panels */
   box-shadow: inset 0 1px 0 rgba(229, 228, 226, 0.12);
+}
+
+@layer base {
+  .theme {
+    --font-heading:          var(--font-sans);
+    --font-sans:          var(--font-sans);
+  }
+
+  /* ═══════════════════════════════════════════════════════════════════
+     ARIA V2 — design system foundation (dashboard rebuild)
+     Direction: warm ivory / editorial premium — third and current
+     iteration (after monochrome-dark and dark-fintech). Warm cream
+     canvas, white cards with soft warm shadows, deep green as the one
+     action accent, plus a small hot/warm signal-color pair for
+     lead-heat (kept separate from the action accent on purpose).
+     Scope: feeds shadcn's standard tokens (bg-primary, bg-card, etc.),
+     which are currently unused anywhere else in the app (verified zero
+     importers of components/ui/button.tsx or card.tsx), so this does
+     not change the visual appearance of any existing screen.
+     App has no light/dark toggle — same palette on :root and .dark so
+     it's active regardless, and correct if theme switching is ever added.
+  ─────────────────────────────────────────────────────────────────── */
+  :root,
+  .dark {
+    --background:          #FAF6EE;   /* canvas — warm ivory */
+    --foreground:          #2B2419;   /* ink — warm near-black */
+    --card:                #FFFFFF;   /* surface — soft white */
+    --card-foreground:     #2B2419;
+    --popover:             #FFFFFF;
+    --popover-foreground:  #2B2419;
+    --primary:             #1F5C46;   /* deep green — actions + key numbers only */
+    --primary-foreground:  #FAF6EE;
+    --secondary:           #F1EAD9;   /* warm secondary surface — section dividers, chips */
+    --secondary-foreground:#2B2419;
+    --muted:               #F1EAD9;
+    --muted-foreground:    #8A7F6C;   /* warm taupe secondary text */
+    --accent:              #F1EAD9;   /* neutral hover surface, not the action color */
+    --accent-foreground:   #2B2419;
+    --destructive:         #B84B33;
+    --destructive-foreground: #FAF6EE;
+    --border:              rgba(43, 36, 25, 0.09);
+    --input:               rgba(43, 36, 25, 0.16);
+    --ring:                #1F5C46;
+    --hot:                 #B84B33;   /* lead-heat: hot — terracotta */
+    --warm:                #B8842E;   /* lead-heat: warm — muted gold */
+    --violet:              #6B5B95;   /* secondary decorative accent — signal lines */
+    --radius:              1.25rem;   /* 20px — soft rounded cards */
+  }
+  /* Plain CSS, not @apply — Tailwind 3.4's opacity-modifier plugin does not
+     resolve custom outlineColor tokens reliably here, and this reset must
+     never fail the whole app's build over a focus-ring detail. */
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+  html {
+    @apply font-sans;
+  }
 }
