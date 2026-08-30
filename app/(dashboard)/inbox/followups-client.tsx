@@ -92,7 +92,7 @@ function FollowUpRow({
   );
 }
 
-export function FollowUpsClient({ items: initialItems, totalCommission: initialCommission }: Props) {
+export function FollowUpsClient({ items: initialItems }: Props) {
   const [items, setItems] = useState(initialItems);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);

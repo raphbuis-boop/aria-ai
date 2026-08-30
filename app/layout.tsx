@@ -56,7 +56,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable, fraunces.variable, workSans.variable)}>
+    <html lang="en" className={cn("font-sans", geist.variable, instrumentSerif.variable, fraunces.variable, workSans.variable)}>
       {/*
         body bg is transparent — the .oc-backdrop div renders the
         Obsidian Chrome canvas. html retains bg-oc-onyx so overscroll

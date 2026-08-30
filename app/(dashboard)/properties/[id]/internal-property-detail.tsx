@@ -53,7 +53,6 @@ export function InternalPropertyDetail({
 }) {
   const router = useRouter();
 
-  const id = String(property.id);
   const address = (property.address as string | null) ?? "Property";
   const town = (property.town as string | null) ?? null;
   const price = (property.price as number | null) ?? null;

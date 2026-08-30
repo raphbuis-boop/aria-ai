@@ -16,9 +16,15 @@ const sentryAuthOk = Boolean(process.env.SENTRY_AUTH_TOKEN);
  * The org/project are committed; the SENTRY_AUTH_TOKEN is set in Vercel
  * (and locally in .env.sentry-build-plugin if you want to upload from dev).
  *
- * When the token is missing, release + sourcemap upload are skipped. When the
- * token is set but invalid (401), errorHandler keeps the Next.js build going;
- * replace the token in Vercel → Settings → Environment Variables to restore uploads.
+ * When the token is missing, sourcemap upload is skipped. When it's set but
+ * invalid (401), errorHandler catches that failure — but errorHandler only
+ * covers the asset-upload step per Sentry's plugin docs, NOT release
+ * create/finalize, which is a separate authenticated API call. That gap is
+ * what actually failed the build with a real invalid token in production
+ * (confirmed), so release create/finalize is unconditionally off below —
+ * runtime error capture works with or without a formally created release.
+ * Replace the token in Vercel → Settings → Environment Variables to restore
+ * sourcemap upload; re-enable release tracking once that's confirmed working.
  */
 export default withSentryConfig(nextConfig, {
   org: "aria-ec",
@@ -47,10 +53,12 @@ export default withSentryConfig(nextConfig, {
     disable: !sentryAuthOk,
   },
   release: {
-    create: sentryAuthOk,
-    finalize: sentryAuthOk,
+    create: false,
+    finalize: false,
   },
+  // Covers sourcemap upload failures (e.g. invalid token) — logs and lets
+  // the build continue instead of failing it.
   errorHandler: (err) => {
-    console.warn("[Sentry]", err.message);
+    console.warn("[Sentry] sourcemap upload skipped:", err.message);
   },
 });
