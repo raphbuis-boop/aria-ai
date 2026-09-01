@@ -115,18 +115,18 @@ function textRecipient(name: string): string {
 }
 
 /**
- * "John Peterson" → "Open John's deal"
- * "Mike & Linda Roth" → "Open the Roths' deal"
- * "Sarah and James Jones" → "Open the Joneses' deal"
+ * "John Peterson" → "View John's file"
+ * "Mike & Linda Roth" → "View the Roths' file"
+ * "Sarah and James Jones" → "View the Joneses' file"
  */
 function closingLabel(name: string): string {
   if (isCouple(name)) {
     const lastName = coupleLastName(name);
     const plural = pluralizeCoupleLastName(lastName);
     // Possessive: "Roths'" / "Joneses'"
-    return `Open the ${plural}' deal`;
+    return `View the ${plural}' file`;
   }
-  return `Open ${name.split(" ")[0]}'s deal`;
+  return `View ${name.split(" ")[0]}'s file`;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -270,7 +270,10 @@ export function buildTodayItems(
       context: client.town ?? null,
       actionLabel: closingLabel(client.name),
       actionType: "navigate",
-      navigateTo: `/transactions/${tx.id}`,
+      // Points at the rebuilt Client Detail page, not the old unrebuilt
+      // /transactions/[id] "Transaction Copilot" screen — that screen is
+      // deliberately off the design system pending a post-demo rebuild.
+      navigateTo: `/clients/${client.id}`,
       urgencyRank: 1,
       transactionId: tx.id,
     });

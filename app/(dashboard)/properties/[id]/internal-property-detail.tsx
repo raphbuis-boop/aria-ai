@@ -64,9 +64,13 @@ export function InternalPropertyDetail({
   const propertyType = (property.property_type as string | null) ?? null;
   const description = (property.description as string | null) ?? null;
   const photosRaw = property.photos as unknown;
-  const photos = Array.isArray(photosRaw) ? photosRaw.filter((p): p is string => typeof p === "string") : [];
+  const allPhotos = Array.isArray(photosRaw) ? photosRaw.filter((p): p is string => typeof p === "string") : [];
 
   const [activePhoto, setActivePhoto] = useState(0);
+  const [failedPhotos, setFailedPhotos] = useState<Set<string>>(new Set());
+  const photos = allPhotos.filter((p) => !failedPhotos.has(p));
+  const markFailed = (p: string) =>
+    setFailedPhotos((prev) => (prev.has(p) ? prev : new Set(prev).add(p)));
 
   const handleShare = async () => {
     triggerHaptic();
@@ -114,7 +118,12 @@ export function InternalPropertyDetail({
           <div className="aspect-[4/3] w-full rounded-2xl bg-secondary overflow-hidden flex items-center justify-center">
             {photos.length > 0 ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={photos[activePhoto]} alt={address} className="size-full object-cover" />
+              <img
+                src={photos[Math.min(activePhoto, photos.length - 1)]}
+                alt={address}
+                className="size-full object-cover"
+                onError={() => markFailed(photos[Math.min(activePhoto, photos.length - 1)])}
+              />
             ) : (
               <HomeIcon className="size-10 text-muted-foreground/40" />
             )}
@@ -131,7 +140,7 @@ export function InternalPropertyDetail({
                   }`}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p} alt="" className="size-full object-cover" />
+                  <img src={p} alt="" className="size-full object-cover" onError={() => markFailed(p)} />
                 </button>
               ))}
             </div>

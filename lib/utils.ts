@@ -56,6 +56,26 @@ export function fmtDate(iso: string | null | undefined): string {
   }
 }
 
+const SOURCE_LABELS: Record<string, string> = {
+  zillow: "Zillow",
+  google: "Google",
+  referral: "Referral",
+  manual: "Manually added",
+  website: "Website",
+  facebook: "Facebook",
+  instagram: "Instagram",
+  open_house: "Open house",
+  sign_call: "Sign call",
+  past_client: "Past client",
+  sphere: "Sphere of influence",
+};
+
+/** Raw DB lead-source enum → display label: "google" → "Google". */
+export function humanizeSource(source: string | null | undefined): string | null {
+  if (!source) return null;
+  return SOURCE_LABELS[source] ?? source.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
+}
+
 /** Date + time: "Jun 20, 2:45 PM". */
 export function fmtDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";

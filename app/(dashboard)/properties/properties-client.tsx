@@ -72,12 +72,13 @@ function MatchCue({ matches, property }: { matches: PropertyMatch[]; property: P
 
 function PropertyRow({ p }: { p: Property }) {
   const photo = photoUrlOf(p.photos);
+  const [failed, setFailed] = useState(false);
   return (
     <Link href={`/properties/${p.id}`} className="flex gap-4 px-5 py-4 hover:bg-accent/50 transition-colors">
       <div className="size-16 shrink-0 rounded-xl bg-secondary overflow-hidden flex items-center justify-center">
-        {photo ? (
+        {photo && !failed ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt="" className="size-full object-cover" />
+          <img src={photo} alt="" className="size-full object-cover" onError={() => setFailed(true)} />
         ) : (
           <HomeIcon className="size-5 text-muted-foreground/50" />
         )}

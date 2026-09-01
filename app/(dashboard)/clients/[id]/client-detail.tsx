@@ -18,7 +18,7 @@ import { DraftSheet } from "@/components/DraftSheet";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
-import { fmtMoney, relTime } from "@/lib/utils";
+import { fmtMoney, relTime, humanizeSource } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -326,7 +326,7 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
             <Fact label="Budget" value={budget} />
             <Fact label="Preferred towns" value={towns} />
             <Fact label="Beds / baths" value={bedsBaths} />
-            <Fact label="Source" value={source} />
+            <Fact label="Source" value={humanizeSource(source)} />
           </Card>
         </section>
       </div>
