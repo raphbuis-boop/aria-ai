@@ -3,7 +3,8 @@
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164, initials } from "@/lib/utils";
-import { heatFromScore } from "@/lib/today-items";
+import { heatFromScore, computeLeadScore } from "@/lib/today-items";
+import type { TodayActivity, TodayTransaction, TodayClient } from "@/lib/today-items";
 import { statusLabel } from "@/lib/client-brief";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -95,11 +96,42 @@ function ClientRow({ client }: { client: Row }) {
   );
 }
 
-export function ClientsPageClient({ initial }: { initial: Row[] }) {
+export function ClientsPageClient({
+  initial,
+  activities,
+  transactions,
+}: {
+  initial: Row[];
+  activities: TodayActivity[];
+  transactions: TodayTransaction[];
+}) {
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rows = initial;
+
+  // Same behavior + timing model as Home and Client-detail — a client's heat
+  // dot, "Hot"/"Follow Up" filter, and hot count all agree with the rest of
+  // the app instead of trusting the hand-typed clients.lead_score column.
+  const rows = useMemo(
+    () =>
+      initial.map((c) => {
+        const todayClient: TodayClient = {
+          id: c.id,
+          name: c.name,
+          town: c.town,
+          status: c.status,
+          lead_score: c.lead_score,
+          budget_min: c.budget_min,
+          budget_max: c.budget_max,
+          phone: c.phone ?? null,
+          birthday: null,
+          home_purchase_date: null,
+        };
+        const { score } = computeLeadScore(todayClient, activities, transactions);
+        return { ...c, lead_score: score };
+      }),
+    [initial, activities, transactions],
+  );
 
   const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [search, setSearch] = useState("");

@@ -41,7 +41,7 @@ export default function SavedPropertiesPage() {
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
       <BackButton label="Property Search" className="mb-4" />
       <div className="flex items-center gap-2">
-        <Bookmark className="text-accent-blue" size={22} />
+        <Bookmark className="text-primary" size={22} />
         <h1 className="text-[20px] font-semibold text-text-primary">
           Watchlist
         </h1>
@@ -58,7 +58,7 @@ export default function SavedPropertiesPage() {
       ) : rows.length === 0 ? (
         <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
           No saved listings yet.{" "}
-          <Link href="/listings" className="font-medium text-accent-blue">
+          <Link href="/listings" className="font-medium text-primary">
             Browse listings →
           </Link>
         </div>
@@ -68,7 +68,7 @@ export default function SavedPropertiesPage() {
             <li key={r.mls_number}>
               <Link
                 href={`/properties/${encodeURIComponent(r.mls_number)}`}
-                className="flex gap-3 rounded-[14px] border border-border-card bg-bg-card p-3 transition hover:border-accent-blue/30"
+                className="flex gap-3 rounded-[14px] border border-border-card bg-bg-card p-3 transition hover:border-primary/30"
               >
                 <div className="h-20 w-24 flex-shrink-0 overflow-hidden rounded-[10px] bg-bg-deep">
                   {r.photo_url ? (
@@ -92,7 +92,7 @@ export default function SavedPropertiesPage() {
                     {r.town ?? ""} · Listing #{r.mls_number}
                   </p>
                   {r.price != null ? (
-                    <p className="mt-1 text-[13px] font-medium text-accent-blue">
+                    <p className="mt-1 text-[13px] font-medium text-primary">
                       {fmtMoney(r.price)}
                     </p>
                   ) : null}

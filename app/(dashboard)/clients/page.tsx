@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ClientsPageClient } from "./clients-client";
 import { commissionFor } from "@/lib/today-items";
+import type { TodayActivity, TodayTransaction } from "@/lib/today-items";
 
 function normalizePhone(p: string | null | undefined): string {
   return (p ?? "").replace(/\D/g, "");
@@ -29,25 +30,37 @@ export default async function ClientsPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: clients }, { data: activeTransactions }] = await Promise.all([
+  const [{ data: clients }, { data: activeTransactions }, { data: activities }] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name, town, status, lead_score, budget_min, budget_max, phone, email, beds_wanted, baths_wanted, notes, client_role")
       .eq("agent_id", user.id)
       .order("last_engagement_at", { ascending: false }),
 
-    // Active deals — real contract_price beats a budget-based estimate.
+    // Active deals — real contract_price beats a budget-based estimate, and
+    // closing_date feeds computeLeadScore's closing-proximity boost.
     supabase
       .from("transactions")
-      .select("client_id, contract_price")
+      .select("id, client_id, contract_price, address, closing_date, status")
       .eq("agent_id", user.id)
       .eq("status", "active"),
+
+    // Full activity history — computeLeadScore needs the true last-contact
+    // date, not a rolling window, so a client gone quiet for months still
+    // scores as stale rather than reading as "no data".
+    supabase
+      .from("activities")
+      .select("client_id, created_at, type, direction")
+      .eq("agent_id", user.id),
   ]);
 
   const dealValueByClient = new Map<string, number>();
   for (const t of activeTransactions ?? []) {
     if (t.contract_price) dealValueByClient.set(String(t.client_id), t.contract_price as number);
   }
+
+  const transactions = (activeTransactions ?? []) as TodayTransaction[];
+  const clientActivities = (activities ?? []) as TodayActivity[];
 
   const rows = dedupeClients(clients ?? []).map((c) => {
     const dealValue = dealValueByClient.get(c.id as string) ?? (c.budget_max as number | null) ?? null;
@@ -59,5 +72,5 @@ export default async function ClientsPage() {
     };
   });
 
-  return <ClientsPageClient initial={rows} />;
+  return <ClientsPageClient initial={rows} activities={clientActivities} transactions={transactions} />;
 }

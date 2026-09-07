@@ -6,6 +6,7 @@ import { ListingInquiryForm } from "@/components/ListingInquiryForm";
 import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { PhotoCarousel } from "@/components/PhotoCarousel";
 import { useToast } from "@/components/ToastProvider";
+import { Button } from "@/components/ui/button";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
 import { Bookmark, CalendarPlus, Loader2, Sparkles } from "lucide-react";
@@ -309,7 +310,7 @@ export function PropertyPageClient({
       {mode === "internal" && listing.mlsNumber ? (
         <Link
           href={`/properties/${encodeURIComponent(listing.mlsNumber)}`}
-          className="mb-3 block rounded-[10px] border border-accent-blue/30 bg-accent-blue/10 px-3 py-2 text-center text-[12px] font-semibold text-accent-blue"
+          className="mb-3 block rounded-[10px] border border-primary/30 bg-primary/10 px-3 py-2 text-center text-[12px] font-semibold text-primary"
         >
           Open live listing detail (refresh from feed) →
         </Link>
@@ -426,7 +427,7 @@ export function PropertyPageClient({
           {listing.listingRepresentative?.phone ? (
             <a
               href={`tel:${listing.listingRepresentative.phone}`}
-              className="mt-1 block text-[13px] text-accent-blue"
+              className="mt-1 block text-[13px] text-primary"
             >
               {listing.listingRepresentative.phone}
             </a>
@@ -434,7 +435,7 @@ export function PropertyPageClient({
           {listing.listingRepresentative?.email ? (
             <a
               href={`mailto:${listing.listingRepresentative.email}`}
-              className="mt-1 block text-[13px] text-accent-blue"
+              className="mt-1 block text-[13px] text-primary"
             >
               {listing.listingRepresentative.email}
             </a>
@@ -471,7 +472,7 @@ export function PropertyPageClient({
             href={listing.externalUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[12px] font-medium text-accent-blue"
+            className="text-[12px] font-medium text-primary"
           >
             External listing link →
           </a>
@@ -490,19 +491,18 @@ export function PropertyPageClient({
       {viewerContext === "agent" ? (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
           <div className="mx-auto flex max-w-lg flex-wrap gap-2">
-            <button
-              type="button"
+            <Button
               onClick={() => setMatchOpen(true)}
-              className="flex-1 min-w-[120px] rounded-[10px] bg-accent-blue px-3 py-2.5 text-[12px] font-semibold text-white"
+              className="flex-1 min-w-[120px] rounded-[10px] px-3 py-2.5 text-[12px]"
             >
               Match to Clients
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => void toggleWatchlist()}
               className={`flex-1 min-w-[100px] rounded-[10px] px-3 py-2.5 text-[12px] font-semibold ${
                 saved
-                  ? "border border-accent-blue/40 bg-accent-blue/15 text-accent-blue"
+                  ? "border border-primary/40 bg-primary/15 text-primary"
                   : "border border-border-card bg-bg-card text-text-primary"
               }`}
             >
@@ -547,13 +547,12 @@ export function PropertyPageClient({
       ) : (
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
           <div className="mx-auto flex max-w-lg gap-2">
-            <button
-              type="button"
+            <Button
               onClick={() => { setInquiryIntent("showing"); setInquiryOpen(true); }}
-              className="flex-1 rounded-[10px] bg-accent-blue px-3 py-2.5 text-[13px] font-semibold text-white"
+              className="flex-1 rounded-[10px] px-3 py-2.5 text-[13px]"
             >
               Request Showing
-            </button>
+            </Button>
             <button
               type="button"
               onClick={() => { setInquiryIntent("info"); setInquiryOpen(true); }}
