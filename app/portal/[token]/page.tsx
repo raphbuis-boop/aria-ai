@@ -1,7 +1,9 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { MarketCard } from "@/components/MarketCard";
-import { fmtMoney, fmtDate } from "@/lib/utils";
+import { PortalBeacon } from "@/components/PortalBeacon";
+import { PortalListingCard } from "@/components/PortalListingCard";
+import { fmtDate } from "@/lib/utils";
 
 export default async function PortalPage({
   params,
@@ -59,6 +61,7 @@ export default async function PortalPage({
 
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
+      <PortalBeacon token={params.token} />
       <div className="text-[22px] font-medium text-accent-blue">Aria</div>
       <div className="text-[13px] text-text-dim">{agent?.full_name}</div>
       <div className="mt-6 text-[22px] text-text-primary">Hi {first},</div>
@@ -72,22 +75,15 @@ export default async function PortalPage({
             const p = m.properties as Record<string, unknown> | null;
             const reasons = (m.match_reasons as string[]) ?? [];
             return (
-              <div
+              <PortalListingCard
                 key={String(m.id)}
-                className="rounded-[14px] border border-border-card bg-bg-card p-4"
-              >
-                <div className="text-[15px] font-medium text-text-primary">
-                  {String(p?.address ?? "")}
-                </div>
-                <div className="text-[14px] text-accent-blue">
-                  {fmtMoney(p?.price as number | null)}
-                </div>
-                <ul className="mt-2 space-y-1 text-[12px] text-accent-green">
-                  {reasons.map((r) => (
-                    <li key={r}>✓ {r}</li>
-                  ))}
-                </ul>
-              </div>
+                token={params.token}
+                listingId={String(p?.id ?? m.id)}
+                address={String(p?.address ?? "")}
+                price={(p?.price as number | null) ?? null}
+                reasons={reasons}
+                mlsNumber={(p?.mls_number as string | null) ?? null}
+              />
             );
           })}
         </div>

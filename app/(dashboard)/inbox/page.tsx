@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { buildTodayItems } from "@/lib/today-items";
-import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem } from "@/lib/today-items";
+import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem, TodayEngagementEvent } from "@/lib/today-items";
 import { FollowUpsClient } from "./followups-client";
 
 export const dynamic = "force-dynamic";
@@ -82,7 +82,14 @@ export default async function FollowUpsPage() {
 
   const dismissedIds = new Set((dismissedRes.data ?? []).map((r) => String(r.item_id)));
 
-  const allItems = buildTodayItems(clients, transactions, activities, newMatchItems, bbaSignedClientIds);
+  const { data: engagementRows } = await supabase
+    .from("client_engagement_events")
+    .select("client_id, event_type, created_at, listing_address, mls_number")
+    .eq("agent_id", user.id)
+    .gte("created_at", minus30ISO);
+  const engagement = (engagementRows ?? []) as TodayEngagementEvent[];
+
+  const allItems = buildTodayItems(clients, transactions, activities, newMatchItems, bbaSignedClientIds, engagement);
   const items = allItems
     .filter((i) => !dismissedIds.has(i.id))
     // Ranked by value — highest commission at stake first.

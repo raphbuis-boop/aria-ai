@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { buildTodayItems, activityVerb } from "@/lib/today-items";
-import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem } from "@/lib/today-items";
+import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem, TodayEngagementEvent } from "@/lib/today-items";
 import { TodayClient as TodayClientComponent } from "./today-client";
 import { initials } from "@/lib/utils";
 
@@ -184,12 +184,23 @@ export default async function DashboardPage() {
 
   const dismissedIds = new Set((dismissedRes.data ?? []).map((r) => String(r.item_id)));
 
+  // Behavioral engagement (last 30d) — feeds real lead heat. Fail-soft: if the
+  // client_engagement_events table isn't migrated yet, this is null -> [] and
+  // scoring simply falls back to the prior signals.
+  const { data: engagementRows } = await supabase
+    .from("client_engagement_events")
+    .select("client_id, event_type, created_at, listing_address, mls_number")
+    .eq("agent_id", user.id)
+    .gte("created_at", minus30ISO);
+  const engagement = (engagementRows ?? []) as TodayEngagementEvent[];
+
   const allItems = buildTodayItems(
     clients,
     transactions,
     activities,
     newMatchItems,
     bbaSignedClientIds,
+    engagement,
   );
 
   // Filter out snoozed/dismissed items before sending to client

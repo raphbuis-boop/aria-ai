@@ -47,6 +47,15 @@ export type ActionType = "text" | "navigate";
 
 export type LeadHeat = "hot" | "warm" | "cold";
 
+export type TodayEngagementEvent = {
+  client_id: string;
+  /** portal_open | view | favorite | inquiry | search | alert_open */
+  event_type: string;
+  created_at: string;
+  listing_address?: string | null;
+  mls_number?: string | null;
+};
+
 export type TodayItem = {
   id: string;
   clientId: string;
@@ -190,7 +199,8 @@ export function heatFromScore(score: number | null): LeadHeat {
 export function computeLeadScore(
   client: TodayClient,
   activities: TodayActivity[],
-  transactions: TodayTransaction[]
+  transactions: TodayTransaction[],
+  engagement: TodayEngagementEvent[] = []
 ): { score: number; reason: string } {
   // If client is closed, return cold with appropriate reason
   if (client.status === "closed") {
@@ -283,6 +293,29 @@ export function computeLeadScore(
     score += 1;
   }
 
+  // ── Behavioral engagement (portal opens, views, favorites, inquiries) ──────
+  // The real signal behind heat — what the client actually does, attributed via
+  // their per-client portal. Recent windows: last 7 days vs the prior 7 days.
+  const DAY_MS = 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  const myEng = engagement.filter((e) => e.client_id === client.id);
+  const eng7 = myEng.filter((e) => nowMs - new Date(e.created_at).getTime() <= 7 * DAY_MS);
+  const engPrev7 = myEng.filter((e) => {
+    const d = nowMs - new Date(e.created_at).getTime();
+    return d > 7 * DAY_MS && d <= 14 * DAY_MS;
+  });
+  const opens7 = eng7.filter((e) => e.event_type === "portal_open").length;
+  const views7 = eng7.filter((e) => e.event_type === "view").length;
+  const favs7 = eng7.filter((e) => e.event_type === "favorite").length;
+  const inquiries7 = eng7.filter((e) => e.event_type === "inquiry").length;
+  if (opens7 > 0) score += 1;
+  if (views7 >= 1) score += 1;
+  if (views7 >= 3) score += 1;
+  if (favs7 >= 1) score += 2;
+  if (inquiries7 >= 1) score += 3;
+  // Rising momentum — engaging more this week than last.
+  if (eng7.length >= 2 && eng7.length > engPrev7.length) score += 1;
+
   // Clamp score between 0 and 10
   score = Math.max(0, Math.min(10, Math.round(score)));
 
@@ -342,6 +375,15 @@ export function computeLeadScore(
   } else if (recentActivities.length === 0 && daysSinceLastContact !== null && daysSinceLastContact > 7) {
     reasonParts.push("No recent activity");
   }
+
+  // Behavioral reason takes priority — it's the freshest, most actionable signal.
+  let engReason: string | null = null;
+  if (inquiries7 >= 1) engReason = "Asked about a listing this week";
+  else if (favs7 >= 1) engReason = favs7 === 1 ? "Favorited a home this week" : `Favorited ${favs7} homes this week`;
+  else if (views7 >= 3) engReason = `Viewed ${views7} listings this week`;
+  else if (views7 >= 1) engReason = `Viewed ${views7} listing${views7 === 1 ? "" : "s"} this week`;
+  else if (opens7 > 0) engReason = "Opened your portal this week";
+  if (engReason) reasonParts.unshift(engReason);
 
   // Join reason parts, limiting to 2 most relevant for brevity
   const reason = reasonParts.slice(0, 2).join("; ") || "Lead scored";
@@ -412,6 +454,7 @@ export function buildTodayItems(
   activities: TodayActivity[],
   newMatchItems: NewMatchItem[],
   bbaSignedClientIds: string[],
+  engagement: TodayEngagementEvent[] = [],
 ): TodayItem[] {
   const items: TodayItem[] = [];
   const now = new Date();
@@ -429,7 +472,7 @@ export function buildTodayItems(
     const reason = tx.address ? `Closing at ${tx.address}` : "Closing soon";
 
     // Compute real lead score for transaction items
-    const { score: txScore, reason: txReason } = computeLeadScore(client, activities, transactions);
+    const { score: txScore, reason: txReason } = computeLeadScore(client, activities, transactions, engagement);
 
     items.push({
       id: `tx-${tx.id}`,
@@ -471,7 +514,7 @@ export function buildTodayItems(
     const budget = fmtBudget(client.budget_min, client.budget_max);
 
     // Compute real lead score for hot lead items
-    const { score: hotScore, reason: hotReason } = computeLeadScore(client, activities, transactions);
+    const { score: hotScore, reason: hotReason } = computeLeadScore(client, activities, transactions, engagement);
 
     items.push({
       id: `hot-${client.id}`,
@@ -506,7 +549,7 @@ export function buildTodayItems(
     if (!isBirthday && !isHomePurchase) continue;
 
     // Compute real lead score for anniversary items
-    const { score: annivScore, reason: annivReason } = computeLeadScore(client, activities, transactions);
+    const { score: annivScore, reason: annivReason } = computeLeadScore(client, activities, transactions, engagement);
 
     if (isHomePurchase) {
       const purchaseYear = client.home_purchase_date
@@ -569,7 +612,7 @@ export function buildTodayItems(
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
     // Compute real lead score for BBA items
-    const { score: bbaScore, reason: bbaReason } = computeLeadScore(client, activities, transactions);
+    const { score: bbaScore, reason: bbaReason } = computeLeadScore(client, activities, transactions, engagement);
 
     bbaCount++;
     items.push({
@@ -602,7 +645,7 @@ export function buildTodayItems(
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
     // Compute real lead score for MLS match items
-    const { score: matchScore, reason: matchReason } = computeLeadScore(client, activities, transactions);
+    const { score: matchScore, reason: matchReason } = computeLeadScore(client, activities, transactions, engagement);
 
     const budget = fmtBudget(client.budget_min, client.budget_max);
     const firstName = client.name.split(" ")[0];
