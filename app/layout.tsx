@@ -62,7 +62,7 @@ export default function RootLayout({
         Obsidian Chrome canvas. html retains bg-oc-onyx so overscroll
         rubber-band areas stay Onyx on iOS, not white.
       */}
-      <body className={`${dmSans.className} min-h-[100dvh] text-oc-alabaster`}>
+      <body className={`${dmSans.className} min-h-[100dvh] text-foreground`}>
         {/* Obsidian Chrome backdrop — fixed, z-index -1, behind all content */}
         <div aria-hidden="true" className="oc-backdrop" />
         <SplashScreen />

@@ -59,7 +59,7 @@ html {
   -webkit-text-size-adjust: 100%;
   /* Overscroll area = backdrop base — matches .oc-backdrop exactly so rubber-band
      zones don't expose a different color band above or below the page. */
-  background: #0C0F16;
+  background: #FAF6EE;
   touch-action: manipulation;
   /* clip vs hidden: overflow-x:hidden on <html> implicitly promotes overflow-y
      to auto on the root element, creating a second scroll container alongside
@@ -158,19 +158,14 @@ a:active, button:active, [role="button"]:active {
   opacity: 0.82;
 }
 
-/* Page enter animation — plays on every route mount.
-   Uses opacity only — NOT transform.
-   Reason: any CSS transform on a parent creates a new containing block,
-   which breaks fixed-positioned children (they clip to the transformed
-   ancestor instead of the viewport). Opacity does not have this side effect.
-   The /voice and /inbox bypass list in PageShell has been removed. */
-@keyframes page-enter {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+/* Authenticated pages keep the same ivory canvas through loading, drawer
+   focus and overscroll. Public/legacy pages retain their existing backdrop. */
+html:has(.app-shell),
+body:has(.app-shell) {
+  background: var(--background);
 }
-
-.page-enter {
-  animation: page-enter 220ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+body:has(.app-shell) > .oc-backdrop {
+  display: none;
 }
 
 /* Skeleton pulse for loading states */
@@ -180,7 +175,7 @@ a:active, button:active, [role="button"]:active {
 }
 
 .skeleton {
-  background: #0d1228;
+  background: #F1EAD9;
   border-radius: 8px;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
@@ -290,36 +285,22 @@ select:focus {
   z-index: -1;
   pointer-events: none;
   /*
-    Frosted obsidian chrome material.
-    Layer order (front → back):
-      1. Vertical chrome fade — catches light at top edge, fades by 32%
-      2. Alabaster haze — wide top-center wash, the "frosted" quality
-      3. Blue Slate upper-left — main atmospheric mass
-      4. Blue Slate lower-right — secondary depth
-      5. Base: #0C0F16 — deep obsidian with cold blue cast
-    All gradients large-spread; no hard bands.
+    Warm ivory canvas — matches --background (#FAF6EE) so any moment the
+    backdrop is visible (first paint, route transition, overscroll) reads
+    as the app's own ground, never a dark flash. Two faint washes (green,
+    gold) add depth without banding. Legacy .oc-backdrop name kept.
   */
-  background-color: #0C0F16;
+  background-color: #FAF6EE;
   background-image:
-    linear-gradient(
-      180deg,
-      rgba(229, 228, 226, 0.05) 0%,
-      transparent 32%
+    radial-gradient(
+      ellipse 90% 55% at 50% 0%,
+      rgba(31, 92, 70, 0.035) 0%,
+      transparent 60%
     ),
     radial-gradient(
-      ellipse 82% 58% at 50% 0%,
-      rgba(229, 228, 226, 0.09) 0%,
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 92% 76% at 8% 12%,
-      rgba(83, 104, 120, 0.42) 0%,
-      transparent 100%
-    ),
-    radial-gradient(
-      ellipse 80% 65% at 90% 88%,
-      rgba(83, 104, 120, 0.26) 0%,
-      transparent 100%
+      ellipse 85% 70% at 100% 100%,
+      rgba(184, 132, 46, 0.03) 0%,
+      transparent 60%
     );
 }
 

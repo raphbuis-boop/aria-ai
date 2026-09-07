@@ -48,8 +48,8 @@ export function SplashScreen() {
           to   { opacity: 1; }
         }
         @keyframes glowIn {
-          from { filter: drop-shadow(0 0 0px rgba(96,165,250,0)); }
-          to   { filter: drop-shadow(0 0 18px rgba(96,165,250,0.55)); }
+          from { filter: drop-shadow(0 0 0px rgba(31,92,70,0)); }
+          to   { filter: drop-shadow(0 0 18px rgba(31,92,70,0.35)); }
         }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(10px); }
@@ -75,7 +75,7 @@ export function SplashScreen() {
         }
         .splash-logo-glow {
           animation: glowIn 0.8s ease-out 2.2s forwards;
-          filter: drop-shadow(0 0 0px rgba(96,165,250,0));
+          filter: drop-shadow(0 0 0px rgba(31,92,70,0));
         }
         .splash-wordmark {
           opacity: 0;
@@ -103,9 +103,9 @@ export function SplashScreen() {
         className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center ${fading ? "splash-screen-fade" : ""}`}
         style={{
           background: `
-            radial-gradient(ellipse 80% 50% at 50% 30%, rgba(59,130,246,0.20), transparent 60%),
-            radial-gradient(ellipse 60% 40% at 50% 80%, rgba(6,182,212,0.10), transparent),
-            #000000
+            radial-gradient(ellipse 80% 50% at 50% 28%, rgba(31,92,70,0.10), transparent 60%),
+            radial-gradient(ellipse 60% 40% at 50% 82%, rgba(184,132,46,0.06), transparent),
+            #FAF6EE
           `,
         }}
       >
@@ -118,7 +118,7 @@ export function SplashScreen() {
               style={{
                 width: 80,
                 height: 80,
-                border: "1px solid rgba(96,165,250,0.4)",
+                border: "1px solid rgba(31,92,70,0.35)",
               }}
             />
           ))}
@@ -128,12 +128,12 @@ export function SplashScreen() {
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
               <defs>
                 <linearGradient id="splash-grad-fill" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#60A5FA"/>
-                  <stop offset="100%" stop-color="#1D4ED8"/>
+                  <stop offset="0%" stop-color="#2E7D5B"/>
+                  <stop offset="100%" stop-color="#1F5C46"/>
                 </linearGradient>
                 <linearGradient id="splash-grad-stroke" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#93C5FD"/>
-                  <stop offset="100%" stop-color="#3B82F6"/>
+                  <stop offset="0%" stop-color="#3E9B72"/>
+                  <stop offset="100%" stop-color="#2E7D5B"/>
                 </linearGradient>
               </defs>
               {/* Filled path — fades in after outline draws */}
@@ -158,8 +158,8 @@ export function SplashScreen() {
 
         {/* Wordmark */}
         <p
-          className="splash-wordmark mt-6 text-[40px] font-bold text-white"
-          style={{ letterSpacing: "-0.04em" }}
+          className="splash-wordmark mt-6 text-[44px] text-[#2B2419]"
+          style={{ letterSpacing: "-0.03em", fontFamily: "var(--font-fraunces), serif" }}
         >
           aria
         </p>
@@ -167,7 +167,7 @@ export function SplashScreen() {
         {/* Tagline */}
         <p
           className="splash-tagline mt-2 text-[14px]"
-          style={{ color: "#9CA3AF" }}
+          style={{ color: "#8A7F6C" }}
         >
           Your real estate teammate.
         </p>
