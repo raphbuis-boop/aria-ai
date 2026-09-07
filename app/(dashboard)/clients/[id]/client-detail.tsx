@@ -11,8 +11,8 @@ import {
   Phone,
   Sparkles,
 } from "lucide-react";
-import type { TodayItem } from "@/lib/today-items";
-import { heatFromScore } from "@/lib/today-items";
+import type { TodayItem, TodayClient, TodayActivity } from "@/lib/today-items";
+import { heatFromScore, computeLeadScore } from "@/lib/today-items";
 import { statusLabel, type ClientBrief } from "@/lib/client-brief";
 import { DraftSheet } from "@/components/DraftSheet";
 import { Card } from "@/components/ui/card";
@@ -202,8 +202,35 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
   const phone = (client.phone as string | null) ?? null;
   const town = (client.town as string | null) ?? null;
   const status = (client.status as string | null) ?? null;
-  const leadScore = (client.lead_score as number | null) ?? null;
-  const leadHeat = heatFromScore(leadScore);
+  const leadScoreFromClient = (client.lead_score as number | null) ?? null;
+
+  // Convert client-detail activities to TodayActivity format
+  const todayActivities: TodayActivity[] = activities.map(a => ({
+    client_id: id,
+    created_at: a.created_at,
+    type: a.type,
+    direction: a.direction,
+  }));
+
+  // Compute real lead score from behavior and timing (without transaction data for closing proximity)
+  const { score: computedLeadScore, reason: computedLeadReason } = computeLeadScore(
+    {
+      id,
+      name,
+      town,
+      status,
+      lead_score: leadScoreFromClient,
+      budget_min: (client.budget_min as number | null) ?? null,
+      budget_max: (client.budget_max as number | null) ?? null,
+      phone,
+      birthday: (client.birthday as string | null) ?? null,
+      home_purchase_date: (client.home_purchase_date as string | null) ?? null,
+    } as TodayClient,
+    todayActivities,
+    [] // No transaction data available in client detail view
+  );
+
+  const leadHeat = heatFromScore(computedLeadScore);
 
   // Compatible with DraftSheet, which only reads id/clientId/clientName/clientPhone/reason/context.
   const draftItem = useMemo<TodayItem>(
@@ -221,12 +248,13 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
       actionType: "text",
       navigateTo: null,
       urgencyRank: 1,
-      leadScore,
+      leadScore: computedLeadScore,
       leadHeat,
+      leadScoreReason: computedLeadReason,
       activitySignal: null,
       commissionEst: brief.commissionEst,
     }),
-    [id, name, phone, town, status, leadScore, leadHeat, client.budget_max, brief],
+    [id, name, phone, town, status, computedLeadScore, computedLeadReason, leadHeat, client.budget_max, brief],
   );
 
   // Pre-fetch the AI draft once on mount so the sheet opens instantly.
@@ -241,6 +269,14 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
         context: town ?? "",
         clientId: id,
         skipInsert: true,
+        urgencyRank: 1,
+        clientTown: town,
+        clientBudgetMax: (client.budget_max as number | null) ?? null,
+        propertyAddress: null,
+        clientStatus: (client.status as string | null) ?? null,
+        leadScore: (client.lead_score as number | null) ?? null,
+        activitySignal: null,
+        commissionEst: brief.commissionEst,
       }),
     })
       .then((r) => r.json())

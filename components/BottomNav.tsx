@@ -12,8 +12,9 @@
 // Safe-area contract: bottom offset includes env(safe-area-inset-bottom).
 
 import { motion } from "framer-motion";
-import { Home, Users, MessageSquare, Building2 } from "lucide-react";
+import { Home, Users, MessageSquare, Building2, LoaderCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useTransition } from "react";
 
 type Tab = {
   key: string;
@@ -25,7 +26,7 @@ type Tab = {
 
 const TABS_LEFT: Tab[] = [
   { key: "today", label: "Today", href: "/dashboard", Icon: Home },
-  { key: "clients", label: "Clients", href: "/people", Icon: Users, activeFor: ["/clients", "/pipeline"] },
+  { key: "clients", label: "Clients", href: "/clients", Icon: Users, activeFor: ["/people", "/pipeline"] },
 ];
 
 const TABS_RIGHT: Tab[] = [
@@ -52,24 +53,32 @@ function triggerHaptic() {
 function TabButton({ tab, pathname }: { tab: Tab; pathname: string }) {
   const router = useRouter();
   const active = isActive(tab.href, tab.activeFor, pathname);
+  const [pending, startTransition] = useTransition();
+
+  useEffect(() => {
+    router.prefetch(tab.href);
+  }, [router, tab.href, pathname]);
 
   return (
     <motion.button
       type="button"
       aria-label={tab.label}
+      aria-current={active ? "page" : undefined}
+      aria-busy={pending}
       whileTap={{ scale: 0.88 }}
       transition={TAP_SPRING}
       onClick={() => {
         triggerHaptic();
-        router.push(tab.href);
+        if (pathname === tab.href || pending) return;
+        startTransition(() => router.push(tab.href));
       }}
       className="flex items-center justify-center"
       style={{ width: 44, height: 44 }}
     >
-      <tab.Icon
+      {pending ? <LoaderCircle className="size-6 animate-spin text-primary" aria-label={`Opening ${tab.label}`} /> : <tab.Icon
         className={active ? "size-6 text-primary" : "size-6 text-muted-foreground"}
         strokeWidth={active ? 2.1 : 1.7}
-      />
+      />}
     </motion.button>
   );
 }
@@ -77,6 +86,7 @@ function TabButton({ tab, pathname }: { tab: Tab; pathname: string }) {
 export function BottomNav() {
   const pathname = usePathname();
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
   const ariaActive = pathname === "/voice" || pathname.startsWith("/voice/") || pathname === "/ai";
 
@@ -110,11 +120,13 @@ export function BottomNav() {
         <motion.button
           type="button"
           aria-label="Aria"
+          aria-busy={pending}
           whileTap={{ scale: 0.9 }}
           transition={TAP_SPRING}
           onClick={() => {
             triggerHaptic();
-            router.push("/voice");
+            if (pathname === "/voice" || pending) return;
+            startTransition(() => router.push("/voice"));
           }}
           className="absolute left-1/2 flex items-center justify-center rounded-full"
           style={{

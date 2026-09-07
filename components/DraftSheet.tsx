@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer } from "vaul";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useState, useRef } from "react";
 import type { TodayItem } from "@/lib/today-items";
 import { smsUrl, whatsAppUrl } from "@/lib/messaging-links";
 
@@ -46,6 +46,32 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
   const hasPhone = !!item?.clientPhone;
   const canSend = hasPhone && draftText.trim().length > 0 && !loading;
 
+  // Capacitor's WKWebView user agent does not include "Safari", so Vaul's
+  // Safari-only body lock misses it. Own the lock for this sheet, including
+  // restoration, so focusing the editor cannot scroll the page underneath.
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const body = document.body;
+    const { scrollX, scrollY } = window;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previous = {
+      position: body.style.position,
+      top: body.style.top,
+      left: body.style.left,
+      right: body.style.right,
+      width: body.style.width,
+    };
+    Object.assign(body.style, {
+      position: "fixed", top: `${-scrollY}px`, left: `${-scrollX}px`, right: "0", width: "100%",
+    });
+    return () => {
+      textareaRef.current?.blur();
+      Object.assign(body.style, previous);
+      window.scrollTo({ left: scrollX, top: scrollY, behavior: "instant" });
+      opener?.focus({ preventScroll: true });
+    };
+  }, [isOpen]);
+
   // Populate draft when item changes — use prefetched draft if available, otherwise fetch
   useEffect(() => {
     if (!item) {
@@ -77,6 +103,14 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
         context: item.context ?? "",
         clientId: item.clientId,
         skipInsert: true,
+        urgencyRank: item.urgencyRank,
+        clientTown: item.clientTown,
+        clientBudgetMax: item.clientBudgetMax,
+        propertyAddress: item.propertyAddress,
+        clientStatus: item.clientStatus,
+        leadScore: item.leadScore,
+        activitySignal: item.activitySignal,
+        commissionEst: item.commissionEst,
       }),
     })
       .then((r) => r.json())
@@ -99,7 +133,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
   // Focus textarea when edit mode turns on
   useEffect(() => {
     if (isEditing && textareaRef.current) {
-      textareaRef.current.focus();
+      textareaRef.current.focus({ preventScroll: true });
     }
   }, [isEditing]);
 
@@ -127,14 +161,16 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
 
   function handleEditToggle() {
     triggerHaptic();
+    if (isEditing) textareaRef.current?.blur();
     setIsEditing((v) => !v);
   }
 
   return (
-    <Drawer.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Drawer.Root open={isOpen} noBodyStyles disablePreventScroll={false} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[2px]" />
         <Drawer.Content
+          onCloseAutoFocus={(event) => event.preventDefault()}
           className="fixed bottom-0 left-0 right-0 z-50 flex flex-col outline-none bg-card border border-border border-b-0 rounded-t-[28px]"
           style={{ maxHeight: "88vh" }}
         >

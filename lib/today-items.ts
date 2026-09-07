@@ -63,10 +63,12 @@ export type TodayItem = {
   urgencyRank: number;
   transactionId?: string;
   propertyAddress?: string | null;
-  /** 0–10 readiness score straight from clients.lead_score — the real signal behind the heat badge. */
+  /** 0–10 computed lead score based on behavior and timing — the real signal behind the heat badge. */
   leadScore: number | null;
   /** hot ≥8, warm ≥5, else cold. Null score reads as cold (nothing to base "hot" on). */
   leadHeat: LeadHeat;
+  /** Short plain-English reason for the lead score (e.g. "gone quiet 12 days", "closing in 3 days"). */
+  leadScoreReason: string | null;
   /** Plain-English label for the client's most recent logged activity, e.g. "Replied to your text 2 days ago". Null when there's no activity history. */
   activitySignal: string | null;
   /** Projected commission at 2.5% of budget max — same convention used elsewhere in the app. Null when no budget on file. */
@@ -176,6 +178,178 @@ export function heatFromScore(score: number | null): LeadHeat {
 }
 
 /**
+ * Computes a dynamic lead score (0-10) based on real signals:
+ * - Deal stage (status)
+ * - Recency of contact (days since last activity)
+ * - Closing proximity (days until closing)
+ * - Activity momentum (recent frequency)
+ * - Engagement levels (showings, offers, etc.)
+ *
+ * Returns an object with the score and a short reason string.
+ */
+export function computeLeadScore(
+  client: TodayClient,
+  activities: TodayActivity[],
+  transactions: TodayTransaction[]
+): { score: number; reason: string } {
+  // If client is closed, return cold with appropriate reason
+  if (client.status === "closed") {
+    return {
+      score: 0,
+      reason: "Closed"
+    };
+  }
+
+  // Start with base score from deal stage
+  let score = 0;
+  switch (client.status) {
+    case "new":
+    case "contacted":
+      score = 2;
+      break;
+    case "showing":
+      score = 4;
+      break;
+    case "offer":
+      score = 6;
+      break;
+    case "under_contract":
+      score = 8;
+      break;
+    default:
+      score = 1; // fallback for unknown status
+  }
+
+  // Get days since last contact
+  const daysSinceLastContact = daysSinceContact(client.id, activities);
+
+  // Adjust score based on recency of contact
+  if (daysSinceLastContact !== null) {
+    if (daysSinceLastContact <= 1) {
+      score += 2; // Very recent contact
+    } else if (daysSinceLastContact <= 3) {
+      score += 1; // Recent contact
+    } else if (daysSinceLastContact <= 7) {
+      // No change for week-old contact
+    } else if (daysSinceLastContact <= 14) {
+      score -= 1; // Getting stale
+    } else {
+      score -= 2; // Stale contact
+    }
+  }
+
+  // Check for closing transaction and adjust score based on proximity
+  const clientTransactions = transactions.filter(tx => tx.client_id === client.id);
+  if (clientTransactions.length > 0) {
+    // Find the most imminent closing
+    const closingDates = clientTransactions
+      .map(tx => tx.closing_date ? new Date(tx.closing_date) : null)
+      .filter((date): date is Date => date !== null && !isNaN(date.getTime()));
+
+    if (closingDates.length > 0) {
+      const soonestClosing = Math.min(...closingDates.map(d => d.getTime()));
+      const daysUntilClosing = Math.ceil((soonestClosing - Date.now()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntilClosing <= 0) {
+        // Closing today or already closed (should be handled by status, but just in case)
+        score += 2;
+      } else if (daysUntilClosing <= 3) {
+        score += 2; // Closing very soon
+      } else if (daysUntilClosing <= 7) {
+        score += 1; // Closing soon
+      }
+      // No adjustment for further out closings
+    }
+  }
+
+  // Adjust score based on activity momentum (last 14 days)
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+  const recentActivities = activities.filter(activity =>
+    new Date(activity.created_at) >= twoWeeksAgo
+  );
+
+  if (recentActivities.length >= 3) {
+    score += 1; // High activity
+  } else if (recentActivities.length === 0) {
+    score -= 1; // No recent activity
+  }
+
+  // Engagement boost for high-intent activities
+  const hasHighIntentActivity = activities.some(activity =>
+    activity.type === "showing" || activity.type === "offer"
+  );
+  if (hasHighIntentActivity) {
+    score += 1;
+  }
+
+  // Clamp score between 0 and 10
+  score = Math.max(0, Math.min(10, Math.round(score)));
+
+  // Generate reason string based on the most significant factors
+  const reasonParts: string[] = [];
+
+  // Add status-based reason
+  const statusReasons: Record<string, string> = {
+    "new": "New lead",
+    "contacted": "Initial contact made",
+    "showing": "Actively touring properties",
+    "offer": "At offer stage",
+    "under_contract": "Under contract"
+  };
+  if (client.status && statusReasons[client.status]) {
+    reasonParts.push(statusReasons[client.status]);
+  }
+
+  // Add recency reason if significant
+  if (daysSinceLastContact !== null) {
+    if (daysSinceLastContact === 0) {
+      reasonParts.push("Contacted today");
+    } else if (daysSinceLastContact === 1) {
+      reasonParts.push("Contacted yesterday");
+    } else if (daysSinceLastContact >= 2 && daysSinceLastContact <= 7) {
+      reasonParts.push(`Contacted ${daysSinceLastContact} days ago`);
+    } else if (daysSinceLastContact > 7 && daysSinceLastContact <= 14) {
+      reasonParts.push(`Contacted ${daysSinceLastContact} days ago`);
+    } else if (daysSinceLastContact > 14) {
+      reasonParts.push(`No contact in ${daysSinceLastContact} days`);
+    }
+  }
+
+  // Add closing reason if imminent
+  if (clientTransactions.length > 0) {
+    const closingDates = clientTransactions
+      .map(tx => tx.closing_date ? new Date(tx.closing_date) : null)
+      .filter((date): date is Date => date !== null && !isNaN(date.getTime()));
+
+    if (closingDates.length > 0) {
+      const soonestClosing = Math.min(...closingDates.map(d => d.getTime()));
+      const daysUntilClosing = Math.ceil((soonestClosing - Date.now()) / (1000 * 60 * 60 * 24));
+
+      if (daysUntilClosing === 0) {
+        reasonParts.push("Closing today");
+      } else if (daysUntilClosing === 1) {
+        reasonParts.push("Closing tomorrow");
+      } else if (daysUntilClosing >= 2 && daysUntilClosing <= 7) {
+        reasonParts.push(`Closing in ${daysUntilClosing} days`);
+      }
+    }
+  }
+
+  // Add activity reason if significant
+  if (recentActivities.length >= 3) {
+    reasonParts.push("High recent activity");
+  } else if (recentActivities.length === 0 && daysSinceLastContact !== null && daysSinceLastContact > 7) {
+    reasonParts.push("No recent activity");
+  }
+
+  // Join reason parts, limiting to 2 most relevant for brevity
+  const reason = reasonParts.slice(0, 2).join("; ") || "Lead scored";
+
+  return { score, reason };
+}
+
+/**
  * Plain-English verb for an activity type + direction — the single source of
  * truth for both the per-card activity signal and the recent-activity feed.
  * Returns null for types that aren't a meaningful client-facing "signal"
@@ -254,6 +428,9 @@ export function buildTodayItems(
     // reason identifies WHICH closing; timing pill ("TODAY"/"TOMORROW"/"2 DAYS") conveys urgency
     const reason = tx.address ? `Closing at ${tx.address}` : "Closing soon";
 
+    // Compute real lead score for transaction items
+    const { score: txScore, reason: txReason } = computeLeadScore(client, activities, transactions);
+
     items.push({
       id: `tx-${tx.id}`,
       clientId: client.id,
@@ -262,8 +439,9 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
-      leadScore: client.lead_score,
-      leadHeat: heatFromScore(client.lead_score),
+      leadScore: txScore,
+      leadHeat: heatFromScore(txScore),
+      leadScoreReason: txReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
       commissionEst: commissionFor(client.budget_max),
       reason,
@@ -292,6 +470,9 @@ export function buildTodayItems(
       days === null ? "You haven't reached out yet" : `Hasn't heard from you in ${days} days`;
     const budget = fmtBudget(client.budget_min, client.budget_max);
 
+    // Compute real lead score for hot lead items
+    const { score: hotScore, reason: hotReason } = computeLeadScore(client, activities, transactions);
+
     items.push({
       id: `hot-${client.id}`,
       clientId: client.id,
@@ -300,8 +481,9 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
-      leadScore: client.lead_score,
-      leadHeat: heatFromScore(client.lead_score),
+      leadScore: hotScore,
+      leadHeat: heatFromScore(hotScore),
+      leadScoreReason: hotReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
       commissionEst: commissionFor(client.budget_max),
       reason: daysPhrase,
@@ -323,6 +505,9 @@ export function buildTodayItems(
     const isHomePurchase = isAnniversaryToday(client.home_purchase_date);
     if (!isBirthday && !isHomePurchase) continue;
 
+    // Compute real lead score for anniversary items
+    const { score: annivScore, reason: annivReason } = computeLeadScore(client, activities, transactions);
+
     if (isHomePurchase) {
       const purchaseYear = client.home_purchase_date
         ? new Date(client.home_purchase_date + "T00:00:00").getFullYear()
@@ -338,8 +523,9 @@ export function buildTodayItems(
         clientTown: client.town,
         clientBudgetMax: client.budget_max,
         clientStatus: client.status,
-        leadScore: client.lead_score,
-        leadHeat: heatFromScore(client.lead_score),
+        leadScore: annivScore,
+        leadHeat: heatFromScore(annivScore),
+        leadScoreReason: annivReason,
         activitySignal: mostRecentActivityLabel(client.id, activities),
         commissionEst: commissionFor(client.budget_max),
         reason: `Home purchase anniversary${yearLabel}`,
@@ -358,8 +544,9 @@ export function buildTodayItems(
         clientTown: client.town,
         clientBudgetMax: client.budget_max,
         clientStatus: client.status,
-        leadScore: client.lead_score,
-        leadHeat: heatFromScore(client.lead_score),
+        leadScore: annivScore,
+        leadHeat: heatFromScore(annivScore),
+        leadScoreReason: annivReason,
         activitySignal: mostRecentActivityLabel(client.id, activities),
         commissionEst: commissionFor(client.budget_max),
         reason: "Today is their birthday",
@@ -381,6 +568,9 @@ export function buildTodayItems(
     if (bbaSignedClientIds.includes(client.id)) continue;
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
+    // Compute real lead score for BBA items
+    const { score: bbaScore, reason: bbaReason } = computeLeadScore(client, activities, transactions);
+
     bbaCount++;
     items.push({
       id: `bba-${client.id}`,
@@ -390,8 +580,9 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
-      leadScore: client.lead_score,
-      leadHeat: heatFromScore(client.lead_score),
+      leadScore: bbaScore,
+      leadHeat: heatFromScore(bbaScore),
+      leadScoreReason: bbaReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
       commissionEst: commissionFor(client.budget_max),
       reason: "Hasn't signed the buyer agreement yet",
@@ -410,6 +601,9 @@ export function buildTodayItems(
     if (!client) continue;
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
 
+    // Compute real lead score for MLS match items
+    const { score: matchScore, reason: matchReason } = computeLeadScore(client, activities, transactions);
+
     const budget = fmtBudget(client.budget_min, client.budget_max);
     const firstName = client.name.split(" ")[0];
     const addrLabel = propertyAddress
@@ -424,8 +618,9 @@ export function buildTodayItems(
       clientTown: client.town,
       clientBudgetMax: client.budget_max,
       clientStatus: client.status,
-      leadScore: client.lead_score,
-      leadHeat: heatFromScore(client.lead_score),
+      leadScore: matchScore,
+      leadHeat: heatFromScore(matchScore),
+      leadScoreReason: matchReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
       commissionEst: commissionFor(client.budget_max),
       reason: "New listing just hit MLS that fits what they want",

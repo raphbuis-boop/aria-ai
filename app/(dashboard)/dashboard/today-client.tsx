@@ -311,6 +311,14 @@ export function TodayClient({
             context: item.context ?? "",
             clientId: item.clientId,
             skipInsert: true,
+            urgencyRank: item.urgencyRank,
+            clientTown: item.clientTown,
+            clientBudgetMax: item.clientBudgetMax,
+            propertyAddress: item.propertyAddress ?? "",
+            clientStatus: item.clientStatus,
+            leadScore: item.leadScore,
+            activitySignal: item.activitySignal ?? "",
+            commissionEst: item.commissionEst,
           }),
         })
           .then((r) => r.json())

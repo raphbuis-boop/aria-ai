@@ -22,3 +22,11 @@ These defaults are optimized for AI coding agents (and humans) working on apps t
   needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
 - For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
 <!-- VERCEL BEST PRACTICES END -->
+
+## Collaboration preferences
+
+- Keep work in the existing task; the user prefers to stay in the originating voice conversation and finds extra tasks confusing.
+- Report concrete reproduced behavior and its practical impact. Distinguish screens loading from demo readiness, and local-code hypotheses from verified deployed behavior.
+- Give concise, meaningful progress updates. Recommend plugins, skills, or repositories only when materially useful to completing the current work.
+- Preserve existing uncommitted changes. Verify interaction changes in the actual simulator against the modified local or preview build; do not silently deploy to production.
+- During readiness walkthroughs, do not send client messages or change client records.

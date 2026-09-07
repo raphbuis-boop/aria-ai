@@ -61,6 +61,14 @@ export default function VoiceSettingsPage() {
         scenario: previewQ,
         voiceSamples: samples,
         skipInsert: true,
+        urgencyRank: 2, // Using a default urgency rank for preview
+        clientTown: "",
+        clientBudgetMax: null,
+        propertyAddress: "",
+        clientStatus: "",
+        leadScore: null,
+        activitySignal: "",
+        commissionEst: null,
       }),
     });
     const data = await res.json();
