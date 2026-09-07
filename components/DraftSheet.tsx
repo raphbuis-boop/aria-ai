@@ -231,7 +231,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
                 className="flex-1 rounded-xl py-[17px] font-display text-body-lg font-semibold bg-primary text-primary-foreground disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
                 style={{ minHeight: "56px" }}
               >
-                Send
+                SMS
               </button>
               <button
                 type="button"

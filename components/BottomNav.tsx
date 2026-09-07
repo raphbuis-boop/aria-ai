@@ -116,7 +116,13 @@ export function BottomNav() {
           <TabButton key={tab.key} tab={tab} pathname={pathname} />
         ))}
 
-        {/* Raised center Aria button — overlaps the top edge of the pill */}
+        {/* Raised center Aria button — overlaps the top edge of the pill.
+            Centering lives on a static wrapper so the whileTap scale transform
+            can't clobber translateX(-50%) and make the button lurch sideways. */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2"
+          style={{ top: -18 }}
+        >
         <motion.button
           type="button"
           aria-label="Aria"
@@ -128,10 +134,8 @@ export function BottomNav() {
             if (pathname === "/voice" || pending) return;
             startTransition(() => router.push("/voice"));
           }}
-          className="absolute left-1/2 flex items-center justify-center rounded-full"
+          className="flex items-center justify-center rounded-full"
           style={{
-            top: -18,
-            transform: "translateX(-50%)",
             width: 56,
             height: 56,
             background: "var(--primary)",
@@ -147,6 +151,7 @@ export function BottomNav() {
             />
           </svg>
         </motion.button>
+        </div>
       </div>
     </div>
   );
