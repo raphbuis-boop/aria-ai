@@ -1,10 +1,13 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { AlertCircle, ArrowLeft, Mic, MicOff, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -37,34 +40,24 @@ declare global {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const BAR_COUNT = 32;
+// Money-first, capped at 4 — pipeline summaries live on /pipeline (hidden until
+// core per VISION.md), not here.
 const DEFAULT_CHIPS = [
   "What should I do today?",
+  "Review my pending drafts",
   "Who's my hottest lead?",
   "Any showings this week?",
-  "Summarize my pipeline",
 ];
 
-// ── Aria spark icon — 4-point star in blue gradient ───────────────────────────
+// ── Aria spark — 4-point star, the app's one green accent ─────────────────────
 
 function AriaSpark({ size = 40 }: { size?: number }) {
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      aria-hidden
-    >
-      <defs>
-        <linearGradient id="spark-grad" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#60A5FA" />
-          <stop offset="100%" stopColor="#3B82F6" />
-        </linearGradient>
-      </defs>
+    <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
       {/* 4-point star */}
       <path
         d="M20 2 L22.5 17.5 L38 20 L22.5 22.5 L20 38 L17.5 22.5 L2 20 L17.5 17.5 Z"
-        fill="url(#spark-grad)"
+        fill="var(--primary)"
       />
     </svg>
   );
@@ -167,29 +160,17 @@ function ChatBubble({ msg }: { msg: Msg }) {
       className={`flex ${isUser ? "justify-end" : "justify-start"}`}
     >
       {!isUser && (
-        <div
-          className="h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5"
-          style={{ background: "rgba(59,130,246,0.16)" }}
-        >
+        <div className="h-7 w-7 rounded-full flex items-center justify-center flex-shrink-0 mr-2 mt-0.5 bg-primary/10">
           <AriaSpark size={16} />
         </div>
       )}
       <div
-        className="max-w-[80%] rounded-[18px] px-4 py-2.5 text-[14px] leading-relaxed"
-        style={
+        className={cn(
+          "max-w-[80%] rounded-[18px] px-4 py-2.5 font-display text-body leading-relaxed",
           isUser
-            ? {
-                background: "var(--oc-blue)",
-                color: "#fff",
-                borderBottomRightRadius: 4,
-              }
-            : {
-                background: "var(--oc-surface-1)",
-                border: "0.5px solid var(--oc-border-soft)",
-                color: "var(--oc-text-1)",
-                borderBottomLeftRadius: 4,
-              }
-        }
+            ? "bg-primary text-primary-foreground rounded-br-[4px]"
+            : "border border-border bg-card text-foreground rounded-bl-[4px]",
+        )}
       >
         {msg.content}
       </div>
@@ -220,72 +201,48 @@ function LiveMode({ onExit }: { onExit: () => void }) {
       className="flex flex-1 flex-col items-center justify-center px-5"
     >
       {/* Session card */}
-      <div
-        className="w-full max-w-sm rounded-3xl px-6 py-6 mb-8"
-        style={{
-          background: "var(--oc-surface-2)",
-          border: "0.5px solid var(--oc-border-mid)",
-          backdropFilter: "blur(32px) saturate(260%)",
-          WebkitBackdropFilter: "blur(32px) saturate(260%)",
-        }}
-      >
+      <Card className="w-full max-w-sm px-6 py-6 mb-8">
         <div className="flex items-center gap-3 mb-4">
-          <div
-            className="h-10 w-10 rounded-full flex items-center justify-center"
-            style={{ background: "rgba(59,130,246,0.16)" }}
-          >
+          <div className="h-10 w-10 rounded-full flex items-center justify-center bg-primary/10">
             <AriaSpark size={22} />
           </div>
           <div>
-            <p className="text-[15px] font-semibold" style={{ color: "var(--oc-text-1)" }}>
+            <p className="font-display text-body-lg font-semibold text-foreground">
               Live with Aria
             </p>
-            <p className="text-[13px] font-mono" style={{ color: "var(--oc-text-3)" }}>
+            <p className="font-mono text-caption text-muted-foreground">
               {mm}:{ss}
             </p>
           </div>
           {/* Coming soon badge */}
-          <span
-            className="ml-auto rounded-full px-2.5 py-1 text-[10px] font-bold uppercase"
-            style={{
-              background: "rgba(196,126,26,0.16)",
-              color: "#C47E1A",
-              letterSpacing: "0.06em",
-            }}
-          >
+          <span className="ml-auto rounded-full bg-secondary px-2.5 py-1 font-display text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
             Soon
           </span>
         </div>
 
-        <p className="text-[13px] leading-relaxed" style={{ color: "var(--oc-text-3)" }}>
+        <p className="font-display text-body leading-relaxed text-muted-foreground">
           Always-on Aria will monitor your business in real time — surfaces
           opportunities, notifies you on showings, and answers instantly.
         </p>
-      </div>
+      </Card>
 
       {/* Control pill buttons — Gemini Live inspired */}
       <div className="flex items-center gap-3">
         {[
-          { icon: "📷", label: "Camera", disabled: true },
-          { icon: "⬆", label: "Share", disabled: true },
-          { icon: "🎙", label: "Mic", disabled: true },
+          { icon: "📷", label: "Camera" },
+          { icon: "⬆", label: "Share" },
+          { icon: "🎙", label: "Mic" },
         ].map(({ icon, label }) => (
           <button
             key={label}
             type="button"
             disabled
-            className="flex flex-col items-center gap-1.5 cursor-not-allowed opacity-35"
+            className="flex flex-col items-center gap-1.5 cursor-not-allowed opacity-40"
           >
-            <div
-              className="h-14 w-14 rounded-2xl flex items-center justify-center text-[20px]"
-              style={{
-                background: "var(--oc-surface-1)",
-                border: "0.5px solid var(--oc-border-soft)",
-              }}
-            >
+            <div className="h-14 w-14 rounded-2xl flex items-center justify-center border border-border bg-secondary text-[20px]">
               {icon}
             </div>
-            <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>{label}</span>
+            <span className="font-display text-[11px] text-muted-foreground">{label}</span>
           </button>
         ))}
         <button
@@ -293,13 +250,10 @@ function LiveMode({ onExit }: { onExit: () => void }) {
           onClick={onExit}
           className="flex flex-col items-center gap-1.5 active:opacity-70"
         >
-          <div
-            className="h-14 w-14 rounded-2xl flex items-center justify-center"
-            style={{ background: "#C43838" }}
-          >
-            <X size={22} color="#fff" />
+          <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-destructive">
+            <X size={22} className="text-destructive-foreground" />
           </div>
-          <span className="text-[11px]" style={{ color: "var(--oc-text-3)" }}>End</span>
+          <span className="font-display text-[11px] text-muted-foreground">End</span>
         </button>
       </div>
     </motion.div>
@@ -311,6 +265,7 @@ function LiveMode({ onExit }: { onExit: () => void }) {
 export default function VoicePage() {
   const router = useRouter();
   const supabase = createClient();
+  const shouldReduceMotion = useReducedMotion();
 
   // ── Mode & voice state ──
   const [mode, setMode] = useState<Mode>("chat");
@@ -396,15 +351,18 @@ export default function VoicePage() {
             ? (draftsRes.value.count ?? draftsRes.value.data?.length ?? 0)
             : 0;
 
-        // Generate context-aware chips
+        // Generate context-aware chips — money-first, capped at 4.
+        // The 3 always-relevant chips get priority; the 4th slot goes to
+        // whichever specific nudge (a showing to prep, a client to check on)
+        // is most timely, falling back to a generic 4th if neither applies.
         const dynamic: string[] = ["What should I do today?"];
         if (draftCount > 0) dynamic.push("Review my pending drafts");
-        if (topClients[0]) dynamic.push(`Any updates on ${(topClients[0].name as string).split(" ")[0]}?`);
-        if (nextShowing?.address) dynamic.push(`Prep for ${nextShowing.address as string}`);
         if (topClients.length > 1) dynamic.push("Who's my hottest lead?");
-        dynamic.push("Summarize my pipeline");
+        if (nextShowing?.address) dynamic.push(`Prep for ${nextShowing.address as string}`);
+        else if (topClients[0]) dynamic.push(`Any updates on ${(topClients[0].name as string).split(" ")[0]}?`);
+        else dynamic.push("Any showings this week?");
 
-        setChips(dynamic.slice(0, 5));
+        setChips(dynamic.slice(0, 4));
       } catch {
         // Non-fatal — keep default chips
       }
@@ -600,10 +558,9 @@ export default function VoicePage() {
   }
 
   // ── Mode tab colors ───────────────────────────────────────────────────────
-  const waveColor =
-    voiceState === "listening" ? "#1A9B5E"
-    : voiceState === "error" ? "#C43838"
-    : "var(--oc-blue)";
+  // One accent throughout — deep green for every active state, terracotta only
+  // for genuine errors.
+  const waveColor = voiceState === "error" ? "var(--destructive)" : "var(--primary)";
 
   const stateLabel =
     voiceState === "idle" ? "Tap to speak"
@@ -615,45 +572,24 @@ export default function VoicePage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div
-      className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden"
-      style={{ background: "#0C0F16", color: "var(--oc-text-1)" }}
-    >
-      {/* Atmospheric glow — shifts blue at bottom */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            "radial-gradient(ellipse 80% 50% at 50% 100%, rgba(59,130,246,0.12) 0%, transparent 70%)",
-        }}
-      />
-
+    <div className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden bg-background text-foreground">
       {/* ── Top bar ── */}
       <div
         className="relative z-10 flex w-full items-center justify-between px-5 shrink-0"
         style={{ paddingTop: "calc(env(safe-area-inset-top) + 14px)", paddingBottom: 14 }}
       >
-        <button
-          type="button"
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => { stopAll(); router.back(); }}
-          className="flex h-9 w-9 items-center justify-center rounded-full active:opacity-70"
-          style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "0.5px solid rgba(255,255,255,0.08)",
-          }}
+          className="h-9 w-9 rounded-full"
           aria-label="Close"
         >
-          <ArrowLeft size={16} style={{ color: "var(--oc-text-2)" }} />
-        </button>
+          <ArrowLeft size={16} />
+        </Button>
 
         {/* Mode switcher pill */}
-        <div
-          className="flex gap-0.5 rounded-full p-0.5"
-          style={{
-            background: "rgba(255,255,255,0.06)",
-            border: "0.5px solid rgba(255,255,255,0.08)",
-          }}
-        >
+        <div className="flex gap-0.5 rounded-full border border-border bg-secondary p-0.5">
           {(["chat", "voice", "live"] as Mode[]).map((m) => (
             <button
               key={m}
@@ -662,12 +598,10 @@ export default function VoicePage() {
                 if (m !== "voice") stopAll();
                 setMode(m);
               }}
-              className="rounded-full px-3.5 py-1.5 text-[12px] font-medium capitalize transition-all duration-200"
-              style={
-                mode === m
-                  ? { background: "var(--oc-blue)", color: "#fff" }
-                  : { color: "var(--oc-text-3)" }
-              }
+              className={cn(
+                "rounded-full px-3.5 py-1.5 font-display text-caption font-semibold capitalize transition-colors duration-200",
+                mode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground",
+              )}
             >
               {m}
             </button>
@@ -698,17 +632,41 @@ export default function VoicePage() {
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ type: "spring", stiffness: 280, damping: 22, delay: 0.05 }}
-                    className="mb-5"
+                    className="relative mb-5"
                   >
-                    <AriaSpark size={44} />
+                    {/* Soft breathing glow behind the mark */}
+                    <motion.div
+                      aria-hidden
+                      className="absolute inset-0 -z-10 rounded-full bg-primary/15 blur-xl"
+                      animate={
+                        shouldReduceMotion
+                          ? undefined
+                          : { opacity: [0.5, 0.9, 0.5], scale: [0.9, 1.15, 0.9] }
+                      }
+                      transition={
+                        shouldReduceMotion
+                          ? undefined
+                          : { duration: 3.6, repeat: Infinity, ease: "easeInOut" }
+                      }
+                    />
+                    {/* The mark itself breathes — slow, calm, never distracting */}
+                    <motion.div
+                      animate={shouldReduceMotion ? undefined : { scale: [1, 1.05, 1] }}
+                      transition={
+                        shouldReduceMotion
+                          ? undefined
+                          : { duration: 3.6, repeat: Infinity, ease: "easeInOut" }
+                      }
+                    >
+                      <AriaSpark size={44} />
+                    </motion.div>
                   </motion.div>
 
                   <motion.h1
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.1 }}
-                    className="text-[28px] font-bold text-center mb-1"
-                    style={{ letterSpacing: "-0.02em", color: "var(--oc-text-1)" }}
+                    className="font-heading text-[28px] leading-tight text-center mb-1 text-foreground"
                   >
                     {greeting}
                   </motion.h1>
@@ -716,8 +674,7 @@ export default function VoicePage() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: 0.15 }}
-                    className="text-[15px] text-center mb-8"
-                    style={{ color: "var(--oc-text-3)" }}
+                    className="font-display text-body-lg text-center mb-8 text-muted-foreground"
                   >
                     What&apos;s on your mind?
                   </motion.p>
@@ -732,14 +689,7 @@ export default function VoicePage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.25, delay: 0.18 + i * 0.06 }}
                         onClick={() => void sendChat(chip)}
-                        className="w-full text-left rounded-2xl px-4 py-3 text-[14px] active:opacity-70"
-                        style={{
-                          background: "var(--oc-surface-1)",
-                          border: "0.5px solid var(--oc-border-soft)",
-                          backdropFilter: "blur(24px) saturate(240%)",
-                          WebkitBackdropFilter: "blur(24px) saturate(240%)",
-                          color: "var(--oc-text-2)",
-                        }}
+                        className="w-full text-left rounded-2xl border border-border bg-card px-4 py-3 font-display text-body text-foreground active:opacity-70"
                       >
                         {chip}
                       </motion.button>
@@ -759,13 +709,7 @@ export default function VoicePage() {
                         animate={{ opacity: 1 }}
                         className="flex justify-start"
                       >
-                        <div
-                          className="rounded-[18px] rounded-bl-[4px] px-4 py-3"
-                          style={{
-                            background: "var(--oc-surface-1)",
-                            border: "0.5px solid var(--oc-border-soft)",
-                          }}
-                        >
+                        <div className="rounded-[18px] rounded-bl-[4px] border border-border bg-card px-4 py-3">
                           {/* Typing dots */}
                           <div className="flex gap-1.5 items-center h-4">
                             {[0, 1, 2].map((i) => (
@@ -777,8 +721,7 @@ export default function VoicePage() {
                                   repeat: Infinity,
                                   delay: i * 0.15,
                                 }}
-                                className="h-1.5 w-1.5 rounded-full"
-                                style={{ background: "var(--oc-text-3)" }}
+                                className="h-1.5 w-1.5 rounded-full bg-muted-foreground"
                               />
                             ))}
                           </div>
@@ -795,15 +738,7 @@ export default function VoicePage() {
                 className="shrink-0 px-4"
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)", paddingTop: 12 }}
               >
-                <div
-                  className="flex items-center gap-2 rounded-full px-4 py-2"
-                  style={{
-                    background: "var(--oc-surface-1)",
-                    border: "0.5px solid var(--oc-border-soft)",
-                    backdropFilter: "blur(24px) saturate(240%)",
-                    WebkitBackdropFilter: "blur(24px) saturate(240%)",
-                  }}
-                >
+                <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
                   <input
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
@@ -814,39 +749,37 @@ export default function VoicePage() {
                       }
                     }}
                     placeholder="Ask Aria…"
-                    className="flex-1 min-w-0 bg-transparent text-[15px] outline-none"
-                    style={{
-                      color: "var(--oc-text-1)",
-                    }}
+                    className="flex-1 min-w-0 bg-transparent font-display text-body-lg text-foreground outline-none placeholder:text-muted-foreground/60"
                     autoComplete="off"
                     autoCorrect="off"
                   />
 
                   {/* Mic button — switches to voice mode */}
                   {!input.trim() && micSupported && (
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={handleComposerMic}
-                      className="h-9 w-9 flex items-center justify-center rounded-full flex-shrink-0 active:opacity-70"
-                      style={{ background: "rgba(255,255,255,0.08)" }}
+                      className="h-9 w-9 rounded-full flex-shrink-0"
                       aria-label="Voice input"
                     >
-                      <Mic size={16} style={{ color: "var(--oc-text-2)" }} />
-                    </button>
+                      <Mic size={16} />
+                    </Button>
                   )}
 
                   {/* Send button */}
                   {input.trim() && (
-                    <button
+                    <Button
                       type="button"
+                      size="icon"
                       onClick={() => void sendChat()}
                       disabled={isLoading}
-                      className="h-9 w-9 flex items-center justify-center rounded-full flex-shrink-0 disabled:opacity-40 active:opacity-80"
-                      style={{ background: "var(--oc-blue)" }}
+                      className="h-9 w-9 rounded-full flex-shrink-0"
                       aria-label="Send"
                     >
-                      <Send size={15} color="#fff" />
-                    </button>
+                      <Send size={15} />
+                    </Button>
                   )}
                 </div>
               </div>
@@ -872,14 +805,7 @@ export default function VoicePage() {
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: 8 }}
                       transition={{ type: "spring", stiffness: 300, damping: 24 }}
-                      className="rounded-2xl px-4 py-3 text-[13px] leading-relaxed text-center"
-                      style={{
-                        background: "var(--oc-surface-1)",
-                        border: "0.5px solid var(--oc-border-soft)",
-                        color: "var(--oc-text-2)",
-                        backdropFilter: "blur(24px) saturate(240%)",
-                        WebkitBackdropFilter: "blur(24px) saturate(240%)",
-                      }}
+                      className="rounded-2xl border border-border bg-card px-4 py-3 text-center font-display text-body leading-relaxed text-foreground"
                     >
                       {transcript}
                     </motion.div>
@@ -904,8 +830,10 @@ export default function VoicePage() {
                     initial={{ opacity: 0, y: 4 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-[12px] font-medium tracking-[0.10em] uppercase"
-                    style={{ color: waveColor === "var(--oc-blue)" ? "rgba(255,255,255,0.22)" : waveColor }}
+                    className={cn(
+                      "font-display text-[12px] font-medium tracking-[0.10em] uppercase",
+                      voiceState === "error" ? "text-destructive" : "text-muted-foreground",
+                    )}
                   >
                     {stateLabel}
                   </motion.p>
@@ -919,14 +847,10 @@ export default function VoicePage() {
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="mx-5 mb-4 flex items-center gap-3 rounded-2xl px-4 py-3"
-                    style={{
-                      background: "rgba(196,56,56,0.08)",
-                      border: "0.5px solid rgba(196,56,56,0.22)",
-                    }}
+                    className="mx-5 mb-4 flex items-center gap-3 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3"
                   >
-                    <AlertCircle size={14} color="#C43838" className="shrink-0" />
-                    <p className="flex-1 text-[13px]" style={{ color: "#C43838" }}>
+                    <AlertCircle size={14} className="shrink-0 text-destructive" />
+                    <p className="flex-1 font-display text-body text-destructive">
                       {errorMsg}
                     </p>
                   </motion.div>
@@ -935,15 +859,9 @@ export default function VoicePage() {
 
               {/* Unsupported mic warning */}
               {!micSupported && (
-                <div
-                  className="mx-5 mb-4 flex items-center gap-2 rounded-2xl px-4 py-3"
-                  style={{
-                    background: "rgba(196,56,56,0.08)",
-                    border: "0.5px solid rgba(196,56,56,0.2)",
-                  }}
-                >
-                  <MicOff size={14} color="#C43838" className="shrink-0" />
-                  <p className="text-[13px]" style={{ color: "#C43838" }}>
+                <div className="mx-5 mb-4 flex items-center gap-2 rounded-2xl border border-destructive/20 bg-destructive/10 px-4 py-3">
+                  <MicOff size={14} className="shrink-0 text-destructive" />
+                  <p className="font-display text-body text-destructive">
                     Voice requires Safari on iPhone
                   </p>
                 </div>
@@ -954,26 +872,21 @@ export default function VoicePage() {
                 className="shrink-0 flex items-center justify-center gap-4 pb-4"
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
               >
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   onClick={() => { stopAll(); setMode("chat"); }}
-                  className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-medium active:opacity-70"
-                  style={{
-                    background: "var(--oc-surface-1)",
-                    border: "0.5px solid var(--oc-border-soft)",
-                    color: "var(--oc-text-2)",
-                  }}
+                  className="gap-2 rounded-full px-5 py-2.5 font-display text-body"
                 >
                   <ArrowLeft size={14} />
                   Chat
-                </button>
+                </Button>
 
                 {(voiceState === "listening" || voiceState === "speaking") && (
                   <button
                     type="button"
                     onClick={stopAll}
-                    className="flex items-center gap-2 rounded-full px-5 py-2.5 text-[13px] font-medium active:opacity-70"
-                    style={{ background: "rgba(196,56,56,0.14)", color: "#C43838" }}
+                    className="flex items-center gap-2 rounded-full bg-destructive/10 px-5 py-2.5 font-display text-body font-medium text-destructive active:opacity-70"
                   >
                     Stop
                   </button>
