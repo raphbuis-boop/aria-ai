@@ -13,6 +13,7 @@
 //   - Composer defaults to SMS (if client has phone), otherwise Email.
 
 import { useToast } from "@/components/ToastProvider";
+import { smsUrl } from "@/lib/messaging-links";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -559,40 +560,31 @@ function ThreadView({
     setDraftOpen(true);
   }
 
-  async function approveDraft() {
+  function approveDraft() {
     if (!conv.pendingDraft || draftBusy) return;
     const phone = conv.clientPhone;
     if (!phone) {
       toast.toast("Client has no phone number", "warn");
       return;
     }
+    const text = draftBody.trim();
+    if (!text) return;
     setDraftBusy(true);
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: conv.pendingDraft.id,
-          clientId: conv.clientId,
-          to: phone,
-          body: draftBody,
-        }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        success?: boolean;
-        error?: string;
-      };
-      if (!data.success) {
-        toast.toast(data.error ?? "Send failed", "warn");
-        return;
-      }
-      toast.toast("Sent", "success");
-      onActivityUpdate(conv.pendingDraft.id, { sent: true, approved: true, body: draftBody });
-      setDraftOpen(false);
-      router.refresh();
-    } finally {
-      setDraftBusy(false);
-    }
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        activityId: conv.pendingDraft.id,
+        clientId: conv.clientId,
+        body: text,
+        channel: "sms",
+      }),
+    });
+    window.location.href = smsUrl(phone, text);
+    onActivityUpdate(conv.pendingDraft.id, { sent: true, approved: true, body: text });
+    setDraftOpen(false);
+    setDraftBusy(false);
+    router.refresh();
   }
 
   async function dismissDraft() {
@@ -614,30 +606,19 @@ function ThreadView({
     }
   }
 
-  async function sendSms() {
+  function sendSms() {
     const text = composerText.trim();
     if (!text || sendBusy || !conv.clientPhone) return;
     setSendBusy(true);
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clientId: conv.clientId, to: conv.clientPhone, body: text }),
-      });
-      const data = (await res.json().catch(() => ({}))) as {
-        success?: boolean;
-        error?: string;
-      };
-      if (!data.success) {
-        toast.toast(data.error ?? "Send failed", "warn");
-        return;
-      }
-      setComposerText("");
-      router.refresh();
-      toast.toast("Sent", "success");
-    } finally {
-      setSendBusy(false);
-    }
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: conv.clientId, body: text, channel: "sms" }),
+    });
+    window.location.href = smsUrl(conv.clientPhone, text);
+    setComposerText("");
+    setSendBusy(false);
+    router.refresh();
   }
 
   function handleComposerKey(e: React.KeyboardEvent<HTMLTextAreaElement>) {

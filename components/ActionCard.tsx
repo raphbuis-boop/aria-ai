@@ -1,6 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
+import { smsUrl } from "@/lib/messaging-links";
 import { useState } from "react";
 
 type Props = {
@@ -66,30 +67,19 @@ export function ActionCard({
     setSheetOpen(true);
   }
 
-  async function sendSms() {
+  function sendSms() {
     if (!clientId || !clientPhone) {
       toast.toast(`No phone number for ${title}. Add one in their profile.`, "warn");
       return;
     }
-    setLoading(true);
-    const res = await fetch("/api/sms/send", {
+    if (!draftText.trim()) return;
+    void fetch("/api/activities/log-send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        clientId,
-        to: clientPhone,
-        body: draftText,
-        activityId,
-      }),
+      body: JSON.stringify({ clientId, body: draftText, channel: "sms", activityId }),
     });
-    const data = await res.json();
-    setLoading(false);
-    if (data.success) {
-      toast.toast(`Sent to ${title} ✓`, "success");
-      setSheetOpen(false);
-    } else {
-      toast.toast(data.error ?? "Could not send", "warn");
-    }
+    window.location.href = smsUrl(clientPhone, draftText);
+    setSheetOpen(false);
   }
 
   return (

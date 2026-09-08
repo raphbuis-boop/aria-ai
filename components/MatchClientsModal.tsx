@@ -2,6 +2,7 @@
 
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
+import { smsUrl } from "@/lib/messaging-links";
 import { useToast } from "@/components/ToastProvider";
 import { useEffect, useState } from "react";
 
@@ -102,6 +103,10 @@ export function MatchClientsModal({
     }
   }
 
+  // sms: deep links hand off to the native Messages app one recipient at a
+  // time — there's no server-side "blast" anymore. So this opens Messages
+  // for the first selected client and queues the rest as real pending
+  // drafts (visible in Inbox) instead of silently dropping them.
   async function sendAll() {
     if (!listing) return;
     const ids = matches.filter(
@@ -113,41 +118,61 @@ export function MatchClientsModal({
     }
     if (
       !window.confirm(
-        `Send SMS to ${ids.length} client${ids.length === 1 ? "" : "s"} now?`,
+        `Text ${ids.length} client${ids.length === 1 ? "" : "s"} about this listing?`,
       )
     ) {
       return;
     }
     setWorking("send");
     try {
-      let ok = 0;
-      for (const m of ids) {
-        const dr = await fetch("/api/ai/draft-text", {
+      const [first, ...rest] = ids;
+      const propertyContext = `${listing.address} in ${listing.city} at ${fmtMoney(listing.price)}`;
+
+      const firstDraft = await fetch("/api/ai/draft-text", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId: first.clientId,
+          clientName: first.name ?? "there",
+          propertyContext,
+          scenario: "MLS listing match",
+          skipInsert: true,
+        }),
+      });
+      const { draft: firstText } = (await firstDraft.json()) as { draft?: string };
+      const body = (firstText ?? "").trim();
+
+      if (body) {
+        void fetch("/api/activities/log-send", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clientId: first.clientId, body, channel: "sms" }),
+        });
+        window.location.href = smsUrl(first.phone!, body);
+      }
+
+      let queued = 0;
+      for (const m of rest) {
+        const res = await fetch("/api/ai/draft-text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             clientId: m.clientId,
             clientName: m.name ?? "there",
-            propertyContext: `${listing.address} in ${listing.city} at ${fmtMoney(listing.price)}`,
+            propertyContext,
             scenario: "MLS listing match",
-            skipInsert: true,
+            skipInsert: false,
           }),
         });
-        const { draft } = (await dr.json()) as { draft?: string };
-        const body = (draft ?? "").trim();
-        if (!body) continue;
-        const send = await fetch("/api/sms/send", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            clientId: m.clientId,
-            to: m.phone,
-            body,
-          }),
-        });
-        if (send.ok) ok += 1;
+        if (res.ok) queued += 1;
       }
-      toast.toast(`Sent ${ok} message${ok === 1 ? "" : "s"}`, "success");
+
+      toast.toast(
+        queued > 0
+          ? `Opening text to ${first.name ?? "client"} — ${queued} more drafted to Inbox`
+          : `Opening text to ${first.name ?? "client"}`,
+        "success",
+      );
       onClose();
     } catch {
       toast.toast("Send failed", "warn");
@@ -240,7 +265,7 @@ export function MatchClientsModal({
               onClick={() => void sendAll()}
               className="flex-1 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary disabled:opacity-50"
             >
-              {working === "send" ? "Sending…" : "Send all (SMS)"}
+              {working === "send" ? "Opening…" : "Text (SMS)"}
             </button>
           </div>
           <button

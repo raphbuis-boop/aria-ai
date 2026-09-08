@@ -1,6 +1,7 @@
 "use client";
 
 import { useToast } from "@/components/ToastProvider";
+import { smsUrl } from "@/lib/messaging-links";
 import {
   Check,
   Copy,
@@ -113,33 +114,20 @@ export function BbaSection({
     }
   }
 
-  async function sendSms() {
+  function sendSms() {
     if (!clientPhone) {
       toast.toast("No phone on file — copy the link instead", "warn");
       return;
     }
     setSending(true);
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId,
-          to: clientPhone,
-          body: `Hi ${clientName.split(" ")[0]} — before our next showing, NJ requires a quick Buyer Broker Agreement. Takes 30 seconds on your phone: ${signingUrl}`,
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.toast(String(data.error ?? "SMS failed"), "warn");
-      } else {
-        toast.toast("Link texted to client", "success");
-      }
-    } catch {
-      toast.toast("Network error", "warn");
-    } finally {
-      setSending(false);
-    }
+    const body = `Hi ${clientName.split(" ")[0]} — before our next showing, NJ requires a quick Buyer Broker Agreement. Takes 30 seconds on your phone: ${signingUrl}`;
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, body, channel: "sms" }),
+    });
+    window.location.href = smsUrl(clientPhone, body);
+    setSending(false);
   }
 
   const templateSelector =

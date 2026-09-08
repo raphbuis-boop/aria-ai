@@ -59,7 +59,7 @@ export default function PrivacyPage() {
             <ul className="mt-2 list-disc space-y-1 pl-5">
               <li>Supabase for authentication, database, and secure storage.</li>
               <li>Anthropic API for AI-generated drafting and analysis features.</li>
-              <li>Twilio for SMS message delivery and related metadata.</li>
+              <li>Your device&apos;s native Messages app for SMS — Aria opens a pre-filled text for you to send yourself; no third-party SMS carrier or gateway handles the message.</li>
               <li>Vercel for application hosting, delivery, and runtime logs.</li>
             </ul>
           </section>

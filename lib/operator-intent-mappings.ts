@@ -76,7 +76,7 @@ export const SEMANTIC_DECOMPOSITION_TEMPLATES: readonly SemanticTemplate[] = [
           "Ripgrep TODO / FIXME / HACK / XXX across src",
           "Scan for stub endpoints, placeholder env vars, missing feature flags",
           "Review recent large commits / PRs for partial migrations",
-          "Check Third-party integrations (Supabase RLS, Twilio, SimplyRETS) for obvious failure modes",
+          "Check Third-party integrations (Supabase RLS, SimplyRETS) for obvious failure modes",
           "Look for runtime instability — error boundaries, unhandled promise paths, polling loops",
         ],
       },

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Sparkles, X } from "lucide-react";
 import { useToast } from "@/components/ToastProvider";
+import { smsUrl } from "@/lib/messaging-links";
 
 type Client = {
   id: string;
@@ -71,35 +72,22 @@ export function AIDraftModal({
     };
   }, [client.id, client.name, client.status, client.town, client.budget_max, propertyContext, scenario]);
 
-  async function send() {
-    if (!draft.trim()) return;
+  function send() {
+    const text = draft.trim();
+    if (!text) return;
     if (!client.phone) {
       toast.toast("No phone on file for this client", "warn");
       return;
     }
     setSending(true);
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: client.id,
-          to: client.phone,
-          body: draft.trim(),
-        }),
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        toast.toast(String(data.error ?? "SMS failed"), "warn");
-      } else {
-        toast.toast("Sent ✓", "success");
-        onClose();
-      }
-    } catch {
-      toast.toast("Network error", "warn");
-    } finally {
-      setSending(false);
-    }
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: client.id, body: text, channel: "sms" }),
+    });
+    window.location.href = smsUrl(client.phone, text);
+    setSending(false);
+    onClose();
   }
 
   return (

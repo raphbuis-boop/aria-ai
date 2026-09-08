@@ -2,6 +2,7 @@
 
 import { useToast } from "@/components/ToastProvider";
 import { fmtDateTime } from "@/lib/utils";
+import { smsUrl } from "@/lib/messaging-links";
 import {
   Mail,
   Megaphone,
@@ -50,25 +51,19 @@ export function ActivityItem({
   const toast = useToast();
   const Icon = icons[type] ?? StickyNote;
 
-  async function approve() {
+  function approve() {
     if (!body) return;
-    const res = await fetch("/api/sms/send", {
+    if (!clientPhone?.trim()) {
+      toast.toast(`No phone on file for ${clientName}`, "warn");
+      return;
+    }
+    void fetch("/api/activities/log-send", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        activityId: id,
-        clientId,
-        to: clientPhone ?? "",
-        body,
-      }),
+      body: JSON.stringify({ activityId: id, clientId, body, channel: "sms" }),
     });
-    const data = await res.json();
-    if (data.success) {
-      toast.toast(`Sent to ${clientName} ✓`, "success");
-      onApproved?.();
-    } else {
-      toast.toast(data.error ?? "Could not send", "warn");
-    }
+    window.location.href = smsUrl(clientPhone, body);
+    onApproved?.();
   }
 
   return (

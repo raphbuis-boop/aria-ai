@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, Twilio SMS, and SimplyRETS MLS data to provide client management, property matching, and automated communications.
+**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. SMS is provider-free — messages open in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`), never sent server-side.
 
 ## Commands
 
@@ -19,7 +19,7 @@ No test suite is configured.
 
 ## Architecture
 
-**Stack:** Next.js 14 App Router · TypeScript · Supabase (auth + DB) · Anthropic Claude · Twilio · Tailwind CSS (dark theme) · Capacitor (iOS wrapper)
+**Stack:** Next.js 14 App Router · TypeScript · Supabase (auth + DB) · Anthropic Claude · Tailwind CSS (ivory design system) · Capacitor (iOS wrapper)
 
 ### Route Groups
 
@@ -64,7 +64,7 @@ Broad founder or product language should be **decomposed into investigations**, 
   - `POST /api/ai/draft-text` — Ghost-write SMS (max 150 tokens, saves to `activities` as unapproved AI draft)
   - `analyze-tone`, `cma`, `listing-narrative`, `showing-summary`, `extract-dates`, `market-insight`
 - **`/api/mls/`** — SimplyRETS (Basic Auth). `GET listings` fetches/normalizes; `POST apply-matches` runs matching against active clients.
-- **`/api/sms/send/`** — Twilio. Validates via `formatPhoneE164()`, sends SMS, writes to `activities` (`sent: true`, `approved: true`).
+- **`/api/activities/log-send`** — Records a message as sent (insert, or update by `activityId` for an approved draft) after the caller opens an `sms:`/`wa.me` deep link client-side. There is no server-side send.
 - **`/api/automation/`** — Scheduled/triggered automation flows.
 - **`/api/bba/`**, **`/api/bba-templates/`** — Buyer Broker Agreement generation and template management.
 - **`/api/inbox/`** — Inbox message handling.
@@ -91,7 +91,6 @@ NEXT_PUBLIC_SUPABASE_URL
 NEXT_PUBLIC_SUPABASE_ANON_KEY
 SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY
-TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_PHONE_NUMBER
 NEXT_PUBLIC_SITE_URL
 SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
 ```
@@ -101,7 +100,7 @@ SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
 - **Server Components by default** — add `"use client"` only for interactivity/browser APIs.
 - **API route auth** — every protected API route must call `getRouteSupabase()` first; return 401 if no user.
 - **Three Supabase clients** — use `server.ts` in Server Components/API routes, `client.ts` in Client Components, `admin.ts` only when service-role access is required.
-- **Styling** — Tailwind only, no CSS modules. Dark theme: black (`#000000`) background, `#111111` cards, `#222222` borders.
+- **Styling** — Tailwind only, no CSS modules. Ivory design system: warm ivory (`--background #FAF6EE`) canvas, white cards, deep green (`--primary #1F5C46`) as the one accent, Fraunces for headings.
 - **Path alias** — `@/*` maps to the project root.
-- **Phone numbers** — always pass through `formatPhoneE164()` before storing or sending via Twilio.
+- **Phone numbers** — always pass through `formatPhoneE164()` before storing or texting.
 - **NJMLS IDX compliance** — any page or component that displays MLS listing data must render `<IdxComplianceNotice />` (or equivalent) using the text from `lib/compliance.ts`. This is a legal requirement of the NJMLS IDX agreement.

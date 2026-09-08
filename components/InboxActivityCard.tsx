@@ -2,6 +2,7 @@
 
 import { useToast } from "@/components/ToastProvider";
 import { fmtDateTime } from "@/lib/utils";
+import { smsUrl } from "@/lib/messaging-links";
 import {
   Mail,
   Megaphone,
@@ -61,7 +62,7 @@ export function InboxActivityCard({
     setDraft(initialBody ?? "");
   }, [initialBody]);
 
-  async function approveSend() {
+  function approveSend() {
     const text = draft.trim();
     if (!text) {
       toast.toast("Add message text first", "warn");
@@ -73,29 +74,21 @@ export function InboxActivityCard({
       return;
     }
     setSending(true);
-    try {
-      const res = await fetch("/api/sms/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          activityId: ai_draft ? id : undefined,
-          clientId,
-          to: phone,
-          body: text,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        toast.toast(`Sent to ${clientName} ✓`, "success");
-        setOpen(false);
-        onRemove?.();
-        router.refresh();
-      } else {
-        toast.toast(data.error ?? "Could not send", "warn");
-      }
-    } finally {
-      setSending(false);
-    }
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        activityId: ai_draft ? id : undefined,
+        clientId,
+        body: text,
+        channel: "sms",
+      }),
+    });
+    window.location.href = smsUrl(phone, text);
+    setSending(false);
+    setOpen(false);
+    onRemove?.();
+    router.refresh();
   }
 
   async function dismiss() {
