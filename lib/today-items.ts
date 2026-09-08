@@ -1,4 +1,5 @@
 import { differenceInCalendarDays } from "date-fns";
+import { sellerPropensity } from "./ai/seller-propensity";
 
 // Client status values (as of May 2026):
 //   new | contacted | showing | offer | under_contract | closed
@@ -447,6 +448,7 @@ export function commissionFor(budgetMax: number | null): number | null {
  *   3  — birthdays / home purchase anniversaries today
  *   4  — pending signatures (no BBA)
  *   5  — new MLS matches for active buyers
+ *   6  — likely to sell (propensity scaffold, BUILD.md P3 — stub data)
  */
 export function buildTodayItems(
   clients: TodayClient[],
@@ -455,6 +457,10 @@ export function buildTodayItems(
   newMatchItems: NewMatchItem[],
   bbaSignedClientIds: string[],
   engagement: TodayEngagementEvent[] = [],
+  // Past (closed) clients — excluded from `clients` above since ranks 1-5 are
+  // all active-buyer concerns. Propensity-to-sell (rank 6) is the opposite:
+  // it only ever fires for closed clients, so it needs its own list.
+  closedClients: TodayClient[] = [],
 ): TodayItem[] {
   const items: TodayItem[] = [];
   const now = new Date();
@@ -673,6 +679,47 @@ export function buildTodayItems(
       navigateTo: `/clients/${client.id}`,
       urgencyRank: 5,
       propertyAddress: propertyAddress ?? null,
+    });
+  }
+
+  // ── 6. Likely to sell — propensity scaffold (BUILD.md P3) ─────────────────
+  // Stub-scored from years-since-purchase/status/budget (see
+  // lib/ai/seller-propensity.ts) — a placeholder for a real behavioral/AVM
+  // model. Capped at 3 like the BBA list above.
+  let propensityCount = 0;
+  for (const client of closedClients) {
+    if (propensityCount >= 3) break;
+    if (items.some((i) => i.clientId === client.id)) continue;
+
+    const propensity = sellerPropensity(client);
+    if (propensity.band !== "high") continue;
+
+    propensityCount++;
+    const firstName = client.name.split(" ")[0];
+    const reason = propensity.reasons[0] ?? "Shows signs of being ready to sell";
+
+    items.push({
+      id: `propensity-${client.id}`,
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      clientTown: client.town,
+      clientBudgetMax: client.budget_max,
+      clientStatus: client.status,
+      // Mapped onto the same 0-10 scale as buyer lead heat so the existing
+      // heat-dot rendering stays meaningful without a UI change — high
+      // propensity reads visually "hot" same as a hot buyer lead.
+      leadScore: Math.round(propensity.score / 10),
+      leadHeat: heatFromScore(Math.round(propensity.score / 10)),
+      leadScoreReason: propensity.reasons.join("; ") || null,
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: commissionFor(client.budget_max),
+      reason,
+      context: client.town ?? null,
+      actionLabel: `Check in with ${firstName}`,
+      actionType: "text",
+      navigateTo: null,
+      urgencyRank: 6,
     });
   }
 

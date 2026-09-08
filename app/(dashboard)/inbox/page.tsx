@@ -89,7 +89,24 @@ export default async function FollowUpsPage() {
     .gte("created_at", minus30ISO);
   const engagement = (engagementRows ?? []) as TodayEngagementEvent[];
 
-  const allItems = buildTodayItems(clients, transactions, activities, newMatchItems, bbaSignedClientIds, engagement);
+  // Past (closed) clients — the only pool propensity-to-sell (rank 6) scores
+  // against. Separate from `clients` above, which excludes closed status.
+  const { data: closedClientRows } = await supabase
+    .from("clients")
+    .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
+    .eq("agent_id", user.id)
+    .eq("status", "closed");
+  const closedClients = (closedClientRows ?? []) as TodayClient[];
+
+  const allItems = buildTodayItems(
+    clients,
+    transactions,
+    activities,
+    newMatchItems,
+    bbaSignedClientIds,
+    engagement,
+    closedClients,
+  );
   const items = allItems
     .filter((i) => !dismissedIds.has(i.id))
     // Ranked by value — highest commission at stake first.
