@@ -114,6 +114,16 @@ export function FollowUpsClient({ items: initialItems }: Props) {
             context: item.context ?? "",
             clientId: item.clientId,
             skipInsert: true,
+            // Full per-client context so the AI writes a genuinely personal draft,
+            // not the same bland line for everyone (matches DraftSheet's payload).
+            urgencyRank: item.urgencyRank,
+            clientTown: item.clientTown,
+            clientBudgetMax: item.clientBudgetMax,
+            propertyAddress: item.propertyAddress,
+            clientStatus: item.clientStatus,
+            leadScore: item.leadScore,
+            activitySignal: item.activitySignal,
+            commissionEst: item.commissionEst,
           }),
         })
           .then((r) => r.json())
