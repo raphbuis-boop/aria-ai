@@ -8,6 +8,7 @@ import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { fmtMoney } from "@/lib/utils";
 import { humanizeMatchReasons } from "@/lib/match-language";
 import type { PropertyMatch } from "./page";
+import type { ParsedSearchFilters } from "@/app/api/ai/search-parse/route";
 
 const STATUS_FILTERS = ["All", "Available", "Pending", "Sold"] as const;
 const PRICE_FILTERS = ["Any price", "Under $750k", "$750k–1M", "$1M+"] as const;
@@ -115,6 +116,43 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [priceFilter, setPriceFilter] = useState<(typeof PRICE_FILTERS)[number]>("Any price");
 
+  // Natural-language search — parses free text into town/beds/baths/price and
+  // applies it alongside the structured filters above (additive, not a
+  // replacement). Property type isn't matched here: this table stores it as
+  // "single_family"/"condo" etc., not the Title Case the parser returns, so a
+  // strict match would silently drop results — safer to skip it than guess.
+  const [nlQuery, setNlQuery] = useState("");
+  const [nlParsing, setNlParsing] = useState(false);
+  const [nlFilters, setNlFilters] = useState<ParsedSearchFilters | null>(null);
+
+  async function runNlSearch() {
+    const q = nlQuery.trim();
+    if (!q || nlParsing) return;
+    setNlParsing(true);
+    try {
+      const res = await fetch("/api/ai/search-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = (await res.json()) as {
+        filters?: ParsedSearchFilters;
+        keywordFallback?: string;
+      };
+      const f = data.filters;
+      const hasStructured =
+        f && (f.towns.length > 0 || f.beds != null || f.baths != null || f.minPrice != null || f.maxPrice != null);
+      if (hasStructured) {
+        setNlFilters(f!);
+      } else {
+        setNlFilters(null);
+        setSearch(data.keywordFallback || q);
+      }
+    } finally {
+      setNlParsing(false);
+    }
+  }
+
   const filtered = useMemo(() => {
     return initial.filter((p) => {
       if (statusFilter !== "All" && p.status !== statusFilter.toLowerCase()) return false;
@@ -125,9 +163,20 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
         const s = search.toLowerCase();
         if (!p.address?.toLowerCase().includes(s) && !(p.town ?? "").toLowerCase().includes(s)) return false;
       }
+      if (nlFilters) {
+        if (
+          nlFilters.towns.length > 0 &&
+          !nlFilters.towns.some((t) => (p.town ?? "").toLowerCase().includes(t.toLowerCase()))
+        )
+          return false;
+        if (nlFilters.beds != null && (p.beds ?? 0) < nlFilters.beds) return false;
+        if (nlFilters.baths != null && (p.baths ?? 0) < nlFilters.baths) return false;
+        if (nlFilters.minPrice != null && (p.price ?? -Infinity) < nlFilters.minPrice) return false;
+        if (nlFilters.maxPrice != null && (p.price ?? Infinity) > nlFilters.maxPrice) return false;
+      }
       return true;
     });
-  }, [initial, statusFilter, priceFilter, search]);
+  }, [initial, statusFilter, priceFilter, search, nlFilters]);
 
   const matchedCount = initial.filter((p) => p.matches.length > 0).length;
 
@@ -141,6 +190,34 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
             {initial.length} listing{initial.length === 1 ? "" : "s"}
             {matchedCount > 0 ? ` · ${matchedCount} matched to clients` : ""}
           </p>
+        </div>
+
+        {/* Natural-language search */}
+        <div className="mb-2 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
+          <Sparkles className="size-3.5 text-primary shrink-0" />
+          <input
+            type="text"
+            placeholder="Describe it — “3-bed under $900k in Tenafly”"
+            value={nlQuery}
+            onChange={(e) => setNlQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                void runNlSearch();
+              }
+            }}
+            disabled={nlParsing}
+            className="flex-1 min-w-0 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
+          />
+          {nlFilters && (
+            <button
+              type="button"
+              onClick={() => { setNlFilters(null); setNlQuery(""); }}
+              aria-label="Clear AI search"
+            >
+              <X className="size-3.5 text-muted-foreground" />
+            </button>
+          )}
         </div>
 
         {/* Search */}

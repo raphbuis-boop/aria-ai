@@ -4,8 +4,9 @@ import { MatchClientsModal } from "@/components/MatchClientsModal";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { useToast } from "@/components/ToastProvider";
 import type { MlsListingPayload } from "@/lib/simplyrets";
+import type { ParsedSearchFilters } from "@/app/api/ai/search-parse/route";
 import { fmtMoney } from "@/lib/utils";
-import { Bookmark, Loader2, Search } from "lucide-react";
+import { Bookmark, Loader2, Search, Sparkles, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -113,6 +114,14 @@ export function MlsSearchClient({
   const [status, setStatus] = useState("Active");
   const [sortKey, setSortKey] = useState("newest");
   const [filtersOpen, setFiltersOpen] = useState(false);
+
+  // ── Natural-language search — parses free text into the same structured
+  // filters above, then runs the normal query. Additive: the filter fields
+  // stay editable afterward. Keywords the backend can't filter on server-side
+  // (SimplyRETS has no free-text param) narrow the current page client-side.
+  const [nlQuery, setNlQuery] = useState("");
+  const [nlParsing, setNlParsing] = useState(false);
+  const [nlKeywords, setNlKeywords] = useState<string[]>([]);
 
   useEffect(() => {
     setCity(searchParams.get("city") ?? "");
@@ -249,12 +258,73 @@ export function MlsSearchClient({
 
   function applySearch() { pushUrlFromForm(); }
 
+  async function runNlSearch() {
+    const q = nlQuery.trim();
+    if (!q || nlParsing) return;
+    setNlParsing(true);
+    try {
+      const res = await fetch("/api/ai/search-parse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query: q }),
+      });
+      const data = (await res.json()) as {
+        filters?: ParsedSearchFilters;
+        keywordFallback?: string;
+      };
+      const f = data.filters;
+      const cityValue = f?.towns[0] || data.keywordFallback || "";
+
+      // Reflect the parse into the structured fields so it's visible/editable,
+      // then run the query from these fresh values directly — state setters
+      // above haven't flushed yet, so pushUrlFromForm() would still see stale
+      // city/minPrice/etc. if called in this same tick.
+      setCity(cityValue);
+      setMinPrice(f?.minPrice != null ? String(f.minPrice) : "");
+      setMaxPrice(f?.maxPrice != null ? String(f.maxPrice) : "");
+      setMinBeds(f?.beds != null ? String(f.beds) : "");
+      setMinBaths(f?.baths != null ? String(f.baths) : "");
+      setPropertyType(f?.propertyType ?? "");
+      setNlKeywords(f?.keywords ?? []);
+
+      const params = new URLSearchParams();
+      if (cityValue) params.set("city", cityValue);
+      if (f?.minPrice != null) params.set("minPrice", String(f.minPrice));
+      if (f?.maxPrice != null) params.set("maxPrice", String(f.maxPrice));
+      if (f?.beds != null) params.set("minBeds", String(f.beds));
+      if (f?.baths != null) params.set("minBaths", String(f.baths));
+      if (f?.propertyType) params.set("propertyType", f.propertyType);
+      if (status.trim()) params.set("status", status.trim());
+      if (sortKey.trim()) params.set("sort", sortKey.trim());
+
+      const basePath = variant === "public" ? "/property-search" : "/listings";
+      router.replace(`${basePath}?${params.toString()}`, { scroll: false });
+    } catch {
+      toast.toast("Could not understand that — try the filters below", "warn");
+    } finally {
+      setNlParsing(false);
+    }
+  }
+
+  // Keywords ("pool", "ADU", "fixer"...) from NL search narrow the current
+  // page client-side — SimplyRETS has no free-text param to filter on
+  // server-side, so this only sees listings already fetched by the
+  // structured filters above.
+  const displayListings = useMemo(() => {
+    if (nlKeywords.length === 0) return listings;
+    return listings.filter((l) => {
+      const haystack = `${l.description ?? ""} ${l.address ?? ""}`.toLowerCase();
+      return nlKeywords.some((k) => haystack.includes(k));
+    });
+  }, [listings, nlKeywords]);
+
   const showingLine = useMemo(() => {
     if (loading && listings.length === 0) return null;
-    const n = listings.length;
+    const n = displayListings.length;
+    if (nlKeywords.length > 0) return `Showing ${n} matching "${nlKeywords.join(", ")}"`;
     if (total != null && Number.isFinite(total)) return `Showing ${n} of ${total} properties`;
     return `Showing ${n} properties`;
-  }, [loading, listings.length, total]);
+  }, [loading, listings.length, displayListings.length, nlKeywords, total]);
 
   const returnToParam = useMemo(() => {
     const q = searchParams.toString();
@@ -320,6 +390,53 @@ export function MlsSearchClient({
             )}
           </div>
         </header>
+
+        {/* ── Natural-language search ── */}
+        <div className="mb-3 rounded-xl border border-border bg-card px-4 py-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-3.5 text-primary shrink-0" />
+            <input
+              value={nlQuery}
+              onChange={(e) => setNlQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  void runNlSearch();
+                }
+              }}
+              placeholder="Describe it — “3-bed under $900k in Tenafly with a pool”"
+              className="flex-1 min-w-0 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60"
+              disabled={nlParsing}
+            />
+            <button
+              type="button"
+              onClick={() => void runNlSearch()}
+              disabled={nlParsing || !nlQuery.trim()}
+              className="shrink-0 rounded-full bg-primary px-3 py-1.5 font-display text-caption font-semibold text-primary-foreground disabled:opacity-50"
+            >
+              {nlParsing ? "…" : "Ask Aria"}
+            </button>
+          </div>
+          {nlKeywords.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {nlKeywords.map((k) => (
+                <span
+                  key={k}
+                  className="rounded-full bg-secondary px-2 py-0.5 font-display text-[11px] font-medium text-muted-foreground"
+                >
+                  {k}
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={() => setNlKeywords([])}
+                className="flex items-center gap-0.5 font-display text-[11px] text-muted-foreground/70 hover:text-muted-foreground"
+              >
+                <X className="size-3" /> Clear
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* ── Search form ── */}
         <div className="grid grid-cols-2 gap-2 mb-2">
@@ -500,7 +617,7 @@ export function MlsSearchClient({
         )}
 
         {/* ── Empty state ── */}
-        {!loading && listings.length === 0 && !errorMessage && (
+        {!loading && displayListings.length === 0 && !errorMessage && (
           <div className="mt-12 flex flex-col items-center text-center">
             <p
               className="mb-1 text-[11px] font-semibold uppercase"
@@ -509,14 +626,16 @@ export function MlsSearchClient({
               No Results
             </p>
             <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
-              No listings match your filters
+              {nlKeywords.length > 0
+                ? `No listings on this page mention "${nlKeywords.join(", ")}" — try clearing that or widening the filters`
+                : "No listings match your filters"}
             </p>
           </div>
         )}
 
         {/* ── Listing cards ── */}
         <div className="mt-4 grid grid-cols-1 gap-3">
-          {listings.map((l) => {
+          {displayListings.map((l) => {
             const photo = l.photos?.[0];
             const mlsKey = l.mlsNumber || l.id;
             const saved = savedMls.has(mlsKey);
