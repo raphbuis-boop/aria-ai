@@ -63,6 +63,23 @@ function extractClientName(
 
 // ── Route ─────────────────────────────────────────────────────────────────────
 
+// Maps the question + grounded reply to a single in-app destination, so the
+// assistant's answer can carry a one-tap CTA (e.g. "Review Follow-ups" → /inbox).
+// Strong keyword signals only — returns null when nothing clearly applies.
+function deriveAction(
+  question: string,
+  reply: string,
+): { label: string; href: string } | null {
+  const t = `${question}\n${reply}`.toLowerCase();
+  if (/follow-?up|drafts?|waiting for approval|review and send|\binbox\b/.test(t))
+    return { label: "Review Follow-ups", href: "/inbox" };
+  if (/property match|new match|\blistings?\b|\bproperties\b/.test(t))
+    return { label: "View Properties", href: "/properties" };
+  if (/hottest lead|top lead|your clients|client list/.test(t))
+    return { label: "See Clients", href: "/clients" };
+  return null;
+}
+
 export async function POST(req: Request) {
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
@@ -363,5 +380,5 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ reply });
+  return NextResponse.json({ reply, action: deriveAction(question, reply) });
 }

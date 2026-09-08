@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Mic, MicOff, Send, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronRight, Mic, MicOff, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,7 +13,8 @@ import { cn } from "@/lib/utils";
 
 type Mode = "chat" | "voice" | "live";
 type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
-type Msg = { role: "user" | "assistant"; content: string; id: string };
+type ChatAction = { label: string; href: string };
+type Msg = { role: "user" | "assistant"; content: string; id: string; action?: ChatAction | null };
 
 type SpeechRecognitionResult = { transcript: string };
 type SpeechRecognitionEvent = {
@@ -151,6 +152,7 @@ function WaveformBars({
 // ── Chat bubble ───────────────────────────────────────────────────────────────
 
 function ChatBubble({ msg }: { msg: Msg }) {
+  const router = useRouter();
   const isUser = msg.role === "user";
   return (
     <motion.div
@@ -164,15 +166,34 @@ function ChatBubble({ msg }: { msg: Msg }) {
           <AriaSpark size={16} />
         </div>
       )}
-      <div
-        className={cn(
-          "max-w-[80%] rounded-[18px] px-4 py-2.5 font-display text-body leading-relaxed",
-          isUser
-            ? "bg-primary text-primary-foreground rounded-br-[4px]"
-            : "border border-border bg-card text-foreground rounded-bl-[4px]",
+      <div className="flex max-w-[80%] flex-col items-start gap-2">
+        <div
+          className={cn(
+            "rounded-[18px] px-4 py-2.5 font-display text-body leading-relaxed",
+            isUser
+              ? "self-end bg-primary text-primary-foreground rounded-br-[4px]"
+              : "border border-border bg-card text-foreground rounded-bl-[4px]",
+          )}
+        >
+          {msg.content}
+        </div>
+        {!isUser && msg.action && (
+          <button
+            type="button"
+            onClick={() => {
+              try {
+                navigator.vibrate?.(8);
+              } catch {
+                /* ignore */
+              }
+              router.push(msg.action!.href);
+            }}
+            className="inline-flex items-center gap-1 rounded-full bg-primary px-3.5 py-1.5 font-display text-caption font-semibold text-primary-foreground active:scale-95 transition-transform"
+          >
+            {msg.action.label}
+            <ChevronRight className="size-3.5" />
+          </button>
         )}
-      >
-        {msg.content}
       </div>
     </motion.div>
   );
@@ -446,7 +467,7 @@ export default function VoicePage() {
 
   // ── Call assistant route ──────────────────────────────────────────────────
   const callAssistant = useCallback(
-    async (question: string, mode: "chat" | "voice"): Promise<string> => {
+    async (question: string, mode: "chat" | "voice"): Promise<{ reply: string; action: ChatAction | null }> => {
       const res = await fetch("/api/ai/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -459,8 +480,8 @@ export default function VoicePage() {
         }),
       });
       if (!res.ok) throw new Error(`Assistant error ${res.status}`);
-      const data = (await res.json()) as { reply?: string };
-      return String(data.reply ?? "");
+      const data = (await res.json()) as { reply?: string; action?: ChatAction | null };
+      return { reply: String(data.reply ?? ""), action: data.action ?? null };
     },
     []
   );
@@ -475,10 +496,10 @@ export default function VoicePage() {
       const userMsg: Msg = { role: "user", content: q, id: crypto.randomUUID() };
       setMessages((prev) => [...prev, userMsg]);
       try {
-        const reply = await callAssistant(q, "chat");
+        const { reply, action } = await callAssistant(q, "chat");
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: reply, id: crypto.randomUUID() },
+          { role: "assistant", content: reply, id: crypto.randomUUID(), action },
         ]);
       } catch {
         setMessages((prev) => [
@@ -503,7 +524,7 @@ export default function VoicePage() {
       setVoiceState("thinking");
       setErrorMsg(null);
       try {
-        const reply = await callAssistant(text, "voice");
+        const { reply } = await callAssistant(text, "voice");
         if (!reply) {
           setErrorMsg("Aria returned an empty response.");
           setVoiceState("error");
