@@ -62,10 +62,16 @@ export default async function PropertyByIdPage({
       })
       .filter((m): m is NonNullable<typeof m> => m !== null);
 
+    const townForMarket = (prop as { town?: string | null }).town ?? null;
+    const { data: market } = townForMarket
+      ? await supabase.from("market_data").select("*").eq("town", townForMarket).maybeSingle()
+      : { data: null };
+
     return (
       <InternalPropertyDetail
         property={prop as Record<string, unknown>}
         matches={matches}
+        market={(market as Record<string, unknown> | null) ?? null}
         returnTo={returnTo}
       />
     );
