@@ -440,7 +440,15 @@ export function TodayClient({
 
           {/* What's happening — activity feed */}
           <section>
-            <SectionLabel>What&apos;s happening</SectionLabel>
+            <div className="flex items-center justify-between">
+              <SectionLabel>What&apos;s happening</SectionLabel>
+              <Link
+                href="/emails"
+                className="font-display text-caption font-semibold text-primary active:opacity-70"
+              >
+                Inbox →
+              </Link>
+            </div>
             {activityFeed.length === 0 ? (
               <EmptyNote>Nothing logged yet — activity shows up here as it happens.</EmptyNote>
             ) : (
