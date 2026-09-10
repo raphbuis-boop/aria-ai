@@ -1,143 +1,145 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { BackButton } from "@/components/BackButton";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, WifiOff } from "lucide-react";
 
-type TownRow = {
+type TownPulse = {
   town: string;
-  median: number;
-  changePct: number;
-  dom: number;
+  activeCount: number;
+  medianPrice: number | null;
+  avgDaysOnMarket: number | null;
+  momentumPct: number | null;
 };
 
-// Hardcoded realistic NJ market data for April 2026 — investor demo.
-const overall = {
-  median: 612_000,
-  changePct: 4.2,
-  avgDom: 18,
-  listToSale: 103,
-  monthLabel: "April 2026",
-};
+type LoadState =
+  | { status: "loading" }
+  | { status: "unconfigured" }
+  | { status: "ready"; towns: TownPulse[] };
 
-const towns: TownRow[] = [
-  { town: "Ridgewood", median: 842_000, changePct: 6.1, dom: 14 },
-  { town: "Westfield", median: 895_000, changePct: 3.8, dom: 16 },
-  { town: "Montclair", median: 634_000, changePct: 1.2, dom: 22 },
-  { town: "Hoboken", median: 715_000, changePct: 5.0, dom: 12 },
-  { town: "Summit", median: 1_100_000, changePct: 8.3, dom: 11 },
-];
-
-function fmtMoney(n: number) {
+function fmtMoney(n: number | null) {
+  if (n == null) return "—";
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2).replace(/\.00$/, "")}M`;
   if (n >= 1_000) return `$${Math.round(n / 1_000)}k`;
-  return `$${n}`;
+  return `$${Math.round(n)}`;
 }
 
 export default function MarketPulsePage() {
+  const [state, setState] = useState<LoadState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/market-pulse", { cache: "no-store" });
+        if (cancelled) return;
+        if (res.status === 503) {
+          setState({ status: "unconfigured" });
+          return;
+        }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        setState({ status: "ready", towns: (json.towns ?? []) as TownPulse[] });
+      } catch {
+        if (!cancelled) setState({ status: "unconfigured" });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="min-h-[100dvh] pb-28" style={{ color: "var(--oc-text-1)" }}>
       <div className="px-5 pt-6">
         <BackButton className="mb-4" />
-        <p className="text-[12px]" style={{ color: "#636366" }}>
-          {overall.monthLabel}
-        </p>
         <h1 className="mt-1 text-[26px] font-semibold leading-tight">
           Market Pulse
         </h1>
         <p className="mt-1 text-[13px]" style={{ color: "#636366" }}>
-          New Jersey snapshot · updated weekly
+          New Jersey snapshot · live MLS data
         </p>
       </div>
 
-      {/* Headline stats */}
-      <div className="mt-5 px-5 grid grid-cols-2 gap-2">
-        <div className="col-span-2">
-          <Stat label="Median" value={fmtMoney(overall.median)} tone="plain" />
+      {state.status === "loading" && (
+        <div className="mt-10 px-5 text-center text-[13px]" style={{ color: "#636366" }}>
+          Loading market data…
         </div>
-        <Stat label="Avg DOM" value={`${overall.avgDom}d`} tone="plain" />
-        <Stat label="List / Sale" value={`${overall.listToSale}%`} tone="green" />
-      </div>
+      )}
 
-      <div className="mt-5 px-5">
-        <div className="rounded-[18px] p-4" style={{ background: "#1c1c1e" }}>
-          <div className="flex items-center gap-1.5 text-[12px] font-semibold" style={{ color: "#636366" }}>
-            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: "#0a7cff" }} />
-            Momentum read
+      {state.status === "unconfigured" && (
+        <div className="mt-10 px-5">
+          <div className="rounded-[18px] p-6 text-center" style={{ background: "#1c1c1e" }}>
+            <WifiOff size={28} className="mx-auto" style={{ color: "#636366" }} />
+            <p className="mt-3 text-[15px] font-semibold" style={{ color: "#f0f0f5" }}>
+              Market data isn&apos;t connected yet
+            </p>
+            <p className="mt-1.5 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
+              Once your MLS feed is connected, this screen will show live
+              prices and days-on-market for your towns.
+            </p>
           </div>
-          <p className="mt-2 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
-            Median up <span className="font-medium text-[#1a9b5e]">+{overall.changePct}%</span> YoY.
-            Inventory tight across Summit, Ridgewood, and Hoboken — expect bidding wars under DOM 15.
-          </p>
         </div>
-      </div>
+      )}
 
-      <div className="mt-6 px-5">
-        <p className="mb-2.5 text-[12px]" style={{ color: "#636366" }}>
-          By town
-        </p>
-        <div className="overflow-hidden rounded-[18px]" style={{ background: "#1c1c1e" }}>
-          {towns.map((t, i) => (
-            <div
-              key={t.town}
-              className="flex items-center justify-between px-4 py-[14px]"
-              style={i > 0 ? { borderTop: "0.5px solid rgba(255,255,255,0.06)" } : {}}
-            >
-              <div className="min-w-0 flex-1">
-                <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
-                  {t.town}
-                </div>
-                <div className="text-[11px]" style={{ color: "#636366" }}>{t.dom} days avg on market</div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="text-right">
-                  <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
-                    {fmtMoney(t.median)}
+      {state.status === "ready" && (
+        <>
+          <div className="mt-6 px-5">
+            <p className="mb-2.5 text-[12px]" style={{ color: "#636366" }}>
+              By town · active listings
+            </p>
+            <div className="overflow-hidden rounded-[18px]" style={{ background: "#1c1c1e" }}>
+              {state.towns.map((t, i) => (
+                <div
+                  key={t.town}
+                  className="flex items-center justify-between px-4 py-[14px]"
+                  style={i > 0 ? { borderTop: "0.5px solid rgba(255,255,255,0.06)" } : {}}
+                >
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
+                      {t.town}
+                    </div>
+                    <div className="text-[11px]" style={{ color: "#636366" }}>
+                      {t.avgDaysOnMarket != null
+                        ? `${Math.round(t.avgDaysOnMarket)} days avg on market`
+                        : "—"}
+                      {" · "}
+                      {t.activeCount} active
+                    </div>
                   </div>
-                  <div
-                    className={`flex items-center justify-end gap-0.5 text-[11px] font-medium ${
-                      t.changePct >= 0 ? "text-[#1a9b5e]" : "text-[#c43838]"
-                    }`}
-                  >
-                    {t.changePct >= 0 ? (
-                      <ArrowUp size={11} />
-                    ) : (
-                      <ArrowDown size={11} />
-                    )}
-                    {t.changePct >= 0 ? "+" : ""}
-                    {t.changePct}%
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-[14px] font-semibold" style={{ color: "#f0f0f5" }}>
+                        {fmtMoney(t.medianPrice)}
+                      </div>
+                      {t.momentumPct != null && (
+                        <div
+                          className={`flex items-center justify-end gap-0.5 text-[11px] font-medium ${
+                            t.momentumPct >= 0 ? "text-[#1a9b5e]" : "text-[#c43838]"
+                          }`}
+                        >
+                          {t.momentumPct >= 0 ? (
+                            <ArrowUp size={11} />
+                          ) : (
+                            <ArrowDown size={11} />
+                          )}
+                          {t.momentumPct >= 0 ? "+" : ""}
+                          {t.momentumPct}%
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      <p className="mt-5 px-5 text-[11px]" style={{ color: "#636366" }}>
-        Market estimates compiled for {overall.monthLabel} · NJ Bergen, Essex &amp; Union counties. Not sourced from live MLS data. For actual listing data, see the MLS search.
-      </p>
-    </div>
-  );
-}
-
-function Stat({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: "green" | "plain";
-}) {
-  const valueColor = tone === "green" ? "#1a9b5e" : "#f0f0f5";
-  return (
-    <div className="rounded-[18px] p-3.5" style={{ background: "#1c1c1e" }}>
-      <p className="mb-1 text-[11px] font-medium" style={{ color: "#636366" }}>
-        {label}
-      </p>
-      <p className="text-[18px] font-semibold leading-none" style={{ color: valueColor }}>
-        {value}
-      </p>
+          <p className="mt-5 px-5 text-[11px]" style={{ color: "#636366" }}>
+            Live data from your MLS feed. Momentum compares median prices of
+            newer vs. older active listings.
+          </p>
+        </>
+      )}
     </div>
   );
 }
