@@ -14,12 +14,20 @@ function todayKey() {
 
 function verifyCron(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
-  if (!secret) return true; // dev — allow all
+  if (!secret) {
+    // No secret configured: allow in dev, deny in production so the route
+    // can't be triggered by anyone on the internet. Set CRON_SECRET in Vercel.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[cron-trigger] CRON_SECRET is not set — rejecting request in production");
+      return false;
+    }
+    return true; // dev — allow all
+  }
   const auth = req.headers.get("authorization");
   return auth === `Bearer ${secret}`;
 }
 
-export async function POST(req: Request) {
+async function handleTrigger(req: Request) {
   if (!verifyCron(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -38,6 +46,16 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ error: "unknown type" }, { status: 400 });
+}
+
+export async function POST(req: Request) {
+  return handleTrigger(req);
+}
+
+// Vercel Cron Jobs trigger via HTTP GET — without this export every scheduled
+// run 405s and no reminders ever fire.
+export async function GET(req: Request) {
+  return handleTrigger(req);
 }
 
 // ─── Showing reminders ────────────────────────────────────────────────────────
@@ -70,50 +88,78 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
   for (const showing of showings) {
     const showingTime = new Date(showing.showing_date).getTime();
     const hoursAway = (showingTime - now) / (60 * 60 * 1000);
+    if (hoursAway < 0) continue; // already happened
     const clientName =
       (showing.clients as { name?: string } | null)?.name ?? "Client";
     const address = showing.address ?? "Property";
+    const dateStr = new Date(showing.showing_date).toLocaleString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    });
 
-    for (const [label, threshold] of [
-      ["24h", 24],
-      ["2h", 2],
-    ] as [string, number][]) {
-      if (hoursAway <= threshold + 0.5 && hoursAway >= threshold - 0.5) {
-        const dedup = `showing_reminder::${showing.id}::${label}`;
-        const dateStr = new Date(showing.showing_date).toLocaleString("en-US", {
-          weekday: "short",
-          month: "short",
-          day: "numeric",
-          hour: "numeric",
-          minute: "2-digit",
+    // ── Daily-cron-friendly "upcoming showing" reminder ──────────────────────
+    // The Hobby-plan cron runs once a day, so exact 24h/2h threshold windows
+    // (±0.5h) essentially never hit. Instead, remind once per calendar day for
+    // every showing in the next ~25h. Dedup key includes the date so a showing
+    // visible across two daily runs notifies once per day, not twice.
+    const dayLabel = hoursAway <= 12 ? "today" : "tomorrow";
+    const upcomingDedup = `showing_reminder::${showing.id}::upcoming::${todayKey()}`;
+    await insertNotification(supabase, {
+      agent_id: showing.agent_id,
+      kind: "showing_reminder",
+      title: `Showing ${dayLabel}: ${address}`,
+      body: `${clientName} · ${dateStr}`,
+      related_client_id: showing.client_id,
+      dedup_key: upcomingDedup,
+    });
+
+    const agent = agentMap.get(showing.agent_id);
+    if (agent?.email) {
+      await sendEmail({
+        to: agent.email,
+        subject: `Showing reminder: ${address}`,
+        html: showingReminderEmail({
+          agentName: agent.name,
+          address,
+          clientName,
+          showingDate: dateStr,
+          hoursAway: Math.round(hoursAway),
+        }),
+      });
+    }
+    processed++;
+
+    // ── Precise 2h reminder (needs a frequent cron, e.g. hourly on Pro) ──────
+    // Kept for setups with sub-daily schedules; harmless on the daily cron
+    // because the window essentially never matches there.
+    if (hoursAway <= 2.5 && hoursAway >= 1.5) {
+      const dedup = `showing_reminder::${showing.id}::2h`;
+      await insertNotification(supabase, {
+        agent_id: showing.agent_id,
+        kind: "showing_reminder",
+        title: `Showing in 2 hours: ${address}`,
+        body: `${clientName} · ${dateStr}`,
+        related_client_id: showing.client_id,
+        dedup_key: dedup,
+      });
+
+      if (agent?.email) {
+        await sendEmail({
+          to: agent.email,
+          subject: `Showing in 2 hours: ${address}`,
+          html: showingReminderEmail({
+            agentName: agent.name,
+            address,
+            clientName,
+            showingDate: dateStr,
+            hoursAway: 2,
+          }),
         });
-
-        await insertNotification(supabase, {
-          agent_id: showing.agent_id,
-          kind: "showing_reminder",
-          title: `Showing ${label === "2h" ? "in 2 hours" : "tomorrow"}: ${address}`,
-          body: `${clientName} · ${dateStr}`,
-          related_client_id: showing.client_id,
-          dedup_key: dedup,
-        });
-
-        const agent = agentMap.get(showing.agent_id);
-        if (agent?.email) {
-          await sendEmail({
-            to: agent.email,
-            subject: `Showing reminder: ${address}`,
-            html: showingReminderEmail({
-              agentName: agent.name,
-              address,
-              clientName,
-              showingDate: dateStr,
-              hoursAway: threshold,
-            }),
-          });
-        }
-
-        processed++;
       }
+      processed++;
     }
   }
 
