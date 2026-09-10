@@ -101,6 +101,7 @@ export function MlsSearchClient({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mlsUnconfigured, setMlsUnconfigured] = useState(false);
   const [savedMls, setSavedMls] = useState<Set<string>>(new Set());
   const [matchListing, setMatchListing] = useState<MlsListingPayload | null>(null);
 
@@ -162,7 +163,11 @@ export function MlsSearchClient({
         hasMore?: boolean;
         offset?: number;
       };
-      if (!res.ok) throw new Error(data.error ?? "Search failed");
+      if (!res.ok) {
+        const err = new Error(data.error ?? "Search failed") as Error & { status?: number };
+        err.status = res.status;
+        throw err;
+      }
       const batch = data.listings ?? [];
       setTotal(
         typeof data.total === "number" && Number.isFinite(data.total) ? data.total : null,
@@ -188,13 +193,21 @@ export function MlsSearchClient({
   useEffect(() => {
     void (async () => {
       setErrorMessage(null);
+      setMlsUnconfigured(false);
       setLoading(true);
       setOffset(0);
       setHasMore(true);
       try {
         await fetchPage(0, false);
       } catch (e) {
-        setErrorMessage(e instanceof Error ? e.message : "Could not load.");
+        const status = e instanceof Error ? (e as { status?: number }).status : undefined;
+        if (status === 503) {
+          // MLS feed isn't connected — show the friendly empty state instead of an error.
+          setMlsUnconfigured(true);
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(e instanceof Error ? e.message : "Could not load.");
+        }
         setListings([]);
       } finally {
         setLoading(false);
@@ -391,7 +404,22 @@ export function MlsSearchClient({
           </div>
         </header>
 
+        {/* ── MLS feed unconfigured ── */}
+        {mlsUnconfigured && (
+          <div className="mb-4 rounded-[18px] p-6 text-center" style={{ background: "#1c1c1e" }}>
+            <Search size={28} className="mx-auto" style={{ color: "#636366" }} />
+            <p className="mt-3 text-[15px] font-semibold" style={{ color: "#f0f0f5" }}>
+              The MLS feed isn&apos;t connected yet
+            </p>
+            <p className="mt-1.5 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
+              Once your MLS feed is connected, you&apos;ll be able to search live listings here.
+            </p>
+          </div>
+        )}
+
         {/* ── Natural-language search ── */}
+        {!mlsUnconfigured && (
+          <>
         <div className="mb-3 rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-primary shrink-0" />
@@ -594,6 +622,9 @@ export function MlsSearchClient({
           </div>
         )}
 
+          </>
+        )}
+
         {/* ── Error state ── */}
         {errorMessage && (
           <div
@@ -617,7 +648,7 @@ export function MlsSearchClient({
         )}
 
         {/* ── Empty state ── */}
-        {!loading && displayListings.length === 0 && !errorMessage && (
+        {!mlsUnconfigured && !loading && displayListings.length === 0 && !errorMessage && (
           <div className="mt-12 flex flex-col items-center text-center">
             <p
               className="mb-1 text-[11px] font-semibold uppercase"
