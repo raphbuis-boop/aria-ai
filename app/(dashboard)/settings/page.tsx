@@ -20,6 +20,7 @@ import {
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { IntegrationWarningBanner } from "@/components/IntegrationWarningBanner";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -226,6 +227,8 @@ export default function SettingsPage() {
       )}
 
       <div className="px-4 pt-6">
+
+        <IntegrationWarningBanner />
 
         {/* ── Profile card ── */}
         <Link href="/settings/profile">
