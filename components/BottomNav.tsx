@@ -72,13 +72,33 @@ function TabButton({ tab, pathname }: { tab: Tab; pathname: string }) {
         if (pathname === tab.href || pending) return;
         startTransition(() => router.push(tab.href));
       }}
-      className="flex items-center justify-center"
+      className="relative flex items-center justify-center"
       style={{ width: 44, height: 44 }}
     >
-      {pending ? <LoaderCircle className="size-6 animate-spin text-primary" aria-label={`Opening ${tab.label}`} /> : <tab.Icon
-        className={active ? "size-6 text-primary" : "size-6 text-muted-foreground"}
-        strokeWidth={active ? 2.1 : 1.7}
-      />}
+      {active && (
+        <motion.span
+          layoutId="nav-glass"
+          className="absolute inset-0 rounded-full"
+          transition={{ type: "spring", stiffness: 380, damping: 30 }}
+          style={{
+            background:
+              "linear-gradient(160deg, rgba(255,255,255,0.85) 0%, rgba(31,92,70,0.16) 48%, rgba(31,92,70,0.06) 100%)",
+            border: "1px solid rgba(255,255,255,0.55)",
+            boxShadow:
+              "inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -2px 4px rgba(31,92,70,0.12), 0 4px 10px -2px rgba(31,92,70,0.22)",
+          }}
+        />
+      )}
+      <span className="relative z-10">
+        {pending ? (
+          <LoaderCircle className="size-6 animate-spin text-primary" aria-label={`Opening ${tab.label}`} />
+        ) : (
+          <tab.Icon
+            className={active ? "size-6 text-primary" : "size-6 text-muted-foreground"}
+            strokeWidth={active ? 2.2 : 1.7}
+          />
+        )}
+      </span>
     </motion.button>
   );
 }
@@ -99,10 +119,15 @@ export function BottomNav() {
       }}
     >
       <div
-        className="relative flex items-center gap-1 rounded-full bg-card border border-border px-3"
+        className="relative flex items-center gap-1 rounded-full px-3"
         style={{
           height: 64,
-          boxShadow: "0 1px 2px rgba(43,36,25,0.05), 0 16px 32px -12px rgba(43,36,25,0.22)",
+          background: "rgba(255, 253, 249, 0.60)",
+          backdropFilter: "blur(28px) saturate(185%)",
+          WebkitBackdropFilter: "blur(28px) saturate(185%)",
+          border: "1px solid rgba(255,255,255,0.6)",
+          boxShadow:
+            "inset 0 1px 0 rgba(255,255,255,0.75), inset 0 -1px 3px rgba(43,36,25,0.05), 0 2px 4px rgba(43,36,25,0.05), 0 18px 36px -14px rgba(43,36,25,0.28)",
         }}
       >
         {TABS_LEFT.map((tab) => (
@@ -138,10 +163,10 @@ export function BottomNav() {
           style={{
             width: 56,
             height: 56,
-            background: "var(--primary)",
+            background: "linear-gradient(160deg, #2b8060 0%, var(--primary) 62%)",
             boxShadow: ariaActive
-              ? "0 6px 18px rgba(31,92,70,0.45), 0 0 0 4px var(--background), 0 0 0 5px var(--primary)"
-              : "0 6px 18px rgba(31,92,70,0.35), 0 0 0 4px var(--background)",
+              ? "inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 18px rgba(31,92,70,0.5), 0 0 0 4px var(--background), 0 0 0 5px var(--primary)"
+              : "inset 0 1px 1px rgba(255,255,255,0.35), 0 6px 18px rgba(31,92,70,0.4), 0 0 0 4px var(--background)",
           }}
         >
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="22" height="22" aria-hidden="true">
