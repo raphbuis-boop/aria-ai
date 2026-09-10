@@ -78,16 +78,22 @@ function TabButton({ tab, pathname }: { tab: Tab; pathname: string }) {
       {active && (
         <motion.span
           layoutId="nav-glass"
-          className="absolute inset-0 rounded-full"
+          className="absolute inset-0 overflow-hidden rounded-full"
           transition={{ type: "spring", stiffness: 380, damping: 30 }}
           style={{
             background:
-              "linear-gradient(160deg, rgba(255,255,255,0.85) 0%, rgba(31,92,70,0.16) 48%, rgba(31,92,70,0.06) 100%)",
-            border: "1px solid rgba(255,255,255,0.55)",
+              "linear-gradient(160deg, rgba(255,255,255,0.9) 0%, rgba(31,92,70,0.18) 48%, rgba(31,92,70,0.06) 100%)",
+            border: "1px solid rgba(255,255,255,0.6)",
             boxShadow:
-              "inset 0 1px 1px rgba(255,255,255,0.9), inset 0 -2px 4px rgba(31,92,70,0.12), 0 4px 10px -2px rgba(31,92,70,0.22)",
+              "inset 0 1px 1px rgba(255,255,255,0.95), inset 0 -2px 5px rgba(31,92,70,0.14), 0 5px 12px -2px rgba(31,92,70,0.28)",
           }}
-        />
+        >
+          <span
+            aria-hidden
+            className="absolute left-1/2 top-[3px] h-1/3 w-2/3 -translate-x-1/2 rounded-full"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.78), transparent)" }}
+          />
+        </motion.span>
       )}
       <span className="relative z-10">
         {pending ? (
@@ -122,14 +128,33 @@ export function BottomNav() {
         className="relative flex items-center gap-1 rounded-full px-3"
         style={{
           height: 64,
-          background: "rgba(255, 253, 249, 0.60)",
-          backdropFilter: "blur(28px) saturate(185%)",
-          WebkitBackdropFilter: "blur(28px) saturate(185%)",
-          border: "1px solid rgba(255,255,255,0.6)",
+          background: "rgba(255, 253, 249, 0.55)",
+          backdropFilter: "blur(32px) saturate(200%)",
+          WebkitBackdropFilter: "blur(32px) saturate(200%)",
+          border: "1px solid rgba(255,255,255,0.7)",
           boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.75), inset 0 -1px 3px rgba(43,36,25,0.05), 0 2px 4px rgba(43,36,25,0.05), 0 18px 36px -14px rgba(43,36,25,0.28)",
+            "inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 3px rgba(43,36,25,0.06), 0 2px 4px rgba(43,36,25,0.05), 0 20px 40px -14px rgba(43,36,25,0.30)",
         }}
       >
+        {/* Glass overlays — clipped to the pill so they never touch the raised Aria button */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-full">
+          {/* curved top specular gloss */}
+          <div
+            className="absolute inset-x-0 top-0 h-1/2"
+            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.55) 0%, rgba(255,255,255,0) 100%)" }}
+          />
+          {/* slow liquid shimmer sweep */}
+          <motion.div
+            className="absolute inset-y-0 w-24"
+            initial={{ x: -140 }}
+            animate={{ x: 380 }}
+            transition={{ duration: 6, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
+            style={{
+              background: "linear-gradient(105deg, transparent, rgba(255,255,255,0.38), transparent)",
+              filter: "blur(6px)",
+            }}
+          />
+        </div>
         {TABS_LEFT.map((tab) => (
           <TabButton key={tab.key} tab={tab} pathname={pathname} />
         ))}
