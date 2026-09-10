@@ -14,22 +14,19 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { isFuture, parseISO } from "date-fns";
 
 const INPUT_STYLE = {
-  background: "rgba(255,255,255,0.06)",
-  border: "0.5px solid rgba(255,255,255,0.08)",
-  color: "#ffffff",
+  background: "var(--card)",
+  border: "1px solid var(--input)",
+  color: "var(--foreground)",
   borderRadius: 12,
   padding: "12px 16px",
-  fontSize: 14,
+  fontSize: 16,
   width: "100%",
   outline: "none",
 };
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p
-      className="mb-2 text-[11px] font-semibold uppercase"
-      style={{ color: "#6B7280", letterSpacing: "0.08em" }}
-    >
+    <p className="mb-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
       {label}
     </p>
   );
@@ -160,36 +157,24 @@ export function ShowingsClient({
   }
 
   return (
-    <div
-      className="min-h-[100dvh] pb-[130px]"
-      style={{
-        background: `
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
-          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent)
-        `,
-        color: "var(--oc-text-1)",
-      }}
-    >
+    <div className="min-h-[100dvh] bg-background text-foreground pb-[130px]">
       <div className="px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h1
-              className="text-[26px] font-semibold leading-tight"
-              style={{ color: "#ffffff", letterSpacing: "-0.025em" }}
-            >
+            <h1 className="font-heading text-[26px] leading-tight text-foreground">
               Timeline
             </h1>
-            <p className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+            <p className="mt-0.5 font-display text-[12px] text-muted-foreground">
               {upcoming.length > 0 ? `${upcoming.length} upcoming` : "No upcoming showings"}
             </p>
           </div>
           <button
             type="button"
             onClick={openModal}
-            className="text-[13px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-            style={{ background: "#3B82F6", padding: "8px 16px", borderRadius: 8 }}
+            className="font-display text-[13px] font-semibold text-primary-foreground active:scale-[0.97] transition-transform duration-100"
+            style={{ background: "var(--primary)", padding: "8px 16px", borderRadius: 8 }}
           >
             + Add
           </button>
@@ -238,10 +223,10 @@ export function ShowingsClient({
             <div
               className="px-4 py-5 text-[13px]"
               style={{
-                background: "rgba(20,20,22,0.5)",
-                border: "0.5px solid rgba(255,255,255,0.06)",
+                background: "var(--secondary)",
+                border: "1px solid var(--border)",
                 borderRadius: 12,
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
               }}
             >
               No upcoming showings. Tap + Add to schedule one.
@@ -291,10 +276,10 @@ export function ShowingsClient({
             <div
               className="px-4 py-5 text-[13px]"
               style={{
-                background: "rgba(20,20,22,0.5)",
-                border: "0.5px solid rgba(255,255,255,0.06)",
+                background: "var(--secondary)",
+                border: "1px solid var(--border)",
                 borderRadius: 12,
-                color: "#6B7280",
+                color: "var(--muted-foreground)",
               }}
             >
               No past showings yet.
@@ -305,20 +290,18 @@ export function ShowingsClient({
 
       {/* ── Add showing sheet ── */}
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 backdrop-blur-[2px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
           <div
             className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
             style={{
-              background: "rgba(20,20,22,0.95)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-              borderBottom: "none",
+              background: "var(--card)",
+              borderTop: "1px solid var(--border)",
+              boxShadow: "0 -8px 40px rgba(43,36,25,0.18)",
             }}
           >
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
-            <p className="mb-4 text-[17px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.02em" }}>
+            <div className="mx-auto mb-5 h-1 w-9 rounded-full" style={{ background: "var(--border)" }} />
+            <p className="mb-4 font-heading text-[19px] text-foreground">
               Log a showing
             </p>
             <div className="space-y-3">
@@ -327,23 +310,23 @@ export function ShowingsClient({
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                 style={INPUT_STYLE}
               >
-                <option value="" style={{ background: "#111111" }}>Select client</option>
+                <option value="" style={{ background: "#ffffff" }}>Select client</option>
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id} style={{ background: "#111111" }}>{c.name}</option>
+                  <option key={c.id} value={c.id} style={{ background: "#ffffff" }}>{c.name}</option>
                 ))}
               </select>
               <input
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Property address"
-                className="placeholder-[#4B5563]"
+                className="placeholder:text-muted-foreground/50"
                 style={INPUT_STYLE}
               />
               <input
                 type="datetime-local"
                 value={form.showing_date}
                 onChange={(e) => setForm({ ...form, showing_date: e.target.value })}
-                className="placeholder-[#4B5563]"
+                className="placeholder:text-muted-foreground/50"
                 style={INPUT_STYLE}
               />
               <select
@@ -351,16 +334,16 @@ export function ShowingsClient({
                 onChange={(e) => setForm({ ...form, status: e.target.value as typeof form.status })}
                 style={INPUT_STYLE}
               >
-                <option value="scheduled" style={{ background: "#111111" }}>Scheduled</option>
-                <option value="completed" style={{ background: "#111111" }}>Completed</option>
-                <option value="cancelled" style={{ background: "#111111" }}>Cancelled</option>
+                <option value="scheduled" style={{ background: "#ffffff" }}>Scheduled</option>
+                <option value="completed" style={{ background: "#ffffff" }}>Completed</option>
+                <option value="cancelled" style={{ background: "#ffffff" }}>Cancelled</option>
               </select>
               <textarea
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes"
                 rows={2}
-                className="resize-none placeholder-[#4B5563]"
+                className="resize-none placeholder:text-muted-foreground/50"
                 style={INPUT_STYLE}
               />
               <textarea
@@ -368,15 +351,15 @@ export function ShowingsClient({
                 onChange={(e) => setForm({ ...form, feedback: e.target.value })}
                 placeholder="Feedback (optional — used for AI summary)"
                 rows={3}
-                className="resize-none placeholder-[#4B5563]"
+                className="resize-none placeholder:text-muted-foreground/50"
                 style={INPUT_STYLE}
               />
             </div>
             <button
               type="button"
               onClick={save}
-              className="mt-5 w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-              style={{ background: "#3B82F6", borderRadius: 10, padding: "14px" }}
+              className="mt-5 w-full font-display text-[15px] font-semibold text-primary-foreground active:scale-[0.98] transition-transform duration-100"
+              style={{ background: "var(--primary)", borderRadius: 14, padding: "15px" }}
             >
               Save showing
             </button>

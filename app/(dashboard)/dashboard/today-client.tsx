@@ -7,6 +7,8 @@ import { motion, AnimatePresence, MotionConfig } from "motion/react";
 import {
   ArrowRight,
   FileText,
+  ChevronDown,
+  ChevronUp,
   Home as HomeIcon,
   Mail,
   MessageSquare,
@@ -291,9 +293,10 @@ export function TodayClient({
     setDateLabel(getDateLabel());
   }, []);
 
+  const [attentionExpanded, setAttentionExpanded] = useState(false);
   const visibleItems = items.filter((i) => !localDismissed.has(i.id));
-  const attentionItems = visibleItems.slice(0, ATTENTION_CAP);
-  const overflowCount = visibleItems.length - attentionItems.length;
+  const attentionItems = visibleItems.slice(0, attentionExpanded ? visibleItems.length : ATTENTION_CAP);
+  const hiddenCount = Math.max(0, visibleItems.length - ATTENTION_CAP);
 
   // Pre-fetch AI drafts for all text-action items on mount — unchanged from prior behavior.
   useEffect(() => {
@@ -414,10 +417,22 @@ export function TodayClient({
                     ))}
                   </AnimatePresence>
                 </Card>
-                {overflowCount > 0 && (
-                  <p className="font-display text-caption text-muted-foreground/60 mt-3 text-center">
-                    +{overflowCount} more today
-                  </p>
+                {hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      try {
+                        navigator.vibrate?.(8);
+                      } catch {
+                        /* ignore */
+                      }
+                      setAttentionExpanded((v) => !v);
+                    }}
+                    className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-2xl border border-border bg-card py-3 font-display text-caption font-semibold text-muted-foreground shadow-[0_1px_2px_rgba(43,36,25,0.04)] transition-all hover:bg-secondary active:scale-[0.985]"
+                  >
+                    {attentionExpanded ? "Show less" : `Show ${hiddenCount} more`}
+                    {attentionExpanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                  </button>
                 )}
               </>
             )}

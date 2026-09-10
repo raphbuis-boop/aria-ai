@@ -79,7 +79,6 @@ export function InternalPropertyDetail({
 
   const commission = price != null ? Math.round(price * 0.025) : null;
   const pricePerSqft = price != null && sqft ? Math.round(price / sqft) : null;
-  const fullAddress = `${address}${town ? `, ${town}` : ""}`;
   const mktAvg = (market?.avg_sale_price as number | null) ?? null;
   const mktDom = (market?.days_on_market as number | null) ?? null;
   const mktYoY = (market?.price_change_pct as number | null) ?? null;
@@ -299,7 +298,7 @@ export function InternalPropertyDetail({
           type="button"
           onClick={() => {
             triggerHaptic();
-            router.push(`/showings?new=1&address=${encodeURIComponent(fullAddress)}`);
+            router.push(`/showings?new=1&address=${encodeURIComponent(town && !address.includes(town) ? `${address}, ${town}` : address)}`);
           }}
           className="mb-8 flex w-full items-center justify-center gap-2 rounded-2xl bg-primary py-4 font-display text-body-lg font-semibold text-primary-foreground transition-transform active:scale-[0.98]"
         >
