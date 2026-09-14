@@ -69,12 +69,12 @@ export default function MarketPulsePage() {
 
       {state.status === "unconfigured" && (
         <div className="mt-10 px-5">
-          <div className="rounded-[18px] p-6 text-center" style={{ background: "#1c1c1e" }}>
-            <WifiOff size={28} className="mx-auto" style={{ color: "#636366" }} />
-            <p className="mt-3 text-[15px] font-semibold" style={{ color: "#f0f0f5" }}>
+          <div className="rounded-[18px] border border-border bg-card p-6 text-center">
+            <WifiOff size={28} className="mx-auto text-muted-foreground" />
+            <p className="mt-3 font-display text-[15px] font-semibold text-foreground">
               Market data isn&apos;t connected yet
             </p>
-            <p className="mt-1.5 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
+            <p className="mt-1.5 font-display text-[13px] leading-[1.55] text-muted-foreground">
               Once your MLS feed is connected, this screen will show live
               prices and days-on-market for your towns.
             </p>

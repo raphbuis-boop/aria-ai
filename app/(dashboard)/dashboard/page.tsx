@@ -160,7 +160,13 @@ export default async function DashboardPage() {
   if (tasksDueRes.error) console.error("[today] tasks:", tasksDueRes.error);
   if (dealsMovingRes.error) console.error("[today] deals_moving:", dealsMovingRes.error);
 
-  const clients = (clientsRes.data ?? []) as TodayClient[];
+  const rawClients = (clientsRes.data ?? []) as TodayClient[];
+  // A blank/null name in the DB must never crash the Today builders (they
+  // split names for labels like "Text Sarah"). "Client" keeps the item useful.
+  const clients = rawClients.map((c) => ({
+    ...c,
+    name: (c.name ?? "").trim() || "Client",
+  }));
   const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
   const activities = (activitiesRes.data ?? []) as TodayActivity[];
   const bbaSignedClientIds = (bbaRes.data ?? []).map((r) => String(r.client_id));
@@ -204,7 +210,10 @@ export default async function DashboardPage() {
     .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
     .eq("agent_id", user.id)
     .eq("status", "closed");
-  const closedClients = (closedClientRows ?? []) as TodayClient[];
+  const closedClients = ((closedClientRows ?? []) as TodayClient[]).map((c) => ({
+    ...c,
+    name: (c.name ?? "").trim() || "Client",
+  }));
 
   const allItems = buildTodayItems(
     clients,

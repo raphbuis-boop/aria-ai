@@ -193,16 +193,16 @@ export function MlsSearchClient({
   useEffect(() => {
     void (async () => {
       setErrorMessage(null);
-      setMlsUnconfigured(false);
       setLoading(true);
       setOffset(0);
       setHasMore(true);
       try {
         await fetchPage(0, false);
+        setMlsUnconfigured(false);
       } catch (e) {
-        const status = e instanceof Error ? (e as { status?: number }).status : undefined;
+        const status = (e as { status?: number })?.status;
         if (status === 503) {
-          // MLS feed isn't connected — show the friendly empty state instead of an error.
+          // MLS feed not connected — show the friendly empty state, not an error.
           setMlsUnconfigured(true);
           setErrorMessage(null);
         } else {
@@ -404,22 +404,32 @@ export function MlsSearchClient({
           </div>
         </header>
 
-        {/* ── MLS feed unconfigured ── */}
+        {/* ── MLS not connected ── */}
         {mlsUnconfigured && (
-          <div className="mb-4 rounded-[18px] p-6 text-center" style={{ background: "#1c1c1e" }}>
-            <Search size={28} className="mx-auto" style={{ color: "#636366" }} />
-            <p className="mt-3 text-[15px] font-semibold" style={{ color: "#f0f0f5" }}>
+          <div className="rounded-[18px] border border-border bg-card p-6 text-center">
+            <Search size={28} className="mx-auto text-muted-foreground" />
+            <p className="mt-3 font-display text-[15px] font-semibold text-foreground">
               The MLS feed isn&apos;t connected yet
             </p>
-            <p className="mt-1.5 text-[13px] leading-[1.55]" style={{ color: "#aeaeb2" }}>
-              Once your MLS feed is connected, you&apos;ll be able to search live listings here.
+            <p className="mt-1.5 font-display text-[13px] leading-[1.55] text-muted-foreground">
+              Once it&apos;s connected, you&apos;ll be able to search live
+              listings and match them to your clients here. Your saved
+              properties and manual listings still work below.
             </p>
+            {variant === "member" && (
+              <Link
+                href="/properties"
+                className="mt-4 inline-block font-display text-[13px] font-semibold text-primary"
+              >
+                Go to my tracked properties →
+              </Link>
+            )}
           </div>
         )}
 
         {/* ── Natural-language search ── */}
         {!mlsUnconfigured && (
-          <>
+        <>
         <div className="mb-3 rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-primary shrink-0" />
@@ -621,8 +631,7 @@ export function MlsSearchClient({
             </button>
           </div>
         )}
-
-          </>
+        </>
         )}
 
         {/* ── Error state ── */}

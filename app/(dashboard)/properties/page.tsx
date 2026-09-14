@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PropertiesClient } from "./properties-client";
 
@@ -16,7 +17,7 @@ export default async function PropertiesPage() {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const [{ data: props }, { data: matches }] = await Promise.all([
     supabase

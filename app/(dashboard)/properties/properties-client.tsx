@@ -280,7 +280,9 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
               <HomeIcon className="size-4 text-muted-foreground" />
             </div>
             <p className="font-display text-body text-muted-foreground/70">
-              {initial.length === 0 ? "No properties yet." : "Try adjusting your search or filters."}
+              {initial.length === 0
+                ? "No saved properties yet — save a listing and Aria will match it to the right clients."
+                : "Try adjusting your search or filters."}
             </p>
           </div>
         ) : (
