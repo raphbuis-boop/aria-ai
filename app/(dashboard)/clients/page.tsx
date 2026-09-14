@@ -30,7 +30,7 @@ export default async function ClientsPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: clients }, { data: activeTransactions }, { data: activities }] = await Promise.all([
+  const [{ data: clients }, { data: activeTransactions }, { data: activities }, { data: bbas }] = await Promise.all([
     supabase
       .from("clients")
       .select("id, name, town, status, lead_score, budget_min, budget_max, phone, email, beds_wanted, baths_wanted, notes, client_role")
@@ -52,11 +52,22 @@ export default async function ClientsPage() {
       .from("activities")
       .select("client_id, created_at, type, direction")
       .eq("agent_id", user.id),
+
+    // Signed BBAs — real commission rate beats the 2.5% default.
+    supabase
+      .from("buyer_broker_agreements")
+      .select("client_id, commission_pct")
+      .eq("agent_id", user.id),
   ]);
 
   const dealValueByClient = new Map<string, number>();
   for (const t of activeTransactions ?? []) {
     if (t.contract_price) dealValueByClient.set(String(t.client_id), t.contract_price as number);
+  }
+
+  const commissionPctByClient = new Map<string, number>();
+  for (const b of bbas ?? []) {
+    if (b.commission_pct != null) commissionPctByClient.set(String(b.client_id), Number(b.commission_pct));
   }
 
   const transactions = (activeTransactions ?? []) as TodayTransaction[];
@@ -68,7 +79,7 @@ export default async function ClientsPage() {
       ...c,
       dealValue,
       dealValueIsReal: dealValueByClient.has(c.id as string),
-      commissionEst: commissionFor(dealValue),
+      commissionEst: commissionFor(dealValue, commissionPctByClient.get(c.id as string)),
     };
   });
 

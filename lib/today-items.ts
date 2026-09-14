@@ -28,6 +28,13 @@ export type TodayTransaction = {
   address: string | null;
   closing_date: string | null;
   status: string | null;
+  contract_price?: number | null;
+};
+
+/** One signed Buyer Broker Agreement — the real commission rate for that client, in place of the 2.5% assumption. */
+export type BbaCommission = {
+  client_id: string;
+  commission_pct: number | null;
 };
 
 export type TodayActivity = {
@@ -81,7 +88,14 @@ export type TodayItem = {
   leadScoreReason: string | null;
   /** Plain-English label for the client's most recent logged activity, e.g. "Replied to your text 2 days ago". Null when there's no activity history. */
   activitySignal: string | null;
-  /** Projected commission at 2.5% of budget max — same convention used elsewhere in the app. Null when no budget on file. */
+  /**
+   * Expected commission — deal value × the client's real BBA commission rate
+   * (falls back to 2.5% if unsigned) × probability of the deal actually
+   * closing (deal stage + closing proximity). This is the "real dollars at
+   * stake" figure that drives the Home hero total and the Follow-ups
+   * ranking — NOT the full commission you'd earn if the deal closes today.
+   * Null when there's no deal value to estimate from (no budget, no deal).
+   */
   commissionEst: number | null;
 };
 
@@ -431,9 +445,85 @@ function mostRecentActivityLabel(clientId: string, activities: TodayActivity[]):
   return `${verb} · ${when}`;
 }
 
-export function commissionFor(budgetMax: number | null): number | null {
-  if (!budgetMax) return null;
-  return Math.round(budgetMax * 0.025);
+export function commissionFor(dealValue: number | null, commissionPct: number = 2.5): number | null {
+  if (!dealValue) return null;
+  return Math.round(dealValue * (commissionPct / 100));
+}
+
+/** Deal-stage baseline probability that a client's deal actually closes — the starting point before timing adjusts it. */
+const STAGE_CLOSE_PROBABILITY: Record<string, number> = {
+  new: 0.1,
+  contacted: 0.15,
+  showing: 0.3,
+  offer: 0.5,
+  under_contract: 0.85,
+  closed: 1,
+};
+
+/**
+ * Probability a deal closes, from deal stage plus how close the closing date
+ * is — clients further along AND closing sooner are weighted higher, per
+ * BUILD.md's "REAL MONEY NUMBERS" spec. Timing only ever raises the stage
+ * baseline (a looming closing date is a positive signal, never negative).
+ */
+export function dealCloseProbability(status: string | null, closingDateIso: string | null): number {
+  const base = STAGE_CLOSE_PROBABILITY[status ?? ""] ?? 0.1;
+  if (!closingDateIso) return base;
+  const days = differenceInCalendarDays(new Date(closingDateIso), new Date());
+  if (days <= 0) return Math.max(base, 0.95);
+  if (days <= 3) return Math.max(base, 0.92);
+  if (days <= 7) return Math.max(base, 0.88);
+  if (days <= 14) return Math.max(base, 0.82);
+  return base;
+}
+
+/** Real deal value for a client: an active transaction's actual contract price beats the budget-based estimate. */
+function realDealValue(
+  clientId: string,
+  budgetMax: number | null,
+  transactions: TodayTransaction[],
+): { value: number | null; isReal: boolean } {
+  const withPrice = transactions.find(
+    (t) => t.client_id === clientId && t.status !== "closed" && t.contract_price,
+  );
+  if (withPrice?.contract_price) return { value: withPrice.contract_price, isReal: true };
+  return { value: budgetMax, isReal: false };
+}
+
+export type MoneyEstimate = {
+  dealValue: number | null;
+  dealValueIsReal: boolean;
+  commissionPct: number;
+  probability: number;
+  /** Full commission if the deal closes — dealValue × commissionPct, not weighted by probability. */
+  projectedCommission: number | null;
+  /** Probability-weighted commission — the "real dollars at stake" figure for ranking and totals. */
+  expectedCommission: number | null;
+};
+
+/**
+ * Computes the real money figures for a client: real deal value (contract
+ * price beats budget estimate), real commission rate (signed BBA beats the
+ * 2.5% default), and a stage+timing-weighted probability of closing.
+ */
+export function computeMoneyEstimate(
+  client: TodayClient,
+  transactions: TodayTransaction[],
+  commissionPctByClient: Map<string, number>,
+): MoneyEstimate {
+  const { value: dealValue, isReal: dealValueIsReal } = realDealValue(client.id, client.budget_max, transactions);
+  const commissionPct = commissionPctByClient.get(client.id) ?? 2.5;
+
+  const soonestClosing = transactions
+    .filter((t) => t.client_id === client.id && t.closing_date)
+    .map((t) => t.closing_date as string)
+    .sort()[0] ?? null;
+  const probability = dealCloseProbability(client.status, soonestClosing);
+
+  const projectedCommission = commissionFor(dealValue, commissionPct);
+  const expectedCommission = projectedCommission !== null ? Math.round(projectedCommission * probability) : null;
+
+  return { dealValue, dealValueIsReal, commissionPct, probability, projectedCommission, expectedCommission };
 }
 
 // ─── Main export ─────────────────────────────────────────────────────────────
@@ -461,6 +551,10 @@ export function buildTodayItems(
   // all active-buyer concerns. Propensity-to-sell (rank 6) is the opposite:
   // it only ever fires for closed clients, so it needs its own list.
   closedClients: TodayClient[] = [],
+  // Real commission rate per client, keyed by client_id — from their signed
+  // BBA. Clients without a signed agreement fall back to the 2.5% default
+  // inside computeMoneyEstimate.
+  bbaCommissionPctByClient: Map<string, number> = new Map(),
 ): TodayItem[] {
   const items: TodayItem[] = [];
   const now = new Date();
@@ -492,7 +586,7 @@ export function buildTodayItems(
       leadHeat: heatFromScore(txScore),
       leadScoreReason: txReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
-      commissionEst: commissionFor(client.budget_max),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
       reason,
       context: client.town ?? null,
       actionLabel: closingLabel(client.name),
@@ -534,7 +628,7 @@ export function buildTodayItems(
       leadHeat: heatFromScore(hotScore),
       leadScoreReason: hotReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
-      commissionEst: commissionFor(client.budget_max),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
       reason: daysPhrase,
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
       actionLabel: `Text ${textRecipient(client.name)}`,
@@ -576,7 +670,7 @@ export function buildTodayItems(
         leadHeat: heatFromScore(annivScore),
         leadScoreReason: annivReason,
         activitySignal: mostRecentActivityLabel(client.id, activities),
-        commissionEst: commissionFor(client.budget_max),
+        commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
         reason: `Home purchase anniversary${yearLabel}`,
         context: client.town ?? null,
         actionLabel: `Send anniversary text to ${textRecipient(client.name)}`,
@@ -597,7 +691,7 @@ export function buildTodayItems(
         leadHeat: heatFromScore(annivScore),
         leadScoreReason: annivReason,
         activitySignal: mostRecentActivityLabel(client.id, activities),
-        commissionEst: commissionFor(client.budget_max),
+        commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
         reason: "Today is their birthday",
         context: client.town ?? null,
         actionLabel: `Send birthday text to ${textRecipient(client.name)}`,
@@ -633,7 +727,7 @@ export function buildTodayItems(
       leadHeat: heatFromScore(bbaScore),
       leadScoreReason: bbaReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
-      commissionEst: commissionFor(client.budget_max),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
       reason: "Hasn't signed the buyer agreement yet",
       context: client.town ?? null,
       actionLabel: `Remind ${client.name.split(" ")[0]} to sign`,
@@ -671,7 +765,7 @@ export function buildTodayItems(
       leadHeat: heatFromScore(matchScore),
       leadScoreReason: matchReason,
       activitySignal: mostRecentActivityLabel(client.id, activities),
-      commissionEst: commissionFor(client.budget_max),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
       reason: "New listing just hit MLS that fits what they want",
       context: [client.town, budget].filter(Boolean).join(" · ") || null,
       actionLabel: addrLabel,
@@ -713,7 +807,7 @@ export function buildTodayItems(
       leadHeat: heatFromScore(Math.round(propensity.score / 10)),
       leadScoreReason: propensity.reasons.join("; ") || null,
       activitySignal: mostRecentActivityLabel(client.id, activities),
-      commissionEst: commissionFor(client.budget_max),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
       reason,
       context: client.town ?? null,
       actionLabel: `Check in with ${firstName}`,

@@ -35,10 +35,6 @@ export default async function DashboardPage() {
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowISO = tomorrow.toISOString().split("T")[0];
 
-  const plus3 = new Date(now);
-  plus3.setDate(plus3.getDate() + 3);
-  const plus3ISO = plus3.toISOString().split("T")[0];
-
   const plus7 = new Date(now);
   plus7.setDate(plus7.getDate() + 7);
   const plus7ISO = plus7.toISOString().split("T")[0];
@@ -76,13 +72,15 @@ export default async function DashboardPage() {
       .eq("agent_id", user.id)  // SCOPE 1
       .neq("status", "closed"),
 
-    // 2. Transactions — closing within the next 3 days (urgency cards) [agent_id scoped ✓]
+    // 2. Transactions — every active deal, with real contract price. Not just
+    // closing-soon: computeMoneyEstimate/computeLeadScore need the full active
+    // pipeline to compute real deal value and closing-proximity for every
+    // client, not only the ones closing in the next 3 days. [agent_id scoped ✓]
     supabase
       .from("transactions")
-      .select("id, client_id, address, closing_date, status")
+      .select("id, client_id, address, closing_date, status, contract_price")
       .eq("agent_id", user.id)  // SCOPE 2
-      .gte("closing_date", todayISO)
-      .lte("closing_date", plus3ISO),
+      .eq("status", "active"),
 
     // 3. Activities — last 30 days, most recent first [agent_id scoped ✓]
     supabase
@@ -101,10 +99,10 @@ export default async function DashboardPage() {
       .gte("created_at", minus24hISO)
       .order("match_score", { ascending: false }),
 
-    // 5. BBA-signed client IDs — any row = signed [agent_id scoped ✓]
+    // 5. BBA-signed clients + their real commission rate [agent_id scoped ✓]
     supabase
       .from("buyer_broker_agreements")
-      .select("client_id")
+      .select("client_id, commission_pct")
       .eq("agent_id", user.id),  // SCOPE 5
 
     // 6. Showings today — full rows for inline schedule [agent_id scoped ✓]
@@ -166,6 +164,11 @@ export default async function DashboardPage() {
   const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
   const activities = (activitiesRes.data ?? []) as TodayActivity[];
   const bbaSignedClientIds = (bbaRes.data ?? []).map((r) => String(r.client_id));
+  const bbaCommissionPctByClient = new Map(
+    (bbaRes.data ?? [])
+      .filter((r) => r.commission_pct != null)
+      .map((r) => [String(r.client_id), Number(r.commission_pct)]),
+  );
 
   // Deduplicate MLS matches by client_id, keeping highest match_score (already ordered desc).
   // Defensively handle null properties (deleted property or broken FK).
@@ -211,6 +214,7 @@ export default async function DashboardPage() {
     bbaSignedClientIds,
     engagement,
     closedClients,
+    bbaCommissionPctByClient,
   );
 
   // Filter out snoozed/dismissed items before sending to client

@@ -152,7 +152,7 @@ function InsightHero({ insight }: { insight: Insight }) {
         {insight.commissionEst > 0 && (
           <>
             {" "}
-            · <span className="text-primary font-medium">~{fmtMoney(insight.commissionEst)}</span> projected
+            · <span className="text-primary font-medium">~{fmtMoney(insight.commissionEst)}</span> expected
             commission
           </>
         )}

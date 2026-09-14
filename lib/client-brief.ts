@@ -110,6 +110,9 @@ export function buildClientBrief(
   activities: BriefActivity[],
   transactions: BriefTransaction[],
   matches: BriefMatch[],
+  // Real commission rate from the client's signed BBA. Falls back to the
+  // 2.5% default (inside commissionFor) when they haven't signed one yet.
+  commissionPct: number | null = null,
 ): ClientBrief {
   const firstName = firstNameOf(client.name);
   const days = daysSinceContact(activities);
@@ -136,7 +139,7 @@ export function buildClientBrief(
     dealValue = client.budgetMax;
     dealValueLabel = "Est. deal value";
   }
-  const commissionEst = commissionFor(dealValue);
+  const commissionEst = commissionFor(dealValue, commissionPct ?? undefined);
 
   // ── Briefing + primary action ────────────────────────────────────────────
   let briefing: string;

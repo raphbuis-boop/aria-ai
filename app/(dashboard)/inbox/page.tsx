@@ -19,10 +19,6 @@ export default async function FollowUpsPage() {
   if (!user) redirect("/login");
 
   const now = new Date();
-  const todayISO = now.toISOString().split("T")[0];
-  const plus3 = new Date(now);
-  plus3.setDate(plus3.getDate() + 3);
-  const plus3ISO = plus3.toISOString().split("T")[0];
   const minus30ISO = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const minus24hISO = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
 
@@ -34,12 +30,13 @@ export default async function FollowUpsPage() {
         .eq("agent_id", user.id)
         .neq("status", "closed"),
 
+      // Every active deal, with real contract price — same convention as the
+      // Home dashboard, needed for real deal value and closing-proximity.
       supabase
         .from("transactions")
-        .select("id, client_id, address, closing_date, status")
+        .select("id, client_id, address, closing_date, status, contract_price")
         .eq("agent_id", user.id)
-        .gte("closing_date", todayISO)
-        .lte("closing_date", plus3ISO),
+        .eq("status", "active"),
 
       supabase
         .from("activities")
@@ -56,7 +53,7 @@ export default async function FollowUpsPage() {
         .gte("created_at", minus24hISO)
         .order("match_score", { ascending: false }),
 
-      supabase.from("buyer_broker_agreements").select("client_id").eq("agent_id", user.id),
+      supabase.from("buyer_broker_agreements").select("client_id, commission_pct").eq("agent_id", user.id),
 
       supabase
         .from("dismissed_opportunities")
@@ -69,6 +66,11 @@ export default async function FollowUpsPage() {
   const transactions = (transactionsRes.data ?? []) as TodayTransaction[];
   const activities = (activitiesRes.data ?? []) as TodayActivity[];
   const bbaSignedClientIds = (bbaRes.data ?? []).map((r) => String(r.client_id));
+  const bbaCommissionPctByClient = new Map(
+    (bbaRes.data ?? [])
+      .filter((r) => r.commission_pct != null)
+      .map((r) => [String(r.client_id), Number(r.commission_pct)]),
+  );
 
   const seen = new Set<string>();
   const newMatchItems: NewMatchItem[] = [];
@@ -106,6 +108,7 @@ export default async function FollowUpsPage() {
     bbaSignedClientIds,
     engagement,
     closedClients,
+    bbaCommissionPctByClient,
   );
   const items = allItems
     .filter((i) => !dismissedIds.has(i.id))

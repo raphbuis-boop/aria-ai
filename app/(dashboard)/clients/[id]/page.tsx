@@ -30,6 +30,7 @@ export default async function ClientDetailPage({
     { data: recentMatches },
     { data: matchedPropertyRows },
     { data: transactions },
+    { data: bba },
   ] = await Promise.all([
     // Full activity history for this client, newest first — the timeline.
     supabase
@@ -63,6 +64,14 @@ export default async function ClientDetailPage({
       .select("id, status, closing_date, contract_price")
       .eq("client_id", params.id)
       .eq("agent_id", user.id),
+
+    // Signed BBA — real commission rate, beats the 2.5% default.
+    supabase
+      .from("buyer_broker_agreements")
+      .select("commission_pct")
+      .eq("client_id", params.id)
+      .eq("agent_id", user.id)
+      .maybeSingle(),
   ]);
 
   const allActivities = activities ?? [];
@@ -93,6 +102,7 @@ export default async function ClientDetailPage({
     allActivities,
     allTransactions,
     allMatches,
+    (bba?.commission_pct as number | null | undefined) ?? null,
   );
 
   // Normalise the property_matches join (Supabase returns the FK join as
