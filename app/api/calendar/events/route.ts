@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { google } from "googleapis";
+import { google, calendar_v3 } from "googleapis";
 import { makeOAuth2Client } from "@/lib/gmail";
 
 export const dynamic = "force-dynamic";
@@ -81,14 +81,14 @@ export async function GET() {
     const events = eventsResponse.data.items || [];
 
     // Transform events to a simplified format
-    const simplifiedEvents = events.map((event: any) => ({
+    const simplifiedEvents = events.map((event: calendar_v3.Schema$Event) => ({
       id: event.id,
       title: event.summary || "No Title",
       description: event.description || "",
       start: event.start?.dateTime || event.start?.date,
       end: event.end?.dateTime || event.end?.date,
       location: event.location || "",
-      attendees: event.attendees?.map((a: any) => ({
+      attendees: event.attendees?.map((a) => ({
         email: a.email,
         name: a.displayName || a.email,
         responseStatus: a.responseStatus

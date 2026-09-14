@@ -44,8 +44,6 @@ export async function POST() {
         const { credentials } = await auth.refreshAccessToken();
         auth.setCredentials(credentials);
 
-        (credentials);
-
         if (credentials.access_token) {
           await supabase
             .from("gmail_integrations")
@@ -140,7 +138,7 @@ export async function POST() {
           insertedClients.push(inserted);
         }
         // If there's a duplicate key error, we skip it (deduplication)
-      } catch (insertErr) {
+      } catch {
         // Silently skip duplicates
         continue;
       }

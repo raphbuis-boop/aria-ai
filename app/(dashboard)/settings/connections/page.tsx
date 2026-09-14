@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 
 export default function ConnectionsPage() {
   const supabase = createClient();
@@ -194,7 +193,7 @@ export default function ConnectionsPage() {
                   No voice samples recorded
                 </p>
                 <p className="mt-1 text-[12px] text-muted">
-                  Record 5 sample messages to train Aria's voice matching
+                  Record 5 sample messages to train Aria&apos;s voice matching
                 </p>
               </>
             )}

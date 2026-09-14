@@ -11,7 +11,11 @@
 
 # next.js
 /.next/
+/.next-corrupted-*/
 /out/
+
+# supabase
+/supabase/.temp/
 
 # production
 /build
