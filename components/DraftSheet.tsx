@@ -1,7 +1,7 @@
 "use client";
 
 import { Drawer } from "vaul";
-import { useEffect, useLayoutEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState, useRef } from "react";
 import type { TodayItem } from "@/lib/today-items";
 import { smsUrl, whatsAppUrl } from "@/lib/messaging-links";
 
@@ -39,6 +39,7 @@ function triggerHaptic() {
 export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: DraftSheetProps) {
   const [draftText, setDraftText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [draftFailed, setDraftFailed] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -73,25 +74,12 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
   }, [isOpen]);
 
   // Populate draft when item changes — use prefetched draft if available, otherwise fetch
-  useEffect(() => {
-    if (!item) {
-      setDraftText("");
-      setIsEditing(false);
-      return;
-    }
-
-    setIsEditing(false);
-
-    // Use prefetched draft if ready (non-undefined means the prefetch ran)
-    if (prefetchedDraft !== undefined) {
-      setDraftText(prefetchedDraft);
-      setLoading(false);
-      return;
-    }
-
-    // Fall back to fetching (e.g. user tapped before prefetch completed)
+  // Extracted so the "Try again" button can re-run the exact same fetch.
+  const fetchDraft = useCallback(() => {
+    if (!item) return () => {};
     let cancelled = false;
     setLoading(true);
+    setDraftFailed(false);
     setDraftText("");
 
     fetch("/api/ai/draft-text", {
@@ -115,10 +103,13 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
     })
       .then((r) => r.json())
       .then((data: { draft?: string }) => {
-        if (!cancelled) setDraftText(data.draft ?? "");
+        if (cancelled) return;
+        const d = data.draft ?? "";
+        setDraftText(d);
+        if (!d) setDraftFailed(true);
       })
       .catch(() => {
-        if (!cancelled) setDraftText("");
+        if (!cancelled) setDraftFailed(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -127,8 +118,31 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
     return () => {
       cancelled = true;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.id]); // intentionally keyed on item.id — re-populate only when a different item opens
+
+  useEffect(() => {
+    if (!item) {
+      setDraftText("");
+      setIsEditing(false);
+      setDraftFailed(false);
+      return;
+    }
+
+    setIsEditing(false);
+
+    // Use prefetched draft if ready (non-undefined means the prefetch ran)
+    if (prefetchedDraft !== undefined) {
+      setDraftText(prefetchedDraft);
+      setDraftFailed(!prefetchedDraft);
+      setLoading(false);
+      return;
+    }
+
+    // Fall back to fetching (e.g. user tapped before prefetch completed)
+    return fetchDraft();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.id]);
 
   // Focus textarea when edit mode turns on
   useEffect(() => {
@@ -203,6 +217,25 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
                 <div className="h-4 rounded animate-pulse bg-secondary" style={{ width: "85%" }} />
                 <p className="font-display text-caption text-muted-foreground pt-1">Drafting in your voice…</p>
               </div>
+            ) : draftFailed && draftText.trim().length === 0 ? (
+              <div className="mb-5 rounded-2xl border border-dashed border-border px-6 py-8 text-center">
+                <p className="font-display text-body font-medium text-foreground mb-1">
+                  Couldn&apos;t draft that message
+                </p>
+                <p className="font-display text-caption text-muted-foreground mb-4">
+                  Check your connection and try again — or write it yourself below.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerHaptic();
+                    fetchDraft();
+                  }}
+                  className="rounded-full px-5 h-10 font-display text-body font-semibold bg-primary text-primary-foreground active:scale-[0.97] transition-transform"
+                >
+                  Try again
+                </button>
+              </div>
             ) : (
               <textarea
                 ref={textareaRef}
@@ -215,10 +248,15 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
               />
             )}
 
-            {/* No phone warning */}
-            {!hasPhone && (
+            {/* No phone — actionable, not a dead end */}
+            {!hasPhone && item && (
               <p className="mb-3 font-display text-caption text-center text-muted-foreground">
-                No phone number on file
+                <a
+                  href={`/clients/${item.clientId}`}
+                  className="font-semibold text-primary"
+                >
+                  Add a phone number to text them →
+                </a>
               </p>
             )}
 
