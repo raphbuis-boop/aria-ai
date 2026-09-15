@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/notifications/trigger?type=daily",
-      "schedule": "0 8 * * *"
+      "schedule": "0 * * * *"
     }
   ]
 }

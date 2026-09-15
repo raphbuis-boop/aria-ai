@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import {
   ChevronRight,
+  Download,
   Globe,
   LogOut,
   Mail,
@@ -22,6 +23,37 @@ type Profile = {
   full_name: string;
   email: string;
 };
+
+type ProfileSettings = {
+  fullName: string;
+  phone: string;
+  brokerageName: string;
+};
+
+type DraftTone = "warm" | "professional" | "direct" | "casual";
+
+const TONE_OPTIONS: { value: DraftTone; label: string }[] = [
+  { value: "warm", label: "Warm & friendly" },
+  { value: "professional", label: "Professional" },
+  { value: "direct", label: "Direct & efficient" },
+  { value: "casual", label: "Casual" },
+];
+
+const REMINDER_HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6am – 9pm ET
+
+function formatHour(hour: number): string {
+  const period = hour >= 12 ? "PM" : "AM";
+  const h12 = hour % 12 === 0 ? 12 : hour % 12;
+  return `${h12}:00 ${period}`;
+}
+
+function triggerHaptic() {
+  try {
+    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
+  } catch {
+    /* never break */
+  }
+}
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
@@ -125,6 +157,165 @@ function SettingsGroup({ children }: { children: React.ReactNode }) {
   );
 }
 
+// iOS-style toggle switch — solid deep-green track when on, visible mid-gray
+// track when off, and a solid white knob (with its own shadow) so it reads
+// clearly against the dark glass card regardless of state.
+function Toggle({ on, onChange, disabled = false }: { on: boolean; onChange: (next: boolean) => void; disabled?: boolean }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={on}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return;
+        triggerHaptic();
+        onChange(!on);
+      }}
+      className="relative shrink-0 rounded-full transition-colors"
+      style={{
+        width: 46,
+        height: 27,
+        background: on ? "#1F5C46" : "#3A3A3C",
+        opacity: disabled ? 0.5 : 1,
+        cursor: disabled ? "default" : "pointer",
+      }}
+    >
+      <span
+        className="absolute rounded-full transition-transform"
+        style={{
+          top: 2,
+          left: 2,
+          width: 23,
+          height: 23,
+          background: "#FFFFFF",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.05)",
+          transform: on ? "translateX(19px)" : "translateX(0px)",
+          transition: "transform 180ms cubic-bezier(0.25,0.46,0.45,0.94)",
+        }}
+      />
+    </button>
+  );
+}
+
+function ToggleRow({
+  label,
+  subtitle,
+  on,
+  onChange,
+  disabled = false,
+  isLast = false,
+}: {
+  label: string;
+  subtitle?: string;
+  on: boolean;
+  onChange: (next: boolean) => void;
+  disabled?: boolean;
+  isLast?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between gap-3"
+      style={{
+        padding: "14px 16px",
+        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <div className="min-w-0 flex-1">
+        <span className="block text-[16px]" style={{ color: "#ffffff" }}>{label}</span>
+        {subtitle ? (
+          <span className="block text-[12px] mt-0.5" style={{ color: "#6B7280" }}>{subtitle}</span>
+        ) : null}
+      </div>
+      <Toggle on={on} onChange={onChange} disabled={disabled} />
+    </div>
+  );
+}
+
+// Inline-editable text row — shows label + value, saves onBlur (or Enter).
+function EditRow({
+  label,
+  value,
+  placeholder,
+  onSave,
+  isLast = false,
+  inputMode,
+}: {
+  label: string;
+  value: string;
+  placeholder?: string;
+  onSave: (next: string) => void;
+  isLast?: boolean;
+  inputMode?: "text" | "tel";
+}) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+
+  return (
+    <div
+      className="flex items-center justify-between gap-3"
+      style={{
+        padding: "12px 16px",
+        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <span className="text-[16px] shrink-0" style={{ color: "#ffffff" }}>{label}</span>
+      <input
+        type={inputMode === "tel" ? "tel" : "text"}
+        value={draft}
+        placeholder={placeholder}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => {
+          if (draft.trim() !== value.trim()) onSave(draft.trim());
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+        }}
+        className="flex-1 min-w-0 bg-transparent text-right text-[15px] outline-none"
+        style={{ color: "#E5E7EB" }}
+      />
+    </div>
+  );
+}
+
+function SelectRow({
+  label,
+  value,
+  options,
+  onChange,
+  isLast = false,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (next: string) => void;
+  isLast?: boolean;
+}) {
+  return (
+    <div
+      className="flex items-center justify-between gap-3"
+      style={{
+        padding: "12px 16px",
+        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
+      }}
+    >
+      <span className="text-[16px] shrink-0" style={{ color: "#ffffff" }}>{label}</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="bg-transparent text-right text-[15px] outline-none"
+        style={{ color: "#E5E7EB", WebkitAppearance: "none", MozAppearance: "none" }}
+      >
+        {options.map((opt) => (
+          <option key={opt.value} value={opt.value} style={{ background: "#1a1a1c", color: "#fff" }}>
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -133,6 +324,20 @@ export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile>({ full_name: "", email: "" });
   const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string } | null>(null);
   const [toast, setToast] = useState<string | null>(null);
+
+  const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
+    fullName: "",
+    phone: "",
+    brokerageName: "",
+  });
+
+  const [notifyFollowups, setNotifyFollowups] = useState(true);
+  const [reminderHourEt, setReminderHourEt] = useState(8);
+
+  const [draftTone, setDraftTone] = useState<DraftTone>("warm");
+  const [signature, setSignature] = useState("");
+
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     void (async () => {
@@ -156,6 +361,34 @@ export default function SettingsPage() {
       .then((r) => r.json())
       .then((d) => setGmailStatus(d))
       .catch(() => setGmailStatus({ connected: false }));
+  }, []);
+
+  // Load Profile / Notifications / Message drafts settings
+  useEffect(() => {
+    void fetch("/api/settings/profile")
+      .then((r) => r.json())
+      .then((d) => setProfileSettings({
+        fullName: d.fullName ?? "",
+        phone: d.phone ?? "",
+        brokerageName: d.brokerageName ?? "",
+      }))
+      .catch(() => {});
+
+    void fetch("/api/settings/notifications")
+      .then((r) => r.json())
+      .then((d) => {
+        setNotifyFollowups(d.notifyFollowups ?? true);
+        setReminderHourEt(d.reminderHourEt ?? 8);
+      })
+      .catch(() => {});
+
+    void fetch("/api/settings/drafts")
+      .then((r) => r.json())
+      .then((d) => {
+        setDraftTone((d.draftTone as DraftTone) ?? "warm");
+        setSignature(d.signature ?? "");
+      })
+      .catch(() => {});
   }, []);
 
   // Handle ?gmail=connected|error callback param
@@ -194,6 +427,68 @@ export default function SettingsPage() {
     router.push("/login");
   }
 
+  async function saveProfileField(field: "fullName" | "phone" | "brokerageName", value: string) {
+    setProfileSettings((p) => ({ ...p, [field]: value }));
+    const res = await fetch("/api/settings/profile", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ [field]: value }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setToast(data.error ?? "Couldn't save — try again");
+      return;
+    }
+    setToast("Saved");
+    if (field === "fullName") {
+      setProfile((p) => ({ ...p, full_name: value }));
+    }
+  }
+
+  async function saveNotifications(next: Partial<{ notifyFollowups: boolean; reminderHourEt: number }>) {
+    if (next.notifyFollowups !== undefined) setNotifyFollowups(next.notifyFollowups);
+    if (next.reminderHourEt !== undefined) setReminderHourEt(next.reminderHourEt);
+    const res = await fetch("/api/settings/notifications", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(next),
+    });
+    if (!res.ok) setToast("Couldn't save — try again");
+  }
+
+  async function saveDrafts(next: Partial<{ draftTone: DraftTone; signature: string }>) {
+    if (next.draftTone !== undefined) setDraftTone(next.draftTone);
+    if (next.signature !== undefined) setSignature(next.signature);
+    const res = await fetch("/api/settings/drafts", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(next),
+    });
+    if (!res.ok) setToast("Couldn't save — try again");
+  }
+
+  async function handleExportClients() {
+    setExporting(true);
+    try {
+      const res = await fetch("/api/clients/export");
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `aria-clients-${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setToast("Clients exported");
+    } catch {
+      setToast("Couldn't export — try again");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   const initial = profile.full_name
     ? profile.full_name.trim()[0].toUpperCase()
     : "?";
@@ -225,45 +520,68 @@ export default function SettingsPage() {
         <IntegrationWarningBanner />
 
         {/* ── Profile card ── */}
-        <Link href="/settings/profile">
+        <div
+          className="mb-7 flex items-center gap-4"
+          style={{
+            background: "rgba(20,20,22,0.6)",
+            borderRadius: 14,
+            border: "0.5px solid rgba(255,255,255,0.06)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            padding: 16,
+          }}
+        >
+          {/* Avatar */}
           <div
-            className="mb-7 flex items-center gap-4 active:opacity-80"
+            className="flex shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
             style={{
-              background: "rgba(20,20,22,0.6)",
-              borderRadius: 14,
-              border: "0.5px solid rgba(255,255,255,0.06)",
-              backdropFilter: "blur(20px)",
-              WebkitBackdropFilter: "blur(20px)",
-              padding: 16,
+              width: 64,
+              height: 64,
+              background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
             }}
           >
-            {/* Avatar */}
-            <div
-              className="flex shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
-              style={{
-                width: 64,
-                height: 64,
-                background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-              }}
-            >
-              {initial}
-            </div>
-
-            {/* Name + subtitle */}
-            <div className="min-w-0 flex-1">
-              <p className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
-                {profile.full_name || "Your Profile"}
-              </p>
-              <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
-                {profile.email || "Tap to set up your profile"}
-              </p>
-            </div>
-
-            <ChevronRight size={18} style={{ color: "#6B7280", flexShrink: 0 }} />
+            {initial}
           </div>
-        </Link>
 
-        {/* ── Group 1: Aria ── */}
+          {/* Name + subtitle */}
+          <div className="min-w-0 flex-1">
+            <p className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
+              {profile.full_name || "Your Profile"}
+            </p>
+            <p className="mt-0.5 text-[13px] truncate" style={{ color: "#6B7280" }}>
+              {profile.email || "Set up your profile below"}
+            </p>
+          </div>
+        </div>
+
+        {/* ── Group: Profile ── */}
+        <GroupLabel label="Profile" />
+        <SettingsGroup>
+          <EditRow
+            label="Name"
+            value={profileSettings.fullName}
+            placeholder="Your name"
+            onSave={(v) => v && void saveProfileField("fullName", v)}
+          />
+          <EditRow
+            label="Brokerage"
+            value={profileSettings.brokerageName}
+            placeholder="Your brokerage"
+            onSave={(v) => v && void saveProfileField("brokerageName", v)}
+          />
+          <EditRow
+            label="Phone"
+            value={profileSettings.phone}
+            placeholder="(555) 555-5555"
+            inputMode="tel"
+            onSave={(v) => void saveProfileField("phone", v)}
+            isLast
+          />
+        </SettingsGroup>
+
+        <div style={{ marginTop: 24 }} />
+
+        {/* ── Group: Aria ── */}
         <GroupLabel label="Aria" />
         <SettingsGroup>
           <SettingsRow icon={Mic} label="Mirror My Voice" href="/settings/voice" />
@@ -272,10 +590,48 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
+        {/* ── Group: Notifications ── */}
+        <GroupLabel label="Notifications" />
+        <SettingsGroup>
+          <ToggleRow
+            label="Follow-up reminders"
+            subtitle="Daily nudge for clients who need contact"
+            on={notifyFollowups}
+            onChange={(v) => void saveNotifications({ notifyFollowups: v })}
+          />
+          <SelectRow
+            label="Daily reminder time"
+            value={String(reminderHourEt)}
+            options={REMINDER_HOURS.map((h) => ({ value: String(h), label: formatHour(h) }))}
+            onChange={(v) => void saveNotifications({ reminderHourEt: Number(v) })}
+            isLast
+          />
+        </SettingsGroup>
+
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 2: Integrations ── */}
-        <GroupLabel label="Integrations" />
+        {/* ── Group: Message drafts ── */}
+        <GroupLabel label="Message drafts" />
+        <SettingsGroup>
+          <SelectRow
+            label="Tone"
+            value={draftTone}
+            options={TONE_OPTIONS}
+            onChange={(v) => void saveDrafts({ draftTone: v as DraftTone })}
+          />
+          <EditRow
+            label="Signature"
+            value={signature}
+            placeholder="e.g. – Sarah, ABC Realty"
+            onSave={(v) => void saveDrafts({ signature: v })}
+            isLast
+          />
+        </SettingsGroup>
+
+        <div style={{ marginTop: 24 }} />
+
+        {/* ── Group: Connected accounts ── */}
+        <GroupLabel label="Connected accounts" />
         <SettingsGroup>
           {gmailStatus?.connected ? (
             <>
@@ -291,7 +647,6 @@ export default function SettingsPage() {
                 label="Disconnect Gmail"
                 onPress={handleGmailDisconnect}
                 destructive
-                isLast
               />
             </>
           ) : (
@@ -300,14 +655,20 @@ export default function SettingsPage() {
               label="Connect Gmail"
               connected={false}
               onPress={() => { window.location.href = "/api/auth/google/connect"; }}
-              isLast
             />
           )}
+          <SettingsRow
+            icon={LogOut}
+            label="Sign out"
+            onPress={handleSignOut}
+            destructive
+            isLast
+          />
         </SettingsGroup>
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 3: Business ── */}
+        {/* ── Group: Business ── */}
         <GroupLabel label="Business" />
         <SettingsGroup>
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
@@ -317,14 +678,14 @@ export default function SettingsPage() {
 
         <div style={{ marginTop: 24 }} />
 
-        {/* ── Group 4: Account ── */}
-        <GroupLabel label="Account" />
+        {/* ── Group: Data ── */}
+        <GroupLabel label="Data" />
         <SettingsGroup>
           <SettingsRow
-            icon={LogOut}
-            label="Sign out"
-            onPress={handleSignOut}
-            destructive
+            icon={Download}
+            label={exporting ? "Exporting…" : "Export clients"}
+            subtitle="Download all clients as a CSV file"
+            onPress={exporting ? undefined : handleExportClients}
             isLast
           />
         </SettingsGroup>

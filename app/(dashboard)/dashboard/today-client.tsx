@@ -383,7 +383,7 @@ export function TodayClient({
               <p className="font-display text-body-lg text-muted-foreground mt-1.5">Here&apos;s what&apos;s happening.</p>
             </div>
             <Link
-              href="/profile"
+              href="/settings"
               aria-label="Profile"
               className="flex size-11 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-body font-semibold text-foreground hover:opacity-80 transition-opacity"
             >

@@ -9,6 +9,14 @@ const DRAFT_RULES = `Rules:
 - Sound like a real person texting from their phone. Warm, concise, natural.
 - Return ONLY the message text.`;
 
+// Settings → Message drafts → Tone
+const TONE_DIRECTIVES: Record<string, string> = {
+  warm: "Tone: warm and friendly, like texting a client you genuinely like.",
+  professional: "Tone: professional and polished — courteous, no slang or emoji.",
+  direct: "Tone: direct and efficient — get to the point in as few words as possible.",
+  casual: "Tone: casual and relaxed, like texting a friend.",
+};
+
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
@@ -27,15 +35,19 @@ export async function POST(req: Request) {
   // Callers other than the Settings preview page (today-client, DraftSheet)
   // don't send voiceSamples — load the agent's saved samples so drafts still
   // match their tone instead of silently falling back to a generic voice.
+  // Tone preference and signature (Settings → Message drafts) always apply.
+  const { data: profile } = await supabase
+    .from("agent_profiles")
+    .select("voice_samples, draft_tone, signature")
+    .eq("id", user.id)
+    .maybeSingle();
+
   let voiceSamples = bodyVoiceSamples;
   if (voiceSamples.length === 0) {
-    const { data: profile } = await supabase
-      .from("agent_profiles")
-      .select("voice_samples")
-      .eq("id", user.id)
-      .maybeSingle();
     voiceSamples = ((profile?.voice_samples as string[] | null) ?? []).filter(Boolean);
   }
+  const draftTone = (profile?.draft_tone as string | null) ?? "warm";
+  const signature = ((profile?.signature as string | null) ?? "").trim();
   const clientId = body.clientId as string | undefined;
   const skipInsert = Boolean(body.skipInsert);
   const propertyContext = body.propertyContext
@@ -69,14 +81,18 @@ export async function POST(req: Request) {
   if (activitySignal) clientContext.push(`Recent activity: ${activitySignal}`);
   if (commissionEst !== null) clientContext.push(`Projected commission: $${commissionEst.toLocaleString()}`);
 
+  const toneDirective = TONE_DIRECTIVES[draftTone] ?? TONE_DIRECTIVES.warm;
+
   const system = matchPing
     ? `You ghost-write a single SMS for a New Jersey real estate agent introducing a specific property to a buyer client.
 Keep it under 320 characters. Conversational — the agent knows this client personally.
 Use the client's context to make the message personal and relevant.
+${toneDirective}
 ${DRAFT_RULES}`
     : `You are ghostwriting a text message for a real estate agent. Match their tone from the provided samples.
 Use the client's context to make the message personal and relevant.
 1–3 sentences max. If property context is provided, introduce it naturally.
+${toneDirective}
 ${DRAFT_RULES}`;
 
   const userMsg = matchPing
@@ -130,6 +146,10 @@ Write ONE short text message.`;
     draft = matchPing
       ? `Hey ${firstName} — found a property that might check your boxes. Want me to send the details?`
       : `Hey ${firstName} — just wanted to check in on your search. Any availability to connect this week?`;
+  }
+
+  if (signature) {
+    draft = `${draft}\n\n${signature}`;
   }
 
   if (clientId && !skipInsert) {
