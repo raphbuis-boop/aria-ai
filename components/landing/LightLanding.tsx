@@ -201,6 +201,27 @@ function Marquee() {
 }
 
 /* ---------- mock UI ---------- */
+/**
+ * Distinct fictional NJ contacts for landing mocks.
+ * Each row/section has its own person — do not reuse a name across Today/Inbox/Pipeline.
+ */
+const LANDING_DEMO = {
+  today: [
+    { n: "Maya Ellison", s: "Viewed 2 listings · no reply in 4d", t: "Text now", hot: true },
+    { n: "The Moretti Family", s: "Pre-approval expires Friday", t: "Call", hot: true },
+    { n: "Chris Alvarez", s: "Open house follow-up due", t: "Draft", hot: false },
+  ],
+  inbox: {
+    name: "Daniel Okonkwo",
+    body: "Hi Daniel — saw you were looking at the two colonials on Maple Ave. The one at 18 Maple just dropped $15k and it checks the boxes we talked about. Want me to set up a showing this weekend?",
+  },
+  pipeline: [
+    { n: "Lauren & Ben Hart", st: "Offer", pct: 82, c: GREEN },
+    { n: "Priya Shah", st: "Showing", pct: 54, c: "#C89B3C" },
+    { n: "James Whitaker", st: "Nurture", pct: 33, c: "#7c7362" },
+  ],
+} as const;
+
 function TodayMock() {
   return (
     <div className="w-full rounded-[22px] bg-white p-4" style={{ border: "1px solid rgba(43,36,25,0.08)", boxShadow: "0 1px 2px rgba(43,36,25,0.05), 0 30px 60px -24px rgba(43,36,25,0.30)" }}>
@@ -213,11 +234,7 @@ function TodayMock() {
           <span className="size-1.5 rounded-full" style={{ background: "#B84B33" }} /> 3 hot
         </div>
       </div>
-      {[
-        { n: "Jordan Miller", s: "Viewed 2 listings · no reply in 4d", t: "Text now", hot: true },
-        { n: "The Bennett Family", s: "Pre-approval expires Friday", t: "Call", hot: true },
-        { n: "Alex Rivera", s: "Open house follow-up due", t: "Draft", hot: false },
-      ].map((r) => (
+      {LANDING_DEMO.today.map((r) => (
         <div key={r.n} className="mb-2 flex items-center gap-3 rounded-2xl p-3" style={{ background: "#FBF8F1", border: "1px solid rgba(43,36,25,0.06)" }}>
           <div className="flex size-9 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold text-white" style={{ background: r.hot ? "#B84B33" : GREEN }}>{r.n.slice(0, 1)}</div>
           <div className="min-w-0 flex-1">
@@ -236,11 +253,11 @@ function InboxMock() {
     <div className="w-full rounded-[22px] bg-white p-4" style={{ border: "1px solid rgba(43,36,25,0.08)", boxShadow: "0 1px 2px rgba(43,36,25,0.05), 0 30px 60px -24px rgba(43,36,25,0.30)" }}>
       <div className="mb-3 flex items-center gap-2">
         <Mail className="size-4" style={{ color: GREEN }} />
-        <div className="text-[13px] font-semibold" style={{ color: INK }}>Reply to Jordan Miller</div>
+        <div className="text-[13px] font-semibold" style={{ color: INK }}>Reply to {LANDING_DEMO.inbox.name}</div>
         <span className="ml-auto"><Label color={GREEN}>AI draft</Label></span>
       </div>
       <div className="rounded-2xl p-3 text-[13.5px] leading-relaxed" style={{ background: "#FBF8F1", border: "1px solid rgba(43,36,25,0.06)", color: INK }}>
-        Hi Jordan — saw you were looking at the two colonials on Maple Ave. The one at 18 Maple just dropped $15k and it checks the boxes we talked about. Want me to set up a showing this weekend?
+        {LANDING_DEMO.inbox.body}
       </div>
       <div className="mt-3 flex items-center gap-2">
         <span className="rounded-full px-4 py-2 text-[13px] font-semibold text-white" style={{ background: GREEN }}>Approve &amp; send</span>
@@ -252,11 +269,7 @@ function InboxMock() {
 }
 
 function PipelineMock() {
-  const rows = [
-    { n: "The Bennett Family", st: "Offer", pct: 82, c: GREEN },
-    { n: "Alex Rivera", st: "Showing", pct: 54, c: "#C89B3C" },
-    { n: "Jordan Miller", st: "Nurture", pct: 33, c: "#7c7362" },
-  ];
+  const rows = LANDING_DEMO.pipeline;
   return (
     <div className="w-full rounded-[22px] bg-white p-4" style={{ border: "1px solid rgba(43,36,25,0.08)", boxShadow: "0 1px 2px rgba(43,36,25,0.05), 0 30px 60px -24px rgba(43,36,25,0.30)" }}>
       <div className="mb-3 text-[13px] font-semibold" style={{ color: INK }}>Active pipeline</div>
