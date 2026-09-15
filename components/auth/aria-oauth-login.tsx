@@ -1,7 +1,6 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -61,21 +60,13 @@ export function AriaOAuthLoginExperience() {
 
   return (
     <div
-      className="relative flex w-full items-center justify-center overflow-hidden bg-[#050508] px-6"
+      className="relative flex w-full items-center justify-center overflow-hidden bg-[#FAF6EE] px-6"
       style={{
         minHeight: "100dvh",
         paddingTop: "max(2.5rem, env(safe-area-inset-top))",
         paddingBottom: "max(2.5rem, env(safe-area-inset-bottom))",
       }}
     >
-      {/* Ambient glow — toned down */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: "radial-gradient(ellipse 700px 500px at 50% 0%, rgba(58,101,240,0.06) 0%, transparent 65%)",
-        }}
-      />
-
       <motion.div
         className="relative z-10 flex w-full max-w-[300px] flex-col items-center"
         variants={container}
@@ -84,28 +75,25 @@ export function AriaOAuthLoginExperience() {
       >
         {/* Logo */}
         <motion.div variants={item} className="mb-10 flex flex-col items-center gap-5">
-          <div className="relative">
-            <div
-              className="absolute inset-0 rounded-[22px]"
-              style={{
-                boxShadow: "0 0 32px rgba(58,101,240,0.18), 0 0 64px rgba(58,101,240,0.08)",
-              }}
-            />
-            <Image
-              src="/aria-logo-mark.jpg"
-              alt="Aria"
-              width={88}
-              height={88}
-              priority
-              className="relative rounded-[20px]"
-            />
+          <div
+            className="flex h-[88px] w-[88px] items-center justify-center rounded-[20px] bg-white"
+            style={{
+              boxShadow: "0 8px 24px rgba(31,92,70,0.12), 0 2px 8px rgba(31,92,70,0.08)",
+            }}
+          >
+            <svg viewBox="0 0 200 200" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <path
+                d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z"
+                fill="#1F5C46"
+              />
+            </svg>
           </div>
 
           <div className="flex flex-col items-center gap-1.5">
-            <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-white">
+            <span className="text-[28px] font-bold leading-none tracking-[-0.02em] text-[#1C2A24]">
               Aria
             </span>
-            <span className="text-[13px] tracking-wide text-[#6b7090]">
+            <span className="text-[13px] tracking-wide text-[#6B7A70]">
               AI Revenue Operating System
             </span>
           </div>
@@ -122,7 +110,7 @@ export function AriaOAuthLoginExperience() {
             disabled={busy !== null}
             onClick={() => void oauth("apple")}
             whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
-            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] bg-white py-[13px] text-[15px] font-medium text-black transition-colors hover:bg-white/92 disabled:pointer-events-none disabled:opacity-45"
+            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] border border-[#E5DECF] bg-white py-[13px] text-[15px] font-medium text-[#1C2A24] transition-colors hover:bg-[#FAF6EE] disabled:pointer-events-none disabled:opacity-45"
           >
             <AppleIcon />
             Continue with Apple
@@ -133,16 +121,16 @@ export function AriaOAuthLoginExperience() {
             disabled={busy !== null}
             onClick={() => void oauth("google")}
             whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
-            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] border border-border-card bg-bg-card py-[13px] text-[15px] font-medium text-white transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-45"
+            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] border border-[#E5DECF] bg-white py-[13px] text-[15px] font-medium text-[#1C2A24] transition-colors hover:bg-[#FAF6EE] disabled:pointer-events-none disabled:opacity-45"
           >
             <GoogleIcon />
             Continue with Google
           </motion.button>
 
           <div className="my-1 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/6" />
-            <span className="text-[11px] text-[#33334a]">or</span>
-            <div className="h-px flex-1 bg-white/6" />
+            <div className="h-px flex-1 bg-[#E5DECF]" />
+            <span className="text-[11px] text-[#6B7A70]">or</span>
+            <div className="h-px flex-1 bg-[#E5DECF]" />
           </div>
 
           <motion.button
@@ -150,14 +138,14 @@ export function AriaOAuthLoginExperience() {
             disabled={busy !== null}
             onClick={() => router.push("/signup")}
             whileTap={{ scale: 0.97, transition: { type: "tween", duration: 0.1 } }}
-            className="w-full rounded-[8px] bg-accent-blue py-[13px] text-[15px] font-semibold text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-45"
+            className="w-full rounded-[8px] bg-[#1F5C46] py-[13px] text-[15px] font-semibold text-white transition-colors hover:opacity-90 disabled:pointer-events-none disabled:opacity-45"
           >
             Create account
           </motion.button>
 
           <Link
             href="/login/email"
-            className="mt-1 w-full rounded-[8px] py-[13px] text-center text-[13px] font-medium text-[#6b7090] transition-colors hover:text-[#9498b0]"
+            className="mt-1 w-full rounded-[8px] py-[13px] text-center text-[13px] font-medium text-[#1F5C46] transition-colors hover:opacity-80"
           >
             Sign in with email
           </Link>
@@ -166,12 +154,12 @@ export function AriaOAuthLoginExperience() {
         {/* Legal */}
         <motion.p
           variants={item}
-          className="mt-8 text-center text-[11px] leading-relaxed text-[#2e2e46]"
+          className="mt-8 text-center text-[11px] leading-relaxed text-[#6B7A70]"
         >
           By continuing you agree to the{" "}
-          <Link href="/terms" className="text-[#6b7090] hover:text-white">Terms</Link>{" "}
+          <Link href="/terms" className="text-[#1C2A24] hover:text-[#1F5C46]">Terms</Link>{" "}
           &amp;{" "}
-          <Link href="/privacy" className="text-[#6b7090] hover:text-white">Privacy Policy</Link>.
+          <Link href="/privacy" className="text-[#1C2A24] hover:text-[#1F5C46]">Privacy Policy</Link>.
         </motion.p>
       </motion.div>
     </div>
