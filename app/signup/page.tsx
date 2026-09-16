@@ -1,7 +1,5 @@
 "use client";
 
-import { LoginAmbientBackground } from "@/components/auth/login-ambient-bg";
-import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
 import Image from "next/image";
 import Link from "next/link";
@@ -11,9 +9,16 @@ import { useState } from "react";
 
 const ease = [0.2, 0.8, 0.2, 1] as const;
 
+// Brand tokens (ivory / deep green) — matches the app + landing.
+const IVORY = "#FAF6EE";
+const INK = "#2B2419";
+const MUTED = "#6f6656";
+const GREEN = "#1F5C46";
+const BORDER = "rgba(43,36,25,0.12)";
+
 function GoogleIcon() {
   return (
-    <svg width="15" height="15" viewBox="0 0 48 48" aria-hidden>
+    <svg width="16" height="16" viewBox="0 0 48 48" aria-hidden>
       <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z" />
       <path fill="#FF3D00" d="m6.3 14.7 6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34.1 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z" />
       <path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2c-2 1.5-4.5 2.4-7.2 2.4-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.6 39.6 16.2 44 24 44z" />
@@ -21,6 +26,17 @@ function GoogleIcon() {
     </svg>
   );
 }
+
+const inputStyle: React.CSSProperties = {
+  background: "#FFFFFF",
+  border: `1px solid ${BORDER}`,
+  color: INK,
+  borderRadius: 12,
+  padding: "13px 16px",
+  fontSize: 15,
+  outline: "none",
+  width: "100%",
+};
 
 export default function SignupPage() {
   const supabase = createClient();
@@ -66,25 +82,27 @@ export default function SignupPage() {
       );
       return;
     }
-    // Email confirmation disabled — session returned immediately
     if (data.session) {
       router.push("/onboarding");
       return;
     }
-    // User created but needs email confirmation
     if (data.user) {
       setNotice("Check your email to confirm your account, then sign in.");
       return;
     }
-    // Supabase returned no user and no error — silent failure (rate limit, blocked domain, etc.)
     setError("Account creation failed. Please try again in a moment or contact support.");
   }
 
   const anyBusy = loading || googleBusy;
 
   return (
-    <div className="relative isolate min-h-[100dvh] w-full text-white">
-      <LoginAmbientBackground />
+    <div className="relative isolate min-h-[100dvh] w-full" style={{ background: IVORY, color: INK }}>
+      {/* soft ivory/green ambient */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(ellipse 60% 40% at 50% -5%, rgba(31,92,70,0.10), transparent 65%)" }}
+      />
       <div
         className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[400px] flex-col px-6"
         style={{
@@ -105,10 +123,15 @@ export default function SignupPage() {
               width={72}
               height={72}
               priority
-              className="mb-5 h-[60px] w-[60px] md:h-[72px] md:w-[72px]"
+              className="mb-4 h-[56px] w-[56px] md:h-[64px] md:w-[64px]"
             />
           </Link>
-          <p className="text-[13px] font-medium text-white/70">Create your account</p>
+          <h1 className="font-heading text-[24px] font-semibold" style={{ color: INK }}>
+            Create your account
+          </h1>
+          <p className="mt-1 text-[13px] font-medium" style={{ color: MUTED }}>
+            Start closing more without working more.
+          </p>
         </motion.div>
 
         <motion.div
@@ -123,7 +146,8 @@ export default function SignupPage() {
             disabled={anyBusy}
             onClick={() => void onGoogleSignup()}
             whileTap={{ scale: anyBusy ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
-            className="flex w-full items-center justify-center gap-2.5 rounded-[8px] border border-[#2a2a2a] bg-[#111] py-3.5 text-[15px] font-medium text-white transition-colors hover:bg-white/5 disabled:pointer-events-none disabled:opacity-45"
+            className="flex w-full items-center justify-center gap-2.5 py-3.5 text-[15px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-45"
+            style={{ background: "#FFFFFF", border: `1px solid ${BORDER}`, color: INK, borderRadius: 12 }}
           >
             <GoogleIcon />
             {googleBusy ? "Redirecting…" : "Continue with Google"}
@@ -131,48 +155,51 @@ export default function SignupPage() {
 
           {/* Divider */}
           <div className="my-5 flex items-center gap-3">
-            <div className="h-px flex-1 bg-white/6" />
-            <span className="text-[11px] text-neutral-600">or sign up with email</span>
-            <div className="h-px flex-1 bg-white/6" />
+            <div className="h-px flex-1" style={{ background: BORDER }} />
+            <span className="text-[11px]" style={{ color: MUTED }}>or sign up with email</span>
+            <div className="h-px flex-1" style={{ background: BORDER }} />
           </div>
 
           {/* Secondary: email/password */}
-          <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col space-y-4">
-            <Input
+          <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col space-y-3">
+            <input
               type="email"
               autoComplete="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Work email"
+              style={inputStyle}
             />
-            <Input
+            <input
               type="password"
               autoComplete="new-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
+              style={inputStyle}
             />
-            {error ? <p className="text-[13px] text-accent-red/90">{error}</p> : null}
-            {notice ? <p className="text-[13px] text-accent-green/85">{notice}</p> : null}
+            {error ? <p className="text-[13px]" style={{ color: "#B84B33" }}>{error}</p> : null}
+            {notice ? <p className="text-[13px]" style={{ color: GREEN }}>{notice}</p> : null}
             <motion.button
               type="submit"
               disabled={anyBusy}
               whileTap={{ scale: anyBusy ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
-              className="mt-2 w-full rounded-[8px] bg-accent-blue py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-55"
+              className="mt-2 w-full py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-55"
+              style={{ background: GREEN, borderRadius: 12 }}
             >
               {loading ? "Creating…" : "Sign up"}
             </motion.button>
           </form>
 
-          <p className="pt-6 text-center text-[13px] text-neutral-500">
+          <p className="pt-6 text-center text-[13px]" style={{ color: MUTED }}>
             Already have an account?{" "}
-            <Link href="/login/email" className="text-neutral-400 hover:text-neutral-300">
+            <Link href="/login/email" className="font-semibold hover:opacity-70" style={{ color: GREEN }}>
               Log in
             </Link>
             {" · "}
-            <Link href="/login" className="text-neutral-400 hover:text-neutral-300">
+            <Link href="/login" className="font-semibold hover:opacity-70" style={{ color: GREEN }}>
               SSO
             </Link>
           </p>
