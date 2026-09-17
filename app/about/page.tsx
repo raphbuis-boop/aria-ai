@@ -1,71 +1,46 @@
+import { PolicyPage, PolicySection } from "@/components/policy/policy-shell";
+import { EQUAL_HOUSING_DISCLOSURE, getComplianceProfileServer } from "@/lib/compliance";
 import type { Metadata } from "next";
-import Link from "next/link";
-import {
-  AGENT_LICENSE,
-  AGENT_NAME,
-  BROKERAGE_LICENSE,
-  BROKERAGE_NAME,
-  EQUAL_HOUSING_DISCLOSURE,
-} from "@/lib/compliance";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "About | Aria",
   description: "About Aria real estate platform.",
 };
 
-export default function AboutPage() {
+export default async function AboutPage() {
+  const profile = await getComplianceProfileServer();
+  const hasAgentDetails = profile.legalName && profile.licenseNumber && profile.brokerageName;
+
   return (
-    <div className="min-h-screen bg-bg-primary px-4 pb-16 pt-10">
-      <div className="mx-auto max-w-lg">
-        <Link
-          href="/"
-          className="text-[13px] font-medium text-accent-blue hover:underline"
-        >
-          ← Back
-        </Link>
+    <PolicyPage
+      title="About Aria"
+      subtitle="AI-powered real estate platform for New Jersey agents and clients."
+    >
+      <PolicySection heading="Platform overview">
+        <p>
+          Aria helps real estate professionals manage relationships, track pipeline activity,
+          match buyers with listings, and handle communication workflows in one place.
+        </p>
+      </PolicySection>
 
-        <header className="mt-6">
-          <h1 className="text-[24px] font-semibold text-text-primary">About Aria</h1>
-          <p className="mt-2 text-[13px] text-text-dim">
-            AI-powered real estate platform for New Jersey agents and clients.
+      {hasAgentDetails ? (
+        <PolicySection heading="Licensed real estate professional">
+          <p>
+            Agent: {profile.legalName}
+            <br />
+            Agent License: {profile.licenseNumber}
+            {profile.licenseState ? ` (${profile.licenseState})` : ""}
+            <br />
+            Brokerage: {profile.brokerageName}
           </p>
-        </header>
+        </PolicySection>
+      ) : null}
 
-        <div className="mt-8 space-y-6 rounded-[14px] border border-border-card bg-bg-card p-5 text-[14px] leading-relaxed text-text-secondary">
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              Platform overview
-            </h2>
-            <p className="mt-2">
-              Aria helps real estate professionals manage relationships, track
-              pipeline activity, match buyers with listings, and handle
-              communication workflows in one place.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              Licensed real estate professional
-            </h2>
-            <p className="mt-2">
-              Agent: {AGENT_NAME}
-              <br />
-              Agent License: {AGENT_LICENSE}
-              <br />
-              Brokerage: {BROKERAGE_NAME}
-              <br />
-              Brokerage License: {BROKERAGE_LICENSE}
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              Equal Housing Opportunity
-            </h2>
-            <p className="mt-2">{EQUAL_HOUSING_DISCLOSURE}</p>
-          </section>
-        </div>
-      </div>
-    </div>
+      <PolicySection heading="Equal Housing Opportunity">
+        <p>{profile.fairHousingStatement || EQUAL_HOUSING_DISCLOSURE}</p>
+      </PolicySection>
+    </PolicyPage>
   );
 }

@@ -1,63 +1,36 @@
+import { PolicyPage, PolicySection } from "@/components/policy/policy-shell";
+import { EQUAL_HOUSING_DISCLOSURE, getComplianceProfileServer } from "@/lib/compliance";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { EQUAL_HOUSING_DISCLOSURE } from "@/lib/compliance";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Fair Housing Statement | Aria",
   description: "Fair Housing and Equal Housing Opportunity statement.",
 };
 
-export default function FairHousingPage() {
+export default async function FairHousingPage() {
+  const profile = await getComplianceProfileServer();
+
   return (
-    <div className="min-h-screen bg-bg-primary px-4 pb-16 pt-10">
-      <div className="mx-auto max-w-lg">
-        <Link
-          href="/"
-          className="text-[13px] font-medium text-accent-blue hover:underline"
-        >
-          ← Back
-        </Link>
+    <PolicyPage title="Fair Housing Statement" subtitle="Equal Housing Opportunity commitment.">
+      <PolicySection heading="Equal Housing Opportunity">
+        <p>{profile.fairHousingStatement || EQUAL_HOUSING_DISCLOSURE}</p>
+      </PolicySection>
 
-        <header className="mt-6">
-          <h1 className="text-[24px] font-semibold text-text-primary">
-            Fair Housing Statement
-          </h1>
-          <p className="mt-2 text-[13px] text-text-dim">
-            Equal Housing Opportunity commitment.
-          </p>
-        </header>
+      <PolicySection heading="Federal Fair Housing Act">
+        <p>
+          We support the Federal Fair Housing Act, which prohibits discrimination in housing
+          based on race, color, religion, sex, disability, familial status, or national origin.
+        </p>
+      </PolicySection>
 
-        <div className="mt-8 space-y-6 rounded-[14px] border border-border-card bg-bg-card p-5 text-[14px] leading-relaxed text-text-secondary">
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              Equal Housing Opportunity
-            </h2>
-            <p className="mt-2">{EQUAL_HOUSING_DISCLOSURE}</p>
-          </section>
-
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              Federal Fair Housing Act
-            </h2>
-            <p className="mt-2">
-              We support the Federal Fair Housing Act, which prohibits
-              discrimination in housing based on race, color, religion, sex,
-              disability, familial status, or national origin.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
-              New Jersey Law Against Discrimination
-            </h2>
-            <p className="mt-2">
-              We also comply with the New Jersey Law Against Discrimination
-              (NJLAD), including applicable protections related to housing and
-              real estate services.
-            </p>
-          </section>
-        </div>
-      </div>
-    </div>
+      <PolicySection heading="New Jersey Law Against Discrimination">
+        <p>
+          We also comply with the New Jersey Law Against Discrimination (NJLAD), including
+          applicable protections related to housing and real estate services.
+        </p>
+      </PolicySection>
+    </PolicyPage>
   );
 }
