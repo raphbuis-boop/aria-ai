@@ -1,22 +1,28 @@
 import { MlsSearchClient } from "@/app/(dashboard)/mls/mls-search-client";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
-import { BROKERAGE_NAME } from "@/lib/compliance";
+import { getComplianceProfileServer } from "@/lib/compliance";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Property Search",
-  description: `Browse active listings from participating brokers (${BROKERAGE_NAME}).`,
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const profile = await getComplianceProfileServer();
+  return {
+    title: "Property Search",
+    description: profile.brokerageName
+      ? `Browse active listings from participating brokers (${profile.brokerageName}).`
+      : "Browse active listings from participating brokers.",
+  };
+}
 
-export default function PropertySearchPage() {
+export default async function PropertySearchPage() {
+  const profile = await getComplianceProfileServer();
   return (
     <>
       <div className="border-b border-border-card bg-bg-card/90 px-4 py-4 text-center">
         <p className="text-[22px] font-semibold leading-tight text-text-primary md:text-[26px]">
-          {BROKERAGE_NAME}
+          {profile.brokerageName || "Property Search"}
         </p>
         <p className="mt-1 text-[13px] text-text-dim md:text-[14px]">
           Property Search · powered by Aria

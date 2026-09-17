@@ -8,6 +8,7 @@ import {
   LogOut,
   Mail,
   Mic,
+  ShieldCheck,
   Sparkles,
   Share2,
   TrendingUp,
@@ -338,6 +339,7 @@ export default function SettingsPage() {
   const [signature, setSignature] = useState("");
 
   const [exporting, setExporting] = useState(false);
+  const [complianceComplete, setComplianceComplete] = useState<boolean | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -388,6 +390,11 @@ export default function SettingsPage() {
         setDraftTone((d.draftTone as DraftTone) ?? "warm");
         setSignature(d.signature ?? "");
       })
+      .catch(() => {});
+
+    void fetch("/api/compliance")
+      .then((r) => r.json())
+      .then((d) => setComplianceComplete(Boolean(d.isComplete)))
       .catch(() => {});
   }, []);
 
@@ -671,6 +678,12 @@ export default function SettingsPage() {
         {/* ── Group: Business ── */}
         <GroupLabel label="Business" />
         <SettingsGroup>
+          <SettingsRow
+            icon={ShieldCheck}
+            label="Compliance profile"
+            subtitle={complianceComplete === false ? "Needs your license & brokerage details" : undefined}
+            href="/settings/compliance"
+          />
           <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
           <SettingsRow icon={TrendingUp} label="Market Pulse" href="/market-pulse" />
           <SettingsRow icon={Globe} label="Client Portal" soon isLast />

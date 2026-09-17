@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { getIdxDisclaimerText, AGENT_NAME, AGENT_LICENSE, EQUAL_HOUSING_DISCLOSURE } from "@/lib/compliance";
+import { useEffect, useState } from "react";
+import { EQUAL_HOUSING_DISCLOSURE, getIdxDisclaimerText, type ComplianceProfile } from "@/lib/compliance";
 
 export function IdxComplianceNotice({
   brokerageName,
@@ -17,6 +17,16 @@ export function IdxComplianceNotice({
   includeAgentAttribution?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const [profile, setProfile] = useState<ComplianceProfile | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/compliance")
+      .then((r) => r.json())
+      .then((d) => setProfile(d))
+      .catch(() => {});
+  }, []);
+
+  const effectiveBrokerageName = brokerageName ?? profile?.brokerageName ?? null;
 
   return (
     <div className="border-t border-[#1e2230] pt-3">
@@ -41,12 +51,14 @@ export function IdxComplianceNotice({
 
       {expanded && (
         <div className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-[#424560]">
-          <p>{getIdxDisclaimerText()}</p>
-          {brokerageName && <p>Listing brokerage: {brokerageName}</p>}
-          {includeAgentAttribution && (
-            <p>{AGENT_NAME}, NJ License #{AGENT_LICENSE}</p>
+          <p>{getIdxDisclaimerText(effectiveBrokerageName)}</p>
+          {effectiveBrokerageName && <p>Listing brokerage: {effectiveBrokerageName}</p>}
+          {includeAgentAttribution && profile?.legalName && profile?.licenseNumber && (
+            <p>
+              {profile.legalName}, {profile.licenseState ?? "NJ"} License #{profile.licenseNumber}
+            </p>
           )}
-          <p>{EQUAL_HOUSING_DISCLOSURE}</p>
+          <p>{profile?.fairHousingStatement || EQUAL_HOUSING_DISCLOSURE}</p>
         </div>
       )}
     </div>

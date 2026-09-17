@@ -1,13 +1,9 @@
-import {
-  AGENT_LICENSE,
-  AGENT_NAME,
-  BROKERAGE_ADDRESS,
-  BROKERAGE_LICENSE,
-  BROKERAGE_NAME,
-  BROKERAGE_PHONE,
-} from "@/lib/compliance";
+"use client";
+
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
+import type { ComplianceProfile } from "@/lib/compliance";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function ComplianceFooter({
   includeIdxNotice = true,
@@ -15,6 +11,15 @@ export function ComplianceFooter({
   /** When false, brokerage + policies only (IDX block already on page). */
   includeIdxNotice?: boolean;
 } = {}) {
+  const [profile, setProfile] = useState<ComplianceProfile | null>(null);
+
+  useEffect(() => {
+    void fetch("/api/compliance")
+      .then((r) => r.json())
+      .then((d) => setProfile(d))
+      .catch(() => {});
+  }, []);
+
   const policyLinks = [
     { href: "/privacy", label: "Privacy" },
     { href: "/terms", label: "Terms" },
@@ -25,19 +30,28 @@ export function ComplianceFooter({
     { href: "/fair-housing", label: "Fair Housing" },
   ];
 
+  const hasIdentity = profile?.legalName && profile?.licenseNumber && profile?.brokerageName;
+
   return (
     <footer className="border-t border-border-card bg-bg-card/80 px-4 py-5 text-[12px] text-text-dim">
       <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-[13px] text-text-primary">
-            {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE}
-          </p>
-          <p className="text-[13px] text-text-primary">
-            {AGENT_NAME}, NJ License #{AGENT_LICENSE}
-          </p>
-          <p className="text-[12px] text-text-dim">
-            {BROKERAGE_ADDRESS} · {BROKERAGE_PHONE}
-          </p>
+          {hasIdentity ? (
+            <>
+              <p className="text-[13px] text-text-primary">
+                {profile.brokerageName}
+              </p>
+              <p className="text-[13px] text-text-primary">
+                {profile.legalName}
+                {profile.licenseState ? `, ${profile.licenseState}` : ""} License #{profile.licenseNumber}
+              </p>
+              {profile.businessAddress || profile.phone ? (
+                <p className="text-[12px] text-text-dim">
+                  {[profile.businessAddress, profile.phone].filter(Boolean).join(" · ")}
+                </p>
+              ) : null}
+            </>
+          ) : null}
           {includeIdxNotice ? (
             <div className="pt-2">
               <IdxComplianceNotice compact />
