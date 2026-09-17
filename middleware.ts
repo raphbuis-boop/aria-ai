@@ -83,6 +83,8 @@ export async function middleware(request: NextRequest) {
     path.startsWith("/auth/") ||
     path === "/login" ||
     path === "/login/email" ||
+    path === "/login/forgot-password" ||
+    path === "/login/reset-password" ||
     path === "/signup" ||
     path === "/setup" ||
     path === "/privacy" ||
