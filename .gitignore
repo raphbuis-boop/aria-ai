@@ -43,3 +43,14 @@ next-env.d.ts
 .sentryclirc
 .env.sentry-build-plugin
 .env*
+
+# local scratch / agent artifacts
+*.bak
+archive/
+BUILD_COMPLETE.txt
+BUILD_SUCCESS.txt
+STATUS.txt
+STEP1_REPORT.txt
+STEP2_COMPLETE.txt
+STEP2_REPORT.txt
+Claude outputs/
