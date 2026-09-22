@@ -68,6 +68,9 @@ const SOURCE_LABELS: Record<string, string> = {
   sign_call: "Sign call",
   past_client: "Past client",
   sphere: "Sphere of influence",
+  realtor: "Realtor.com",
+  meta: "Meta ad",
+  sms: "Texted in",
 };
 
 /** Raw DB lead-source enum → display label: "google" → "Google". */

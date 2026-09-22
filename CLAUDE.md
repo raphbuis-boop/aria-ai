@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. SMS is provider-free — messages open in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`), never sent server-side.
+**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. Agent-composed SMS opens in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`). The Aria SMS lead flow (`lib/sms/`) is the one exception: it texts leads server-side over Twilio — lead intake (`POST /api/leads`), inbound webhook (`/api/webhooks/twilio/sms`) with Claude replies, showing approvals (`/api/showings/[id]/approve|decline`), and BBA link follow-through. Anything Aria needs the agent for (showing approvals, handoffs, failed texts) is a `showings` row with status `requested` or a `tasks` row with `kind` `aria_*`, surfaced on Today under "Aria needs you".
 
 ## Commands
 
@@ -93,6 +93,13 @@ SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY
 NEXT_PUBLIC_SITE_URL
 SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
+TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN          # Aria SMS lead flow
+TWILIO_FROM_NUMBER (or TWILIO_PHONE_NUMBER) or TWILIO_MESSAGING_SERVICE_SID
+LEAD_WEBHOOK_SECRET                            # bearer token for external lead sources → POST /api/leads
+LEAD_DEFAULT_AGENT_ID                          # agent for website/Meta/text-in leads (unset → not auto-created)
+META_APP_SECRET / META_VERIFY_TOKEN / META_PAGE_ACCESS_TOKEN / META_LEAD_AGENT_ID?  # /api/leads/meta
+GOOGLE_CALENDAR_WRITE=1                        # request calendar.events so approved showings go on Google Calendar
+# SMS_DRY_RUN=1 logs texts instead of sending (local testing only)
 ```
 
 ## Conventions

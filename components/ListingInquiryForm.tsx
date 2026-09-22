@@ -36,6 +36,7 @@ export function ListingInquiryForm({
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
+  const [smsConsent, setSmsConsent] = useState(false);
   const [honeypot, setHoneypot] = useState("");
   const [sending, setSending] = useState(false);
 
@@ -58,6 +59,7 @@ export function ListingInquiryForm({
           email,
           phone,
           message,
+          sms_consent: Boolean(phone.trim()) && smsConsent,
           listing_id: listingId,
           listing_address: listingAddress,
           mls_number: mlsNumber ?? "",
@@ -188,6 +190,20 @@ export function ListingInquiryForm({
                 className="mt-1 w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px] text-text-primary focus:border-accent-blue/60 focus:outline-none"
                 autoComplete="tel"
               />
+              {phone.trim() ? (
+                <label className="mt-2 flex items-start gap-2 text-[11px] leading-snug text-text-muted">
+                  <input
+                    type="checkbox"
+                    checked={smsConsent}
+                    onChange={(e) => setSmsConsent(e.target.checked)}
+                    className="mt-0.5"
+                  />
+                  <span>
+                    Text me about this home and similar listings. Msg &amp; data
+                    rates may apply. Reply STOP to opt out.
+                  </span>
+                </label>
+              ) : null}
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase text-text-dim">

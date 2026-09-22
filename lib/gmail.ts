@@ -10,16 +10,16 @@ function makeOAuth2Client() {
 }
 
 /**
- * Returns an authenticated Gmail API client for the given agent.
- * Auto-refreshes the access token if expired and persists the new token.
- * Returns null if the agent has not connected Gmail.
+ * Returns an authorized Google OAuth client for the agent (shared by Gmail
+ * and Calendar), plus the scopes they granted. Auto-refreshes the access
+ * token if expired and persists the new token. Null if not connected.
  */
-export async function getGmailClient(agentId: string) {
+export async function getGoogleAuth(agentId: string) {
   const supabase = createAdminClient();
 
   const { data: integration, error } = await supabase
     .from("gmail_integrations")
-    .select("access_token, refresh_token, token_expiry")
+    .select("access_token, refresh_token, token_expiry, scope")
     .eq("agent_id", agentId)
     .single();
 
@@ -50,13 +50,27 @@ export async function getGmailClient(agentId: string) {
           .eq("agent_id", agentId);
       }
     } catch (err) {
-      // Log the actual reason so it appears in Vercel Function logs
-      console.error("[gmail] token refresh failed for agent", agentId, err);
+      // Log the reason only — the raw Gaxios error embeds the refresh token
+      // in its request config, so it must never be logged whole.
+      const reason =
+        (err as { response?: { data?: { error_description?: string; error?: string } } })?.response?.data?.error_description ??
+        (err instanceof Error ? err.message : "unknown error");
+      console.error("[gmail] token refresh failed for agent", agentId, reason);
       return null;
     }
   }
 
-  return google.gmail({ version: "v1", auth });
+  const scopes = String(integration.scope ?? "").split(/\s+/).filter(Boolean);
+  return { auth, scopes };
+}
+
+/**
+ * Returns an authenticated Gmail API client for the given agent.
+ * Returns null if the agent has not connected Gmail.
+ */
+export async function getGmailClient(agentId: string) {
+  const google_ = await getGoogleAuth(agentId);
+  return google_ ? google.gmail({ version: "v1", auth: google_.auth }) : null;
 }
 
 export { makeOAuth2Client };

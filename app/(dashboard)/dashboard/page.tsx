@@ -4,6 +4,7 @@ import { buildTodayItems, activityVerb } from "@/lib/today-items";
 import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem, TodayEngagementEvent } from "@/lib/today-items";
 import { TodayClient as TodayClientComponent } from "./today-client";
 import { initials } from "@/lib/utils";
+import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,8 @@ export default async function DashboardPage() {
     dismissedRes,
     tasksDueRes,
     dealsMovingRes,
+    ariaShowingRequestsRes,
+    ariaTasksRes,
   ] = await Promise.all([
     // 0. Agent profile — real name (scoped by id, not agent_id)
     supabase
@@ -112,6 +115,8 @@ export default async function DashboardPage() {
       .eq("agent_id", user.id)  // SCOPE 6
       .gte("showing_date", `${todayISO}T00:00:00`)
       .lt("showing_date", `${tomorrowISO}T00:00:00`)
+      // Pending SMS requests aren't booked yet; they show under "Aria needs you".
+      .in("status", ["scheduled", "completed"])
       .order("showing_date", { ascending: true }),
 
     // 7. Closings this week count (briefing strip) [agent_id scoped ✓]
@@ -145,6 +150,23 @@ export default async function DashboardPage() {
       .eq("agent_id", user.id)  // SCOPE 10
       .eq("status", "active")
       .order("closing_date", { ascending: true }),
+
+    // 11. Showing requests from Aria's SMS threads awaiting approval [agent_id scoped ✓]
+    supabase
+      .from("showings")
+      .select("id, address, showing_date, requested_time_text, notes, created_at, clients(id, name)")
+      .eq("agent_id", user.id)  // SCOPE 11
+      .eq("status", "requested")
+      .order("created_at", { ascending: true }),
+
+    // 12. Conversations Aria handed to the agent (handoffs, failures) [agent_id scoped ✓]
+    supabase
+      .from("tasks")
+      .select("id, kind, title, client_id, created_at, clients(name)")
+      .eq("agent_id", user.id)  // SCOPE 12
+      .eq("done", false)
+      .in("kind", ARIA_TASK_KINDS.filter((k) => k !== "aria_showing_approval"))
+      .order("created_at", { ascending: true }),
   ]);
 
   // Log errors without crashing the page
@@ -159,6 +181,28 @@ export default async function DashboardPage() {
   if (dismissedRes.error) console.error("[today] dismissed_opportunities:", dismissedRes.error);
   if (tasksDueRes.error) console.error("[today] tasks:", tasksDueRes.error);
   if (dealsMovingRes.error) console.error("[today] deals_moving:", dealsMovingRes.error);
+  if (ariaShowingRequestsRes.error) console.error("[today] aria showing requests:", ariaShowingRequestsRes.error);
+  if (ariaTasksRes.error) console.error("[today] aria tasks:", ariaTasksRes.error);
+
+  const one = <T,>(rel: T | T[] | null | undefined): T | null =>
+    Array.isArray(rel) ? rel[0] ?? null : rel ?? null;
+  const ariaShowingRequests = (ariaShowingRequestsRes.data ?? []).map((r) => ({
+    id: String(r.id),
+    address: r.address as string | null,
+    showing_date: r.showing_date as string | null,
+    requested_time_text: r.requested_time_text as string | null,
+    notes: r.notes as string | null,
+    created_at: r.created_at as string,
+    client: one(r.clients as { id: string; name: string } | { id: string; name: string }[] | null),
+  }));
+  const ariaTasks = (ariaTasksRes.data ?? []).map((t) => ({
+    id: String(t.id),
+    kind: String(t.kind),
+    title: t.title as string,
+    clientId: t.client_id ? String(t.client_id) : null,
+    clientName: one(t.clients as { name: string } | { name: string }[] | null)?.name ?? null,
+    createdAt: t.created_at as string,
+  }));
 
   const rawClients = (clientsRes.data ?? []) as TodayClient[];
   // A blank/null name in the DB must never crash the Today builders (they
@@ -337,6 +381,8 @@ export default async function DashboardPage() {
       agentInitials={agentInitials}
       hasAnyClients={hasAnyClients}
       kpi={{ activeClients, warmLeads, pipelineCount, pendingDeals }}
+      ariaShowingRequests={ariaShowingRequests}
+      ariaTasks={ariaTasks}
     />
   );
 }

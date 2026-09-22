@@ -55,7 +55,12 @@ export async function POST() {
             .eq("agent_id", user.id);
         }
       } catch (err) {
-        console.error("[contacts] token refresh failed for agent", user.id, err);
+        // Never log the raw Gaxios error: it embeds the refresh token.
+        console.error(
+          "[contacts] token refresh failed for agent",
+          user.id,
+          err instanceof Error ? err.message : "unknown error",
+        );
         return NextResponse.json(
           { error: "Failed to refresh Google token" }, 
           { status: 401 }

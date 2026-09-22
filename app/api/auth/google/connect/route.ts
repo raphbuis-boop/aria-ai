@@ -9,6 +9,11 @@ const SCOPES = [
   "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/calendar.readonly",
   "https://www.googleapis.com/auth/contacts.readonly",
+  // Lets Aria put approved showings on the agent's calendar. Off until the
+  // Google OAuth app is verified for this scope.
+  ...(process.env.GOOGLE_CALENDAR_WRITE === "1"
+    ? ["https://www.googleapis.com/auth/calendar.events"]
+    : []),
 ];
 
 export async function GET() {

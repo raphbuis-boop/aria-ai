@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { ClientDetail } from "./client-detail";
 import { buildClientBrief } from "@/lib/client-brief";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export default async function ClientDetailPage({
   params,
@@ -31,6 +32,7 @@ export default async function ClientDetailPage({
     { data: matchedPropertyRows },
     { data: transactions },
     { data: bba },
+    { data: showingRequests },
   ] = await Promise.all([
     // Full activity history for this client, newest first — the timeline.
     supabase
@@ -52,11 +54,11 @@ export default async function ClientDetailPage({
     // Matched properties with details — top 3 by score for the strip
     supabase
       .from("property_matches")
-      .select("match_score, properties(id, address, price, beds, baths, town, status)")
+      .select("match_score, match_reasons, properties(id, address, price, beds, baths, town, status)")
       .eq("client_id", params.id)
       .eq("agent_id", user.id)
       .order("match_score", { ascending: false })
-      .limit(3),
+      .limit(5),
 
     // Transactions for this client — deal value, closing date, status.
     supabase
@@ -68,11 +70,29 @@ export default async function ClientDetailPage({
     // Signed BBA — real commission rate, beats the 2.5% default.
     supabase
       .from("buyer_broker_agreements")
-      .select("commission_pct")
+      .select("commission_pct, signed_at, term_start, term_end, search_area, signed_storage_path")
       .eq("client_id", params.id)
       .eq("agent_id", user.id)
       .maybeSingle(),
+
+    // Showings the client asked for over SMS, awaiting the agent's approval.
+    supabase
+      .from("showings")
+      .select("id, address, showing_date, requested_time_text, notes, created_at")
+      .eq("client_id", params.id)
+      .eq("agent_id", user.id)
+      .eq("status", "requested")
+      .order("created_at", { ascending: true }),
   ]);
+
+  // Short-lived link to the signed PDF (private bucket; ownership checked above).
+  let signedPdfUrl: string | null = null;
+  if (bba?.signed_storage_path) {
+    const { data: signed } = await createAdminClient()
+      .storage.from("bba-templates")
+      .createSignedUrl(bba.signed_storage_path as string, 60 * 60);
+    signedPdfUrl = signed?.signedUrl ?? null;
+  }
 
   const allActivities = activities ?? [];
   const allMatches = recentMatches ?? [];
@@ -109,6 +129,7 @@ export default async function ClientDetailPage({
   // a single object or null, but TypeScript types it as array or object)
   type RawMatchRow = {
     match_score: number | null;
+    match_reasons: unknown;
     properties: {
       id: string;
       address: string | null;
@@ -141,6 +162,9 @@ export default async function ClientDetailPage({
         town: prop.town,
         status: prop.status,
         score: Number(row.match_score ?? 0),
+        sentByAria:
+          Array.isArray(row.match_reasons) &&
+          row.match_reasons.includes("Recommended by Aria over SMS"),
       };
     })
     .filter((p): p is NonNullable<typeof p> => p !== null);
@@ -154,6 +178,25 @@ export default async function ClientDetailPage({
       recentMatchCount={recentMatchCount}
       matchedProperties={matchedProperties}
       brief={brief}
+      showingRequests={showingRequests ?? []}
+      ariaThread={{
+        phone: (client.phone as string | null) ?? null,
+        paused: Boolean(client.aria_paused),
+        optedOut: Boolean(client.sms_opted_out),
+        started: allActivities.some((a) => a.type === "text"),
+      }}
+      bba={
+        bba?.signed_at
+          ? {
+              signed_at: bba.signed_at as string,
+              commission_pct: Number(bba.commission_pct),
+              term_start: bba.term_start as string,
+              term_end: bba.term_end as string,
+              search_area: (bba.search_area as string | null) ?? null,
+              signed_pdf_url: signedPdfUrl,
+            }
+          : null
+      }
     />
   );
 }

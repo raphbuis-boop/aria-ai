@@ -41,7 +41,8 @@ const KIND_CONFIG: Record<
     Icon: Inbox,
     color: "text-green-400",
     bg: "bg-green-500/12",
-    href: () => "/inquiries",
+    // SMS leads carry a client; IDX form inquiries don't.
+    href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/inquiries"),
   },
   match_found: {
     Icon: Home,

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { onBbaSigned } from "@/lib/sms/bba";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // pdf-lib needs Node runtime
@@ -332,6 +333,12 @@ export async function POST(
     approved: true,
     sent: false,
   });
+
+  try {
+    await onBbaSigned(admin, client.id, signedFileUrl);
+  } catch (err) {
+    console.error("[bba/sign] post-sign follow-up failed:", err);
+  }
 
   return NextResponse.json({
     ok: true,

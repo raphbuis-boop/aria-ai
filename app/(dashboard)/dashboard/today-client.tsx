@@ -23,6 +23,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { fmtMoney, relTime } from "@/lib/utils";
+import { AriaApprovals, type AriaTaskRow } from "@/components/aria/AriaApprovals";
+import type { ShowingRequestRow } from "@/components/aria/ShowingApprovalCard";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,8 @@ type Props = {
   agentInitials: string;
   hasAnyClients: boolean;
   kpi: KPI;
+  ariaShowingRequests: ShowingRequestRow[];
+  ariaTasks: AriaTaskRow[];
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -280,6 +284,8 @@ export function TodayClient({
   userName,
   agentInitials,
   hasAnyClients,
+  ariaShowingRequests,
+  ariaTasks,
 }: Props) {
   const router = useRouter();
   const [greeting, setGreeting] = useState("Good morning");
@@ -390,6 +396,9 @@ export function TodayClient({
               {agentInitials}
             </Link>
           </header>
+
+          {/* Approvals and handoffs from Aria's SMS threads — first thing the agent sees */}
+          <AriaApprovals showingRequests={ariaShowingRequests} tasks={ariaTasks} />
 
           {/* Aria insight — the hero */}
           <InsightHero insight={insight} />

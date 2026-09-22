@@ -19,6 +19,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { fmtMoney, relTime, humanizeSource } from "@/lib/utils";
+import {
+  AriaThread,
+  BbaStatus,
+  MatchedHomes,
+  ShowingRequests,
+  type AriaThreadState,
+  type ShowingRequestRow,
+  type SignedBba,
+} from "./aria-sms-panel";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -42,6 +51,7 @@ type MatchedProperty = {
   town: string | null;
   status: string | null;
   score: number;
+  sentByAria: boolean;
 };
 
 type ClientDetailProps = {
@@ -52,6 +62,9 @@ type ClientDetailProps = {
   recentMatchCount: number;
   matchedProperties: MatchedProperty[];
   brief: ClientBrief;
+  showingRequests: ShowingRequestRow[];
+  bba: SignedBba;
+  ariaThread: AriaThreadState;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────
@@ -139,7 +152,13 @@ function ClientHeader({
 // ── Timeline row ──────────────────────────────────────────────────────────
 
 function TimelineRow({ a }: { a: Activity }) {
-  const { icon: Icon, label } = typeMeta(a.type);
+  const { icon: Icon, label: typeLabel } = typeMeta(a.type);
+  const label =
+    a.type === "text" && a.direction === "inbound"
+      ? "Text received"
+      : a.type === "text" && a.direction === "outbound"
+        ? "Text sent"
+        : typeLabel;
   const isDraftPending = a.ai_draft && !a.approved && !a.sent;
 
   return (
@@ -192,7 +211,15 @@ function fmtBudget(min: unknown, max: unknown): string | null {
 
 // ── Root ──────────────────────────────────────────────────────────────────
 
-export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
+export function ClientDetail({
+  client,
+  activities,
+  brief,
+  matchedProperties,
+  showingRequests,
+  bba,
+  ariaThread,
+}: ClientDetailProps) {
   const router = useRouter();
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
   const [prefetchedDraft, setPrefetchedDraft] = useState<string | undefined>(undefined);
@@ -304,7 +331,8 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
   const beds = client.beds_wanted != null ? String(client.beds_wanted) : null;
   const baths = client.baths_wanted != null ? String(client.baths_wanted) : null;
   const bedsBaths = beds || baths ? `${beds ?? "—"} bed · ${baths ?? "—"} bath` : null;
-  const source = (client.source as string | null) ?? null;
+  // lead_source keeps the precise origin (e.g. "realtor"); source is the legacy vocabulary.
+  const source = (client.lead_source as string | null) ?? (client.source as string | null) ?? null;
 
   return (
     <div className="min-h-[100dvh] bg-background text-foreground">
@@ -337,6 +365,10 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
           {brief.primaryActionLabel}
         </Button>
 
+        <ShowingRequests requests={showingRequests} />
+
+        <AriaThread clientId={id} firstName={firstNameOf(name)} state={ariaThread} />
+
         {/* Timeline */}
         <section className="mb-12">
           <p className="font-display text-section text-muted-foreground mb-3">Timeline</p>
@@ -355,6 +387,10 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
           )}
         </section>
 
+        <BbaStatus bba={bba} />
+
+        <MatchedHomes homes={matchedProperties} />
+
         {/* Key facts — secondary, reference only */}
         <section>
           <p className="font-display text-section text-muted-foreground mb-3">Details</p>
@@ -362,6 +398,7 @@ export function ClientDetail({ client, activities, brief }: ClientDetailProps) {
             <Fact label="Budget" value={budget} />
             <Fact label="Preferred towns" value={towns} />
             <Fact label="Beds / baths" value={bedsBaths} />
+            <Fact label="Timeline" value={(client.timeline as string | null) ?? null} />
             <Fact label="Source" value={humanizeSource(source)} />
           </Card>
         </section>

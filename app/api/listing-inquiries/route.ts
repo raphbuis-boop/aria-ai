@@ -7,6 +7,9 @@ import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertNotification } from "@/lib/notifications";
 import { NextResponse } from "next/server";
+import { waitUntil } from "@vercel/functions";
+import { ingestLead } from "@/lib/sms/lead";
+import { defaultLeadAgentId } from "@/lib/sms/lead-auth";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -126,6 +129,25 @@ export async function POST(req: Request) {
       }
     } catch (e) {
       console.error("[listing-inquiries] notification failed", e);
+    }
+
+    // Website lead → client + Aria. Only texts when the visitor ticked the
+    // SMS consent box; otherwise the client is created without a text.
+    const leadAgentId = defaultLeadAgentId();
+    if (leadAgentId) {
+      waitUntil(
+        ingestLead(admin, {
+          agentId: leadAgentId,
+          source: "website",
+          name: visitor_name,
+          phone: visitor_phone || null,
+          email: visitor_email,
+          message: `${intent === "showing" ? "Wants a showing." : "Wants info."}${message ? ` ${message}` : ""}`,
+          propertyAddress: listing_address || null,
+          budgetMax: listing_price,
+          autoText: body.sms_consent === true,
+        }).catch((e) => console.error("[listing-inquiries] lead ingest failed", e)),
+      );
     }
   } catch (e) {
     console.error("[listing-inquiries] insert failed", e);
