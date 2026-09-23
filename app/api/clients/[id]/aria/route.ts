@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ingestLead } from "@/lib/sms/lead";
 import { sendClientSms } from "@/lib/sms/outbound";
 import { closeAriaTasks } from "@/lib/sms/tasks";
+import { recordAgentSentProperty } from "@/lib/sms/recommend";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -15,17 +16,24 @@ export const maxDuration = 60;
  *  - "pause" / "resume": turn Aria's auto-replies off/on for this client.
  *  - "send":   the agent replies personally from the Aria number (so the
  *              client sees one thread); closes Aria's "needs you" tasks.
+ *              Optional `propertyId` records that home as sent to the client.
  */
 export async function POST(request: Request, { params }: { params: { id: string } }) {
   const { user } = await getRouteSupabase();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const payload = (await request.json().catch(() => ({}))) as { action?: string; body?: string };
+  const payload = (await request.json().catch(() => ({}))) as {
+    action?: string;
+    body?: string;
+    propertyId?: string;
+  };
   const admin = createAdminClient();
 
   const { data: client } = await admin
     .from("clients")
-    .select("id, agent_id, name, phone, email, sms_opted_out, lead_source, source")
+    .select(
+      "id, agent_id, name, phone, email, sms_opted_out, lead_source, source, status, town, preferred_towns, budget_min, budget_max, beds_wanted, baths_wanted, nearby_towns_ok, budget_flex_pct, bed_flex, bath_flex",
+    )
     .eq("id", params.id)
     .eq("agent_id", user.id)
     .maybeSingle();
@@ -61,6 +69,9 @@ export async function POST(request: Request, { params }: { params: { id: string 
       });
       if (!sent.ok) return NextResponse.json({ error: sent.error }, { status: 400 });
       await closeAriaTasks(admin, client.id, ["aria_handoff", "aria_client_texted", "aria_reply_failed", "aria_send_failed"]);
+      if (typeof payload.propertyId === "string" && payload.propertyId) {
+        await recordAgentSentProperty(admin, client, payload.propertyId);
+      }
       return NextResponse.json(sent);
     }
     default:

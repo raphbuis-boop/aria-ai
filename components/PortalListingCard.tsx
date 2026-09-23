@@ -109,7 +109,7 @@ export function PortalListingCard({
   return (
     <div
       ref={ref}
-      className="relative rounded-[14px] border border-border-card bg-bg-card p-4"
+      className="relative rounded-[14px] border border-border bg-card p-4"
     >
       <button
         type="button"
@@ -127,12 +127,12 @@ export function PortalListingCard({
         />
       </button>
 
-      <div className="pr-9 text-[15px] font-medium text-text-primary">
+      <div className="pr-9 text-[15px] font-medium text-foreground">
         {address}
       </div>
-      <div className="text-[14px] text-accent-blue">{fmtMoney(price)}</div>
+      <div className="text-[14px] text-primary">{fmtMoney(price)}</div>
       {reasons.length > 0 ? (
-        <ul className="mt-2 space-y-1 text-[12px] text-accent-green">
+        <ul className="mt-2 space-y-1 text-[12px] text-primary">
           {reasons.map((r) => (
             <li key={r}>✓ {r}</li>
           ))}

@@ -119,8 +119,8 @@ export default function ImportPage() {
     <div
       style={{
         minHeight: "100vh",
-        background: "#0a0a0a",
-        color: "#e8eaf2",
+        background: "var(--card)",
+        color: "var(--foreground)",
         fontFamily: "Inter, system-ui, sans-serif",
       }}
     >
@@ -134,7 +134,7 @@ export default function ImportPage() {
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              color: "#6b7090",
+              color: "var(--muted-foreground)",
               fontSize: 14,
               textDecoration: "none",
               marginBottom: 20,
@@ -146,7 +146,7 @@ export default function ImportPage() {
           <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", marginBottom: 4 }}>
             Import contacts
           </h1>
-          <p style={{ color: "#6b7090", fontSize: 14 }}>
+          <p style={{ color: "var(--muted-foreground)", fontSize: 14 }}>
             Upload a CSV to add clients to your pipeline.
           </p>
         </div>
@@ -173,14 +173,14 @@ export default function ImportPage() {
                         width: 22,
                         height: 22,
                         borderRadius: "50%",
-                        background: done ? "#3a65f0" : active ? "rgba(58,101,240,0.15)" : "rgba(255,255,255,0.04)",
-                        border: `1.5px solid ${done || active ? "#3a65f0" : "rgba(255,255,255,0.10)"}`,
+                        background: done ? "var(--primary)" : active ? "color-mix(in srgb, var(--primary) 15%, transparent)" : "var(--secondary)",
+                        border: `1.5px solid ${done || active ? "var(--primary)" : "var(--secondary)"}`,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: 11,
                         fontWeight: 600,
-                        color: done ? "#fff" : active ? "#3a65f0" : "#424560",
+                        color: done ? "var(--primary-foreground)" : active ? "var(--primary)" : "var(--muted-foreground)",
                         flexShrink: 0,
                       }}
                     >
@@ -190,7 +190,7 @@ export default function ImportPage() {
                       style={{
                         fontSize: 12,
                         fontWeight: active ? 500 : 400,
-                        color: active ? "#e8eaf2" : done ? "#9498b0" : "#424560",
+                        color: active ? "var(--foreground)" : done ? "var(--muted-foreground)" : "var(--muted-foreground)",
                         display: i === 2 ? "none" : undefined, // hide "Preview" label on small screens via media — inline for now
                       }}
                     >
@@ -202,7 +202,7 @@ export default function ImportPage() {
                       style={{
                         width: 24,
                         height: 1,
-                        background: idx < current ? "#3a65f0" : "rgba(255,255,255,0.08)",
+                        background: idx < current ? "var(--primary)" : "var(--secondary)",
                         marginLeft: 2,
                       }}
                     />
@@ -216,8 +216,8 @@ export default function ImportPage() {
         {/* Step content */}
         <div
           style={{
-            background: "#0d0f16",
-            border: "0.5px solid rgba(255,255,255,0.07)",
+            background: "var(--card)",
+            border: "1px solid var(--border)",
             borderRadius: 16,
             padding: "22px 20px",
           }}
@@ -250,13 +250,13 @@ export default function ImportPage() {
               {importError && (
                 <p
                   style={{
-                    color: "#ef4444",
+                    color: "var(--destructive)",
                     fontSize: 13,
                     marginTop: 10,
                     padding: "8px 12px",
-                    background: "rgba(239,68,68,0.08)",
+                    background: "color-mix(in srgb, var(--destructive) 12%, transparent)",
                     borderRadius: 8,
-                    border: "0.5px solid rgba(239,68,68,0.2)",
+                    border: "1px solid var(--border)",
                   }}
                 >
                   {importError}
@@ -272,26 +272,26 @@ export default function ImportPage() {
                   width: 52,
                   height: 52,
                   borderRadius: "50%",
-                  background: "rgba(16,185,129,0.12)",
-                  border: "1px solid rgba(16,185,129,0.3)",
+                  background: "color-mix(in srgb, var(--primary) 12%, transparent)",
+                  border: "1px solid var(--border)",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   margin: "0 auto 16px",
                 }}
               >
-                <CheckCircle size={26} color="#10b981" />
+                <CheckCircle size={26} color="var(--primary)" />
               </div>
               <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>
                 {result.inserted} client{result.inserted !== 1 ? "s" : ""} imported
               </p>
               {result.skipped > 0 && (
-                <p style={{ color: "#6b7090", fontSize: 13, marginBottom: 4 }}>
+                <p style={{ color: "var(--muted-foreground)", fontSize: 13, marginBottom: 4 }}>
                   {result.skipped} duplicate{result.skipped !== 1 ? "s" : ""} skipped
                 </p>
               )}
               {result.errors.length > 0 && (
-                <p style={{ color: "#f59e0b", fontSize: 13, marginBottom: 4 }}>
+                <p style={{ color: "var(--warm)", fontSize: 13, marginBottom: 4 }}>
                   {result.errors.length} row{result.errors.length !== 1 ? "s" : ""} could not be imported
                 </p>
               )}
@@ -308,9 +308,9 @@ export default function ImportPage() {
                   style={{
                     flex: 1,
                     background: "transparent",
-                    border: "0.5px solid rgba(255,255,255,0.12)",
+                    border: "1px solid var(--border)",
                     borderRadius: 9,
-                    color: "#9498b0",
+                    color: "var(--muted-foreground)",
                     fontSize: 14,
                     fontWeight: 500,
                     padding: "12px 16px",
@@ -324,10 +324,10 @@ export default function ImportPage() {
                   onClick={() => router.push("/clients")}
                   style={{
                     flex: 1,
-                    background: "#3a65f0",
+                    background: "var(--primary)",
                     border: "none",
                     borderRadius: 9,
-                    color: "#ffffff",
+                    color: "var(--primary-foreground)",
                     fontSize: 14,
                     fontWeight: 600,
                     padding: "12px 16px",

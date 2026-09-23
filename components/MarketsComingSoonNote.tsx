@@ -11,14 +11,14 @@ export function MarketsComingSoonNote({
   if (variant === "badge") {
     return (
       <span
-        className={`inline-flex items-center rounded-full border border-border-card bg-bg-deep px-2.5 py-1 text-[10px] font-medium text-text-dim ${className}`}
+        className={`inline-flex items-center rounded-full border border-border bg-secondary px-2.5 py-1 text-[10px] font-medium text-muted-foreground ${className}`}
       >
         New Jersey listings
       </span>
     );
   }
   return (
-    <p className={`text-[11px] text-text-dim ${className}`}>
+    <p className={`text-[11px] text-muted-foreground ${className}`}>
       New Jersey listings.
     </p>
   );

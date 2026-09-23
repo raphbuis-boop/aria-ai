@@ -30,10 +30,10 @@ export default async function ClientsPage() {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const [{ data: clients }, { data: activeTransactions }, { data: activities }, { data: bbas }] = await Promise.all([
+  const [{ data: clients }, { data: activeTransactions }, { data: activities }, { data: bbas }, { data: texts }] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, name, town, status, lead_score, budget_min, budget_max, phone, email, beds_wanted, baths_wanted, notes, client_role")
+      .select("id, name, town, preferred_towns, status, lead_score, budget_min, budget_max, phone, email, client_role, source, lead_source, aria_paused, sms_opted_out, created_at")
       .eq("agent_id", user.id)
       .order("last_engagement_at", { ascending: false }),
 
@@ -50,7 +50,7 @@ export default async function ClientsPage() {
     // scores as stale rather than reading as "no data".
     supabase
       .from("activities")
-      .select("client_id, created_at, type, direction")
+      .select("client_id, created_at, type, direction, channel:metadata->>channel")
       .eq("agent_id", user.id),
 
     // Signed BBAs — real commission rate beats the 2.5% default.
@@ -58,7 +58,32 @@ export default async function ClientsPage() {
       .from("buyer_broker_agreements")
       .select("client_id, commission_pct")
       .eq("agent_id", user.id),
+
+    // Recent texts — newest first, so the first row per client is its last message.
+    supabase
+      .from("activities")
+      .select("client_id, body, direction, created_at")
+      .eq("agent_id", user.id)
+      .eq("type", "text")
+      // Unapproved AI drafts were never sent.
+      .or("ai_draft.is.null,ai_draft.is.false,approved.is.true,sent.is.true")
+      .order("created_at", { ascending: false })
+      .limit(1000),
   ]);
+
+  const lastTextByClient = new Map<string, { body: string | null; inbound: boolean }>();
+  for (const t of texts ?? []) {
+    const id = String(t.client_id);
+    if (!lastTextByClient.has(id)) lastTextByClient.set(id, { body: t.body as string | null, inbound: t.direction === "inbound" });
+  }
+  const lastContactByClient = new Map<string, string>();
+  const ariaThreadClientIds = new Set<string>();
+  for (const a of activities ?? []) {
+    if (a.type === "text" && a.channel === "twilio") ariaThreadClientIds.add(String(a.client_id));
+    const id = String(a.client_id);
+    const prev = lastContactByClient.get(id);
+    if (!prev || a.created_at > prev) lastContactByClient.set(id, a.created_at as string);
+  }
 
   const dealValueByClient = new Map<string, number>();
   for (const t of activeTransactions ?? []) {
@@ -80,6 +105,9 @@ export default async function ClientsPage() {
       dealValue,
       dealValueIsReal: dealValueByClient.has(c.id as string),
       commissionEst: commissionFor(dealValue, commissionPctByClient.get(c.id as string)),
+      lastText: lastTextByClient.get(c.id as string) ?? null,
+      lastContactAt: lastContactByClient.get(c.id as string) ?? null,
+      ariaThread: ariaThreadClientIds.has(c.id as string),
     };
   });
 

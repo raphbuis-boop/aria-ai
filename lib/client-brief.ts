@@ -78,6 +78,20 @@ function contactPhrase(days: number | null): string {
   return `hasn't been contacted in ${days} days`;
 }
 
+export const CLIENT_STATUSES = [
+  { value: "new", label: "New lead" },
+  { value: "contacted", label: "Contacted" },
+  { value: "showing", label: "Touring" },
+  { value: "offer", label: "Offer" },
+  { value: "under_contract", label: "Under contract" },
+  { value: "closed", label: "Closed" },
+] as const;
+
+/** Short chip label for clients.status ("New lead", "Touring"…). */
+export function statusShortLabel(status: string | null): string {
+  return CLIENT_STATUSES.find((s) => s.value === status)?.label ?? "Active";
+}
+
 export function statusLabel(status: string | null): string {
   switch (status) {
     case "new": return "a new lead";

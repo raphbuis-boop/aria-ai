@@ -11,7 +11,7 @@ export async function GET() {
 
   const { data } = await supabase
     .from("gmail_integrations")
-    .select("email")
+    .select("email, scope")
     .eq("agent_id", user.id)
     .maybeSingle();
 
@@ -19,5 +19,11 @@ export async function GET() {
     return NextResponse.json({ connected: false });
   }
 
-  return NextResponse.json({ connected: true, email: data.email });
+  const scopes = String(data.scope ?? "").split(/\s+/);
+  return NextResponse.json({
+    connected: true,
+    email: data.email,
+    calendarRead: scopes.some((s) => s.includes("/auth/calendar")),
+    calendarWrite: scopes.some((s) => s.endsWith("/auth/calendar.events") || s.endsWith("/auth/calendar")),
+  });
 }

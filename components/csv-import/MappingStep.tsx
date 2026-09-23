@@ -40,25 +40,25 @@ export function MappingStep({
           gap: 10,
           marginBottom: 16,
           padding: "10px 14px",
-          background: "rgba(58,101,240,0.06)",
+          background: "color-mix(in srgb, var(--primary) 8%, transparent)",
           borderRadius: 10,
-          border: "0.5px solid rgba(58,101,240,0.2)",
+          border: "1px solid var(--border)",
         }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ color: "#e8eaf2", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          <p style={{ color: "var(--foreground)", fontSize: 13, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {filename}
           </p>
-          <p style={{ color: "#6b7090", fontSize: 12, marginTop: 2 }}>
+          <p style={{ color: "var(--muted-foreground)", fontSize: 12, marginTop: 2 }}>
             {rowCount} rows · {activeCount} columns mapped · {highCount} high-confidence
           </p>
         </div>
       </div>
 
-      <p style={{ color: "#9498b0", fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
+      <p style={{ color: "var(--muted-foreground)", fontSize: 13, marginBottom: 14, lineHeight: 1.5 }}>
         Aria mapped your columns automatically.{" "}
-        <span style={{ color: "#10b981" }}>●</span> Green = confident,{" "}
-        <span style={{ color: "#f59e0b" }}>●</span> yellow = review.
+        <span style={{ color: "var(--primary)" }}>●</span> Green = confident,{" "}
+        <span style={{ color: "var(--warm)" }}>●</span> yellow = review.
         Change any mapping using the dropdown.
       </p>
 
@@ -71,8 +71,8 @@ export function MappingStep({
               alignItems: "center",
               gap: 10,
               padding: "9px 12px",
-              background: "rgba(255,255,255,0.025)",
-              border: "0.5px solid rgba(255,255,255,0.07)",
+              background: "var(--secondary)",
+              border: "1px solid var(--border)",
               borderRadius: 9,
             }}
           >
@@ -84,16 +84,16 @@ export function MappingStep({
                 borderRadius: "50%",
                 flexShrink: 0,
                 background: m.field === "skip"
-                  ? "#424560"
+                  ? "var(--muted-foreground)"
                   : m.confidence === "high"
-                    ? "#10b981"
-                    : "#f59e0b",
+                    ? "var(--primary)"
+                    : "var(--warm)",
               }}
             />
             {/* CSV header label */}
             <span
               style={{
-                color: m.field === "skip" ? "#6b7090" : "#e8eaf2",
+                color: m.field === "skip" ? "var(--muted-foreground)" : "var(--foreground)",
                 fontSize: 13,
                 flex: 1,
                 minWidth: 0,
@@ -105,16 +105,16 @@ export function MappingStep({
               {m.header}
             </span>
             {/* Arrow */}
-            <span style={{ color: "#424560", fontSize: 12, flexShrink: 0 }}>→</span>
+            <span style={{ color: "var(--muted-foreground)", fontSize: 12, flexShrink: 0 }}>→</span>
             {/* Field selector */}
             <select
               value={m.field}
               onChange={(e) => updateField(i, e.target.value as AriaField)}
               style={{
-                background: "#0d0f16",
-                border: "0.5px solid rgba(255,255,255,0.10)",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
                 borderRadius: 7,
-                color: m.field === "skip" ? "#6b7090" : "#e8eaf2",
+                color: m.field === "skip" ? "var(--muted-foreground)" : "var(--foreground)",
                 fontSize: 12,
                 padding: "5px 8px",
                 cursor: "pointer",
@@ -139,9 +139,9 @@ export function MappingStep({
           onClick={onBack}
           style={{
             background: "transparent",
-            border: "0.5px solid rgba(255,255,255,0.12)",
+            border: "1px solid var(--border)",
             borderRadius: 9,
-            color: "#9498b0",
+            color: "var(--muted-foreground)",
             fontSize: 14,
             fontWeight: 500,
             padding: "12px 16px",
@@ -157,10 +157,10 @@ export function MappingStep({
           disabled={loading || activeCount === 0}
           style={{
             flex: 1,
-            background: loading || activeCount === 0 ? "#1e2230" : "#3a65f0",
+            background: loading || activeCount === 0 ? "var(--secondary)" : "var(--primary)",
             border: "none",
             borderRadius: 9,
-            color: loading || activeCount === 0 ? "#6b7090" : "#ffffff",
+            color: loading || activeCount === 0 ? "var(--muted-foreground)" : "var(--primary-foreground)",
             fontSize: 14,
             fontWeight: 600,
             padding: "12px 16px",

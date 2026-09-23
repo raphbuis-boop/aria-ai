@@ -1,18 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
 import { CheckCircle2 } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 import { Card } from "@/components/ui/card";
 import { Toaster, toast } from "@/components/ui/sonner";
-import { fmtMoney } from "@/lib/utils";
 import { smartTemplateDraft, isGenericAiFallback } from "@/lib/draft-templates";
 
 type Props = {
   items: TodayItem[];
-  totalCommission: number;
 };
 
 const HEAT_DOT_COLOR: Record<"hot" | "warm", { fill: string; ring: string }> = {
@@ -70,16 +69,15 @@ function FollowUpRow({
           </div>
           <p className="font-display text-caption text-muted-foreground mt-0.5">{item.reason}</p>
         </div>
-        {item.commissionEst ? (
-          <p className="font-display text-body font-semibold text-primary shrink-0">
-            ~{fmtMoney(item.commissionEst)}
-          </p>
-        ) : null}
       </div>
 
-      {/* Draft preview */}
+      {/* Draft preview — or, for leads in an Aria thread, a pointer to it */}
       <div className="mt-3 rounded-xl bg-secondary px-4 py-3">
-        {draft === undefined ? (
+        {item.actionType === "navigate" ? (
+          <p className="font-display text-caption text-muted-foreground">
+            In an Aria text thread — open it to reply from Aria&apos;s number.
+          </p>
+        ) : draft === undefined ? (
           <div className="space-y-1.5">
             <div className="h-3 rounded bg-border/70 animate-pulse" style={{ width: "85%" }} />
             <div className="h-3 rounded bg-border/70 animate-pulse" style={{ width: "60%" }} />
@@ -97,14 +95,15 @@ export function FollowUpsClient({ items: initialItems }: Props) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
 
-  const totalCommission = items.reduce((sum, i) => sum + (i.commissionEst ?? 0), 0);
+  const router = useRouter();
 
   // Prefetch a draft for every item on mount — AI first, clean template fallback.
   useEffect(() => {
-    if (initialItems.length === 0) return;
+    const textItems = initialItems.filter((i) => i.actionType === "text");
+    if (textItems.length === 0) return;
 
     Promise.all(
-      initialItems.map((item) =>
+      textItems.map((item) =>
         fetch("/api/ai/draft-text", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -147,10 +146,14 @@ export function FollowUpsClient({ items: initialItems }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // stable on mount — server-rendered items
 
-  const handleOpen = useCallback((item: TodayItem) => {
-    triggerHaptic();
-    setActiveDraftItem(item);
-  }, []);
+  const handleOpen = useCallback(
+    (item: TodayItem) => {
+      triggerHaptic();
+      if (item.actionType === "navigate" && item.navigateTo) router.push(item.navigateTo);
+      else setActiveDraftItem(item);
+    },
+    [router],
+  );
 
   const handleSent = useCallback((itemId: string) => {
     setActiveDraftItem(null);
@@ -175,9 +178,8 @@ export function FollowUpsClient({ items: initialItems }: Props) {
             <h1 className="font-heading text-[34px] leading-tight text-foreground mb-2">Follow-ups</h1>
             {items.length > 0 ? (
               <p className="font-display text-body-lg text-muted-foreground">
-                <span className="text-foreground font-semibold">{items.length}</span> follow-up
-                {items.length === 1 ? "" : "s"} today ·{" "}
-                <span className="text-primary font-semibold">~{fmtMoney(totalCommission)}</span> at stake
+                <span className="text-foreground font-semibold">{items.length}</span>{" "}
+                {items.length === 1 ? "client needs" : "clients need"} a check-in, most valuable first.
               </p>
             ) : (
               <p className="font-display text-body-lg text-muted-foreground">Nothing on the table right now.</p>

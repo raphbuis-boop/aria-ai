@@ -12,18 +12,6 @@ function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
 
-// Current hour in US Eastern time (handles EST/EDT automatically) — used to
-// gate the daily follow-up digest against each agent's reminder_hour_et.
-function currentEasternHour(now: number): number {
-  const hourStr = new Intl.DateTimeFormat("en-US", {
-    timeZone: "America/New_York",
-    hour: "numeric",
-    hour12: false,
-  }).format(now);
-  // "24" at midnight in some environments — normalize to 0.
-  return Number(hourStr) % 24;
-}
-
 function verifyCron(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
   if (!secret) {
@@ -184,32 +172,25 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
   let processed = 0;
 
   // ── Engagement alerts ──
-  // This route is invoked hourly (see vercel.json) so each agent's follow-up
-  // digest can fire at their own chosen local hour (Settings → Notifications
-  // → "Daily reminder time"). Fetch prefs once and skip agents who've either
-  // disabled the digest or whose hour hasn't come up yet this run.
+  // The cron runs once a day (see vercel.json — 12:00 UTC, 7–8 AM ET), so
+  // every agent who hasn't turned the digest off gets it on that run.
   const { data: agents } = await supabase.auth.admin.listUsers();
   const allUsers = agents?.users ?? [];
 
   const { data: prefRows } = await supabase
     .from("agent_profiles")
-    .select("id, notify_followups, reminder_hour_et")
+    .select("id, notify_followups")
     .in("id", allUsers.map((u) => u.id));
   const prefsById = new Map(
     (prefRows ?? []).map((p) => [
       p.id as string,
       {
         notifyFollowups: (p.notify_followups as boolean | null) ?? true,
-        reminderHourEt: (p.reminder_hour_et as number | null) ?? 8,
       },
     ]),
   );
 
-  const currentHourEt = currentEasternHour(now);
-  const userList = allUsers.filter((u) => {
-    const prefs = prefsById.get(u.id) ?? { notifyFollowups: true, reminderHourEt: 8 };
-    return prefs.notifyFollowups && prefs.reminderHourEt === currentHourEt;
-  });
+  const userList = allUsers.filter((u) => prefsById.get(u.id)?.notifyFollowups ?? true);
 
   for (const user of userList) {
     const { data: clients } = await supabase

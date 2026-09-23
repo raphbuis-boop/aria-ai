@@ -47,15 +47,15 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
           marginBottom: 14,
         }}
       >
-        <Chip label={`${active.length} to import`} color="#3a65f0" />
+        <Chip label={`${active.length} to import`} color="var(--primary)" />
         {rows.length - active.length > 0 && (
-          <Chip label={`${rows.length - active.length} removed`} color="#6b7090" />
+          <Chip label={`${rows.length - active.length} removed`} color="var(--muted-foreground)" />
         )}
         {nameErrors > 0 && (
-          <Chip label={`${nameErrors} missing name`} color="#ef4444" />
+          <Chip label={`${nameErrors} missing name`} color="var(--destructive)" />
         )}
         {phoneWarnings > 0 && (
-          <Chip label={`${phoneWarnings} invalid phone`} color="#f59e0b" />
+          <Chip label={`${phoneWarnings} invalid phone`} color="var(--warm)" />
         )}
       </div>
 
@@ -65,26 +65,26 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
           overflowX: "auto",
           overflowY: "auto",
           maxHeight: 340,
-          border: "0.5px solid rgba(255,255,255,0.07)",
+          border: "1px solid var(--border)",
           borderRadius: 10,
           fontSize: 12,
         }}
       >
         <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 640 }}>
           <thead>
-            <tr style={{ background: "rgba(255,255,255,0.03)" }}>
+            <tr style={{ background: "var(--secondary)" }}>
               {["Name", "Phone", "Email", "Type", "Budget max", "Town", ""].map((h) => (
                 <th
                   key={h}
                   style={{
                     padding: "8px 10px",
                     textAlign: "left",
-                    color: "#6b7090",
+                    color: "var(--muted-foreground)",
                     fontWeight: 500,
                     fontSize: 11,
                     letterSpacing: "0.06em",
                     textTransform: "uppercase",
-                    borderBottom: "0.5px solid rgba(255,255,255,0.07)",
+                    borderBottom: "1px solid var(--border)",
                     whiteSpace: "nowrap",
                   }}
                 >
@@ -103,8 +103,8 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                 <tr
                   key={row._id}
                   style={{
-                    borderBottom: "0.5px solid rgba(255,255,255,0.05)",
-                    background: nameErr ? "rgba(239,68,68,0.04)" : "transparent",
+                    borderBottom: "1px solid var(--border)",
+                    background: nameErr ? "color-mix(in srgb, var(--destructive) 12%, transparent)" : "transparent",
                   }}
                 >
                   {/* Name */}
@@ -115,9 +115,9 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                       placeholder="Required"
                       style={{
                         background: "transparent",
-                        border: `0.5px solid ${nameErr ? "rgba(239,68,68,0.5)" : "rgba(255,255,255,0.08)"}`,
+                        border: `0.5px solid ${nameErr ? "color-mix(in srgb, var(--destructive) 12%, transparent)" : "var(--secondary)"}`,
                         borderRadius: 6,
-                        color: nameErr ? "#ef4444" : "#e8eaf2",
+                        color: nameErr ? "var(--destructive)" : "var(--foreground)",
                         fontSize: 13,
                         padding: "4px 8px",
                         width: 130,
@@ -129,7 +129,7 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                   <td style={{ padding: "6px 8px" }}>
                     <span
                       style={{
-                        color: ph.valid ? "#9498b0" : "#f59e0b",
+                        color: ph.valid ? "var(--muted-foreground)" : "var(--warm)",
                         fontFamily: "monospace",
                         fontSize: 12,
                       }}
@@ -138,8 +138,8 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                     </span>
                   </td>
                   {/* Email */}
-                  <td style={{ padding: "6px 8px", color: "#9498b0", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {row.email || <span style={{ color: "#424560" }}>—</span>}
+                  <td style={{ padding: "6px 8px", color: "var(--muted-foreground)", maxWidth: 160, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {row.email || <span style={{ color: "var(--muted-foreground)" }}>—</span>}
                   </td>
                   {/* Type */}
                   <td style={{ padding: "6px 8px" }}>
@@ -147,10 +147,10 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                       value={row.client_role.toLowerCase() === "seller" ? "seller" : "buyer"}
                       onChange={(e) => updateRow(row._id, { client_role: e.target.value })}
                       style={{
-                        background: "#0d0f16",
-                        border: "0.5px solid rgba(255,255,255,0.10)",
+                        background: "var(--card)",
+                        border: "1px solid var(--border)",
                         borderRadius: 6,
-                        color: "#e8eaf2",
+                        color: "var(--foreground)",
                         fontSize: 12,
                         padding: "3px 6px",
                         cursor: "pointer",
@@ -162,12 +162,12 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                     </select>
                   </td>
                   {/* Budget max */}
-                  <td style={{ padding: "6px 8px", color: "#9498b0", whiteSpace: "nowrap" }}>
-                    {row.budget_max || <span style={{ color: "#424560" }}>—</span>}
+                  <td style={{ padding: "6px 8px", color: "var(--muted-foreground)", whiteSpace: "nowrap" }}>
+                    {row.budget_max || <span style={{ color: "var(--muted-foreground)" }}>—</span>}
                   </td>
                   {/* Town */}
-                  <td style={{ padding: "6px 8px", color: "#9498b0", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {row.town || <span style={{ color: "#424560" }}>—</span>}
+                  <td style={{ padding: "6px 8px", color: "var(--muted-foreground)", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {row.town || <span style={{ color: "var(--muted-foreground)" }}>—</span>}
                   </td>
                   {/* Delete */}
                   <td style={{ padding: "6px 8px" }}>
@@ -180,7 +180,7 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                         border: "none",
                         cursor: "pointer",
                         padding: 4,
-                        color: "#424560",
+                        color: "var(--muted-foreground)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -197,7 +197,7 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
       </div>
 
       {nameErrors > 0 && (
-        <p style={{ color: "#ef4444", fontSize: 12, marginTop: 8 }}>
+        <p style={{ color: "var(--destructive)", fontSize: 12, marginTop: 8 }}>
           Rows with a missing name will be skipped. Fill them in or remove them.
         </p>
       )}
@@ -209,9 +209,9 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
           disabled={importing}
           style={{
             background: "transparent",
-            border: "0.5px solid rgba(255,255,255,0.12)",
+            border: "1px solid var(--border)",
             borderRadius: 9,
-            color: "#9498b0",
+            color: "var(--muted-foreground)",
             fontSize: 14,
             fontWeight: 500,
             padding: "12px 16px",
@@ -227,10 +227,10 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
           disabled={!canImport || importing}
           style={{
             flex: 1,
-            background: !canImport || importing ? "#1e2230" : "#3a65f0",
+            background: !canImport || importing ? "var(--secondary)" : "var(--primary)",
             border: "none",
             borderRadius: 9,
-            color: !canImport || importing ? "#6b7090" : "#ffffff",
+            color: !canImport || importing ? "var(--muted-foreground)" : "var(--primary-foreground)",
             fontSize: 14,
             fontWeight: 600,
             padding: "12px 16px",

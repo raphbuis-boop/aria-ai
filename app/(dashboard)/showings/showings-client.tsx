@@ -290,7 +290,7 @@ export function ShowingsClient({
 
       {/* ── Add showing sheet ── */}
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 backdrop-blur-[2px]">
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
           <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
           <div
             className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
@@ -310,9 +310,9 @@ export function ShowingsClient({
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                 style={INPUT_STYLE}
               >
-                <option value="" style={{ background: "#ffffff" }}>Select client</option>
+                <option value="">Select client</option>
                 {clients.map((c) => (
-                  <option key={c.id} value={c.id} style={{ background: "#ffffff" }}>{c.name}</option>
+                  <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
               <input
@@ -334,9 +334,9 @@ export function ShowingsClient({
                 onChange={(e) => setForm({ ...form, status: e.target.value as typeof form.status })}
                 style={INPUT_STYLE}
               >
-                <option value="scheduled" style={{ background: "#ffffff" }}>Scheduled</option>
-                <option value="completed" style={{ background: "#ffffff" }}>Completed</option>
-                <option value="cancelled" style={{ background: "#ffffff" }}>Cancelled</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
               </select>
               <textarea
                 value={form.notes}

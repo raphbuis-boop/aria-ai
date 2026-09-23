@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MessageSquareWarning, Sparkles } from "lucide-react";
+import { MessageSquareWarning } from "lucide-react";
+import { Section } from "@/components/Section";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
@@ -77,16 +78,7 @@ export function AriaApprovals({
   const count = showingRequests.length + tasks.length;
 
   return (
-    <section className="mb-12" aria-labelledby="aria-needs-you">
-      <div className="mb-3 flex items-center gap-2">
-        <Sparkles className="size-3.5 text-primary" />
-        <p id="aria-needs-you" className="font-display text-section text-foreground">
-          Aria needs you
-        </p>
-        <span className="rounded-full bg-primary px-2 py-0.5 font-display text-[11px] font-semibold text-primary-foreground">
-          {count}
-        </span>
-      </div>
+    <Section label="Aria needs you" count={count}>
       <div className="space-y-3">
         {showingRequests.map((r) => (
           <ShowingApprovalCard key={r.id} req={r} />
@@ -99,6 +91,6 @@ export function AriaApprovals({
           </Card>
         ) : null}
       </div>
-    </section>
+    </Section>
   );
 }

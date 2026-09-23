@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, CalendarPlus, ChevronRight, Home as HomeIcon, Share2, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { ArrowLeft, CalendarPlus, Check, Home as HomeIcon, Send, Share2, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/Section";
+import { SendPropertySheet, type SendTarget } from "@/components/aria/SendPropertySheet";
+import { createClient } from "@/lib/supabase/client";
+import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { Card } from "@/components/ui/card";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { Toaster, toast } from "@/components/ui/sonner";
@@ -54,11 +60,13 @@ function StatTile({ label, value }: { label: string; value: string }) {
 export function InternalPropertyDetail({
   property,
   matches,
+  textableClients,
   market,
   returnTo,
 }: {
   property: Record<string, unknown>;
   matches: Match[];
+  textableClients: SendTarget[];
   market: Record<string, unknown> | null;
   returnTo: string | null;
 }) {
@@ -77,7 +85,23 @@ export function InternalPropertyDetail({
   const photosRaw = property.photos as unknown;
   const allPhotos = Array.isArray(photosRaw) ? photosRaw.filter((p): p is string => typeof p === "string") : [];
 
-  const commission = price != null ? Math.round(price * 0.025) : null;
+  const [sendTo, setSendTo] = useState<SendTarget | null>(null);
+  const [picking, setPicking] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(status);
+  const textable = new Set(textableClients.map((c) => c.id));
+
+  async function changeStatus(next: string) {
+    const prev = currentStatus;
+    setCurrentStatus(next);
+    const { error } = await createClient().from("properties").update({ status: next }).eq("id", String(property.id));
+    if (error) {
+      setCurrentStatus(prev);
+      toast.error(error.message);
+    } else {
+      toast.success(next === "available" ? "Aria can recommend this home" : "Aria won't recommend this home");
+      router.refresh();
+    }
+  }
   const pricePerSqft = price != null && sqft ? Math.round(price / sqft) : null;
   const mktAvg = (market?.avg_sale_price as number | null) ?? null;
   const mktDom = (market?.days_on_market as number | null) ?? null;
@@ -168,25 +192,27 @@ export function InternalPropertyDetail({
         <header className="mb-5">
           <h1 className="font-heading text-[28px] leading-tight text-foreground mb-1">{address}</h1>
           <p className="font-display text-body text-muted-foreground mb-4">{town ?? "—"}</p>
-          <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-wrap items-center gap-3">
             <p className="font-heading text-[34px] leading-none text-primary">{fmtMoney(price)}</p>
-            {status && (
-              <span className="rounded-full bg-secondary px-3 py-1 font-display text-caption font-semibold text-foreground">
-                {STATUS_LABEL[status] ?? status}
-              </span>
-            )}
+            <select
+              value={currentStatus ?? ""}
+              onChange={(e) => void changeStatus(e.target.value)}
+              aria-label="Listing status"
+              className="rounded-full border border-border bg-secondary px-3 py-1 font-display text-caption font-semibold text-foreground outline-none"
+            >
+              {currentStatus && !STATUS_LABEL[currentStatus] ? <option value={currentStatus}>{currentStatus}</option> : null}
+              {Object.entries(STATUS_LABEL).map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
           </div>
-          {commission != null && (
-            <div className="mt-3 flex items-center gap-2">
-              <Sparkles className="size-3.5 text-primary" />
-              <p className="font-display text-body text-muted-foreground">
-                <span className="font-semibold text-primary">~{fmtMoney(commission)}</span> your commission
-                {matches.length > 0 && (
-                  <> · fits <span className="font-semibold text-foreground">{matches.length}</span> client{matches.length === 1 ? "" : "s"}</>
-                )}
-              </p>
-            </div>
-          )}
+          <p className="mt-2 font-display text-caption text-muted-foreground">
+            {currentStatus === "available"
+              ? "Available — Aria can recommend it to matching leads over text."
+              : "Not available — Aria won't recommend it."}
+          </p>
         </header>
 
         {/* Quick stats */}
@@ -197,49 +223,75 @@ export function InternalPropertyDetail({
           <StatTile label="$/sq ft" value={pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : "—"} />
         </section>
 
-        {/* Aria match-fit */}
+        {/* Client matches */}
         <section className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="size-3.5 text-primary" />
-            <p className="font-display text-caption uppercase tracking-[0.08em] text-primary">Aria match</p>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <h2 className="font-display text-section uppercase text-muted-foreground">Client matches</h2>
+            {textableClients.length ? (
+              <button type="button" onClick={() => setPicking((v) => !v)} className="font-display text-caption font-semibold text-primary">
+                {picking ? "Cancel" : "Send to a client →"}
+              </button>
+            ) : null}
           </div>
+          {picking ? (
+            <Card className="mb-3 max-h-72 divide-y divide-border overflow-y-auto">
+              {textableClients.map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => {
+                    setPicking(false);
+                    setSendTo(c);
+                  }}
+                  className="flex w-full items-center justify-between px-5 py-3 text-left font-display text-body text-foreground hover:bg-secondary/50"
+                >
+                  {c.name}
+                  <Send className="size-3.5 text-muted-foreground" />
+                </button>
+              ))}
+            </Card>
+          ) : null}
           {matches.length === 0 ? (
             <Card className="px-6 py-6">
-              <p className="font-display text-body-lg text-muted-foreground">
-                No clients match this listing yet — matching runs as client criteria and new listings come in.
+              <p className="font-display text-body text-muted-foreground">
+                No clients match this home yet. Matching runs as client preferences and listings change.
               </p>
             </Card>
           ) : (
             <Card className="divide-y divide-border overflow-hidden">
-              <div className="px-5 py-4 bg-secondary/50">
-                <p className="font-heading text-[17px] text-foreground">
-                  Fits {matches.length} client{matches.length === 1 ? "" : "s"} in your book
-                </p>
-              </div>
-              {matches.map((m) => (
-                <button
-                  key={m.clientId}
-                  type="button"
-                  onClick={() => {
-                    triggerHaptic();
-                    router.push(`/clients/${m.clientId}`);
-                  }}
-                  className="w-full text-left px-5 py-4 hover:bg-accent/50 transition-colors"
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <p className="font-display text-body-lg font-semibold text-foreground">{m.clientName}</p>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <span className="font-display text-body font-semibold text-primary">{m.score}%</span>
-                      <ChevronRight className="size-4 text-muted-foreground/50" />
-                    </div>
+              {matches.map((m) => {
+                const sent = m.reasons.includes(ARIA_RECOMMENDED_REASON) ? "aria" : m.reasons.includes(AGENT_SENT_REASON) ? "agent" : null;
+                return (
+                  <div key={m.clientId} className="flex items-center gap-3 px-5 py-4">
+                    <Link href={`/clients/${m.clientId}`} className="min-w-0 flex-1">
+                      <p className="flex items-center gap-2 font-display text-body-lg font-semibold text-foreground">
+                        <span className="truncate">{m.clientName}</span>
+                        <span className="shrink-0 font-display text-body text-primary">{m.score}%</span>
+                      </p>
+                      {sent ? (
+                        <Pill tone="primary" className="mt-1">
+                          {sent === "aria" ? <Sparkles className="size-3" /> : <Check className="size-3" />}
+                          {sent === "aria" ? "Sent by Aria" : "Sent"}
+                        </Pill>
+                      ) : m.reasons.length > 0 ? (
+                        <p className="mt-1 font-display text-caption text-muted-foreground">
+                          {humanizeMatchReasons(m.clientName, m.reasons, { town, price, beds, baths, propertyType })}
+                        </p>
+                      ) : null}
+                    </Link>
+                    {textable.has(m.clientId) ? (
+                      <Button
+                        size="sm"
+                        variant={sent ? "outline" : "default"}
+                        onClick={() => setSendTo({ id: m.clientId, name: m.clientName })}
+                        className="h-9 shrink-0 rounded-full px-3"
+                      >
+                        <Send className="size-3.5" /> {sent ? "Resend" : "Send"}
+                      </Button>
+                    ) : null}
                   </div>
-                  {m.reasons.length > 0 && (
-                    <p className="font-display text-caption text-muted-foreground mt-1">
-                      {humanizeMatchReasons(m.clientName, m.reasons, { town, price, beds, baths, propertyType })}
-                    </p>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </Card>
           )}
         </section>
@@ -252,7 +304,6 @@ export function InternalPropertyDetail({
             <Fact label="Square feet" value={sqft ? sqft.toLocaleString() : null} />
             <Fact label="Price / sq ft" value={pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : null} />
             <Fact label="Property type" value={titleCasePropertyType(propertyType)} />
-            <Fact label="Status" value={status ? (STATUS_LABEL[status] ?? status) : null} />
           </Card>
           {description && (
             <Card className="px-6 py-5 mt-3">
@@ -309,6 +360,11 @@ export function InternalPropertyDetail({
         <IdxComplianceNotice compact />
       </div>
 
+      <SendPropertySheet
+        property={sendTo ? { id: String(property.id), address, town, price, beds, baths } : null}
+        target={sendTo}
+        onClose={() => setSendTo(null)}
+      />
       <Toaster />
     </div>
   );

@@ -39,10 +39,10 @@ const STATUS_LABELS: Record<Inquiry["status"], string> = {
 };
 
 const STATUS_COLORS: Record<Inquiry["status"], string> = {
-  new: "bg-accent-blue/15 text-accent-blue",
+  new: "bg-primary/15 text-primary",
   contacted: "bg-amber-500/15 text-amber-400",
   converted: "bg-emerald-500/15 text-emerald-400",
-  archived: "bg-[#2a2e40] text-text-dim",
+  archived: "bg-input text-muted-foreground",
 };
 
 function InquiryDetailPanel({
@@ -79,23 +79,23 @@ function InquiryDetailPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-black/70 backdrop-blur-[2px] md:items-center">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px] md:items-center">
       <button
         type="button"
         aria-label="Close"
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-10 pt-4 md:max-h-[85vh] md:overflow-y-auto md:rounded-[20px] md:border-b-[0.5px]">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40] md:hidden" />
+      <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-border bg-card px-5 pb-10 pt-4 md:max-h-[85vh] md:overflow-y-auto md:rounded-[20px] md:border-b-[0.5px]">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-input md:hidden" />
 
         {/* header */}
         <div className="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p className="text-[16px] font-semibold text-text-primary">
+            <p className="text-[16px] font-semibold text-foreground">
               {inquiry.visitor_name}
             </p>
-            <p className="mt-0.5 text-[12px] text-text-dim">
+            <p className="mt-0.5 text-[12px] text-muted-foreground">
               {inquiry.intent === "showing" ? "Showing request" : "Info request"}{" "}
               · {relTime(inquiry.created_at)}
             </p>
@@ -103,7 +103,7 @@ function InquiryDetailPanel({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1e2230] text-text-dim"
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-border text-muted-foreground"
             aria-label="Close"
           >
             <X size={14} />
@@ -111,10 +111,10 @@ function InquiryDetailPanel({
         </div>
 
         {/* contact */}
-        <div className="mb-4 space-y-2 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
+        <div className="mb-4 space-y-2 rounded-[12px] border border-border bg-card px-3 py-3">
           <a
             href={`mailto:${inquiry.visitor_email}`}
-            className="flex items-center gap-2 text-[13px] text-accent-blue"
+            className="flex items-center gap-2 text-[13px] text-primary"
           >
             <Mail size={14} className="flex-shrink-0" />
             {inquiry.visitor_email}
@@ -122,7 +122,7 @@ function InquiryDetailPanel({
           {inquiry.visitor_phone ? (
             <a
               href={`tel:${inquiry.visitor_phone}`}
-              className="flex items-center gap-2 text-[13px] text-accent-blue"
+              className="flex items-center gap-2 text-[13px] text-primary"
             >
               <Phone size={14} className="flex-shrink-0" />
               {inquiry.visitor_phone}
@@ -131,14 +131,14 @@ function InquiryDetailPanel({
         </div>
 
         {/* listing */}
-        <div className="mb-4 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
+        <div className="mb-4 rounded-[12px] border border-border bg-card px-3 py-3">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             Listing
           </p>
-          <p className="mt-1 text-[13px] font-medium text-text-primary">
+          <p className="mt-1 text-[13px] font-medium text-foreground">
             {inquiry.listing_address ?? inquiry.listing_id}
           </p>
-          <div className="mt-1 flex flex-wrap gap-x-3 text-[12px] text-text-dim">
+          <div className="mt-1 flex flex-wrap gap-x-3 text-[12px] text-muted-foreground">
             {inquiry.listing_price ? (
               <span>{fmtMoney(inquiry.listing_price)}</span>
             ) : null}
@@ -148,11 +148,11 @@ function InquiryDetailPanel({
 
         {/* message */}
         {inquiry.message ? (
-          <div className="mb-4 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
-            <p className="text-[10px] font-bold uppercase tracking-wide text-text-dim">
+          <div className="mb-4 rounded-[12px] border border-border bg-card px-3 py-3">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
               Message
             </p>
-            <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-text-primary">
+            <p className="mt-1 whitespace-pre-wrap text-[13px] leading-relaxed text-foreground">
               {inquiry.message}
             </p>
           </div>
@@ -160,7 +160,7 @@ function InquiryDetailPanel({
 
         {/* status */}
         <div className="mb-4">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-text-dim">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
             Status
           </p>
           <div className="flex flex-wrap gap-2">
@@ -174,7 +174,7 @@ function InquiryDetailPanel({
                   className={`rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition ${
                     inquiry.status === s
                       ? STATUS_COLORS[s]
-                      : "border border-border-card bg-bg-deep text-text-dim hover:text-text-primary"
+                      : "border border-border bg-secondary text-muted-foreground hover:text-foreground"
                   } disabled:cursor-not-allowed`}
                 >
                   {STATUS_LABELS[s]}
@@ -188,7 +188,7 @@ function InquiryDetailPanel({
         <button
           type="button"
           onClick={() => toast.toast("Convert to Client coming in Session 2", "default")}
-          className="w-full rounded-[10px] border border-dashed border-border-card bg-bg-deep py-2.5 text-[13px] font-semibold text-text-dim"
+          className="w-full rounded-[10px] border border-dashed border-border bg-secondary py-2.5 text-[13px] font-semibold text-muted-foreground"
         >
           + Convert to Client
         </button>
@@ -233,11 +233,11 @@ export default function InquiriesPage() {
     <div className="mx-auto max-w-lg px-4 pb-32 pt-6">
       {/* header */}
       <div className="mb-5 flex items-center gap-3">
-        <h1 className="text-[22px] font-semibold text-text-primary">
+        <h1 className="text-[22px] font-semibold text-foreground">
           Inquiries
         </h1>
         {newCount > 0 && (
-          <span className="rounded-[6px] bg-accent-blue/15 px-2 py-0.5 text-[11px] font-bold text-accent-blue">
+          <span className="rounded-[6px] bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary">
             {newCount} new
           </span>
         )}
@@ -257,8 +257,8 @@ export default function InquiriesPage() {
               onClick={() => setTab(key)}
               className={`flex-shrink-0 rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition ${
                 tab === key
-                  ? "bg-[#1e1e38] text-white"
-                  : "text-text-dim hover:text-text-primary"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
@@ -273,17 +273,17 @@ export default function InquiriesPage() {
       {/* list */}
       {loading ? (
         <div className="flex justify-center py-16">
-          <Loader2 className="animate-spin text-text-dim" size={24} />
+          <Loader2 className="animate-spin text-muted-foreground" size={24} />
         </div>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
-          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[14px] bg-bg-card text-text-dim">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[14px] bg-card text-muted-foreground">
             <MessageSquare size={22} />
           </div>
-          <p className="text-[15px] font-medium text-text-primary">
+          <p className="text-[15px] font-medium text-foreground">
             {tab === "all" ? "No inquiries yet" : `No ${tab} inquiries`}
           </p>
-          <p className="mt-1 max-w-[260px] text-[13px] text-text-dim">
+          <p className="mt-1 max-w-[260px] text-[13px] text-muted-foreground">
             {tab === "all"
               ? "When buyers fill out the contact form on your public property pages, they'll show up here."
               : `Move inquiries to "${tab}" by opening one and updating its status.`}
@@ -296,32 +296,32 @@ export default function InquiriesPage() {
               key={inq.id}
               type="button"
               onClick={() => setSelected(inq)}
-              className="w-full rounded-[14px] border border-border-card bg-bg-card px-4 py-3 text-left transition hover:border-[#2a2e40]"
+              className="w-full rounded-[14px] border border-border bg-card px-4 py-3 text-left transition hover:border-input"
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
-                    <p className="truncate text-[14px] font-semibold text-text-primary">
+                    <p className="truncate text-[14px] font-semibold text-foreground">
                       {inq.visitor_name}
                     </p>
                     {inq.status === "new" && (
-                      <span className="flex-shrink-0 rounded-[4px] bg-accent-blue px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                      <span className="flex-shrink-0 rounded-[4px] bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
                         New
                       </span>
                     )}
                   </div>
-                  <p className="mt-0.5 truncate text-[12px] text-text-dim">
+                  <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
                     {inq.visitor_email}
                     {inq.visitor_phone ? ` · ${inq.visitor_phone}` : ""}
                   </p>
                   {inq.listing_address ? (
-                    <p className="mt-1 truncate text-[12px] text-text-muted">
+                    <p className="mt-1 truncate text-[12px] text-muted-foreground">
                       {inq.intent === "showing" ? "Showing · " : "Info · "}
                       {inq.listing_address}
                     </p>
                   ) : null}
                   {inq.message ? (
-                    <p className="mt-1 line-clamp-1 text-[12px] text-text-dim">
+                    <p className="mt-1 line-clamp-1 text-[12px] text-muted-foreground">
                       &quot;{inq.message}&quot;
                     </p>
                   ) : null}
@@ -330,7 +330,7 @@ export default function InquiriesPage() {
                   <span className={`rounded-[6px] px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLORS[inq.status]}`}>
                     {STATUS_LABELS[inq.status]}
                   </span>
-                  <span className="text-[11px] text-text-dim">
+                  <span className="text-[11px] text-muted-foreground">
                     {relTime(inq.created_at)}
                   </span>
                 </div>

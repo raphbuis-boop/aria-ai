@@ -40,7 +40,7 @@ export default async function FollowUpsPage() {
 
       supabase
         .from("activities")
-        .select("client_id, created_at, type, direction")
+        .select("client_id, created_at, type, direction, metadata")
         .eq("agent_id", user.id)
         .gte("created_at", minus30ISO)
         .order("created_at", { ascending: false }),
@@ -110,12 +110,22 @@ export default async function FollowUpsPage() {
     closedClients,
     bbaCommissionPctByClient,
   );
+  // Leads in an Aria SMS thread are answered from that thread (Aria's number).
+  const ariaThreadClientIds = new Set(
+    (activitiesRes.data ?? [])
+      .filter((a) => a.type === "text" && (a.metadata as { channel?: string } | null)?.channel === "twilio")
+      .map((a) => String(a.client_id)),
+  );
   const items = allItems
     .filter((i) => !dismissedIds.has(i.id))
+    .map((i) =>
+      ariaThreadClientIds.has(i.clientId) && i.actionType === "text"
+        ? { ...i, actionType: "navigate" as const, navigateTo: `/clients/${i.clientId}#messages` }
+        : i,
+    )
     // Ranked by value — highest commission at stake first.
     .sort((a, b) => (b.commissionEst ?? 0) - (a.commissionEst ?? 0));
 
-  const totalCommission = items.reduce((sum, i) => sum + (i.commissionEst ?? 0), 0);
 
-  return <FollowUpsClient items={items} totalCommission={totalCommission} />;
+  return <FollowUpsClient items={items} />;
 }

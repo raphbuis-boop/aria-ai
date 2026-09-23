@@ -42,9 +42,9 @@ const SORT_OPTS: { value: string; label: string }[] = [
 ];
 
 const INPUT_STYLE = {
-  background: "rgba(255,255,255,0.06)",
-  border: "0.5px solid rgba(255,255,255,0.08)",
-  color: "#ffffff",
+  background: "var(--secondary)",
+  border: "1px solid var(--border)",
+  color: "var(--foreground)",
   borderRadius: 10,
   padding: "10px 12px",
   fontSize: 14,
@@ -348,16 +348,7 @@ export function MlsSearchClient({
   const listingDetailBase = variant === "public" ? "/property-search" : "/listings";
 
   return (
-    <div
-      className="min-h-[100dvh] pb-[130px]"
-      style={{
-        background: `
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
-          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent)
-        `,
-        color: "var(--oc-text-1)",
-      }}
-    >
+    <div className="min-h-[100dvh] bg-background pb-[130px] text-foreground">
       <div className="mx-auto max-w-lg px-5 pt-6">
 
         {/* ── IDX compliance (member) ── */}
@@ -373,15 +364,15 @@ export function MlsSearchClient({
             <div className="min-w-0">
               <h1
                 className="text-[22px] font-semibold leading-tight"
-                style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
+                style={{ color: "var(--foreground)", letterSpacing: "-0.02em" }}
               >
                 Property Search
               </h1>
-              <p className="mt-0.5 text-[13px]" style={{ color: "#6B7280" }}>
+              <p className="mt-0.5 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
                 Live property listings
               </p>
               {showingLine && (
-                <p className="mt-1 text-[12px]" style={{ color: "#6B7280" }}>
+                <p className="mt-1 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
                   {showingLine}
                 </p>
               )}
@@ -391,9 +382,9 @@ export function MlsSearchClient({
                 href="/properties/saved"
                 className="flex-shrink-0 flex items-center gap-1.5 text-[13px] font-medium px-3 py-1.5 rounded-full"
                 style={{
-                  background: "rgba(59,130,246,0.1)",
-                  color: "#3B82F6",
-                  border: "0.5px solid rgba(59,130,246,0.2)",
+                  background: "color-mix(in srgb, var(--primary) 12%, transparent)",
+                  color: "var(--primary)",
+                  border: "1px solid color-mix(in srgb, var(--primary) 25%, transparent)",
                   marginTop: 2,
                 }}
               >
@@ -482,7 +473,7 @@ export function MlsSearchClient({
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Town or city"
-            className="col-span-2 placeholder-[#4B5563]"
+            className="col-span-2 placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
           <input
@@ -490,7 +481,7 @@ export function MlsSearchClient({
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
             placeholder="Min $"
-            className="placeholder-[#4B5563]"
+            className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
           <input
@@ -498,7 +489,7 @@ export function MlsSearchClient({
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
             placeholder="Max $"
-            className="placeholder-[#4B5563]"
+            className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
           <input
@@ -506,7 +497,7 @@ export function MlsSearchClient({
             value={minBeds}
             onChange={(e) => setMinBeds(e.target.value)}
             placeholder="Min beds"
-            className="placeholder-[#4B5563]"
+            className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
           <input
@@ -514,7 +505,7 @@ export function MlsSearchClient({
             value={minBaths}
             onChange={(e) => setMinBaths(e.target.value)}
             placeholder="Min baths"
-            className="placeholder-[#4B5563]"
+            className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
           <select
@@ -525,7 +516,7 @@ export function MlsSearchClient({
             style={SELECT_STYLE}
           >
             {PROPERTY_TYPES.map((o) => (
-              <option key={o.label} value={o.value} style={{ background: "#111111" }}>
+              <option key={o.label} value={o.value} style={{ background: "var(--card)" }}>
                 {o.label}
               </option>
             ))}
@@ -534,9 +525,9 @@ export function MlsSearchClient({
             type="button"
             onClick={() => void applySearch()}
             disabled={loading}
-            className="col-span-2 flex items-center justify-center gap-2 text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100 disabled:opacity-60"
+            className="col-span-2 flex items-center justify-center gap-2 text-[14px] font-semibold text-primary-foreground active:scale-[0.97] transition-transform duration-100 disabled:opacity-60"
             style={{
-              background: "#3B82F6",
+              background: "var(--primary)",
               borderRadius: 8,
               padding: "11px",
             }}
@@ -551,7 +542,7 @@ export function MlsSearchClient({
           type="button"
           onClick={() => setFiltersOpen((o) => !o)}
           className="mb-3 text-[13px] font-medium"
-          style={{ color: "#3B82F6" }}
+          style={{ color: "var(--primary)" }}
         >
           {filtersOpen ? "Hide filters" : "More filters & sort"}
         </button>
@@ -561,8 +552,8 @@ export function MlsSearchClient({
           <div
             className="mb-4 space-y-3 p-4"
             style={{
-              background: "rgba(20,20,22,0.6)",
-              border: "0.5px solid rgba(255,255,255,0.06)",
+              background: "var(--card)",
+              border: "1px solid var(--border)",
               borderRadius: 14,
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
@@ -571,7 +562,7 @@ export function MlsSearchClient({
             <div>
               <p
                 className="mb-1.5 text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
               >
                 Min sqft
               </p>
@@ -579,14 +570,14 @@ export function MlsSearchClient({
                 type="number"
                 value={minSqft}
                 onChange={(e) => setMinSqft(e.target.value)}
-                className="placeholder-[#4B5563]"
+                className="placeholder-muted-foreground"
                 style={INPUT_STYLE}
               />
             </div>
             <div>
               <p
                 className="mb-1.5 text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
               >
                 Status
               </p>
@@ -596,7 +587,7 @@ export function MlsSearchClient({
                 style={SELECT_STYLE}
               >
                 {STATUS_OPTS.map((o) => (
-                  <option key={o.value} value={o.value} style={{ background: "#111111" }}>
+                  <option key={o.value} value={o.value} style={{ background: "var(--card)" }}>
                     {o.label}
                   </option>
                 ))}
@@ -605,7 +596,7 @@ export function MlsSearchClient({
             <div>
               <p
                 className="mb-1.5 text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
               >
                 Sort by
               </p>
@@ -615,7 +606,7 @@ export function MlsSearchClient({
                 style={SELECT_STYLE}
               >
                 {SORT_OPTS.map((o) => (
-                  <option key={o.value} value={o.value} style={{ background: "#111111" }}>
+                  <option key={o.value} value={o.value} style={{ background: "var(--card)" }}>
                     {o.label}
                   </option>
                 ))}
@@ -624,8 +615,8 @@ export function MlsSearchClient({
             <button
               type="button"
               onClick={() => void applySearch()}
-              className="w-full text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-              style={{ background: "#3B82F6", borderRadius: 8, padding: "11px" }}
+              className="w-full text-[14px] font-semibold text-primary-foreground active:scale-[0.97] transition-transform duration-100"
+              style={{ background: "var(--primary)", borderRadius: 8, padding: "11px" }}
             >
               Apply filters
             </button>
@@ -639,10 +630,10 @@ export function MlsSearchClient({
           <div
             className="mb-4 px-4 py-3 text-[13px]"
             style={{
-              background: "rgba(20,20,22,0.6)",
-              border: "0.5px solid rgba(255,255,255,0.06)",
+              background: "var(--card)",
+              border: "1px solid var(--border)",
               borderRadius: 12,
-              color: "#F59E0B",
+              color: "var(--warm)",
             }}
           >
             {errorMessage}
@@ -652,7 +643,7 @@ export function MlsSearchClient({
         {/* ── Loading spinner ── */}
         {loading && listings.length === 0 && (
           <div className="mt-12 flex justify-center">
-            <Loader2 className="animate-spin" size={22} style={{ color: "#6B7280" }} />
+            <Loader2 className="animate-spin" size={22} style={{ color: "var(--muted-foreground)" }} />
           </div>
         )}
 
@@ -661,11 +652,11 @@ export function MlsSearchClient({
           <div className="mt-12 flex flex-col items-center text-center">
             <p
               className="mb-1 text-[11px] font-semibold uppercase"
-              style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
             >
               No Results
             </p>
-            <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
+            <p className="text-[13px]" style={{ color: "var(--muted-foreground)" }}>
               {nlKeywords.length > 0
                 ? `No listings on this page mention "${nlKeywords.join(", ")}" — try clearing that or widening the filters`
                 : "No listings match your filters"}
@@ -695,8 +686,8 @@ export function MlsSearchClient({
                 }}
                 className="cursor-pointer text-left outline-none"
                 style={{
-                  background: "rgba(20,20,22,0.7)",
-                  border: "0.5px solid rgba(255,255,255,0.06)",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: 14,
                   padding: 14,
                   backdropFilter: "blur(20px)",
@@ -706,13 +697,13 @@ export function MlsSearchClient({
                 {/* Photo */}
                 <div
                   className="relative w-full overflow-hidden"
-                  style={{ height: 144, borderRadius: 10, background: "rgba(255,255,255,0.04)" }}
+                  style={{ height: 144, borderRadius: 10, background: "var(--secondary)" }}
                 >
                   {photo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={photo} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-[11px]" style={{ color: "#6B7280" }}>
+                    <div className="flex h-full items-center justify-center text-[11px]" style={{ color: "var(--muted-foreground)" }}>
                       No photo
                     </div>
                   )}
@@ -727,7 +718,7 @@ export function MlsSearchClient({
                   {variant === "member" && saved && (
                     <span
                       className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full"
-                      style={{ background: "rgba(0,0,0,0.55)", color: "#3B82F6" }}
+                      style={{ background: "color-mix(in srgb, var(--foreground) 45%, transparent)", color: "var(--primary)" }}
                     >
                       <Bookmark size={16} fill="currentColor" />
                     </span>
@@ -735,27 +726,27 @@ export function MlsSearchClient({
                 </div>
 
                 {/* Address */}
-                <div className="mt-3 text-[14px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.01em" }}>
+                <div className="mt-3 text-[14px] font-semibold" style={{ color: "var(--foreground)", letterSpacing: "-0.01em" }}>
                   {l.address || "—"}
                 </div>
 
                 {/* City + MLS # */}
-                <div className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+                <div className="mt-0.5 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
                   {l.city} · Listing #{l.mlsNumber}
                 </div>
 
                 {/* Price */}
-                <div className="mt-1.5 text-[15px] font-semibold" style={{ color: "#3B82F6" }}>
+                <div className="mt-1.5 text-[15px] font-semibold" style={{ color: "var(--primary)" }}>
                   {fmtMoney(l.price)}
                 </div>
 
                 {/* Beds/baths/sqft */}
-                <div className="mt-2 text-[12px]" style={{ color: "#9CA3AF" }}>
+                <div className="mt-2 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
                   {l.beds} bd · {l.baths} ba · {l.sqft ? l.sqft.toLocaleString() : "—"} sqft
                 </div>
 
                 {/* Brokerage */}
-                <div className="mt-1 text-[11px]" style={{ color: "#6B7280" }}>
+                <div className="mt-1 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
                   {l.listingFirm?.name ?? "N/A"}
                 </div>
 
@@ -764,8 +755,8 @@ export function MlsSearchClient({
                   <div
                     className="mt-2 inline-block text-[11px]"
                     style={{
-                      background: "rgba(255,255,255,0.06)",
-                      color: "#6B7280",
+                      background: "var(--secondary)",
+                      color: "var(--muted-foreground)",
                       padding: "2px 8px",
                       borderRadius: 6,
                     }}
@@ -784,10 +775,10 @@ export function MlsSearchClient({
                     <button
                       type="button"
                       onClick={() => setMatchListing(l)}
-                      className="text-[13px] font-medium text-white active:scale-[0.97] transition-transform duration-100"
+                      className="text-[13px] font-medium text-primary-foreground active:scale-[0.97] transition-transform duration-100"
                       style={{
                         background: "transparent",
-                        border: "0.5px solid rgba(255,255,255,0.15)",
+                        border: "1px solid var(--border)",
                         borderRadius: 8,
                         padding: "9px 14px",
                       }}
@@ -800,8 +791,8 @@ export function MlsSearchClient({
                       className="text-[13px] font-semibold active:scale-[0.97] transition-transform duration-100"
                       style={
                         saved
-                          ? { background: "rgba(59,130,246,0.15)", color: "#3B82F6", borderRadius: 8, padding: "9px 14px" }
-                          : { background: "#3B82F6", color: "#ffffff", borderRadius: 8, padding: "9px 14px" }
+                          ? { background: "color-mix(in srgb, var(--primary) 12%, transparent)", color: "var(--primary)", borderRadius: 8, padding: "9px 14px" }
+                          : { background: "var(--primary)", color: "var(--primary-foreground)", borderRadius: 8, padding: "9px 14px" }
                       }
                     >
                       {saved ? "Saved" : "Watchlist"}
@@ -817,7 +808,7 @@ export function MlsSearchClient({
         <div ref={sentinelRef} className="h-4 w-full" />
         {loadingMore && (
           <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin" size={22} style={{ color: "#6B7280" }} />
+            <Loader2 className="animate-spin" size={22} style={{ color: "var(--muted-foreground)" }} />
           </div>
         )}
 
@@ -826,14 +817,14 @@ export function MlsSearchClient({
           <Link
             href="/properties"
             className="mt-6 inline-block text-[13px] font-medium"
-            style={{ color: "#3B82F6" }}
+            style={{ color: "var(--primary)" }}
           >
             My tracked properties →
           </Link>
         ) : (
-          <p className="mt-6 text-center text-[12px]" style={{ color: "#6B7280" }}>
+          <p className="mt-6 text-center text-[12px]" style={{ color: "var(--muted-foreground)" }}>
             Have an account?{" "}
-            <Link href="/login" className="font-medium" style={{ color: "#3B82F6" }}>
+            <Link href="/login" className="font-medium" style={{ color: "var(--primary)" }}>
               Sign in
             </Link>{" "}
             for client matching and your watchlist.

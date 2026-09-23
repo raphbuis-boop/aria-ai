@@ -7,6 +7,7 @@ import "./globals.css";
 import { ToastProvider } from "@/components/ToastProvider";
 import { PostHogProvider } from "./providers";
 import { cn } from "@/lib/utils";
+import { THEME_BOOT_SCRIPT } from "@/lib/theme";
 
 const geist = GeistSans;
 
@@ -56,15 +57,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn("font-sans", geist.variable, instrumentSerif.variable, fraunces.variable, workSans.variable)}>
-      {/*
-        body bg is transparent — the .oc-backdrop div renders the
-        Obsidian Chrome canvas. html retains bg-oc-onyx so overscroll
-        rubber-band areas stay Onyx on iOS, not white.
-      */}
-      <body className={`${dmSans.className} min-h-[100dvh] text-foreground`}>
-        {/* Obsidian Chrome backdrop — fixed, z-index -1, behind all content */}
-        <div aria-hidden="true" className="oc-backdrop" />
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={cn("font-sans", geist.variable, instrumentSerif.variable, fraunces.variable, workSans.variable)}
+    >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      </head>
+      <body className={`${dmSans.className} min-h-[100dvh] bg-background text-foreground`}>
+
         <SplashScreen />
         <PostHogProvider>
           <ToastProvider>

@@ -241,14 +241,14 @@ export function PropertyPageClient({
         <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
           <BackButton href={backHref} label="Back" className="mb-4" />
           <IdxComplianceNotice logoSize="prominent" />
-          <div className="mt-10 flex justify-center text-text-dim">
+          <div className="mt-10 flex justify-center text-muted-foreground">
             <Loader2 className="animate-spin" size={28} />
           </div>
         </div>
       );
     }
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-text-dim">
+      <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
         <Loader2 className="animate-spin" size={28} />
       </div>
     );
@@ -263,11 +263,11 @@ export function PropertyPageClient({
             <IdxComplianceNotice logoSize="prominent" />
           </div>
         ) : null}
-        <div className="rounded-[14px] border border-border-card bg-bg-card px-4 py-6 text-center">
-          <p className="text-[15px] font-medium text-text-primary">
+        <div className="rounded-[14px] border border-border bg-card px-4 py-6 text-center">
+          <p className="text-[15px] font-medium text-foreground">
             Something went wrong
           </p>
-          <p className="mt-2 text-[13px] leading-relaxed text-text-dim">
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
             {loadError}
           </p>
         </div>
@@ -277,17 +277,17 @@ export function PropertyPageClient({
 
   if (notFound || !listing) {
     return (
-      <div className="mx-auto max-w-lg px-4 py-16 text-center text-text-dim">
+      <div className="mx-auto max-w-lg px-4 py-16 text-center text-muted-foreground">
         <BackButton href={backHref} label="Back to search" className="mb-6 inline-block" />
         {viewerContext === "public" ? (
           <div className="mb-4 text-left">
             <IdxComplianceNotice logoSize="prominent" />
           </div>
         ) : null}
-        <p className="text-[15px] font-medium text-text-primary">
+        <p className="text-[15px] font-medium text-foreground">
           Listing no longer available
         </p>
-        <p className="mt-2 text-[13px] text-text-muted">
+        <p className="mt-2 text-[13px] text-muted-foreground">
           This listing may have sold or been removed from the listing feed.
         </p>
       </div>
@@ -318,13 +318,13 @@ export function PropertyPageClient({
 
       <PhotoCarousel photos={listing.photos ?? []} className="mb-4" />
 
-      <h1 className="text-[22px] font-semibold leading-tight text-text-primary">
+      <h1 className="text-[22px] font-semibold leading-tight text-foreground">
         {fmtMoney(listing.price)}
       </h1>
-      <p className="mt-1 text-[15px] font-medium text-text-primary">
+      <p className="mt-1 text-[15px] font-medium text-foreground">
         {listing.address || "—"}
       </p>
-      <p className="text-[13px] text-text-dim">
+      <p className="text-[13px] text-muted-foreground">
         {listing.city}
         {listing.state ? `, ${listing.state}` : ""}{" "}
         {listing.postalCode ?? ""}
@@ -332,54 +332,54 @@ export function PropertyPageClient({
       </p>
 
       <div className="mt-4 grid grid-cols-2 gap-2 text-[13px]">
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Beds</div>
-          <div className="font-medium text-text-primary">{listing.beds}</div>
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Beds</div>
+          <div className="font-medium text-foreground">{listing.beds}</div>
         </div>
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Baths</div>
-          <div className="font-medium text-text-primary">{listing.baths}</div>
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Baths</div>
+          <div className="font-medium text-foreground">{listing.baths}</div>
         </div>
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Sq ft</div>
-          <div className="font-medium text-text-primary">
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Sq ft</div>
+          <div className="font-medium text-foreground">
             {listing.sqft ? listing.sqft.toLocaleString() : "—"}
           </div>
         </div>
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Lot</div>
-          <div className="font-medium text-text-primary">
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Lot</div>
+          <div className="font-medium text-foreground">
             {listing.lotSize != null ? listing.lotSize.toLocaleString() : "—"}
           </div>
         </div>
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Year built</div>
-          <div className="font-medium text-text-primary">
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Year built</div>
+          <div className="font-medium text-foreground">
             {listing.yearBuilt ?? "—"}
           </div>
         </div>
-        <div className="rounded-[10px] border border-border-card bg-bg-card px-3 py-2">
-          <div className="text-[10px] uppercase text-text-dim">Type</div>
-          <div className="font-medium text-text-primary">
+        <div className="rounded-[10px] border border-border bg-card px-3 py-2">
+          <div className="text-[10px] uppercase text-muted-foreground">Type</div>
+          <div className="font-medium text-foreground">
             {listing.propertyType ?? listing.propertySubType ?? "—"}
           </div>
         </div>
       </div>
 
       {listing.daysOnMarket != null ? (
-        <p className="mt-3 text-[12px] text-text-muted">
+        <p className="mt-3 text-[12px] text-muted-foreground">
           {listing.daysOnMarket} days on market · Status {listing.status}
         </p>
       ) : (
-        <p className="mt-3 text-[12px] text-text-muted">Status {listing.status}</p>
+        <p className="mt-3 text-[12px] text-muted-foreground">Status {listing.status}</p>
       )}
 
       {listing.openHouses?.length ? (
-        <div className="mt-4 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
+        <div className="mt-4 rounded-[12px] border border-border bg-card px-3 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Open houses
           </p>
-          <ul className="mt-2 space-y-1 text-[13px] text-text-primary">
+          <ul className="mt-2 space-y-1 text-[13px] text-foreground">
             {listing.openHouses.map((o, i) => (
               <li key={i}>
                 {fmtDate(o.startTime)}
@@ -393,21 +393,21 @@ export function PropertyPageClient({
 
       {listing.description ? (
         <div className="mt-5">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Description
           </p>
-          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-text-muted">
+          <p className="mt-2 whitespace-pre-wrap text-[13px] leading-relaxed text-muted-foreground">
             {listing.description}
           </p>
         </div>
       ) : null}
 
       {listing.taxAnnualAmount != null || listing.taxYear != null ? (
-        <div className="mt-5 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
+        <div className="mt-5 rounded-[12px] border border-border bg-card px-3 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Taxes
           </p>
-          <p className="mt-1 text-[13px] text-text-primary">
+          <p className="mt-1 text-[13px] text-foreground">
             {listing.taxAnnualAmount != null
               ? `${fmtMoney(listing.taxAnnualAmount)}/yr`
               : "—"}
@@ -417,11 +417,11 @@ export function PropertyPageClient({
       ) : null}
 
       {listing.listingRepresentative?.name || listing.listingFirm?.name ? (
-        <div className="mt-5 rounded-[12px] border border-border-card bg-bg-card px-3 py-3">
-          <p className="text-[11px] font-bold uppercase tracking-wide text-text-dim">
+        <div className="mt-5 rounded-[12px] border border-border bg-card px-3 py-3">
+          <p className="text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Listed with
           </p>
-          <p className="mt-1 text-[13px] font-medium text-text-primary">
+          <p className="mt-1 text-[13px] font-medium text-foreground">
             {listing.listingRepresentative?.name ?? "—"}
           </p>
           {listing.listingRepresentative?.phone ? (
@@ -441,7 +441,7 @@ export function PropertyPageClient({
             </a>
           ) : null}
           {listing.listingFirm?.name ? (
-            <p className="mt-2 text-[12px] text-text-dim">
+            <p className="mt-2 text-[12px] text-muted-foreground">
               {listing.listingFirm.name}
               {listing.listingFirm.phone
                 ? ` · ${listing.listingFirm.phone}`
@@ -452,14 +452,14 @@ export function PropertyPageClient({
       ) : null}
 
       {mapSrc ? (
-        <div className="mt-5 overflow-hidden rounded-[12px] border border-border-card">
-          <p className="bg-bg-card px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-text-dim">
+        <div className="mt-5 overflow-hidden rounded-[12px] border border-border">
+          <p className="bg-card px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-muted-foreground">
             Map
           </p>
           <iframe
             title="Map"
             src={mapSrc}
-            className="h-56 w-full border-0 bg-bg-deep"
+            className="h-56 w-full border-0 bg-secondary"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"
           />
@@ -480,16 +480,16 @@ export function PropertyPageClient({
       ) : null}
 
       {draftPreview ? (
-        <div className="mt-4 rounded-[12px] border border-border-card bg-bg-deep px-3 py-3">
-          <p className="text-[11px] font-bold uppercase text-text-dim">
+        <div className="mt-4 rounded-[12px] border border-border bg-secondary px-3 py-3">
+          <p className="text-[11px] font-bold uppercase text-muted-foreground">
             AI draft
           </p>
-          <p className="mt-2 text-[13px] text-text-primary">{draftPreview}</p>
+          <p className="mt-2 text-[13px] text-foreground">{draftPreview}</p>
         </div>
       ) : null}
 
       {viewerContext === "agent" ? (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-secondary/95 px-4 py-3 backdrop-blur-md">
           <div className="mx-auto flex max-w-lg flex-wrap gap-2">
             <Button
               onClick={() => setMatchOpen(true)}
@@ -503,7 +503,7 @@ export function PropertyPageClient({
               className={`flex-1 min-w-[100px] rounded-[10px] px-3 py-2.5 text-[12px] font-semibold ${
                 saved
                   ? "border border-primary/40 bg-primary/15 text-primary"
-                  : "border border-border-card bg-bg-card text-text-primary"
+                  : "border border-border bg-card text-foreground"
               }`}
             >
               <Bookmark
@@ -517,7 +517,7 @@ export function PropertyPageClient({
               type="button"
               disabled={drafting}
               onClick={() => void draftPropertyBlurb()}
-              className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary disabled:opacity-50"
+              className="flex-1 min-w-[120px] rounded-[10px] border border-border bg-card px-3 py-2.5 text-[12px] font-semibold text-foreground disabled:opacity-50"
             >
               <Sparkles size={14} className="mr-1 inline-block align-text-bottom" />
               {drafting ? "…" : "AI draft"}
@@ -529,7 +529,7 @@ export function PropertyPageClient({
                   `/showings?new=1&address=${encodeURIComponent(fullAddress)}`,
                 )
               }
-              className="flex-1 min-w-[120px] rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary"
+              className="flex-1 min-w-[120px] rounded-[10px] border border-border bg-card px-3 py-2.5 text-[12px] font-semibold text-foreground"
             >
               <CalendarPlus size={14} className="mr-1 inline-block align-text-bottom" />
               Showing
@@ -538,14 +538,14 @@ export function PropertyPageClient({
           <div className="mx-auto mt-2 max-w-lg text-center">
             <Link
               href="/properties/saved"
-              className="text-[11px] text-text-dim"
+              className="text-[11px] text-muted-foreground"
             >
               View watchlist
             </Link>
           </div>
         </div>
       ) : (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border-card bg-bg-deep/95 px-4 py-3 backdrop-blur-md">
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-secondary/95 px-4 py-3 backdrop-blur-md">
           <div className="mx-auto flex max-w-lg gap-2">
             <Button
               onClick={() => { setInquiryIntent("showing"); setInquiryOpen(true); }}
@@ -556,7 +556,7 @@ export function PropertyPageClient({
             <button
               type="button"
               onClick={() => { setInquiryIntent("info"); setInquiryOpen(true); }}
-              className="flex-1 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[13px] font-semibold text-text-primary"
+              className="flex-1 rounded-[10px] border border-border bg-card px-3 py-2.5 text-[13px] font-semibold text-foreground"
             >
               Contact Agent
             </button>

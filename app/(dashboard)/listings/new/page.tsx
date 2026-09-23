@@ -118,10 +118,10 @@ export default function NewListingPage() {
 
   return (
     <div className="mx-auto max-w-lg px-4 pb-28 pt-6">
-      <div className="text-[20px] font-medium text-text-primary">
+      <div className="text-[20px] font-medium text-foreground">
         New Listing
       </div>
-      <div className="mt-2 text-[12px] text-text-dim">Step {step} of 3</div>
+      <div className="mt-2 text-[12px] text-muted-foreground">Step {step} of 3</div>
       <MarketsComingSoonNote className="mt-2" />
 
       {step === 1 ? (
@@ -140,13 +140,13 @@ export default function NewListingPage() {
               value={form[k]}
               onChange={(e) => setForm({ ...form, [k]: e.target.value })}
               placeholder={ph}
-              className="w-full rounded-[8px] border border-border-card bg-bg-deep px-3 py-2 text-[13px]"
+              className="w-full rounded-[8px] border border-border bg-secondary px-3 py-2 text-[13px]"
             />
           ))}
           <button
             type="button"
             onClick={() => setStep(2)}
-            className="mt-2 w-full rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
+            className="mt-2 w-full rounded-[8px] bg-primary py-2 text-[13px] text-primary-foreground"
           >
             Continue
           </button>
@@ -155,7 +155,7 @@ export default function NewListingPage() {
 
       {step === 2 ? (
         <div className="mt-4">
-          <label className="inline-block rounded-[8px] bg-accent-blue px-3 py-2 text-[12px] text-white">
+          <label className="inline-block rounded-[8px] bg-primary px-3 py-2 text-[12px] text-primary-foreground">
             Upload photos
             <input type="file" multiple className="hidden" onChange={uploadPhotos} />
           </label>
@@ -168,7 +168,7 @@ export default function NewListingPage() {
           <button
             type="button"
             onClick={() => setStep(3)}
-            className="mt-4 w-full rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
+            className="mt-4 w-full rounded-[8px] bg-primary py-2 text-[13px] text-primary-foreground"
           >
             Continue
           </button>
@@ -180,14 +180,14 @@ export default function NewListingPage() {
           <button
             type="button"
             onClick={generateSuite}
-            className="w-full rounded-[8px] bg-accent-blue py-2 text-[13px] text-white"
+            className="w-full rounded-[8px] bg-primary py-2 text-[13px] text-primary-foreground"
           >
             Generate Marketing Suite
           </button>
           {suite ? (
             <div className="space-y-3">
-              <div className="rounded-[14px] border border-border-card bg-bg-card p-3 text-[13px] text-text-secondary">
-                <div className="text-[11px] text-text-dim">Listing description</div>
+              <div className="rounded-[14px] border border-border bg-card p-3 text-[13px] text-foreground/75">
+                <div className="text-[11px] text-muted-foreground">Listing description</div>
                 {suite.mls_description}
                 <button
                   type="button"
@@ -196,7 +196,7 @@ export default function NewListingPage() {
                       .writeText(suite.mls_description)
                       .then(() => toast.toast("Copied", "success"))
                   }
-                  className="mt-2 rounded-[8px] border border-border-card px-2 py-1 text-[11px] text-accent-blue"
+                  className="mt-2 rounded-[8px] border border-border px-2 py-1 text-[11px] text-primary"
                 >
                   Copy
                 </button>
@@ -205,7 +205,7 @@ export default function NewListingPage() {
                 (k) => (
                   <div
                     key={k}
-                    className="rounded-[14px] border border-border-card bg-bg-card p-3 text-[13px]"
+                    className="rounded-[14px] border border-border bg-card p-3 text-[13px]"
                   >
                     {String(suite[k] ?? "")}
                     <button
@@ -215,14 +215,14 @@ export default function NewListingPage() {
                           .writeText(String(suite[k] ?? ""))
                           .then(() => toast.toast("Copied", "success"))
                       }
-                      className="mt-2 rounded-[8px] border border-border-card px-2 py-1 text-[11px] text-accent-blue"
+                      className="mt-2 rounded-[8px] border border-border px-2 py-1 text-[11px] text-primary"
                     >
                       Copy
                     </button>
                   </div>
                 ),
               )}
-              <div className="rounded-[14px] border border-border-card bg-bg-card p-3 text-[13px]">
+              <div className="rounded-[14px] border border-border bg-card p-3 text-[13px]">
                 {suite.sms_blast}
                 <button
                   type="button"
@@ -231,7 +231,7 @@ export default function NewListingPage() {
                       .writeText(suite.sms_blast)
                       .then(() => toast.toast("Copied", "success"))
                   }
-                  className="mt-2 rounded-[8px] border border-border-card px-2 py-1 text-[11px] text-accent-blue"
+                  className="mt-2 rounded-[8px] border border-border px-2 py-1 text-[11px] text-primary"
                 >
                   Copy
                 </button>
@@ -241,14 +241,14 @@ export default function NewListingPage() {
           <button
             type="button"
             onClick={saveListing}
-            className="w-full rounded-[8px] border border-border-card py-2 text-[13px] text-accent-blue"
+            className="w-full rounded-[8px] border border-border py-2 text-[13px] text-primary"
           >
             Save listing
           </button>
           <button
             type="button"
             onClick={findBuyers}
-            className="w-full rounded-[8px] bg-bg-deep py-2 text-[13px] text-text-secondary"
+            className="w-full rounded-[8px] bg-secondary py-2 text-[13px] text-foreground/75"
           >
             Find Matching Buyers
           </button>
@@ -256,13 +256,13 @@ export default function NewListingPage() {
             {buyers.map((b) => (
               <div
                 key={b.id}
-                className="flex items-center justify-between rounded-[10px] border border-border-card bg-bg-card px-3 py-2"
+                className="flex items-center justify-between rounded-[10px] border border-border bg-card px-3 py-2"
               >
                 <span className="text-[13px]">{b.name}</span>
                 <button
                   type="button"
                   onClick={() => aiTextBuyer(b.id, b.name)}
-                  className="rounded-[8px] bg-accent-blue px-2 py-1 text-[11px] text-white"
+                  className="rounded-[8px] bg-primary px-2 py-1 text-[11px] text-primary-foreground"
                 >
                   AI Text
                 </button>

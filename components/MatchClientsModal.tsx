@@ -184,60 +184,60 @@ export function MatchClientsModal({
   if (!open || !listing) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/65 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Close"
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 mb-6 max-h-[85vh] w-full max-w-lg overflow-hidden rounded-t-[22px] border border-border-card bg-bg-card shadow-xl">
-        <div className="border-b border-border-card px-4 py-3">
-          <p className="text-[15px] font-semibold text-text-primary">
+      <div className="relative z-10 mb-6 max-h-[85vh] w-full max-w-lg overflow-hidden rounded-t-[22px] border border-border bg-card shadow-xl">
+        <div className="border-b border-border px-4 py-3">
+          <p className="text-[15px] font-semibold text-foreground">
             Match to clients
           </p>
-          <p className="mt-0.5 truncate text-[12px] text-text-dim">
+          <p className="mt-0.5 truncate text-[12px] text-muted-foreground">
             {listing.address} · {fmtMoney(listing.price)}
           </p>
         </div>
         <div className="max-h-[50vh] overflow-y-auto px-4 py-3">
           {loading ? (
-            <p className="py-6 text-center text-[13px] text-text-dim">
+            <p className="py-6 text-center text-[13px] text-muted-foreground">
               Finding matches…
             </p>
           ) : matches.length === 0 ? (
-            <p className="py-6 text-center text-[13px] text-text-dim">
+            <p className="py-6 text-center text-[13px] text-muted-foreground">
               No clients matched this listing (score ≥ 40).
             </p>
           ) : (
             <>
-              <p className="mb-3 text-[12px] text-text-muted">
+              <p className="mb-3 text-[12px] text-muted-foreground">
                 This property matches {matches.length} of your clients:
               </p>
               <ul className="space-y-2">
                 {matches.map((m) => (
                   <li key={m.clientId}>
-                    <label className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border-card bg-bg-deep px-3 py-2.5">
+                    <label className="flex cursor-pointer items-start gap-3 rounded-[12px] border border-border bg-secondary px-3 py-2.5">
                       <input
                         type="checkbox"
                         checked={selected.has(m.clientId)}
                         onChange={() => toggle(m.clientId)}
-                        className="mt-1 rounded border-border-card"
+                        className="mt-1 rounded border-border"
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
-                          <span className="text-[13px] font-medium text-text-primary">
+                          <span className="text-[13px] font-medium text-foreground">
                             {m.name ?? "Client"}
                           </span>
-                          <span className="text-[12px] font-bold text-accent-blue">
+                          <span className="text-[12px] font-bold text-primary">
                             {m.score}% match
                           </span>
                         </div>
-                        <p className="mt-0.5 text-[11px] text-text-dim">
+                        <p className="mt-0.5 text-[11px] text-muted-foreground">
                           {m.reasons.join(" · ")}
                         </p>
                         {!m.phone?.trim() ? (
-                          <p className="mt-1 text-[10px] text-accent-amber">
+                          <p className="mt-1 text-[10px] text-warm">
                             No phone — can&apos;t SMS
                           </p>
                         ) : null}
@@ -249,13 +249,13 @@ export function MatchClientsModal({
             </>
           )}
         </div>
-        <div className="flex flex-col gap-2 border-t border-border-card bg-bg-deep/80 px-4 py-3">
+        <div className="flex flex-col gap-2 border-t border-border bg-secondary/80 px-4 py-3">
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               disabled={working !== null || matches.length === 0}
               onClick={() => void draftSelected()}
-              className="flex-1 rounded-[10px] bg-accent-blue px-3 py-2.5 text-[12px] font-semibold text-white disabled:opacity-50"
+              className="flex-1 rounded-[10px] bg-primary px-3 py-2.5 text-[12px] font-semibold text-primary-foreground disabled:opacity-50"
             >
               {working === "draft" ? "Drafting…" : "Draft AI text"}
             </button>
@@ -263,7 +263,7 @@ export function MatchClientsModal({
               type="button"
               disabled={working !== null || matches.length === 0}
               onClick={() => void sendAll()}
-              className="flex-1 rounded-[10px] border border-border-card bg-bg-card px-3 py-2.5 text-[12px] font-semibold text-text-primary disabled:opacity-50"
+              className="flex-1 rounded-[10px] border border-border bg-card px-3 py-2.5 text-[12px] font-semibold text-foreground disabled:opacity-50"
             >
               {working === "send" ? "Opening…" : "Text (SMS)"}
             </button>
@@ -271,7 +271,7 @@ export function MatchClientsModal({
           <button
             type="button"
             onClick={onClose}
-            className="w-full rounded-[10px] py-2 text-[12px] text-text-dim"
+            className="w-full rounded-[10px] py-2 text-[12px] text-muted-foreground"
           >
             Cancel
           </button>

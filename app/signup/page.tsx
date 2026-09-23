@@ -1,7 +1,7 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
+import { AriaMark } from "@/components/auth/aria-mark";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -10,11 +10,11 @@ import { useState } from "react";
 const ease = [0.2, 0.8, 0.2, 1] as const;
 
 // Brand tokens (ivory / deep green) — matches the app + landing.
-const IVORY = "#FAF6EE";
-const INK = "#2B2419";
-const MUTED = "#6f6656";
-const GREEN = "#1F5C46";
-const BORDER = "rgba(43,36,25,0.12)";
+const IVORY = "var(--background)";
+const INK = "var(--foreground)";
+const MUTED = "var(--muted-foreground)";
+const GREEN = "var(--primary)";
+const BORDER = "var(--input)";
 
 function GoogleIcon() {
   return (
@@ -28,7 +28,7 @@ function GoogleIcon() {
 }
 
 const inputStyle: React.CSSProperties = {
-  background: "#FFFFFF",
+  background: "var(--card)",
   border: `1px solid ${BORDER}`,
   color: INK,
   borderRadius: 12,
@@ -117,14 +117,7 @@ export default function SignupPage() {
           className="mb-8 flex flex-col items-center"
         >
           <Link href="/login" className="transition hover:opacity-80">
-            <Image
-              src="/aria-logo.png"
-              alt="Aria"
-              width={72}
-              height={72}
-              priority
-              className="mb-4 h-[56px] w-[56px] md:h-[64px] md:w-[64px]"
-            />
+            <span className="mb-4 block"><AriaMark size={60} /></span>
           </Link>
           <h1 className="font-heading text-[24px] font-semibold" style={{ color: INK }}>
             Create your account
@@ -147,7 +140,7 @@ export default function SignupPage() {
             onClick={() => void onGoogleSignup()}
             whileTap={{ scale: anyBusy ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
             className="flex w-full items-center justify-center gap-2.5 py-3.5 text-[15px] font-medium transition-colors disabled:pointer-events-none disabled:opacity-45"
-            style={{ background: "#FFFFFF", border: `1px solid ${BORDER}`, color: INK, borderRadius: 12 }}
+            style={{ background: "var(--card)", border: `1px solid ${BORDER}`, color: INK, borderRadius: 12 }}
           >
             <GoogleIcon />
             {googleBusy ? "Redirecting…" : "Continue with Google"}
@@ -180,13 +173,13 @@ export default function SignupPage() {
               placeholder="Password"
               style={inputStyle}
             />
-            {error ? <p className="text-[13px]" style={{ color: "#B84B33" }}>{error}</p> : null}
+            {error ? <p className="text-[13px]" style={{ color: "var(--destructive)" }}>{error}</p> : null}
             {notice ? <p className="text-[13px]" style={{ color: GREEN }}>{notice}</p> : null}
             <motion.button
               type="submit"
               disabled={anyBusy}
               whileTap={{ scale: anyBusy ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
-              className="mt-2 w-full py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-55"
+              className="mt-2 w-full py-3.5 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-55"
               style={{ background: GREEN, borderRadius: 12 }}
             >
               {loading ? "Creating…" : "Sign up"}

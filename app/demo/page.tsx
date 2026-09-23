@@ -598,9 +598,9 @@ function TabButton({
       style={{ opacity: active ? 1 : 0.45 }}
       aria-pressed={active}
     >
-      <span className={active ? "text-accent-blue" : "text-text-dim"}>{children}</span>
+      <span className={active ? "text-primary" : "text-muted-foreground"}>{children}</span>
       <span
-        className={`text-[9px] ${active ? "text-accent-blue" : "text-text-dim"}`}
+        className={`text-[9px] ${active ? "text-primary" : "text-muted-foreground"}`}
       >
         {label}
       </span>
@@ -632,7 +632,7 @@ export default function DemoPage() {
       {tab === "pipeline" && <PipelineView clients={clients} setClients={setClients} />}
       {tab === "clients" && <ClientsView clients={clients} />}
 
-      <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border-card bg-bg-primary">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 h-16 border-t border-border bg-background">
         <div className="mx-auto flex h-full max-w-lg items-end justify-between px-2 pb-1 pt-1">
           <TabButton active={tab === "home"} onClick={() => setTab("home")} label="Home">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

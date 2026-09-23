@@ -1,13 +1,10 @@
 "use client";
 
-// BottomNav — floating tab bar, WhatsApp-style dark glass pill.
+// BottomNav — floating tab bar on the ivory canvas.
 //
-// 5 slots, left to right: Today / Clients / Aria (raised center orb) / Follow-ups / Properties
-// Icon + label per tab (WhatsApp layout). The active tab gets a filled,
-// rounded highlight that slides between tabs (shared layoutId). The pill is a
-// dark charcoal glass surface that floats over the ivory app content. The
-// center Aria button is a raised, breathing blue orb (matching the landing
-// page) with the white "A" mark on top.
+// 5 slots, left to right: Today / Clients / Aria (raised center button) / Follow-ups / Properties
+// The active tab gets a soft green highlight that slides between tabs
+// (shared layoutId). Colors come from the theme tokens, so it follows dark mode.
 //
 // Safe-area contract: bottom offset includes env(safe-area-inset-bottom).
 
@@ -26,12 +23,12 @@ type Tab = {
 
 const TABS_LEFT: Tab[] = [
   { key: "today", label: "Today", href: "/dashboard", Icon: Home },
-  { key: "clients", label: "Clients", href: "/clients", Icon: Users, activeFor: ["/people", "/pipeline"] },
+  { key: "clients", label: "Clients", href: "/clients", Icon: Users, activeFor: ["/showings", "/transactions"] },
 ];
 
 const TABS_RIGHT: Tab[] = [
-  { key: "followups", label: "Follow-ups", href: "/inbox", Icon: MessageSquare, activeFor: ["/inbox"] },
-  { key: "properties", label: "Properties", href: "/properties", Icon: Building2, activeFor: ["/properties", "/mls", "/listings"] },
+  { key: "followups", label: "Follow-ups", href: "/inbox", Icon: MessageSquare, activeFor: ["/emails", "/inquiries"] },
+  { key: "properties", label: "Properties", href: "/properties", Icon: Building2, activeFor: ["/listings"] },
 ];
 
 const TAP_SPRING = { type: "spring", stiffness: 500, damping: 28 } as const;
@@ -79,27 +76,21 @@ function TabButton({ tab, pathname }: { tab: Tab; pathname: string }) {
       {active && (
         <motion.span
           layoutId="nav-glass"
-          className="absolute inset-0 rounded-2xl"
+          className="absolute inset-0 rounded-2xl bg-primary/10"
           transition={{ type: "spring", stiffness: 420, damping: 34 }}
-          style={{
-            background: "rgba(120,120,128,0.26)",
-            boxShadow: "inset 0 0.5px 0 rgba(255,255,255,0.12)",
-          }}
         />
       )}
       <span className="relative z-10 flex flex-col items-center gap-0.5">
         {pending ? (
-          <LoaderCircle className="size-[22px] animate-spin" style={{ color: "#fff" }} aria-label={`Opening ${tab.label}`} />
+          <LoaderCircle className="size-[22px] animate-spin text-primary" aria-label={`Opening ${tab.label}`} />
         ) : (
           <tab.Icon
-            className="size-[22px]"
-            style={{ color: active ? "#ffffff" : "#8e8e93" }}
+            className={active ? "size-[22px] text-primary" : "size-[22px] text-muted-foreground"}
             strokeWidth={active ? 2.2 : 1.9}
           />
         )}
         <span
-          className="text-[10px] font-medium leading-none tracking-tight"
-          style={{ color: active ? "#ffffff" : "#8e8e93" }}
+          className={`text-[10px] font-medium leading-none tracking-tight ${active ? "text-primary" : "text-muted-foreground"}`}
         >
           {tab.label}
         </span>
@@ -113,7 +104,7 @@ export function BottomNav() {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
 
-  const ariaActive = pathname === "/voice" || pathname.startsWith("/voice/") || pathname === "/ai";
+  const ariaActive = pathname === "/voice" || pathname.startsWith("/voice/");
 
   return (
     <div
@@ -123,25 +114,11 @@ export function BottomNav() {
         transform: "translateX(-50%)",
       }}
     >
-      <div
-        className="relative flex items-center gap-1 rounded-[30px] px-2.5"
-        style={{
-          height: 66,
-          background: "rgba(28, 28, 30, 0.72)",
-          backdropFilter: "blur(28px) saturate(180%)",
-          WebkitBackdropFilter: "blur(28px) saturate(180%)",
-          border: "1px solid rgba(255,255,255,0.08)",
-          boxShadow:
-            "inset 0 1px 0 rgba(255,255,255,0.10), 0 1px 2px rgba(0,0,0,0.30), 0 18px 40px -12px rgba(0,0,0,0.55)",
-        }}
+      <nav
+        aria-label="Main"
+        className="relative flex items-center gap-1 rounded-[30px] border border-border bg-card/90 px-2.5 shadow-[0_1px_2px_rgba(43,36,25,0.06),0_18px_40px_-14px_rgba(43,36,25,0.28)] backdrop-blur-xl"
+        style={{ height: 66 }}
       >
-        {/* Subtle top specular gloss, clipped to the pill */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-[30px]">
-          <div
-            className="absolute inset-x-0 top-0 h-1/2"
-            style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0) 100%)" }}
-          />
-        </div>
 
         {TABS_LEFT.map((tab) => (
           <TabButton key={tab.key} tab={tab} pathname={pathname} />
@@ -160,65 +137,28 @@ export function BottomNav() {
         <div className="absolute left-1/2 -translate-x-1/2" style={{ top: -20 }}>
           <motion.button
             type="button"
-            aria-label="Aria"
+            aria-label="Ask Aria"
+            aria-current={ariaActive ? "page" : undefined}
             aria-busy={pending}
             whileTap={{ scale: 0.9 }}
-            animate={{
-              scale: [1, 1.06, 1],
-              boxShadow: [
-                "0 0 0 3px var(--background), 0 0 0 8px rgba(79,123,255,0.06), 0 0 0 16px rgba(79,123,255,0.03), 0 10px 30px rgba(79,123,255,0.35)",
-                "0 0 0 3px var(--background), 0 0 0 11px rgba(79,123,255,0.08), 0 0 0 22px rgba(79,123,255,0.04), 0 12px 40px rgba(79,123,255,0.45)",
-                "0 0 0 3px var(--background), 0 0 0 8px rgba(79,123,255,0.06), 0 0 0 16px rgba(79,123,255,0.03), 0 10px 30px rgba(79,123,255,0.35)",
-              ],
-            }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+            transition={TAP_SPRING}
             onClick={() => {
               triggerHaptic();
               if (pathname === "/voice" || pending) return;
               startTransition(() => router.push("/voice"));
             }}
-            className="relative flex items-center justify-center rounded-full"
-            style={{
-              width: 56,
-              height: 56,
-              background: "radial-gradient(circle at 38% 35%, #6f9bff, #4f7bff 50%, #2a4acc)",
-            }}
+            className="relative flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--background),0_10px_24px_-6px_rgba(31,92,70,0.55)]"
           >
-            {/* Pulsing halo ring — matches the landing orb's ::after */}
-            <motion.span
-              aria-hidden
-              className="pointer-events-none absolute rounded-full"
-              style={{
-                inset: -6,
-                border: ariaActive
-                  ? "1px solid rgba(107,143,255,0.55)"
-                  : "0.5px solid rgba(79,123,255,0.28)",
-              }}
-              animate={{ scale: [1, 1.14, 1], opacity: [0.9, 0.4, 0.9] }}
-              transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-            />
-            {/* Glossy top-left highlight — gives the sphere its 3D read */}
-            <span
-              aria-hidden
-              className="pointer-events-none absolute left-1/2 top-[5px] h-1/3 w-1/2 -translate-x-1/2 rounded-full"
-              style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.6), transparent)" }}
-            />
-            <svg
-              viewBox="0 0 200 200"
-              xmlns="http://www.w3.org/2000/svg"
-              width="22"
-              height="22"
-              aria-hidden="true"
-              className="relative z-10"
-            >
-              <path
-                d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z"
-                fill="#ffffff"
-              />
-            </svg>
+            {pending ? (
+              <LoaderCircle className="size-5 animate-spin" />
+            ) : (
+              <svg viewBox="0 0 200 200" width="22" height="22" aria-hidden="true">
+                <path d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z" fill="currentColor" />
+              </svg>
+            )}
           </motion.button>
         </div>
-      </div>
+      </nav>
     </div>
   );
 }

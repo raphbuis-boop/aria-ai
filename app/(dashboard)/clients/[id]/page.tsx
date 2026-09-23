@@ -1,19 +1,30 @@
 import { createClient } from "@/lib/supabase/server";
-import { notFound } from "next/navigation";
-import { ClientDetail } from "./client-detail";
-import { buildClientBrief } from "@/lib/client-brief";
+import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
+import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
+import { ClientDetail, type MatchedHome, type ShowingItem } from "./client-detail";
 
-export default async function ClientDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export const dynamic = "force-dynamic";
+
+type Rel<T> = T | T[] | null;
+type PropertyJoin = {
+  id: string;
+  address: string | null;
+  price: number | null;
+  beds: number | null;
+  baths: number | null;
+  town: string | null;
+  status: string | null;
+  photos: unknown;
+};
+
+export default async function ClientDetailPage({ params }: { params: { id: string } }) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) redirect("/login");
 
   const { data: client } = await supabase
     .from("clients")
@@ -21,69 +32,44 @@ export default async function ClientDetailPage({
     .eq("id", params.id)
     .eq("agent_id", user.id) // multi-tenant safety
     .maybeSingle();
-
   if (!client) notFound();
 
-  const minus24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-
-  const [
-    { data: activities },
-    { data: recentMatches },
-    { data: matchedPropertyRows },
-    { data: transactions },
-    { data: bba },
-    { data: showingRequests },
-  ] = await Promise.all([
-    // Full activity history for this client, newest first — the timeline.
-    supabase
-      .from("activities")
-      .select("id, type, direction, body, ai_draft, approved, sent, created_at")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id)
-      .order("created_at", { ascending: false }),
-
-    // Property matches — recent (last 24h, unnotified), feeds the briefing.
-    supabase
-      .from("property_matches")
-      .select("id, created_at, notified")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id)
-      .gte("created_at", minus24h)
-      .eq("notified", false),
-
-    // Matched properties with details — top 3 by score for the strip
-    supabase
-      .from("property_matches")
-      .select("match_score, match_reasons, properties(id, address, price, beds, baths, town, status)")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id)
-      .order("match_score", { ascending: false })
-      .limit(5),
-
-    // Transactions for this client — deal value, closing date, status.
-    supabase
-      .from("transactions")
-      .select("id, status, closing_date, contract_price")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id),
-
-    // Signed BBA — real commission rate, beats the 2.5% default.
-    supabase
-      .from("buyer_broker_agreements")
-      .select("commission_pct, signed_at, term_start, term_end, search_area, signed_storage_path")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id)
-      .maybeSingle(),
-
-    // Showings the client asked for over SMS, awaiting the agent's approval.
-    supabase
-      .from("showings")
-      .select("id, address, showing_date, requested_time_text, notes, created_at")
-      .eq("client_id", params.id)
-      .eq("agent_id", user.id)
-      .eq("status", "requested")
-      .order("created_at", { ascending: true }),
-  ]);
+  const [{ data: activities }, { data: matchRows }, { data: showings }, { data: bba }, { data: ariaTasks }] =
+    await Promise.all([
+      supabase
+        .from("activities")
+        .select("id, type, direction, body, ai_draft, approved, sent, created_at, metadata")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("property_matches")
+        .select("match_score, match_reasons, created_at, properties(id, address, price, beds, baths, town, status, photos)")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .order("match_score", { ascending: false })
+        .limit(12),
+      supabase
+        .from("showings")
+        .select("id, address, showing_date, status, requested_time_text, notes, created_at")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("buyer_broker_agreements")
+        .select("commission_pct, signed_at, term_start, term_end, search_area, signed_storage_path")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .maybeSingle(),
+      supabase
+        .from("tasks")
+        .select("id, kind, title, client_id, created_at")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .eq("done", false)
+        .in("kind", ARIA_TASK_KINDS.filter((k) => k !== "aria_showing_approval"))
+        .order("created_at", { ascending: true }),
+    ]);
 
   // Short-lived link to the signed PDF (private bucket; ownership checked above).
   let signedPdfUrl: string | null = null;
@@ -94,91 +80,45 @@ export default async function ClientDetailPage({
     signedPdfUrl = signed?.signedUrl ?? null;
   }
 
-  const allActivities = activities ?? [];
-  const allMatches = recentMatches ?? [];
-  const allTransactions = transactions ?? [];
-
-  const draftCount = allActivities.filter(
-    (a) => a.ai_draft && !a.approved && !a.sent,
-  ).length;
-
-  const lastDraftBody =
-    (allActivities.find((a) => a.ai_draft && !a.approved && !a.sent)
-      ?.body as string | null) ?? null;
-
-  const recentMatchCount = allMatches.length;
-
-  const brief = buildClientBrief(
-    {
-      name: client.name as string,
-      phone: client.phone as string | null,
-      status: client.status as string | null,
-      clientRole: client.client_role as string | null,
-      budgetMin: client.budget_min as number | null,
-      budgetMax: client.budget_max as number | null,
-      town: client.town as string | null,
-      leadScore: client.lead_score as number | null,
-    },
-    allActivities,
-    allTransactions,
-    allMatches,
-    (bba?.commission_pct as number | null | undefined) ?? null,
-  );
-
-  // Normalise the property_matches join (Supabase returns the FK join as
-  // a single object or null, but TypeScript types it as array or object)
-  type RawMatchRow = {
-    match_score: number | null;
-    match_reasons: unknown;
-    properties: {
-      id: string;
-      address: string | null;
-      price: number | null;
-      beds: number | null;
-      baths: number | null;
-      town: string | null;
-      status: string | null;
-    } | {
-      id: string;
-      address: string | null;
-      price: number | null;
-      beds: number | null;
-      baths: number | null;
-      town: string | null;
-      status: string | null;
-    }[] | null;
-  };
-
-  const matchedProperties = ((matchedPropertyRows ?? []) as unknown as RawMatchRow[])
+  const homes: MatchedHome[] = (matchRows ?? [])
     .map((row) => {
-      const prop = Array.isArray(row.properties) ? row.properties[0] : row.properties;
-      if (!prop) return null;
+      const joined = row.properties as unknown as Rel<PropertyJoin>;
+      const p = Array.isArray(joined) ? joined[0] : joined;
+      if (!p) return null;
+      const reasons = Array.isArray(row.match_reasons) ? (row.match_reasons as string[]) : [];
       return {
-        id: prop.id,
-        address: prop.address,
-        price: prop.price,
-        beds: prop.beds,
-        baths: prop.baths,
-        town: prop.town,
-        status: prop.status,
+        id: p.id,
+        address: p.address,
+        price: p.price,
+        beds: p.beds,
+        baths: p.baths,
+        town: p.town,
+        status: p.status,
+        photo: Array.isArray(p.photos) && typeof p.photos[0] === "string" ? (p.photos[0] as string) : null,
         score: Number(row.match_score ?? 0),
-        sentByAria:
-          Array.isArray(row.match_reasons) &&
-          row.match_reasons.includes("Recommended by Aria over SMS"),
+        sent: reasons.includes(ARIA_RECOMMENDED_REASON) ? ("aria" as const) : reasons.includes(AGENT_SENT_REASON) ? ("agent" as const) : null,
       };
     })
-    .filter((p): p is NonNullable<typeof p> => p !== null);
+    .filter((h): h is MatchedHome => h !== null)
+    // Homes already texted first, then best fit.
+    .sort((a, b) => Number(Boolean(b.sent)) - Number(Boolean(a.sent)) || b.score - a.score);
+
+  const allActivities = activities ?? [];
 
   return (
     <ClientDetail
       client={client}
       activities={allActivities}
-      draftCount={draftCount}
-      lastDraftBody={lastDraftBody}
-      recentMatchCount={recentMatchCount}
-      matchedProperties={matchedProperties}
-      brief={brief}
-      showingRequests={showingRequests ?? []}
+      homes={homes}
+      showings={(showings ?? []) as ShowingItem[]}
+      ariaTasks={(ariaTasks ?? []).map((t) => ({
+        id: String(t.id),
+        kind: String(t.kind),
+        title: t.title as string,
+        clientId: params.id,
+        clientName: null,
+        createdAt: t.created_at as string,
+      }))}
       ariaThread={{
         phone: (client.phone as string | null) ?? null,
         paused: Boolean(client.aria_paused),

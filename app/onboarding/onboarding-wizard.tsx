@@ -49,7 +49,7 @@ function ProgressBar({ step }: { step: WizardStep }) {
               width: s === step ? 28 : 8,
               height: 4,
               borderRadius: 99,
-              background: s === step ? "#3B82F6" : s < step ? "#10B981" : "rgba(255,255,255,0.12)",
+              background: s === step ? "var(--primary)" : s < step ? "var(--primary)" : "var(--secondary)",
               transition: "all 400ms cubic-bezier(0.16,1,0.3,1)",
             }}
           />
@@ -67,7 +67,7 @@ function SkipButton({ onClick }: { onClick: () => void }) {
       type="button"
       onClick={onClick}
       className="mt-4 w-full py-3 text-[13px] font-medium"
-      style={{ color: "#4B5563" }}
+      style={{ color: "var(--muted-foreground)" }}
     >
       Skip for now
     </button>
@@ -190,11 +190,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
   return (
     <div
       className="fixed inset-0 flex flex-col overflow-y-auto"
-      style={{
-        background: "#040407",
-        color: "#ffffff",
-        fontFamily: "Inter, system-ui, sans-serif",
-      }}
+      style={{ background: "var(--background)", color: "var(--foreground)" }}
     >
       <div
         className="relative z-10 mx-auto flex w-full max-w-[420px] flex-col px-6"
@@ -207,7 +203,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
         {/* Aria wordmark */}
         <p
           className="mb-6 text-center text-[11px] font-semibold uppercase tracking-[0.2em]"
-          style={{ color: "#3B82F6" }}
+          style={{ color: "var(--primary)" }}
         >
           Aria
         </p>
@@ -217,14 +213,14 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
         {/* ── Step 1: Welcome ── */}
         {step === 1 && (
           <div className="flex flex-col">
-            <h1 className="mb-2 text-[28px] font-bold tracking-tight">
+            <h1 className="mb-2 font-heading text-[30px] leading-tight">
               Welcome to Aria
             </h1>
-            <p className="mb-8 text-[15px]" style={{ color: "#6B7280" }}>
-              Your AI-powered real estate CRM. Let&apos;s get you set up in 2 minutes.
+            <p className="mb-8 text-[15px]" style={{ color: "var(--muted-foreground)" }}>
+              Aria texts your new leads, learns what they want, and asks you before booking showings. Two minutes to set up.
             </p>
 
-            <label className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "#6B7280" }}>
+            <label className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--muted-foreground)" }}>
               Your name
             </label>
             <input
@@ -233,10 +229,10 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
               onChange={(e) => setName(e.target.value)}
               placeholder="Full name"
               onKeyDown={(e) => { if (e.key === "Enter") void handleSaveName(); }}
-              className="rounded-[14px] px-4 py-3.5 text-[16px] text-white outline-none"
+              className="rounded-[14px] px-4 py-3.5 text-[16px] text-foreground outline-none"
               style={{
-                background: "rgba(20,20,22,0.6)",
-                border: "0.5px solid rgba(255,255,255,0.10)",
+                background: "var(--card)",
+                border: "1px solid var(--border)",
               }}
             />
 
@@ -244,8 +240,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
               type="button"
               onClick={() => void handleSaveName()}
               disabled={savingName}
-              className="mt-4 w-full rounded-full py-4 text-[16px] font-semibold text-white disabled:opacity-50 active:scale-[0.98] transition-transform"
-              style={{ background: "linear-gradient(135deg, #3B82F6, #06B6D4)" }}
+              className="mt-4 w-full rounded-full bg-primary py-4 text-[16px] font-semibold text-primary-foreground disabled:opacity-50 active:scale-[0.98] transition-transform"
             >
               {savingName ? "Saving…" : "Continue →"}
             </button>
@@ -257,20 +252,20 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
         {/* ── Step 2: Gmail ── */}
         {step === 2 && (
           <div className="flex flex-col">
-            <h1 className="mb-2 text-[28px] font-bold tracking-tight">
-              Connect Gmail
+            <h1 className="mb-2 font-heading text-[30px] leading-tight">
+              Connect Google
             </h1>
-            <p className="mb-8 text-[15px]" style={{ color: "#6B7280" }}>
-              Aria reads your inbox so you can reply to clients without leaving the app.
+            <p className="mb-8 text-[15px]" style={{ color: "var(--muted-foreground)" }}>
+              Read and answer client email in Aria, and let Aria check your calendar before you approve a showing.
             </p>
 
             {gmailError && (
               <div
                 className="mb-4 flex items-center gap-3 rounded-[14px] px-4 py-4"
-                style={{ background: "rgba(239,68,68,0.08)", border: "0.5px solid rgba(239,68,68,0.25)" }}
+                style={{ background: "color-mix(in srgb, var(--destructive) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--destructive) 25%, transparent)" }}
               >
-                <span style={{ color: "#EF4444", fontSize: 18 }}>✕</span>
-                <p className="text-[13px] leading-snug" style={{ color: "#FCA5A5" }}>
+                <span style={{ color: "var(--destructive)", fontSize: 18 }}>✕</span>
+                <p className="text-[13px] leading-snug" style={{ color: "var(--destructive)" }}>
                   Google connection failed. You can try again or skip for now.
                 </p>
               </div>
@@ -279,22 +274,22 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             {gmailConnected ? (
               <div
                 className="mb-4 flex items-center gap-3 rounded-[14px] px-4 py-4"
-                style={{ background: "rgba(16,185,129,0.10)", border: "0.5px solid rgba(16,185,129,0.25)" }}
+                style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)", border: "1px solid color-mix(in srgb, var(--primary) 25%, transparent)" }}
               >
-                <span style={{ color: "#10B981", fontSize: 20 }}>✓</span>
+                <span style={{ color: "var(--primary)", fontSize: 20 }}>✓</span>
                 <div>
-                  <p className="text-[14px] font-semibold" style={{ color: "#10B981" }}>Gmail connected</p>
-                  <p className="text-[12px]" style={{ color: "#6B7280" }}>Your inbox is synced</p>
+                  <p className="text-[14px] font-semibold" style={{ color: "var(--primary)" }}>Google connected</p>
+                  <p className="text-[12px]" style={{ color: "var(--muted-foreground)" }}>Email and calendar are linked</p>
                 </div>
               </div>
             ) : (
               <button
                 type="button"
                 onClick={handleGmailConnect}
-                className="flex w-full items-center justify-center gap-3 rounded-[14px] py-4 text-[16px] font-semibold text-white active:opacity-80"
+                className="flex w-full items-center justify-center gap-3 rounded-[14px] py-4 text-[16px] font-semibold text-foreground active:opacity-80"
                 style={{
-                  background: "rgba(20,20,22,0.6)",
-                  border: "0.5px solid rgba(255,255,255,0.10)",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                 }}
               >
                 {/* Google G icon */}
@@ -311,8 +306,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             <button
               type="button"
               onClick={() => setStep(3)}
-              className="mt-4 w-full rounded-full py-4 text-[16px] font-semibold text-white active:scale-[0.98] transition-transform"
-              style={{ background: "linear-gradient(135deg, #3B82F6, #06B6D4)" }}
+              className="mt-4 w-full rounded-full py-4 text-[16px] font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
             >
               Continue →
             </button>
@@ -326,10 +320,10 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
           <div className="flex flex-col">
             {csvSubStep === "upload" && (
               <>
-                <h1 className="mb-2 text-[28px] font-bold tracking-tight">
+                <h1 className="mb-2 font-heading text-[30px] leading-tight">
                   Import your clients
                 </h1>
-                <p className="mb-8 text-[15px]" style={{ color: "#6B7280" }}>
+                <p className="mb-8 text-[15px]" style={{ color: "var(--muted-foreground)" }}>
                   Upload a CSV from your old CRM. Aria will map the columns automatically.
                 </p>
                 <UploadStep onFile={handleFile} />
@@ -359,7 +353,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
                   importing={importing}
                 />
                 {importError && (
-                  <p className="mt-3 text-center text-[13px]" style={{ color: "#EF4444" }}>
+                  <p className="mt-3 text-center text-[13px]" style={{ color: "var(--destructive)" }}>
                     {importError}
                   </p>
                 )}
@@ -370,7 +364,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
               <div className="flex flex-col items-center text-center pt-8">
                 <div
                   className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[28px]"
-                  style={{ background: "rgba(16,185,129,0.12)" }}
+                  style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
                 >
                   ✓
                 </div>
@@ -378,15 +372,14 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
                   {importResult.inserted} client{importResult.inserted !== 1 ? "s" : ""} imported
                 </h2>
                 {importResult.skipped > 0 && (
-                  <p className="mb-6 text-[13px]" style={{ color: "#6B7280" }}>
+                  <p className="mb-6 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
                     {importResult.skipped} row{importResult.skipped !== 1 ? "s" : ""} skipped
                   </p>
                 )}
                 <button
                   type="button"
                   onClick={() => setStep(4)}
-                  className="mt-6 w-full rounded-full py-4 text-[16px] font-semibold text-white"
-                  style={{ background: "linear-gradient(135deg, #3B82F6, #06B6D4)" }}
+                  className="mt-6 w-full rounded-full py-4 text-[16px] font-semibold bg-primary text-primary-foreground"
                 >
                   Continue →
                 </button>
@@ -401,34 +394,24 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             {/* Aria orb */}
             <div
               className="mb-6 flex h-20 w-20 items-center justify-center rounded-full"
-              style={{
-                background: "radial-gradient(circle at 38% 35%, #8aacff, #3a65f0 55%, #2a48cc)",
-                boxShadow: "0 0 0 1px rgba(58,101,240,0.25), 0 20px 80px rgba(58,101,240,0.4)",
-              }}
+              style={{ background: "var(--primary)", boxShadow: "0 16px 40px -12px rgba(31,92,70,0.55)" }}
             >
-              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="38" height="38">
-                <defs>
-                  <linearGradient id="finish-grad" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
-                    <stop offset="100%" stopColor="rgba(255,255,255,0.70)" />
-                  </linearGradient>
-                </defs>
-                <path d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z" fill="url(#finish-grad)" />
+              <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="36" height="36" aria-hidden>
+                <path d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z" fill="var(--primary-foreground)" />
               </svg>
             </div>
 
-            <h1 className="mb-3 text-[28px] font-bold tracking-tight">
+            <h1 className="mb-3 font-heading text-[30px] leading-tight">
               You&apos;re all set
             </h1>
-            <p className="mb-10 text-[15px] leading-relaxed" style={{ color: "#6B7280" }}>
-              Aria will surface who to follow up with, draft your texts, and keep you on top of every deal.
+            <p className="mb-10 text-[15px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
+              New leads, conversations and anything Aria needs from you will show up on Today.
             </p>
 
             <button
               type="button"
               onClick={() => void finish()}
-              className="w-full rounded-full py-4 text-[16px] font-semibold text-white active:scale-[0.98] transition-transform"
-              style={{ background: "linear-gradient(135deg, #3B82F6, #06B6D4)" }}
+              className="w-full rounded-full py-4 text-[16px] font-semibold bg-primary text-primary-foreground active:scale-[0.98] transition-transform"
             >
               Open Aria →
             </button>

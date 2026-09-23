@@ -39,7 +39,7 @@ export function PhotoCarousel({
   if (!photos.length) {
     return (
       <div
-        className={`flex w-full items-center justify-center rounded-[14px] bg-bg-deep text-[12px] text-text-dim ${aspectClass} ${className}`}
+        className={`flex w-full items-center justify-center rounded-[14px] bg-secondary text-[12px] text-muted-foreground ${aspectClass} ${className}`}
       >
         No photos
       </div>

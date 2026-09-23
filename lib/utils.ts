@@ -1,9 +1,27 @@
 import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { extendTailwindMerge } from "tailwind-merge"
 import { formatDistanceToNow } from "date-fns"
+
+// The ivory type scale (tailwind.config.ts fontSize) must be registered, or
+// twMerge reads `text-caption` as a text color and drops `text-primary-foreground`.
+const twMerge = extendTailwindMerge({
+  extend: {
+    classGroups: {
+      "font-size": [{ text: ["caption", "body", "body-lg", "title", "section", "display"] }],
+    },
+  },
+})
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/** "+12015550142" → "(201) 555-0142"; anything else is returned as-is. */
+export function fmtPhone(raw: string | null | undefined): string {
+  if (!raw) return ""
+  const d = raw.replace(/\D/g, "")
+  const ten = d.length === 11 && d[0] === "1" ? d.slice(1) : d
+  return ten.length === 10 ? `(${ten.slice(0, 3)}) ${ten.slice(3, 6)}-${ten.slice(6)}` : raw
 }
 
 /** Normalizes a US phone number to E.164 (+1XXXXXXXXXX). Returns null if unparseable. */

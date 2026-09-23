@@ -19,7 +19,7 @@ export function IdxComplianceNotice({
   const [expanded, setExpanded] = useState(false);
 
   return (
-    <div className="border-t border-[#1e2230] pt-3">
+    <div className="border-t border-border pt-3">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
@@ -33,14 +33,14 @@ export function IdxComplianceNotice({
           alt="NJMLS IDX"
           className="h-auto w-16 flex-shrink-0 rounded-[3px] bg-white px-1.5 py-1 object-contain"
         />
-        <span className="flex-1 text-[10px] text-[#424560]">
+        <span className="flex-1 text-[10px] text-muted-foreground">
           NJMLS IDX · Equal Housing Opportunity
         </span>
-        <span className="text-[11px] text-[#424560]">{expanded ? "−" : "+"}</span>
+        <span className="text-[11px] text-muted-foreground">{expanded ? "−" : "+"}</span>
       </button>
 
       {expanded && (
-        <div className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-[#424560]">
+        <div className="mt-2 space-y-1.5 text-[10px] leading-relaxed text-muted-foreground">
           <p>{getIdxDisclaimerText()}</p>
           {brokerageName && <p>Listing brokerage: {brokerageName}</p>}
           {includeAgentAttribution && (
