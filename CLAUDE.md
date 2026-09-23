@@ -23,9 +23,9 @@ No test suite is configured.
 
 ### Route Groups
 
-- `app/(dashboard)/` — All protected pages (clients, properties, pipeline, inbox, MLS, showings, transactions, CMA, files, referrals, listings, market, market-pulse, settings, etc.)
+- `app/(dashboard)/` — Protected pages: Today (`dashboard`), clients (+ detail with the SMS thread), properties, inbox (Follow-ups), showings, transactions, listings (MLS search), emails (Gmail), inquiries, voice (Ask Aria), settings (+ import, voice)
 - `app/api/` — Backend API routes
-- `app/login/`, `app/setup/`, `app/portal/` — Public pages
+- `app/login/`, `app/signup/`, `app/portal/`, `app/bba/sign/` — Public pages
 
 ### Key Libraries (`lib/`)
 
@@ -38,7 +38,6 @@ No test suite is configured.
 | `lib/compliance.ts` | NJMLS IDX constants and `getIdxDisclaimerText()` — required on all pages displaying MLS data |
 | `lib/simplyrets.ts` | SimplyRETS API client helpers |
 | `lib/inbox-drafts.ts` | Draft persistence for inbox AI messages |
-| `lib/mobile-briefing.ts` | Morning briefing data for the mobile home screen |
 | `lib/supabase/server.ts` | SSR Supabase client (cookie-based) |
 | `lib/supabase/client.ts` | Browser Supabase client |
 | `lib/supabase/admin.ts` | Service-role admin client (no auto-refresh) |
@@ -107,7 +106,7 @@ GOOGLE_CALENDAR_WRITE=1                        # request calendar.events so appr
 - **Server Components by default** — add `"use client"` only for interactivity/browser APIs.
 - **API route auth** — every protected API route must call `getRouteSupabase()` first; return 401 if no user.
 - **Three Supabase clients** — use `server.ts` in Server Components/API routes, `client.ts` in Client Components, `admin.ts` only when service-role access is required.
-- **Styling** — Tailwind only, no CSS modules. Ivory design system: warm ivory (`--background #FAF6EE`) canvas, white cards, deep green (`--primary #1F5C46`) as the one accent, Fraunces for headings.
+- **Styling** — Tailwind only, no CSS modules. Ivory design system: warm ivory (`--background #FAF6EE`) canvas, white cards, deep green (`--primary #1F5C46`) as the one accent, Fraunces for headings. Use the semantic tokens (`bg-card`, `text-muted-foreground`, `bg-primary/10`…) — never hex colors — so the `.dark` theme (Settings → Appearance, `lib/theme.ts`) works. Shared page primitives live in `components/Section.tsx`.
 - **Path alias** — `@/*` maps to the project root.
 - **Phone numbers** — always pass through `formatPhoneE164()` before storing or texting.
 - **NJMLS IDX compliance** — any page or component that displays MLS listing data must render `<IdxComplianceNotice />` (or equivalent) using the text from `lib/compliance.ts`. This is a legal requirement of the NJMLS IDX agreement.

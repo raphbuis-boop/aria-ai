@@ -2,6 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { scoreMatch, type ClientRow, type PropertyRow } from "@/lib/matchProperties";
 import { MATCH_MIN_SCORE } from "@/lib/matching";
 import type { CandidateProperty } from "@/lib/sms/conversation";
+import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
+
 
 type InventoryRow = PropertyRow & { address: string | null; status: string | null };
 
@@ -51,7 +53,6 @@ export async function recordRecommendations(
   recommended: CandidateProperty[],
 ) {
   if (!recommended.length) return;
-  const now = new Date().toISOString();
   const ids = recommended.map((p) => p.id);
 
   await supabase
@@ -66,10 +67,55 @@ export async function recordRecommendations(
       client_id: client.id,
       agent_id: client.agent_id,
       match_score: p.score,
-      match_reasons: ["Recommended by Aria over SMS"],
+      match_reasons: [ARIA_RECOMMENDED_REASON],
       notified: true,
-      notified_at: now,
     })),
   );
   if (error) console.error("[sms/recommend] property_matches insert failed", error.message);
+}
+
+/**
+ * The agent texted a specific home to the client from Aria's number. Marks
+ * (or creates) the client↔property match so it shows as sent everywhere.
+ */
+export async function recordAgentSentProperty(
+  supabase: SupabaseClient,
+  client: ClientRow & { agent_id: string },
+  propertyId: string,
+) {
+  const { data: property } = await supabase
+    .from("properties")
+    .select("id, town, price, beds, baths")
+    .eq("id", propertyId)
+    .eq("agent_id", client.agent_id)
+    .maybeSingle();
+  if (!property) return;
+
+  const { data: existing } = await supabase
+    .from("property_matches")
+    .select("id, match_reasons")
+    .eq("client_id", client.id)
+    .eq("property_id", propertyId)
+    .maybeSingle();
+
+  if (existing) {
+    const reasons = Array.isArray(existing.match_reasons) ? (existing.match_reasons as string[]) : [];
+    if (!reasons.includes(AGENT_SENT_REASON)) {
+      await supabase
+        .from("property_matches")
+        .update({ match_reasons: [...reasons, AGENT_SENT_REASON], notified: true })
+        .eq("id", existing.id);
+    }
+    return;
+  }
+
+  const { error } = await supabase.from("property_matches").insert({
+    property_id: propertyId,
+    client_id: client.id,
+    agent_id: client.agent_id,
+    match_score: scoreMatch(client, property as PropertyRow).score,
+    match_reasons: [AGENT_SENT_REASON],
+    notified: true,
+  });
+  if (error) console.error("[sms/recommend] agent-sent match insert failed", error.message);
 }

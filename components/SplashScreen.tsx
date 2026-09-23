@@ -129,7 +129,7 @@ export function SplashScreen() {
               <defs>
                 <linearGradient id="splash-grad-fill" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stop-color="#2E7D5B"/>
-                  <stop offset="100%" stop-color="#1F5C46"/>
+                  <stop offset="100%" stop-color="var(--primary)"/>
                 </linearGradient>
                 <linearGradient id="splash-grad-stroke" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
                   <stop offset="0%" stop-color="#3E9B72"/>
@@ -158,7 +158,7 @@ export function SplashScreen() {
 
         {/* Wordmark */}
         <p
-          className="splash-wordmark mt-6 text-[44px] text-[#2B2419]"
+          className="splash-wordmark mt-6 text-[44px] text-foreground"
           style={{ letterSpacing: "-0.03em", fontFamily: "var(--font-fraunces), serif" }}
         >
           aria

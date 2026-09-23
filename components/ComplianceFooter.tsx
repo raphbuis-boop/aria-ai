@@ -26,16 +26,16 @@ export function ComplianceFooter({
   ];
 
   return (
-    <footer className="border-t border-border-card bg-bg-card/80 px-4 py-5 text-[12px] text-text-dim">
+    <footer className="border-t border-border bg-card/80 px-4 py-5 text-[12px] text-muted-foreground">
       <div className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2">
         <div className="space-y-2">
-          <p className="text-[13px] text-text-primary">
+          <p className="text-[13px] text-foreground">
             {BROKERAGE_NAME}, License #{BROKERAGE_LICENSE}
           </p>
-          <p className="text-[13px] text-text-primary">
+          <p className="text-[13px] text-foreground">
             {AGENT_NAME}, NJ License #{AGENT_LICENSE}
           </p>
-          <p className="text-[12px] text-text-dim">
+          <p className="text-[12px] text-muted-foreground">
             {BROKERAGE_ADDRESS} · {BROKERAGE_PHONE}
           </p>
           {includeIdxNotice ? (
@@ -46,7 +46,7 @@ export function ComplianceFooter({
         </div>
 
         <div>
-          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-text-muted">
+          <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             Policies
           </p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1">
@@ -54,7 +54,7 @@ export function ComplianceFooter({
               <Link
                 key={link.href}
                 href={link.href}
-                className="text-[12px] text-text-dim hover:text-text-primary"
+                className="text-[12px] text-muted-foreground hover:text-foreground"
               >
                 {link.label}
               </Link>

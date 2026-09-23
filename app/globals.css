@@ -4,62 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  /* ── Legacy palette (kept for backward compat — do not remove) ── */
-  --c-bg:          #080910;
-  --c-card:        #0d0f16;
-  --c-elevated:    #121520;
-  --c-deep:        #060709;
-  --c-border:      #1e2230;
-  --c-border-soft: #181b24;
-  --c-text:        #e8eaf2;
-  --c-text-2:      #9498b0;
-  --c-text-3:      #6b7090;
-  --c-text-dim:    #424560;
-  --c-blue:        #3a65f0;
-  --c-blue-bright: #6b8fff;
-  --c-amber:       #c47e1a;
-  --c-green:       #1a9b5e;
-  --c-red:         #c43838;
-
-  /* ── Obsidian Chrome design system ──────────────────────────────
-     Palette: Onyx #0A0A0A · Blue Slate #536878 · Alabaster Grey #E5E4E2
-     To revert: remove everything below this block and the .oc-* classes.
-  ─────────────────────────────────────────────────────────────── */
-
-  /* Base */
-  --oc-onyx:        #0A0A0A;
-  --oc-slate:       #536878;
-  --oc-alabaster:   #E5E4E2;
-
-  /* Surfaces — frosted glass panels; low opacity lets backdrop bleed through */
-  --oc-surface-1:   rgba(14, 20, 30, 0.58);   /* standard card glass */
-  --oc-surface-2:   rgba(18, 25, 38, 0.68);   /* elevated sheets / modals */
-
-  /* Borders — clean blue-slate edge */
-  --oc-border-soft: rgba(83, 104, 120, 0.40);
-  --oc-border-mid:  rgba(83, 104, 120, 0.58);
-
-  /* Text — alabaster hierarchy, less mud */
-  --oc-text-1:      #E8E6E4;          /* Alabaster — primary, warm white */
-  --oc-text-2:      #B0C4CF;          /* Slate-tinted midtone — readable */
-  --oc-text-3:      #7A96A8;          /* Blue Slate — muted, still legible */
-
-  /* Accent */
-  --oc-blue:        #3B82F6;
-  --oc-blue-dim:    rgba(59, 130, 246, 0.12);
-
-  /* Semantic */
-  --oc-amber:       #C47E1A;
-  --oc-green:       #1A9B5E;
-  --oc-red:         #C43838;
-}
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* Overscroll area = backdrop base — matches .oc-backdrop exactly so rubber-band
-     zones don't expose a different color band above or below the page. */
-  background: #FAF6EE;
+  /* Overscroll area matches the canvas so rubber-band zones never flash. */
+  background: var(--background);
   touch-action: manipulation;
   /* clip vs hidden: overflow-x:hidden on <html> implicitly promotes overflow-y
      to auto on the root element, creating a second scroll container alongside
@@ -81,9 +30,8 @@ body {
      overflow-y:auto here was pairing with the former html overflow-x:hidden
      to create two competing scroll containers, breaking page scroll. */
   max-width: 100%;
-  /* transparent — the fixed .oc-backdrop renders beneath all content */
-  background: transparent;
-  color: var(--oc-text-1);
+  background: var(--background);
+  color: var(--foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   /* Vertical overscroll: contain (body bounces but doesn't chain to html/viewport).
@@ -127,26 +75,6 @@ a:active, button:active, [role="button"]:active {
   overscroll-behavior-x: contain;
 }
 
-/* iOS inset grouped list — defined purely by background contrast, no borders */
-.ios-group {
-  border-radius: 18px;
-  background: #1c1c1e;
-  overflow: hidden;
-}
-
-.ios-row {
-  display: flex;
-  align-items: center;
-  padding: 13px 16px;
-  transition: background-color 80ms ease;
-  cursor: pointer;
-  /* Larger touch target without visual change */
-  min-height: 52px;
-}
-
-.ios-row:active {
-  background-color: rgba(255, 255, 255, 0.06);
-}
 
 /* Tactile press — use on any tappable card */
 .press {
@@ -164,9 +92,6 @@ html:has(.app-shell),
 body:has(.app-shell) {
   background: var(--background);
 }
-body:has(.app-shell) > .oc-backdrop {
-  display: none;
-}
 
 /* Skeleton pulse for loading states */
 @keyframes skeleton-pulse {
@@ -175,7 +100,7 @@ body:has(.app-shell) > .oc-backdrop {
 }
 
 .skeleton {
-  background: #F1EAD9;
+  background: var(--secondary);
   border-radius: 8px;
   animation: skeleton-pulse 1.4s ease-in-out infinite;
 }
@@ -200,8 +125,8 @@ input:focus,
 textarea:focus,
 select:focus {
   outline: none;
-  border-color: rgba(10, 124, 255, 0.5) !important;
-  box-shadow: 0 0 0 3px rgba(10, 124, 255, 0.08);
+  border-color: color-mix(in srgb, var(--ring) 45%, transparent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 10%, transparent);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -214,19 +139,6 @@ select:focus {
   }
 }
 
-/* ─── Landing page light-theme overrides ──────────────────────────────────── */
-.landing-page {
-  background: #fafaf7;
-  color: #0b0b0f;
-}
-
-/* Override the dark-app input focus ring for landing forms */
-.landing-page input:focus,
-.landing-page input:focus-visible {
-  border-color: rgba(0, 0, 0, 0.15) !important;
-  box-shadow: none !important;
-  outline: none !important;
-}
 
 @keyframes aria-pulse {
   0%,
@@ -269,68 +181,6 @@ select:focus {
 .orb-glow-purple { animation: orb-glow 1.2s ease-in-out infinite; }
 .orb-glow-green { animation: orb-glow 1.6s ease-in-out infinite; }
 
-/* ═══════════════════════════════════════════════════════════════════
-   OBSIDIAN CHROME — reusable utility classes
-   To revert entirely: delete this block and the --oc-* vars in :root.
-═══════════════════════════════════════════════════════════════════ */
-
-/*
-  Global backdrop — rendered once in app/layout.tsx as a fixed div.
-  Two radial halations in Blue Slate at very low opacity create depth
-  without banding. 90% Onyx, 10% atmosphere. No glow, no neon.
-*/
-.oc-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  /*
-    Warm ivory canvas — matches --background (#FAF6EE) so any moment the
-    backdrop is visible (first paint, route transition, overscroll) reads
-    as the app's own ground, never a dark flash. Two faint washes (green,
-    gold) add depth without banding. Legacy .oc-backdrop name kept.
-  */
-  background-color: #FAF6EE;
-  background-image:
-    radial-gradient(
-      ellipse 90% 55% at 50% 0%,
-      rgba(31, 92, 70, 0.035) 0%,
-      transparent 60%
-    ),
-    radial-gradient(
-      ellipse 85% 70% at 100% 100%,
-      rgba(184, 132, 46, 0.03) 0%,
-      transparent 60%
-    );
-}
-
-/*
-  Standard card — semi-transparent surface over the backdrop.
-  Apply with className="oc-card" on any container.
-*/
-.oc-card {
-  background: var(--oc-surface-1);
-  backdrop-filter: blur(24px) saturate(240%);
-  -webkit-backdrop-filter: blur(24px) saturate(240%);
-  border: 0.5px solid var(--oc-border-soft);
-  border-radius: 16px;
-  /* 1px inner light catch at top edge — glass panel highlight */
-  box-shadow: inset 0 1px 0 rgba(229, 228, 226, 0.08);
-}
-
-/*
-  Elevated card — heavier blur for sheets, modals, popovers.
-  Apply with className="oc-card-elevated".
-*/
-.oc-card-elevated {
-  background: var(--oc-surface-2);
-  backdrop-filter: blur(32px) saturate(260%);
-  -webkit-backdrop-filter: blur(32px) saturate(260%);
-  border: 0.5px solid var(--oc-border-mid);
-  border-radius: 16px;
-  /* stronger inner highlight for elevated panels */
-  box-shadow: inset 0 1px 0 rgba(229, 228, 226, 0.12);
-}
 
 @layer base {
   .theme {
@@ -338,22 +188,11 @@ select:focus {
     --font-sans:          var(--font-sans);
   }
 
-  /* ═══════════════════════════════════════════════════════════════════
-     ARIA V2 — design system foundation (dashboard rebuild)
-     Direction: warm ivory / editorial premium — third and current
-     iteration (after monochrome-dark and dark-fintech). Warm cream
-     canvas, white cards with soft warm shadows, deep green as the one
-     action accent, plus a small hot/warm signal-color pair for
-     lead-heat (kept separate from the action accent on purpose).
-     Scope: feeds shadcn's standard tokens (bg-primary, bg-card, etc.),
-     which are currently unused anywhere else in the app (verified zero
-     importers of components/ui/button.tsx or card.tsx), so this does
-     not change the visual appearance of any existing screen.
-     App has no light/dark toggle — same palette on :root and .dark so
-     it's active regardless, and correct if theme switching is ever added.
-  ─────────────────────────────────────────────────────────────────── */
-  :root,
-  .dark {
+  /* Ivory design system — warm ivory canvas, white cards, deep green as the
+     one action accent, hot/warm pair for lead heat. `.dark` is applied on
+     <html> by the Appearance setting (see components/ThemeScript.tsx). */
+  :root {
+    color-scheme: light;
     --background:          #FAF6EE;   /* canvas — warm ivory */
     --foreground:          #2B2419;   /* ink — warm near-black */
     --card:                #FFFFFF;   /* surface — soft white */
@@ -377,6 +216,31 @@ select:focus {
     --warm:                #B8842E;   /* lead-heat: warm — muted gold */
     --violet:              #6B5B95;   /* secondary decorative accent — signal lines */
     --radius:              1.25rem;   /* 20px — soft rounded cards */
+  }
+  .dark {
+    color-scheme: dark;
+    --background:          #15130F;
+    --foreground:          #F1EBDF;
+    --card:                #1F1C17;
+    --card-foreground:     #F1EBDF;
+    --popover:             #24211B;
+    --popover-foreground:  #F1EBDF;
+    --primary:             #5FAE8C;
+    --primary-foreground:  #0F1A15;
+    --secondary:           #2A261F;
+    --secondary-foreground:#F1EBDF;
+    --muted:               #2A261F;
+    --muted-foreground:    #A69C8A;
+    --accent:              #2A261F;
+    --accent-foreground:   #F1EBDF;
+    --destructive:         #D9745B;
+    --destructive-foreground: #15130F;
+    --border:              rgba(241, 235, 223, 0.10);
+    --input:               rgba(241, 235, 223, 0.18);
+    --ring:                #5FAE8C;
+    --hot:                 #E07F63;
+    --warm:                #D6A452;
+    --violet:              #9D8CC9;
   }
   /* Plain CSS, not @apply — Tailwind 3.4's opacity-modifier plugin does not
      resolve custom outlineColor tokens reliably here, and this reset must

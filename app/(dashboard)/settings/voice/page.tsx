@@ -75,20 +75,20 @@ export default function VoiceSettingsPage() {
     setPreviewOut(String(data.draft ?? ""));
   }
 
-  const inputBg: React.CSSProperties = { background: "#1c1c1e", border: "none", color: "#f0f0f5" };
+  const inputBg: React.CSSProperties = { background: "var(--card)", border: "none", color: "var(--foreground)" };
   const inputCls = "w-full rounded-[13px] px-4 py-3 text-base outline-none";
 
   return (
     <div
-      className="min-h-[100dvh] pb-32 pt-6"
-      style={{ color: "var(--oc-text-1)" }}
+      className="min-h-[100dvh] pb-40 pt-6"
+      style={{ color: "var(--foreground)" }}
     >
       <div className="px-5">
         <BackButton className="mb-5" />
         <h1 className="mb-2 text-[22px] font-semibold tracking-[-0.02em]">
           Mirror My Voice
         </h1>
-        <p className="mb-6 text-[13px] leading-relaxed" style={{ color: "#50587a" }}>
+        <p className="mb-6 text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
           Paste 5 real texts you&apos;ve sent to clients. Aria will match your tone exactly.
         </p>
 
@@ -96,7 +96,7 @@ export default function VoiceSettingsPage() {
         <div className="space-y-2.5">
           {samples.map((s, i) => (
             <div key={i}>
-              <p className="mb-1.5 text-[11px]" style={{ color: "#636366" }}>
+              <p className="mb-1.5 text-[11px]" style={{ color: "var(--muted-foreground)" }}>
                 Sample {i + 1}
               </p>
               <textarea
@@ -117,8 +117,8 @@ export default function VoiceSettingsPage() {
         <button
           type="button"
           onClick={saveVoice}
-          className="mt-4 w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-white"
-          style={{ background: "#0a7cff" }}
+          className="mt-4 w-full rounded-[13px] py-3.5 text-[14px] font-semibold text-primary-foreground"
+          style={{ background: "var(--primary)" }}
         >
           Save & Analyze
         </button>
@@ -127,7 +127,7 @@ export default function VoiceSettingsPage() {
         {analysis && (
           <div
             className="mt-3 rounded-[13px] p-4 text-[13px] leading-relaxed"
-            style={{ background: "#1c1c1e", color: "#8e8e93" }}
+            style={{ background: "var(--card)", color: "var(--muted-foreground)" }}
           >
             {analysis}
           </div>
@@ -136,9 +136,9 @@ export default function VoiceSettingsPage() {
         {/* ── Preview ── */}
         <div
           className="mt-6"
-          style={{ borderTop: "0.5px solid rgba(255,255,255,0.06)", paddingTop: 20 }}
+          style={{ borderTop: "1px solid var(--border)", paddingTop: 20 }}
         >
-          <p className="mb-2 text-[12px]" style={{ color: "#636366" }}>
+          <p className="mb-2 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
             Preview a draft
           </p>
           <input
@@ -151,14 +151,14 @@ export default function VoiceSettingsPage() {
             type="button"
             onClick={previewDraft}
             className="mt-2.5 rounded-full px-4 py-2 text-[13px] font-medium"
-            style={{ background: "rgba(255,255,255,0.06)", color: "#8e8e93" }}
+            style={{ background: "var(--secondary)", color: "var(--muted-foreground)" }}
           >
             Generate preview
           </button>
           {previewOut && (
             <div
               className="mt-3 rounded-[13px] p-4 text-[13px] leading-relaxed"
-              style={{ background: "#1c1c1e", color: "#8e8e93" }}
+              style={{ background: "var(--card)", color: "var(--muted-foreground)" }}
             >
               {previewOut}
             </div>

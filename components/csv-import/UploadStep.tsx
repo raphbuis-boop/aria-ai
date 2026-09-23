@@ -66,12 +66,12 @@ export function UploadStep({ onFile }: Props) {
         onClick={() => inputRef.current?.click()}
         onKeyDown={(e) => e.key === "Enter" && inputRef.current?.click()}
         style={{
-          border: `1.5px dashed ${dragging ? "#3a65f0" : "rgba(255,255,255,0.12)"}`,
+          border: `1.5px dashed ${dragging ? "var(--primary)" : "var(--secondary)"}`,
           borderRadius: 14,
           padding: "52px 24px",
           textAlign: "center",
           cursor: "pointer",
-          background: dragging ? "rgba(58,101,240,0.06)" : "transparent",
+          background: dragging ? "color-mix(in srgb, var(--primary) 8%, transparent)" : "transparent",
           transition: "border-color 120ms ease, background 120ms ease",
           outline: "none",
         }}
@@ -81,19 +81,19 @@ export function UploadStep({ onFile }: Props) {
             width: 44,
             height: 44,
             borderRadius: "50%",
-            background: "rgba(58,101,240,0.10)",
+            background: "color-mix(in srgb, var(--primary) 10%, transparent)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             margin: "0 auto 14px",
           }}
         >
-          <Upload size={20} color="#3a65f0" />
+          <Upload size={20} color="var(--primary)" />
         </div>
-        <p style={{ color: "#e8eaf2", fontSize: 15, fontWeight: 500, marginBottom: 4 }}>
+        <p style={{ color: "var(--foreground)", fontSize: 15, fontWeight: 500, marginBottom: 4 }}>
           Drop your CSV here
         </p>
-        <p style={{ color: "#6b7090", fontSize: 13 }}>
+        <p style={{ color: "var(--muted-foreground)", fontSize: 13 }}>
           or tap to browse — .csv only, max 500 rows
         </p>
         <input
@@ -113,13 +113,13 @@ export function UploadStep({ onFile }: Props) {
       {error && (
         <p
           style={{
-            color: "#ef4444",
+            color: "var(--destructive)",
             fontSize: 13,
             marginTop: 10,
             padding: "8px 12px",
-            background: "rgba(239,68,68,0.08)",
+            background: "color-mix(in srgb, var(--destructive) 12%, transparent)",
             borderRadius: 8,
-            border: "0.5px solid rgba(239,68,68,0.2)",
+            border: "1px solid var(--border)",
           }}
         >
           {error}
@@ -131,13 +131,13 @@ export function UploadStep({ onFile }: Props) {
         style={{
           marginTop: 20,
           padding: "12px 14px",
-          background: "rgba(255,255,255,0.02)",
+          background: "var(--secondary)",
           borderRadius: 10,
-          border: "0.5px solid rgba(255,255,255,0.06)",
+          border: "1px solid var(--border)",
         }}
       >
-        <p style={{ color: "#6b7090", fontSize: 12, lineHeight: 1.6 }}>
-          <span style={{ color: "#9498b0", fontWeight: 500 }}>Supported columns:</span>{" "}
+        <p style={{ color: "var(--muted-foreground)", fontSize: 12, lineHeight: 1.6 }}>
+          <span style={{ color: "var(--muted-foreground)", fontWeight: 500 }}>Supported columns:</span>{" "}
           First Name, Last Name, Email, Phone, Client Type, Budget, Town / Area, Notes, Source.
           Column headers don&apos;t need to match exactly — Aria will map them automatically.
         </p>

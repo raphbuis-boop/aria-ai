@@ -47,7 +47,7 @@ export function BbaPdfViewer({
 
 function PdfFallback({ url }: { url: string }) {
   return (
-    <div className="flex flex-col gap-2 rounded-[10px] border-[0.5px] border-[#1e2230] bg-[#0a0a15] p-4 text-[12.5px] text-[#b6b6c8]">
+    <div className="flex flex-col gap-2 rounded-[10px] border-[0.5px] border-border bg-secondary p-4 text-[12.5px] text-muted-foreground">
       <p>
         Your browser can&apos;t display the PDF inline. Tap below to open the
         agreement in a new tab, then come back here to sign.
@@ -57,14 +57,14 @@ function PdfFallback({ url }: { url: string }) {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-[10px] bg-gradient-to-br from-[#3a65f0] to-[#7c5cfc] px-3 py-2 text-[12px] font-semibold text-white"
+          className="inline-flex items-center gap-1.5 rounded-[10px] bg-primary px-3 py-2 text-[12px] font-semibold text-primary-foreground"
         >
           <ExternalLink size={12} /> Open agreement
         </a>
         <a
           href={url}
           download
-          className="inline-flex items-center gap-1.5 rounded-[10px] border-[0.5px] border-[#2a2e40] px-3 py-2 text-[12px] font-semibold text-[#9090a8]"
+          className="inline-flex items-center gap-1.5 rounded-[10px] border-[0.5px] border-input px-3 py-2 text-[12px] font-semibold text-muted-foreground"
         >
           <Download size={12} /> Download
         </a>

@@ -1,253 +1,160 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, BellOff, Calendar, CheckCheck, Clock, Home, Inbox, Users, X } from "lucide-react";
+import { Bell, Calendar, CheckCheck, Clock, Home, Inbox, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { relTime } from "@/lib/utils";
 
 type Notification = {
   id: string;
-  kind: "showing_reminder" | "engagement_alert" | "task_due" | "inquiry_received" | "match_found";
+  kind: string;
   title: string;
   body: string | null;
   related_client_id: string | null;
-  related_listing_id: string | null;
   read: boolean;
   created_at: string;
 };
 
-const KIND_CONFIG: Record<
-  Notification["kind"],
-  { Icon: React.ElementType; color: string; bg: string; href: (n: Notification) => string }
-> = {
-  showing_reminder: {
-    Icon: Calendar,
-    color: "text-blue-400",
-    bg: "bg-blue-500/12",
-    href: () => "/showings",
-  },
-  engagement_alert: {
-    Icon: Users,
-    color: "text-yellow-400",
-    bg: "bg-yellow-500/12",
-    href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/clients"),
-  },
-  task_due: {
-    Icon: Clock,
-    color: "text-purple-400",
-    bg: "bg-purple-500/12",
-    href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/clients"),
-  },
-  inquiry_received: {
-    Icon: Inbox,
-    color: "text-green-400",
-    bg: "bg-green-500/12",
-    // SMS leads carry a client; IDX form inquiries don't.
-    href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/inquiries"),
-  },
-  match_found: {
-    Icon: Home,
-    color: "text-[#6b8fff]",
-    bg: "bg-[#3a65f0]/12",
-    href: (n) => (n.related_client_id ? `/clients/${n.related_client_id}` : "/mls"),
-  },
+const KIND_ICON: Record<string, React.ElementType> = {
+  showing_reminder: Calendar,
+  engagement_alert: Users,
+  task_due: Clock,
+  inquiry_received: Inbox,
+  match_found: Home,
 };
 
-function relTime(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  return `${Math.floor(h / 24)}d ago`;
+function hrefFor(n: Notification): string {
+  if (n.related_client_id) return `/clients/${n.related_client_id}`;
+  if (n.kind === "showing_reminder") return "/showings";
+  if (n.kind === "inquiry_received") return "/inquiries";
+  return "/dashboard";
 }
 
+/** Bell + dropdown over the agent's `notifications` rows (new leads, BBA
+ * signed, showing reminders…). Polls the unread count every 30s. */
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [items, setItems] = useState<Notification[] | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
-    const res = await fetch("/api/notifications");
-    const data = (await res.json()) as {
-      notifications?: Notification[];
-      unread?: number;
-    };
-    setNotifications(data.notifications ?? []);
-    setUnread(data.unread ?? 0);
-    setLoading(false);
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch("/api/notifications");
+      if (!res.ok) return;
+      const data = (await res.json()) as { notifications?: Notification[]; unread?: number };
+      setItems(data.notifications ?? []);
+      setUnread(data.unread ?? 0);
+    } catch {
+      /* offline — keep last state */
+    }
   }, []);
 
-  // Poll unread count every 15s
   useEffect(() => {
-    async function pollUnread() {
-      const res = await fetch("/api/notifications");
-      if (res.ok) {
-        const data = (await res.json()) as { unread?: number; notifications?: Notification[] };
-        setUnread(data.unread ?? 0);
-        if (!open) setNotifications(data.notifications ?? []);
-      }
-    }
-    pollUnread();
-    const id = setInterval(pollUnread, 15000);
+    void load();
+    const id = setInterval(load, 30_000);
     return () => clearInterval(id);
-  }, [open]);
+  }, [load]);
 
-  // Open → fetch fresh list
-  useEffect(() => {
-    if (open) fetchNotifications();
-  }, [open, fetchNotifications]);
-
-  // Close on outside click
   useEffect(() => {
     if (!open) return;
-    function handle(e: MouseEvent) {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
+    void load();
+    const onDown = (e: MouseEvent) => {
+      if (panelRef.current && !panelRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [open, load]);
+
+  async function openItem(n: Notification) {
+    setOpen(false);
+    if (!n.read) {
+      setUnread((u) => Math.max(0, u - 1));
+      void fetch(`/api/notifications/${n.id}/read`, { method: "PATCH" });
     }
-    document.addEventListener("mousedown", handle);
-    return () => document.removeEventListener("mousedown", handle);
-  }, [open]);
+    router.push(hrefFor(n));
+  }
 
-  const markRead = useCallback(async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n)),
-    );
-    setUnread((c) => Math.max(0, c - 1));
-    await fetch(`/api/notifications/${id}/read`, { method: "PATCH" });
-  }, []);
-
-  const markAllRead = useCallback(async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  async function markAllRead() {
     setUnread(0);
+    setItems((prev) => prev?.map((n) => ({ ...n, read: true })) ?? prev);
     await fetch("/api/notifications/mark-all-read", { method: "POST" });
-  }, []);
-
-  const handleNotificationClick = useCallback(
-    async (n: Notification) => {
-      if (!n.read) await markRead(n.id);
-      const href = KIND_CONFIG[n.kind].href(n);
-      setOpen(false);
-      router.push(href);
-    },
-    [markRead, router],
-  );
+  }
 
   return (
-    <div ref={panelRef} className="relative">
-      {/* Bell button */}
+    <div className="relative" ref={panelRef}>
       <button
         type="button"
+        aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        aria-label="Notifications"
-        className="relative flex h-10 w-10 items-center justify-center rounded-[18px] text-[#3a3a52] transition-all"
+        className="relative flex size-11 items-center justify-center rounded-full bg-secondary text-foreground"
       >
-        {unread > 0 ? <Bell size={20} strokeWidth={2} /> : <Bell size={20} strokeWidth={2} />}
-        {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-[16px] min-w-[16px] items-center justify-center rounded-md bg-[#c43838] px-1 text-[9px] font-bold text-white">
+        <Bell className="size-[18px]" />
+        {unread > 0 ? (
+          <span className="absolute right-1.5 top-1.5 flex min-w-[18px] items-center justify-center rounded-full bg-hot px-1 text-[10px] font-semibold leading-[18px] text-white">
             {unread > 9 ? "9+" : unread}
           </span>
-        )}
+        ) : null}
       </button>
 
-      {/* Dropdown panel */}
-      {open && (
-        <div className="absolute right-0 top-12 z-[95] w-[320px] max-w-[calc(100vw-2rem)] overflow-hidden rounded-2xl border border-[#1e2230] bg-[#0d0f16] shadow-2xl">
-          {/* Header */}
-          <div className="flex items-center justify-between border-b border-[#1e2230] px-4 py-3">
-            <p className="text-[12px] font-bold uppercase tracking-widest text-[#6b7090]">
-              Notifications
-            </p>
-            <div className="flex items-center gap-2">
-              {unread > 0 && (
+      {open ? (
+        <div className="absolute right-0 top-[52px] z-50 w-[min(360px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_24px_48px_-16px_rgba(0,0,0,0.25)]">
+          <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <p className="font-display text-body font-semibold">Notifications</p>
+            <div className="flex items-center gap-1">
+              {unread > 0 ? (
                 <button
                   type="button"
                   onClick={markAllRead}
-                  className="flex items-center gap-1 text-[11px] font-medium text-[#6b8fff] hover:text-blue-300"
+                  className="flex items-center gap-1 rounded-full px-2 py-1 font-display text-caption text-primary"
                 >
-                  <CheckCheck size={12} />
-                  Mark all read
+                  <CheckCheck className="size-3.5" /> Mark all read
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                className="text-[#333350] hover:text-[#9498b0]"
-              >
-                <X size={14} />
+              ) : null}
+              <button type="button" aria-label="Close" onClick={() => setOpen(false)} className="rounded-full p-1.5 text-muted-foreground">
+                <X className="size-4" />
               </button>
             </div>
           </div>
-
-          {/* List */}
-          <div className="max-h-[420px] overflow-y-auto">
-            {loading && notifications.length === 0 ? (
-              <div className="flex items-center justify-center py-10">
-                <span className="text-[12px] text-[#6b7090]">Loading…</span>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-10">
-                <BellOff size={24} className="text-[#2a2e40]" />
-                <p className="text-[12px] text-[#6b7090]">No notifications yet</p>
-              </div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {items === null ? (
+              <p className="px-4 py-6 text-center font-display text-body text-muted-foreground">Loading…</p>
+            ) : items.length === 0 ? (
+              <p className="px-4 py-6 text-center font-display text-body text-muted-foreground">
+                You&apos;re all caught up.
+              </p>
             ) : (
-              <ul>
-                {notifications.map((n) => {
-                  const cfg = KIND_CONFIG[n.kind];
-                  return (
-                    <li key={n.id}>
-                      <button
-                        type="button"
-                        onClick={() => handleNotificationClick(n)}
-                        className={[
-                          "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors",
-                          "border-b border-[#111118] last:border-b-0",
-                          n.read
-                            ? "hover:bg-[#0d0f16]"
-                            : "bg-[#12121e] hover:bg-[#14142a]",
-                        ].join(" ")}
-                      >
-                        <span
-                          className={`mt-0.5 flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-[8px] ${cfg.bg}`}
-                        >
-                          <cfg.Icon size={13} className={cfg.color} />
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p
-                            className={`text-[12.5px] leading-snug ${
-                              n.read
-                                ? "font-normal text-[#9498b0]"
-                                : "font-semibold text-[#e8eaf2]"
-                            }`}
-                          >
-                            {n.title}
-                          </p>
-                          {n.body && (
-                            <p className="mt-0.5 truncate text-[11px] text-[#555570]">
-                              {n.body}
-                            </p>
-                          )}
-                          <p className="mt-1 text-[10px] text-[#333350]">
-                            {relTime(n.created_at)}
-                          </p>
-                        </div>
-                        {!n.read && (
-                          <span className="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[#3a65f0]" />
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              items.map((n) => {
+                const Icon = KIND_ICON[n.kind] ?? Bell;
+                return (
+                  <button
+                    key={n.id}
+                    type="button"
+                    onClick={() => void openItem(n)}
+                    className="flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left last:border-b-0 hover:bg-secondary/60"
+                  >
+                    <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                      <Icon className="size-3.5" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className={`block font-display text-body ${n.read ? "text-muted-foreground" : "font-semibold text-foreground"}`}>
+                        {n.title}
+                      </span>
+                      {n.body ? (
+                        <span className="mt-0.5 block truncate font-display text-caption text-muted-foreground">{n.body}</span>
+                      ) : null}
+                      <span className="mt-0.5 block font-display text-[11px] text-muted-foreground/70">{relTime(n.created_at)}</span>
+                    </span>
+                    {!n.read ? <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

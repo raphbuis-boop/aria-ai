@@ -2,24 +2,21 @@
 
 import { Toaster as SonnerToaster, toast } from "sonner";
 
-/**
- * Sonner-based Toaster — shadcn's modern toast primitive.
- *
- * Aria already has a custom `ToastProvider` at `@/components/ToastProvider`
- * which is wired into `app/layout.tsx`. This file gives you a second
- * option (used by newer shadcn recipes via `toast(...)` from "sonner").
- *
- * To adopt it, mount <Toaster /> in your root layout AFTER the existing
- * ToastProvider, and call `toast("message")` from any client component.
- * Both can coexist; eventually you may want to consolidate on one.
- */
+/** Sonner toasts, colored from the theme tokens so they follow light/dark. */
 export function Toaster() {
   return (
     <SonnerToaster
       position="top-center"
-      theme="dark"
+      theme="light"
       closeButton
       toastOptions={{
+        style: {
+          background: "var(--popover)",
+          color: "var(--popover-foreground)",
+          border: "1px solid var(--border)",
+          borderRadius: 16,
+          boxShadow: "0 12px 32px -12px rgba(0,0,0,0.25)",
+        },
         classNames: {
           toast:
             "group toast border border-border bg-popover text-popover-foreground font-[family-name:var(--font-sans)] shadow-none",

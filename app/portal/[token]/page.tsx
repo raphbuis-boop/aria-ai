@@ -19,8 +19,8 @@ export default async function PortalPage({
 
   if (!client) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-bg-primary px-4">
-        <p className="text-[15px] text-text-secondary">
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <p className="text-[15px] text-foreground/75">
           This link is no longer active.
         </p>
       </div>
@@ -62,12 +62,12 @@ export default async function PortalPage({
   return (
     <div className="mx-auto max-w-lg px-4 py-10">
       <PortalBeacon token={params.token} />
-      <div className="text-[22px] font-medium text-accent-blue">Aria</div>
-      <div className="text-[13px] text-text-dim">{agent?.full_name}</div>
-      <div className="mt-6 text-[22px] text-text-primary">Hi {first},</div>
+      <div className="text-[22px] font-medium text-primary">Aria</div>
+      <div className="text-[13px] text-muted-foreground">{agent?.full_name}</div>
+      <div className="mt-6 text-[22px] text-foreground">Hi {first},</div>
 
       <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
           Your saved homes
         </div>
         <div className="mt-3 space-y-3">
@@ -90,21 +90,21 @@ export default async function PortalPage({
       </div>
 
       <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
           Next steps
         </div>
         <div className="mt-3 space-y-2">
           {(tasks ?? []).map((t) => (
             <div
               key={String(t.id)}
-              className="flex items-start justify-between gap-3 rounded-[10px] border border-border-card bg-bg-card px-3 py-2"
+              className="flex items-start justify-between gap-3 rounded-[10px] border border-border bg-card px-3 py-2"
             >
               <span
-                className={`text-[13px] ${t.done ? "text-text-dim line-through" : "text-text-primary"}`}
+                className={`text-[13px] ${t.done ? "text-muted-foreground line-through" : "text-foreground"}`}
               >
                 {String(t.title)}
               </span>
-              <span className="text-[11px] text-text-dim">
+              <span className="text-[11px] text-muted-foreground">
                 {fmtDate(t.due_at as string | null)}
               </span>
             </div>
@@ -113,7 +113,7 @@ export default async function PortalPage({
       </div>
 
       <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
+        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
           Market update
         </div>
         <MarketsComingSoonNote className="mt-2" />
@@ -135,7 +135,7 @@ export default async function PortalPage({
         {agent?.phone ? (
           <a
             href={`tel:${agent.phone}`}
-            className="rounded-[8px] bg-accent-blue py-3 text-center text-[14px] font-medium text-white"
+            className="rounded-[8px] bg-primary py-3 text-center text-[14px] font-medium text-white"
           >
             Message your agent
           </a>
@@ -143,7 +143,7 @@ export default async function PortalPage({
         {agent?.email ? (
           <a
             href={`mailto:${agent.email}`}
-            className="rounded-[8px] border border-border-card py-3 text-center text-[14px] text-accent-blue"
+            className="rounded-[8px] border border-border py-3 text-center text-[14px] text-primary"
           >
             Email your agent
           </a>

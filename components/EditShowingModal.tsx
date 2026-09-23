@@ -95,7 +95,7 @@ export function EditShowingModal({
     "w-full rounded-[14px] border border-input bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50";
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Close"

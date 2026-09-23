@@ -28,11 +28,11 @@ export default function PublicPropertyDetailPage({
 
   return (
     <>
-      <div className="border-b border-border-card bg-bg-card/90 px-4 py-3 text-center">
-        <p className="text-[18px] font-semibold text-text-primary md:text-[22px]">
+      <div className="border-b border-border bg-card/90 px-4 py-3 text-center">
+        <p className="text-[18px] font-semibold text-foreground md:text-[22px]">
           {BROKERAGE_NAME}
         </p>
-        <p className="mt-1 text-[13px] text-text-dim md:text-[14px]">
+        <p className="mt-1 text-[13px] text-muted-foreground md:text-[14px]">
           Property Search · powered by Aria
         </p>
       </div>

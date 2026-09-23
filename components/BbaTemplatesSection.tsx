@@ -130,16 +130,14 @@ export function BbaTemplatesSection() {
   }
 
   return (
-    <div id="bba-templates" className="mt-8 scroll-mt-6">
+    <div id="bba-templates" className="scroll-mt-6">
       <div className="flex items-center justify-between">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-text-dim">
-          BBA Templates
-        </div>
+        <p className="font-display text-body font-semibold text-foreground">Agreement templates</p>
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
           disabled={uploading}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border border-border-card px-2.5 py-1 text-[11px] font-medium text-accent-blue disabled:opacity-60"
+          className="inline-flex items-center gap-1.5 rounded-[8px] border border-border px-2.5 py-1 text-[11px] font-medium text-primary disabled:opacity-60"
         >
           <Upload size={12} />
           {uploading ? "Uploading…" : "Upload PDF"}
@@ -155,7 +153,7 @@ export function BbaTemplatesSection() {
           }}
         />
       </div>
-      <p className="mt-1 text-[12px] text-text-dim">
+      <p className="mt-1 text-[12px] text-muted-foreground">
         Upload your brokerage&apos;s Buyer Broker Agreement PDF. The default
         template is auto-attached when you send a BBA signing link to a client.
       </p>
@@ -174,14 +172,14 @@ export function BbaTemplatesSection() {
         }}
         className={`mt-3 rounded-[12px] border border-dashed px-3 py-6 text-center text-[12px] transition ${
           dragOver
-            ? "border-accent-blue bg-accent-blue/5 text-accent-blue"
-            : "border-border-card text-text-dim"
+            ? "border-primary bg-primary/5 text-primary"
+            : "border-border text-muted-foreground"
         }`}
       >
         Drop a PDF here to upload, or click{" "}
         <button
           type="button"
-          className="font-medium text-accent-blue underline"
+          className="font-medium text-primary underline"
           onClick={() => fileRef.current?.click()}
         >
           choose a file
@@ -191,9 +189,9 @@ export function BbaTemplatesSection() {
 
       <div className="mt-4 space-y-2">
         {loading ? (
-          <p className="text-[12px] text-text-dim">Loading…</p>
+          <p className="text-[12px] text-muted-foreground">Loading…</p>
         ) : templates.length === 0 ? (
-          <p className="rounded-[12px] border border-border-card bg-bg-card px-3 py-4 text-[12px] text-text-dim">
+          <p className="rounded-[12px] border border-border bg-card px-3 py-4 text-[12px] text-muted-foreground">
             No templates yet. Aria&apos;s generic NJ agreement is used as a
             fallback until you upload one.
           </p>
@@ -201,9 +199,9 @@ export function BbaTemplatesSection() {
           templates.map((t) => (
             <div
               key={t.id}
-              className="flex items-center gap-2 rounded-[12px] border border-border-card bg-bg-card px-3 py-2.5"
+              className="flex items-center gap-2 rounded-[12px] border border-border bg-card px-3 py-2.5"
             >
-              <FileText size={16} className="flex-shrink-0 text-accent-blue" />
+              <FileText size={16} className="flex-shrink-0 text-primary" />
               <div className="min-w-0 flex-1">
                 {editingName?.id === t.id ? (
                   <input
@@ -217,7 +215,7 @@ export function BbaTemplatesSection() {
                       if (e.key === "Enter") rename(t.id, editingName.value);
                       if (e.key === "Escape") setEditingName(null);
                     }}
-                    className="w-full rounded-[6px] border border-border-card bg-bg-deep px-2 py-1 text-[13px] text-text-primary outline-none"
+                    className="w-full rounded-[6px] border border-border bg-secondary px-2 py-1 text-[13px] text-foreground outline-none"
                   />
                 ) : (
                   <button
@@ -225,12 +223,12 @@ export function BbaTemplatesSection() {
                     onClick={() =>
                       setEditingName({ id: t.id, value: t.template_name })
                     }
-                    className="block w-full truncate text-left text-[13px] font-medium text-text-primary"
+                    className="block w-full truncate text-left text-[13px] font-medium text-foreground"
                   >
                     {t.template_name}
                   </button>
                 )}
-                <p className="text-[10px] text-text-dim">
+                <p className="text-[10px] text-muted-foreground">
                   Uploaded{" "}
                   {new Date(t.uploaded_at).toLocaleDateString("en-US", {
                     month: "short",
@@ -240,14 +238,14 @@ export function BbaTemplatesSection() {
                 </p>
               </div>
               {t.is_default ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-400">
+                <span className="inline-flex items-center gap-1 rounded-full bg-warm/15 px-2 py-0.5 text-[10px] font-semibold text-warm">
                   <Star size={10} fill="currentColor" /> Default
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={() => setDefault(t.id)}
-                  className="rounded-[6px] border border-border-card px-2 py-1 text-[11px] text-accent-blue"
+                  className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-primary"
                 >
                   Set default
                 </button>
@@ -256,7 +254,7 @@ export function BbaTemplatesSection() {
                 <button
                   type="button"
                   onClick={() => setPreview(t)}
-                  className="rounded-[6px] border border-border-card px-2 py-1 text-[11px] text-text-dim"
+                  className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-muted-foreground"
                 >
                   Preview
                 </button>
@@ -264,7 +262,7 @@ export function BbaTemplatesSection() {
               <button
                 type="button"
                 onClick={() => setConfirmDelete(t)}
-                className="rounded-[6px] border border-border-card px-2 py-1 text-[11px] text-red-400"
+                className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-destructive"
                 aria-label={`Delete ${t.template_name}`}
               >
                 <Trash2 size={12} />
@@ -275,17 +273,17 @@ export function BbaTemplatesSection() {
       </div>
 
       {preview && preview.signed_url ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-3">
-          <div className="flex h-full max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-border-card bg-bg-card">
-            <div className="flex items-center justify-between border-b border-border-card px-4 py-2.5">
-              <div className="flex items-center gap-2 text-[13px] font-medium text-text-primary">
-                <Check size={14} className="text-accent-blue" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/60 p-3">
+          <div className="flex h-full max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-border bg-card">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+              <div className="flex items-center gap-2 text-[13px] font-medium text-foreground">
+                <Check size={14} className="text-primary" />
                 {preview.template_name}
               </div>
               <button
                 type="button"
                 onClick={() => setPreview(null)}
-                className="rounded-[6px] border border-border-card px-2 py-1 text-[11px] text-text-dim"
+                className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-muted-foreground"
               >
                 Close
               </button>

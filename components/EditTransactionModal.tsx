@@ -63,7 +63,7 @@ export function EditTransactionModal({
   });
 
   const inputClass =
-    "w-full rounded-[14px] border-[0.5px] border-[#222238] bg-[#0d0f16] px-4 py-3 text-sm text-[#e8eaf2] placeholder-[#6b7090] outline-none focus:border-[#3a65f0]/40";
+    "w-full rounded-[14px] border-[0.5px] border-border bg-card px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary/40";
 
   async function save() {
     setSaving(true);
@@ -109,19 +109,19 @@ export function EditTransactionModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/60 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
       <button
         type="button"
         aria-label="Close"
         className="absolute inset-0"
         onClick={onClose}
       />
-      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-[#1e2230] bg-[#0d0f16] px-5 pb-9 pt-4">
-        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-[#2a2e40]" />
-        <div className="mb-1 text-[15px] font-semibold text-[#e8eaf2]">
+      <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-t-[24px] border-[0.5px] border-b-0 border-border bg-card px-5 pb-9 pt-4">
+        <div className="mx-auto mb-4 h-1 w-9 rounded-full bg-input" />
+        <div className="mb-1 text-[15px] font-semibold text-foreground">
           Edit transaction
         </div>
-        <p className="mb-4 text-xs text-[#555570]">
+        <p className="mb-4 text-xs text-muted-foreground">
           Changes save to your transactions table.
         </p>
 
@@ -143,7 +143,7 @@ export function EditTransactionModal({
           />
 
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
               Status
             </p>
             <select
@@ -159,12 +159,12 @@ export function EditTransactionModal({
             </select>
           </div>
 
-          <p className="pt-1 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
+          <p className="pt-1 text-[10px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
             Milestones
           </p>
           {milestones.map(([k, label]) => (
             <div key={k}>
-              <p className="mb-1 text-[11px] text-[#9498b0]">{label}</p>
+              <p className="mb-1 text-[11px] text-muted-foreground">{label}</p>
               <input
                 type="datetime-local"
                 value={form[k] as string}
@@ -176,7 +176,7 @@ export function EditTransactionModal({
             </div>
           ))}
 
-          <p className="pt-1 text-[10px] font-semibold uppercase tracking-[1.2px] text-[#6b7090]">
+          <p className="pt-1 text-[10px] font-semibold uppercase tracking-[1.2px] text-muted-foreground">
             Parties
           </p>
           <div className="flex gap-2">
@@ -224,14 +224,14 @@ export function EditTransactionModal({
             type="button"
             onClick={save}
             disabled={saving}
-            className="flex-1 rounded-[12px] bg-[#3a65f0] py-3 text-sm font-semibold text-white transition active:bg-[#4369de] disabled:opacity-60"
+            className="flex-1 rounded-[12px] bg-primary py-3 text-sm font-semibold text-primary-foreground transition active:bg-primary disabled:opacity-60"
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
           <button
             type="button"
             onClick={onClose}
-            className="rounded-[12px] border-[0.5px] border-[#2a2e40] bg-transparent px-4 py-3 text-sm font-semibold text-[#888]"
+            className="rounded-[12px] border-[0.5px] border-input bg-transparent px-4 py-3 text-sm font-semibold text-muted-foreground"
           >
             Cancel
           </button>

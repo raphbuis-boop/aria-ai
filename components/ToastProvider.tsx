@@ -40,12 +40,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
         {items.map((t) => (
           <div
             key={t.id}
-            className={`pointer-events-auto max-w-md rounded-[8px] border border-border-card px-4 py-3 text-[13px] font-medium ${
+            className={`pointer-events-auto max-w-md rounded-[8px] border border-border px-4 py-3 text-[13px] font-medium ${
               t.tone === "success"
-                ? "bg-bg-deep text-accent-green"
+                ? "bg-secondary text-primary"
                 : t.tone === "warn"
-                  ? "bg-bg-deep text-accent-amber"
-                  : "bg-bg-card text-text-secondary"
+                  ? "bg-secondary text-warm"
+                  : "bg-card text-foreground/75"
             }`}
           >
             {t.message}

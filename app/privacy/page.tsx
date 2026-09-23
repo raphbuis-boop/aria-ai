@@ -8,27 +8,27 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-bg-primary px-4 pb-16 pt-10">
+    <div className="min-h-screen bg-background px-4 pb-16 pt-10">
       <div className="mx-auto max-w-lg">
         <Link
           href="/"
-          className="text-[13px] font-medium text-accent-blue hover:underline"
+          className="text-[13px] font-medium text-primary hover:underline"
         >
           ← Back
         </Link>
 
         <header className="mt-6">
-          <h1 className="text-[24px] font-semibold text-text-primary">
+          <h1 className="text-[24px] font-semibold text-foreground">
             Privacy Policy
           </h1>
-          <p className="mt-2 text-[13px] text-text-dim">
+          <p className="mt-2 text-[13px] text-muted-foreground">
             Effective date: {new Date().toLocaleDateString("en-US")}
           </p>
         </header>
 
-        <div className="mt-8 space-y-6 rounded-[14px] border border-border-card bg-bg-card p-5 text-[14px] leading-relaxed text-text-secondary">
+        <div className="mt-8 space-y-6 rounded-[14px] border border-border bg-card p-5 text-[14px] leading-relaxed text-foreground/75">
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               Information we collect
             </h2>
             <p className="mt-2">
@@ -39,7 +39,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               How we use your information
             </h2>
             <p className="mt-2">
@@ -50,7 +50,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               Service providers and infrastructure
             </h2>
             <p className="mt-2">
@@ -65,7 +65,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               Data sharing and sale of data
             </h2>
             <p className="mt-2">
@@ -76,14 +76,14 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               Account deletion and retention
             </h2>
             <p className="mt-2">
               To request account deletion, email{" "}
               <a
                 href="mailto:support@getariaai.com"
-                className="font-medium text-accent-blue hover:underline"
+                className="font-medium text-primary hover:underline"
               >
                 support@getariaai.com
               </a>
@@ -94,7 +94,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">
+            <h2 className="text-[15px] font-semibold text-foreground">
               New Jersey jurisdiction
             </h2>
             <p className="mt-2">
@@ -106,12 +106,12 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="text-[15px] font-semibold text-text-primary">Contact</h2>
+            <h2 className="text-[15px] font-semibold text-foreground">Contact</h2>
             <p className="mt-2">
               Questions about this policy or your data? Contact{" "}
               <a
                 href="mailto:support@getariaai.com"
-                className="font-medium text-accent-blue hover:underline"
+                className="font-medium text-primary hover:underline"
               >
                 support@getariaai.com
               </a>

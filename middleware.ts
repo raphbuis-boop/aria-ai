@@ -84,7 +84,6 @@ export async function middleware(request: NextRequest) {
     path === "/login" ||
     path === "/login/email" ||
     path === "/signup" ||
-    path === "/setup" ||
     path === "/privacy" ||
     path === "/terms" ||
     path === "/about" ||

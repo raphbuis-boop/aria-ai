@@ -18,7 +18,6 @@ export function ConditionalComplianceFooter() {
 
   const publicPrefixes = [
     "/property-search",
-    "/setup",
     "/privacy",
     "/terms",
     "/about",

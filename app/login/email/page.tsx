@@ -1,9 +1,8 @@
 "use client";
 
-import { LoginAmbientBackground } from "@/components/auth/login-ambient-bg";
+import { AriaMark } from "@/components/auth/aria-mark";
 import { Input } from "@/components/ui/input";
 import { createClient } from "@/lib/supabase/client";
-import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
@@ -37,8 +36,7 @@ export default function EmailLoginPage() {
   }
 
   return (
-    <div className="relative isolate min-h-[100dvh] w-full text-white">
-      <LoginAmbientBackground />
+    <div className="relative isolate min-h-[100dvh] w-full bg-background text-foreground">
       <div
         className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[400px] flex-col px-6"
         style={{
@@ -52,17 +50,11 @@ export default function EmailLoginPage() {
           transition={{ duration: 0.16, ease }}
           className="mb-8 flex flex-col items-center"
         >
-          <Link href="/login" className="transition hover:opacity-80">
-            <Image
-              src="/aria-logo.png"
-              alt="Aria"
-              width={72}
-              height={72}
-              priority
-              className="mb-5 h-[60px] w-[60px] md:h-[72px] md:w-[72px]"
-            />
+          <Link href="/login" className="mb-5 transition hover:opacity-80" aria-label="Back to sign-in options">
+            <AriaMark size={64} />
           </Link>
-          <p className="text-[13px] font-medium text-white/70">Log in with email</p>
+          <h1 className="font-heading text-[26px] text-foreground">Welcome back</h1>
+          <p className="mt-1 text-[13px] text-muted-foreground">Log in with your email</p>
         </motion.div>
 
         <motion.form
@@ -88,19 +80,24 @@ export default function EmailLoginPage() {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
           />
-          {error ? <p className="text-[13px] text-accent-red/90">{error}</p> : null}
+          {error ? <p className="text-[13px] text-destructive/90">{error}</p> : null}
           <motion.button
             type="submit"
             disabled={loading}
             whileTap={{ scale: loading ? 1 : 0.97, transition: { type: "tween", duration: 0.1 } }}
-            className="mt-2 w-full rounded-[8px] bg-accent-blue py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-55"
+            className="mt-2 w-full rounded-[8px] bg-primary py-3.5 text-[15px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-55"
           >
             {loading ? "Signing in…" : "Log in"}
           </motion.button>
 
-          <p className="pt-8 text-center text-[13px] text-neutral-500">
-            <Link href="/login" className="text-neutral-400 hover:text-neutral-300">
-              ← Other sign-in options
+          <p className="pt-6 text-center text-[13px] text-muted-foreground">
+            No account?{" "}
+            <Link href="/signup" className="font-semibold text-primary">
+              Sign up
+            </Link>
+            {" · "}
+            <Link href="/login" className="font-semibold text-primary">
+              Other options
             </Link>
           </p>
         </motion.form>

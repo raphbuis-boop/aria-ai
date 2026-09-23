@@ -1,704 +1,603 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
-import {
-  ChevronRight,
-  Download,
-  Globe,
-  LogOut,
-  Mail,
-  Mic,
-  Sparkles,
-  Share2,
-  TrendingUp,
-} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { IntegrationWarningBanner } from "@/components/IntegrationWarningBanner";
+import {
+  Building2,
+  CalendarDays,
+  ChevronRight,
+  Copy,
+  Download,
+  FileSignature,
+  Inbox,
+  KeyRound,
+  LogOut,
+  Mail,
+  MessageSquare,
+  Mic,
+  PenLine as Pen,
+  Monitor,
+  Moon,
+  Search,
+  Sun,
+  Trash2,
+  Upload,
+  Webhook,
+} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
+import { Button } from "@/components/ui/button";
+import { Toaster, toast } from "@/components/ui/sonner";
+import { applyThemePref, readThemePref, type ThemePref } from "@/lib/theme";
+import { cn, fmtPhone } from "@/lib/utils";
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────
 
-type Profile = {
-  full_name: string;
-  email: string;
+type Health = {
+  aiConfigured: boolean;
+  emailConfigured: boolean;
+  mlsConfigured: boolean;
+  googleConfigured: boolean;
+  calendarWriteEnabled: boolean;
+  sms: { configured: boolean; fromNumber: string | null; messagingService: boolean; dryRun: boolean };
+  leads: { webhookConfigured: boolean; defaultAgent: boolean; metaConfigured: boolean };
 };
-
-type ProfileSettings = {
-  fullName: string;
-  phone: string;
-  brokerageName: string;
-};
-
+type Google = { connected: boolean; email?: string; calendarRead?: boolean; calendarWrite?: boolean };
 type DraftTone = "warm" | "professional" | "direct" | "casual";
 
-const TONE_OPTIONS: { value: DraftTone; label: string }[] = [
+const TONES: { value: DraftTone; label: string }[] = [
   { value: "warm", label: "Warm & friendly" },
   { value: "professional", label: "Professional" },
-  { value: "direct", label: "Direct & efficient" },
+  { value: "direct", label: "Direct" },
   { value: "casual", label: "Casual" },
 ];
 
-const REMINDER_HOURS = Array.from({ length: 16 }, (_, i) => i + 6); // 6am – 9pm ET
+// ── Primitives ────────────────────────────────────────────────────────────
 
-function formatHour(hour: number): string {
-  const period = hour >= 12 ? "PM" : "AM";
-  const h12 = hour % 12 === 0 ? 12 : hour % 12;
-  return `${h12}:00 ${period}`;
-}
-
-function triggerHaptic() {
-  try {
-    if (typeof navigator !== "undefined" && navigator.vibrate) navigator.vibrate(10);
-  } catch {
-    /* never break */
-  }
-}
-
-// ── Sub-components ────────────────────────────────────────────────────────────
-
-function GroupLabel({ label }: { label: string }) {
+function Group({ title, footer, children }: { title: string; footer?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <p
-      className="mb-1.5 text-[11px] font-semibold uppercase"
-      style={{ color: "#6B7280", letterSpacing: "0.08em", marginLeft: 16 }}
-    >
-      {label}
-    </p>
+    <section className="mb-8">
+      <h2 className="mb-2 px-4 font-display text-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground">{title}</h2>
+      <div className="overflow-hidden rounded-2xl border border-border bg-card divide-y divide-border">{children}</div>
+      {footer ? <div className="mt-2 px-4 font-display text-caption text-muted-foreground">{footer}</div> : null}
+    </section>
   );
 }
 
-type RowProps = {
-  icon: React.ElementType;
+type Tone = "ok" | "warn" | "off";
+function Status({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-display text-caption font-medium",
+        tone === "ok" ? "text-primary" : tone === "warn" ? "text-warm" : "text-muted-foreground",
+      )}
+    >
+      <span className={cn("size-1.5 rounded-full", tone === "ok" ? "bg-primary" : tone === "warn" ? "bg-warm" : "bg-muted-foreground/50")} />
+      {children}
+    </span>
+  );
+}
+
+function RowIcon({ Icon, danger }: { Icon: React.ElementType; danger?: boolean }) {
+  return (
+    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", danger ? "bg-destructive/10 text-destructive" : "bg-secondary text-foreground")}>
+      <Icon className="size-4" />
+    </span>
+  );
+}
+
+function Row({
+  Icon,
+  label,
+  detail,
+  right,
+  href,
+  onPress,
+  danger,
+}: {
+  Icon: React.ElementType;
   label: string;
-  subtitle?: string;
-  connected?: boolean;
+  detail?: React.ReactNode;
+  right?: React.ReactNode;
   href?: string;
   onPress?: () => void;
-  destructive?: boolean;
-  soon?: boolean;
-  isLast?: boolean;
-};
-
-function SettingsRow({ icon: Icon, label, subtitle, connected, href, onPress, destructive = false, soon = false, isLast = false }: RowProps) {
-  const iconColor = destructive ? "#EF4444" : "#9CA3AF";
-  const labelColor = destructive ? "#EF4444" : "#ffffff";
-  const labelWeight = destructive ? 500 : 400;
-
-  const inner = (
-    <div
-      className="flex items-center active:bg-white/[0.03]"
-      style={{
-        padding: "14px 16px",
-        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <Icon size={20} style={{ color: iconColor, flexShrink: 0 }} />
-      <div className="ml-3 flex-1 min-w-0">
-        <span
-          className="block text-[16px]"
-          style={{ color: labelColor, fontWeight: labelWeight }}
-        >
-          {label}
-        </span>
-        {subtitle ? (
-          <span className="block text-[12px] mt-0.5 truncate" style={{ color: "#6B7280" }}>
-            {subtitle}
-          </span>
-        ) : null}
+  danger?: boolean;
+}) {
+  const body = (
+    <div className="flex min-h-[56px] items-center gap-3 px-4 py-3">
+      <RowIcon Icon={Icon} danger={danger} />
+      <div className="min-w-0 flex-1">
+        <p className={cn("font-display text-body-lg", danger ? "font-medium text-destructive" : "text-foreground")}>{label}</p>
+        {detail ? <div className="mt-0.5 font-display text-caption text-muted-foreground">{detail}</div> : null}
       </div>
-      {connected !== undefined && (
-        <div
-          className="mr-2 h-2 w-2 rounded-full flex-shrink-0"
-          style={{ background: connected ? "#10B981" : "#48484a" }}
-        />
-      )}
-      {soon ? (
-        <span
-          className="text-[9px] font-semibold uppercase"
-          style={{
-            color: "#6B7280",
-            background: "rgba(107,114,128,0.15)",
-            padding: "2px 6px",
-            borderRadius: 4,
-          }}
-        >
-          Soon
-        </span>
-      ) : !destructive ? (
-        <ChevronRight size={16} style={{ color: "#6B7280", flexShrink: 0 }} />
-      ) : null}
+      {right}
+      {href || onPress ? <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" /> : null}
     </div>
   );
+  if (href) return <Link href={href} className="block hover:bg-secondary/40">{body}</Link>;
+  if (onPress)
+    return (
+      <button type="button" onClick={onPress} className="block w-full text-left hover:bg-secondary/40">
+        {body}
+      </button>
+    );
+  return body;
+}
 
-  if (soon) return <div>{inner}</div>;
-  if (href) return <Link href={href} className="block">{inner}</Link>;
+function EditRow({
+  Icon,
+  label,
+  value,
+  placeholder,
+  inputMode,
+  onSave,
+}: {
+  Icon: React.ElementType;
+  label: string;
+  value: string;
+  placeholder: string;
+  inputMode?: "text" | "tel";
+  onSave: (v: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
   return (
-    <button type="button" onClick={onPress} className="block w-full text-left">
-      {inner}
-    </button>
+    <label className="flex min-h-[56px] items-center gap-3 px-4 py-3">
+      <RowIcon Icon={Icon} />
+      <span className="shrink-0 font-display text-body-lg text-foreground">{label}</span>
+      <input
+        value={draft}
+        placeholder={placeholder}
+        inputMode={inputMode}
+        type={inputMode === "tel" ? "tel" : "text"}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={() => draft.trim() !== value.trim() && onSave(draft.trim())}
+        onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
+        className="min-w-0 flex-1 bg-transparent text-right font-display text-body text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:text-foreground"
+      />
+    </label>
   );
 }
 
-function SettingsGroup({ children }: { children: React.ReactNode }) {
-  return (
-    <div
-      style={{
-        background: "rgba(20,20,22,0.6)",
-        borderRadius: 14,
-        border: "0.5px solid rgba(255,255,255,0.06)",
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        overflow: "hidden",
-      }}
-    >
-      {children}
-    </div>
-  );
-}
-
-// iOS-style toggle switch — solid deep-green track when on, visible mid-gray
-// track when off, and a solid white knob (with its own shadow) so it reads
-// clearly against the dark glass card regardless of state.
-function Toggle({ on, onChange, disabled = false }: { on: boolean; onChange: (next: boolean) => void; disabled?: boolean }) {
+function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <button
       type="button"
       role="switch"
       aria-checked={on}
-      disabled={disabled}
-      onClick={() => {
-        if (disabled) return;
-        triggerHaptic();
-        onChange(!on);
-      }}
-      className="relative shrink-0 rounded-full transition-colors"
-      style={{
-        width: 46,
-        height: 27,
-        background: on ? "#1F5C46" : "#3A3A3C",
-        opacity: disabled ? 0.5 : 1,
-        cursor: disabled ? "default" : "pointer",
-      }}
+      aria-label={label}
+      onClick={() => onChange(!on)}
+      className={cn("relative h-7 w-12 shrink-0 rounded-full transition-colors", on ? "bg-primary" : "bg-input")}
     >
       <span
-        className="absolute rounded-full transition-transform"
-        style={{
-          top: 2,
-          left: 2,
-          width: 23,
-          height: 23,
-          background: "#FFFFFF",
-          boxShadow: "0 2px 4px rgba(0,0,0,0.35), 0 0 0 0.5px rgba(0,0,0,0.05)",
-          transform: on ? "translateX(19px)" : "translateX(0px)",
-          transition: "transform 180ms cubic-bezier(0.25,0.46,0.45,0.94)",
-        }}
+        className={cn(
+          "absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow-sm transition-transform",
+          on ? "translate-x-5" : "translate-x-0",
+        )}
       />
     </button>
   );
 }
 
-function ToggleRow({
-  label,
-  subtitle,
-  on,
-  onChange,
-  disabled = false,
-  isLast = false,
-}: {
-  label: string;
-  subtitle?: string;
-  on: boolean;
-  onChange: (next: boolean) => void;
-  disabled?: boolean;
-  isLast?: boolean;
-}) {
+function CopyValue({ value }: { value: string }) {
   return (
-    <div
-      className="flex items-center justify-between gap-3"
-      style={{
-        padding: "14px 16px",
-        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-      }}
+    <button
+      type="button"
+      onClick={() =>
+        void navigator.clipboard?.writeText(value).then(
+          () => toast.success("Copied"),
+          () => toast.error("Couldn't copy"),
+        )
+      }
+      className="mt-1 inline-flex max-w-full items-center gap-1.5 rounded-lg bg-secondary px-2 py-1 font-mono text-[11px] text-foreground"
     >
-      <div className="min-w-0 flex-1">
-        <span className="block text-[16px]" style={{ color: "#ffffff" }}>{label}</span>
-        {subtitle ? (
-          <span className="block text-[12px] mt-0.5" style={{ color: "#6B7280" }}>{subtitle}</span>
-        ) : null}
-      </div>
-      <Toggle on={on} onChange={onChange} disabled={disabled} />
-    </div>
+      <span className="truncate">{value}</span>
+      <Copy className="size-3 shrink-0" />
+    </button>
   );
 }
 
-// Inline-editable text row — shows label + value, saves onBlur (or Enter).
-function EditRow({
-  label,
-  value,
-  placeholder,
-  onSave,
-  isLast = false,
-  inputMode,
-}: {
-  label: string;
-  value: string;
-  placeholder?: string;
-  onSave: (next: string) => void;
-  isLast?: boolean;
-  inputMode?: "text" | "tel";
-}) {
-  const [draft, setDraft] = useState(value);
-  useEffect(() => setDraft(value), [value]);
-
-  return (
-    <div
-      className="flex items-center justify-between gap-3"
-      style={{
-        padding: "12px 16px",
-        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <span className="text-[16px] shrink-0" style={{ color: "#ffffff" }}>{label}</span>
-      <input
-        type={inputMode === "tel" ? "tel" : "text"}
-        value={draft}
-        placeholder={placeholder}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => {
-          if (draft.trim() !== value.trim()) onSave(draft.trim());
-        }}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-        }}
-        className="flex-1 min-w-0 bg-transparent text-right text-[15px] outline-none"
-        style={{ color: "#E5E7EB" }}
-      />
-    </div>
-  );
-}
-
-function SelectRow({
-  label,
-  value,
-  options,
-  onChange,
-  isLast = false,
-}: {
-  label: string;
-  value: string;
-  options: { value: string; label: string }[];
-  onChange: (next: string) => void;
-  isLast?: boolean;
-}) {
-  return (
-    <div
-      className="flex items-center justify-between gap-3"
-      style={{
-        padding: "12px 16px",
-        borderBottom: isLast ? "none" : "0.5px solid rgba(255,255,255,0.06)",
-      }}
-    >
-      <span className="text-[16px] shrink-0" style={{ color: "#ffffff" }}>{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="bg-transparent text-right text-[15px] outline-none"
-        style={{ color: "#E5E7EB", WebkitAppearance: "none", MozAppearance: "none" }}
-      >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value} style={{ background: "#1a1a1c", color: "#fff" }}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
-
-// ── Main page ─────────────────────────────────────────────────────────────────
+// ── Page ──────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const supabase = createClient();
   const router = useRouter();
-  const [profile, setProfile] = useState<Profile>({ full_name: "", email: "" });
-  const [gmailStatus, setGmailStatus] = useState<{ connected: boolean; email?: string } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
-
-  const [profileSettings, setProfileSettings] = useState<ProfileSettings>({
-    fullName: "",
-    phone: "",
-    brokerageName: "",
-  });
-
-  const [notifyFollowups, setNotifyFollowups] = useState(true);
-  const [reminderHourEt, setReminderHourEt] = useState(8);
-
-  const [draftTone, setDraftTone] = useState<DraftTone>("warm");
-  const [signature, setSignature] = useState("");
-
+  const [origin, setOrigin] = useState("");
+  const [profile, setProfile] = useState({ fullName: "", email: "", phone: "", brokerageName: "" });
+  const [health, setHealth] = useState<Health | null>(null);
+  const [google, setGoogle] = useState<Google | null>(null);
+  const [notify, setNotify] = useState({ notifyFollowups: true });
+  const [drafts, setDrafts] = useState<{ draftTone: DraftTone; signature: string }>({ draftTone: "warm", signature: "" });
+  const [theme, setTheme] = useState<ThemePref>("system");
   const [exporting, setExporting] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [password, setPassword] = useState("");
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteText, setDeleteText] = useState("");
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    void (async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data } = await supabase
-        .from("agent_profiles")
-        .select("full_name, email")
-        .eq("id", user.id)
-        .maybeSingle();
-      setProfile({
-        full_name: String(data?.full_name ?? user.user_metadata?.full_name ?? ""),
-        email: String(data?.email ?? user.email ?? ""),
-      });
-    })();
-  }, [supabase]);
+    setOrigin(window.location.origin);
+    setTheme(readThemePref());
+    const get = <T,>(url: string, set: (d: T) => void) =>
+      fetch(url)
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => d && set(d as T))
+        .catch(() => {});
+    void get<typeof profile>("/api/settings/profile", (d) =>
+      setProfile({ fullName: d.fullName ?? "", email: d.email ?? "", phone: d.phone ?? "", brokerageName: d.brokerageName ?? "" }),
+    );
+    void get<Health>("/api/health/env", setHealth);
+    void get<Google>("/api/gmail/status", setGoogle);
+    void get<typeof notify>("/api/settings/notifications", setNotify);
+    void get<typeof drafts>("/api/settings/drafts", (d) => setDrafts({ draftTone: d.draftTone ?? "warm", signature: d.signature ?? "" }));
 
-  // Check Gmail connection status
-  useEffect(() => {
-    void fetch("/api/gmail/status")
-      .then((r) => r.json())
-      .then((d) => setGmailStatus(d))
-      .catch(() => setGmailStatus({ connected: false }));
-  }, []);
-
-  // Load Profile / Notifications / Message drafts settings
-  useEffect(() => {
-    void fetch("/api/settings/profile")
-      .then((r) => r.json())
-      .then((d) => setProfileSettings({
-        fullName: d.fullName ?? "",
-        phone: d.phone ?? "",
-        brokerageName: d.brokerageName ?? "",
-      }))
-      .catch(() => {});
-
-    void fetch("/api/settings/notifications")
-      .then((r) => r.json())
-      .then((d) => {
-        setNotifyFollowups(d.notifyFollowups ?? true);
-        setReminderHourEt(d.reminderHourEt ?? 8);
-      })
-      .catch(() => {});
-
-    void fetch("/api/settings/drafts")
-      .then((r) => r.json())
-      .then((d) => {
-        setDraftTone((d.draftTone as DraftTone) ?? "warm");
-        setSignature(d.signature ?? "");
-      })
-      .catch(() => {});
-  }, []);
-
-  // Handle ?gmail=connected|error callback param
-  useEffect(() => {
-    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
-    const gmail = params.get("gmail");
-    if (gmail === "connected") {
-      setToast("Gmail connected!");
-      // Refresh status
-      void fetch("/api/gmail/status")
-        .then((r) => r.json())
-        .then((d) => setGmailStatus(d));
-      window.history.replaceState({}, "", "/settings");
-    } else if (gmail === "error") {
-      setToast("Connection failed — try again");
-      window.history.replaceState({}, "", "/settings");
-    }
+    const g = params.get("gmail");
+    if (g === "connected") toast.success("Google account connected");
+    if (g === "error") toast.error("Google connection failed — try again");
+    if (g) window.history.replaceState({}, "", "/settings");
   }, []);
 
-  // Auto-dismiss toast
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 3000);
-    return () => clearTimeout(t);
-  }, [toast]);
-
-  async function handleGmailDisconnect() {
-    await fetch("/api/gmail/disconnect", { method: "POST" });
-    setGmailStatus({ connected: false });
-    setToast("Gmail disconnected");
-  }
-
-  async function handleSignOut() {
-    await supabase.auth.signOut();
-    router.push("/login");
-  }
-
-  async function saveProfileField(field: "fullName" | "phone" | "brokerageName", value: string) {
-    setProfileSettings((p) => ({ ...p, [field]: value }));
-    const res = await fetch("/api/settings/profile", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [field]: value }),
-    });
+  async function patch(url: string, body: Record<string, unknown>, ok = "Saved") {
+    const res = await fetch(url, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setToast(data.error ?? "Couldn't save — try again");
-      return;
+      toast.error(data.error ?? "Couldn't save — try again");
+      return false;
     }
-    setToast("Saved");
-    if (field === "fullName") {
-      setProfile((p) => ({ ...p, full_name: value }));
-    }
+    toast.success(ok);
+    return true;
   }
 
-  async function saveNotifications(next: Partial<{ notifyFollowups: boolean; reminderHourEt: number }>) {
-    if (next.notifyFollowups !== undefined) setNotifyFollowups(next.notifyFollowups);
-    if (next.reminderHourEt !== undefined) setReminderHourEt(next.reminderHourEt);
-    const res = await fetch("/api/settings/notifications", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(next),
-    });
-    if (!res.ok) setToast("Couldn't save — try again");
+  async function saveProfile(field: "fullName" | "phone" | "brokerageName", value: string) {
+    if (field !== "phone" && !value) return;
+    if (await patch("/api/settings/profile", { [field]: value })) setProfile((p) => ({ ...p, [field]: value }));
   }
 
-  async function saveDrafts(next: Partial<{ draftTone: DraftTone; signature: string }>) {
-    if (next.draftTone !== undefined) setDraftTone(next.draftTone);
-    if (next.signature !== undefined) setSignature(next.signature);
-    const res = await fetch("/api/settings/drafts", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(next),
-    });
-    if (!res.ok) setToast("Couldn't save — try again");
+  async function disconnectGoogle() {
+    const res = await fetch("/api/gmail/disconnect", { method: "POST" });
+    if (res.ok) {
+      setGoogle({ connected: false });
+      toast.success("Google disconnected");
+    } else toast.error("Couldn't disconnect");
   }
 
-  async function handleExportClients() {
+  async function exportClients() {
     setExporting(true);
     try {
       const res = await fetch("/api/clients/export");
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `aria-clients-${new Date().toISOString().slice(0, 10)}.csv`;
-      document.body.appendChild(a);
+      if (!res.ok) throw new Error();
+      const url = URL.createObjectURL(await res.blob());
+      const a = Object.assign(document.createElement("a"), { href: url, download: `aria-clients-${new Date().toISOString().slice(0, 10)}.csv` });
       a.click();
-      a.remove();
       URL.revokeObjectURL(url);
-      setToast("Clients exported");
     } catch {
-      setToast("Couldn't export — try again");
+      toast.error("Couldn't export — try again");
     } finally {
       setExporting(false);
     }
   }
 
-  const initial = profile.full_name
-    ? profile.full_name.trim()[0].toUpperCase()
-    : "?";
+  async function changePassword() {
+    if (password.length < 8) {
+      toast.error("Use at least 8 characters");
+      return;
+    }
+    const { error } = await createClient().auth.updateUser({ password });
+    if (error) toast.error(error.message);
+    else {
+      toast.success("Password updated");
+      setPassword("");
+      setPwOpen(false);
+    }
+  }
+
+  async function signOut(scope: "local" | "global") {
+    await createClient().auth.signOut({ scope });
+    router.push("/login");
+    router.refresh();
+  }
+
+  async function deleteAccount() {
+    setDeleting(true);
+    const res = await fetch("/api/account", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: deleteText }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      setDeleting(false);
+      toast.error(data.error ?? "Couldn't delete account");
+      return;
+    }
+    await createClient().auth.signOut().catch(() => {});
+    window.location.href = "/";
+  }
+
+  const sms = health?.sms;
+  const smsTone: Tone = !health ? "off" : sms?.configured ? (sms.dryRun ? "warn" : "ok") : "warn";
+  const smsLabel = !health ? "Checking…" : !sms?.configured ? "Not configured" : sms.dryRun ? "Test mode" : "Connected";
+  const calendarTone: Tone = !google?.connected ? "off" : google.calendarWrite ? "ok" : google.calendarRead ? "ok" : "warn";
+  const calendarLabel = !google?.connected
+    ? "Not connected"
+    : google.calendarWrite
+      ? "Adds showings"
+      : google.calendarRead
+        ? "Conflict checks"
+        : "No calendar access";
 
   return (
-    <div
-      className="min-h-[100dvh] pb-32"
-      style={{ color: "var(--oc-text-1)" }}
-    >
-      {/* Toast */}
-      {toast && (
-        <div
-          className="fixed left-1/2 z-50 -translate-x-1/2 rounded-full px-5 py-2.5 text-[13px] font-semibold text-white transition-all"
-          style={{
-            top: "calc(env(safe-area-inset-top) + 12px)",
-            background: "rgba(20,20,22,0.95)",
-            border: "0.5px solid rgba(255,255,255,0.12)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.4)",
-          }}
-        >
-          {toast}
-        </div>
-      )}
+    <div className="min-h-[100dvh] bg-background pb-32 text-foreground">
+      <div className="mx-auto max-w-2xl px-5 pt-10 sm:px-8">
+        <h1 className="mb-6 font-heading text-[34px] leading-tight">Settings</h1>
 
-      <div className="px-4 pt-6">
-
-        <IntegrationWarningBanner />
-
-        {/* ── Profile card ── */}
-        <div
-          className="mb-7 flex items-center gap-4"
-          style={{
-            background: "rgba(20,20,22,0.6)",
-            borderRadius: 14,
-            border: "0.5px solid rgba(255,255,255,0.06)",
-            backdropFilter: "blur(20px)",
-            WebkitBackdropFilter: "blur(20px)",
-            padding: 16,
-          }}
-        >
-          {/* Avatar */}
-          <div
-            className="flex shrink-0 items-center justify-center rounded-full text-[22px] font-bold text-white"
-            style={{
-              width: 64,
-              height: 64,
-              background: "linear-gradient(135deg, #3B82F6, #06B6D4)",
-            }}
-          >
-            {initial}
-          </div>
-
-          {/* Name + subtitle */}
-          <div className="min-w-0 flex-1">
-            <p className="text-[18px] font-bold leading-tight" style={{ color: "#ffffff" }}>
-              {profile.full_name || "Your Profile"}
-            </p>
-            <p className="mt-0.5 text-[13px] truncate" style={{ color: "#6B7280" }}>
-              {profile.email || "Set up your profile below"}
-            </p>
+        {/* Account card */}
+        <div className="mb-8 flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
+          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary font-heading text-[22px] text-primary-foreground">
+            {(profile.fullName.trim()[0] ?? "?").toUpperCase()}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate font-display text-title text-foreground">{profile.fullName || "Your name"}</p>
+            <p className="truncate font-display text-body text-muted-foreground">{profile.email}</p>
           </div>
         </div>
 
-        {/* ── Group: Profile ── */}
-        <GroupLabel label="Profile" />
-        <SettingsGroup>
-          <EditRow
-            label="Name"
-            value={profileSettings.fullName}
-            placeholder="Your name"
-            onSave={(v) => v && void saveProfileField("fullName", v)}
+        <Group title="Account">
+          <EditRow Icon={KeyRound} label="Name" value={profile.fullName} placeholder="Your name" onSave={(v) => void saveProfile("fullName", v)} />
+          <EditRow Icon={MessageSquare} label="Mobile" value={profile.phone} placeholder="(201) 555-0100" inputMode="tel" onSave={(v) => void saveProfile("phone", v)} />
+          <Row Icon={Mail} label="Email" right={<span className="truncate font-display text-body text-muted-foreground">{profile.email}</span>} />
+        </Group>
+
+        <Group title="Brokerage">
+          <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
+        </Group>
+
+        <Group
+          title="Integrations"
+          footer="Status is read live from the server. Keys and secrets are set in the deployment's environment, never here."
+        >
+          <Row
+            Icon={MessageSquare}
+            label="Twilio SMS"
+            detail={
+              !health ? null : sms?.configured ? (
+                <>
+                  {sms.fromNumber ? `Texting from ${fmtPhone(sms.fromNumber)}` : "Texting via messaging service"}
+                  {sms.dryRun ? " · texts are logged, not sent (SMS_DRY_RUN)" : ""}
+                  {origin ? (
+                    <div>
+                      Inbound webhook: <CopyValue value={`${origin}/api/webhooks/twilio/sms`} />
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                "Aria can't text leads until Twilio credentials and a sending number are set."
+              )
+            }
+            right={<Status tone={smsTone}>{smsLabel}</Status>}
           />
-          <EditRow
-            label="Brokerage"
-            value={profileSettings.brokerageName}
-            placeholder="Your brokerage"
-            onSave={(v) => v && void saveProfileField("brokerageName", v)}
+          <Row
+            Icon={Mail}
+            label="Gmail"
+            detail={google?.connected ? google.email : health && !health.googleConfigured ? "Google sign-in isn't configured on the server." : "Read and reply to client email."}
+            right={<Status tone={google?.connected ? "ok" : "off"}>{google === null ? "Checking…" : google.connected ? "Connected" : "Not connected"}</Status>}
           />
-          <EditRow
-            label="Phone"
-            value={profileSettings.phone}
-            placeholder="(555) 555-5555"
-            inputMode="tel"
-            onSave={(v) => void saveProfileField("phone", v)}
-            isLast
+          <Row
+            Icon={CalendarDays}
+            label="Google Calendar"
+            detail={
+              !google?.connected
+                ? "Connect Google to check showing conflicts."
+                : google.calendarWrite
+                  ? "Checks conflicts and adds approved showings to your calendar."
+                  : health?.calendarWriteEnabled
+                    ? "Checks conflicts. Reconnect Google to let Aria add approved showings."
+                    : "Checks conflicts before you approve a showing."
+            }
+            right={<Status tone={calendarTone}>{calendarLabel}</Status>}
           />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Aria ── */}
-        <GroupLabel label="Aria" />
-        <SettingsGroup>
-          <SettingsRow icon={Mic} label="Mirror My Voice" href="/settings/voice" />
-          <SettingsRow icon={Sparkles} label="Ask Aria" href="/voice" isLast />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Notifications ── */}
-        <GroupLabel label="Notifications" />
-        <SettingsGroup>
-          <ToggleRow
-            label="Follow-up reminders"
-            subtitle="Daily nudge for clients who need contact"
-            on={notifyFollowups}
-            onChange={(v) => void saveNotifications({ notifyFollowups: v })}
-          />
-          <SelectRow
-            label="Daily reminder time"
-            value={String(reminderHourEt)}
-            options={REMINDER_HOURS.map((h) => ({ value: String(h), label: formatHour(h) }))}
-            onChange={(v) => void saveNotifications({ reminderHourEt: Number(v) })}
-            isLast
-          />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Message drafts ── */}
-        <GroupLabel label="Message drafts" />
-        <SettingsGroup>
-          <SelectRow
-            label="Tone"
-            value={draftTone}
-            options={TONE_OPTIONS}
-            onChange={(v) => void saveDrafts({ draftTone: v as DraftTone })}
-          />
-          <EditRow
-            label="Signature"
-            value={signature}
-            placeholder="e.g. – Sarah, ABC Realty"
-            onSave={(v) => void saveDrafts({ signature: v })}
-            isLast
-          />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Connected accounts ── */}
-        <GroupLabel label="Connected accounts" />
-        <SettingsGroup>
-          {gmailStatus?.connected ? (
+          {google?.connected ? (
             <>
-              <SettingsRow
-                icon={Mail}
-                label="Gmail"
-                subtitle={gmailStatus.email}
-                connected={true}
-                onPress={() => {/* already connected — no-op tap */}}
-              />
-              <SettingsRow
-                icon={Mail}
-                label="Disconnect Gmail"
-                onPress={handleGmailDisconnect}
-                destructive
-              />
+              <Row Icon={Inbox} label="Open email inbox" href="/emails" />
+              {health?.calendarWriteEnabled && !google.calendarWrite ? (
+                <Row Icon={CalendarDays} label="Reconnect Google" onPress={() => (window.location.href = "/api/auth/google/connect")} />
+              ) : null}
+              <Row Icon={LogOut} label="Disconnect Google" onPress={() => void disconnectGoogle()} />
             </>
-          ) : (
-            <SettingsRow
-              icon={Mail}
-              label="Connect Gmail"
-              connected={false}
-              onPress={() => { window.location.href = "/api/auth/google/connect"; }}
-            />
-          )}
-          <SettingsRow
-            icon={LogOut}
-            label="Sign out"
-            onPress={handleSignOut}
-            destructive
-            isLast
+          ) : health?.googleConfigured !== false ? (
+            <Row Icon={Mail} label="Connect Google" onPress={() => (window.location.href = "/api/auth/google/connect")} />
+          ) : null}
+          <Row
+            Icon={Search}
+            label="MLS / IDX"
+            detail={health?.mlsConfigured ? "NJMLS listings via SimplyRETS. IDX disclaimer shown wherever listings appear." : "MLS search is off until the board's SimplyRETS credentials are set."}
+            right={<Status tone={health?.mlsConfigured ? "ok" : "off"}>{!health ? "Checking…" : health.mlsConfigured ? "Connected" : "Not configured"}</Status>}
+            href={health?.mlsConfigured ? "/listings" : undefined}
           />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Business ── */}
-        <GroupLabel label="Business" />
-        <SettingsGroup>
-          <SettingsRow icon={Share2} label="Referrals" href="/referrals" />
-          <SettingsRow icon={TrendingUp} label="Market Pulse" href="/market-pulse" />
-          <SettingsRow icon={Globe} label="Client Portal" soon isLast />
-        </SettingsGroup>
-
-        <div style={{ marginTop: 24 }} />
-
-        {/* ── Group: Data ── */}
-        <GroupLabel label="Data" />
-        <SettingsGroup>
-          <SettingsRow
-            icon={Download}
-            label={exporting ? "Exporting…" : "Export clients"}
-            subtitle="Download all clients as a CSV file"
-            onPress={exporting ? undefined : handleExportClients}
-            isLast
+          <Row
+            Icon={Webhook}
+            label="Lead intake"
+            detail={
+              health?.leads.webhookConfigured ? (
+                <>
+                  Send leads with the lead secret as a Bearer token:
+                  {origin ? <CopyValue value={`${origin}/api/leads`} /> : null}
+                  {health.leads.metaConfigured ? <div>Meta lead ads connected.</div> : null}
+                  {!health.leads.defaultAgent ? <div>Website/Meta leads route to another agent account.</div> : null}
+                </>
+              ) : (
+                "External lead sources are off until LEAD_WEBHOOK_SECRET is set. Leads you add by hand still work."
+              )
+            }
+            right={<Status tone={health?.leads.webhookConfigured ? "ok" : "off"}>{!health ? "Checking…" : health.leads.webhookConfigured ? "On" : "Off"}</Status>}
           />
-        </SettingsGroup>
+        </Group>
 
-        {/* ── Footer ── */}
-        <p
-          className="mt-6 text-center text-[11px]"
-          style={{ color: "#4B5563" }}
+        <section className="mb-8">
+          <h2 className="mb-2 px-4 font-display text-caption font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+            BBA template
+          </h2>
+          <div className="rounded-2xl border border-border bg-card p-4">
+            <div className="mb-3 flex items-center gap-3">
+              <RowIcon Icon={FileSignature} />
+              <p className="font-display text-caption text-muted-foreground">
+                The default template is what clients sign from the link Aria texts after you approve a showing.
+              </p>
+            </div>
+            <BbaTemplatesSection />
+          </div>
+        </section>
+
+        <Group
+          title="Aria automation"
+          footer="Aria texts new leads, answers replies, recommends available homes and asks you before booking any showing. Pause Aria for one client from their Messages thread."
         >
-          Aria v1.0.0 — Made for NJ agents
-        </p>
+          <Row
+            Icon={MessageSquare}
+            label="AI replies"
+            detail={health && !health.aiConfigured ? "Claude isn't configured on the server — Aria can't draft or reply." : "Claude drafts the first text and replies to leads."}
+            right={<Status tone={health?.aiConfigured ? "ok" : "warn"}>{!health ? "Checking…" : health.aiConfigured ? "On" : "Off"}</Status>}
+          />
+          <label className="flex min-h-[56px] items-center gap-3 px-4 py-3">
+            <RowIcon Icon={MessageSquare} />
+            <span className="flex-1 font-display text-body-lg text-foreground">Draft tone</span>
+            <select
+              value={drafts.draftTone}
+              onChange={(e) => {
+                const draftTone = e.target.value as DraftTone;
+                setDrafts((d) => ({ ...d, draftTone }));
+                void patch("/api/settings/drafts", { draftTone });
+              }}
+              className="bg-transparent text-right font-display text-body text-muted-foreground outline-none"
+            >
+              {TONES.map((t) => (
+                <option key={t.value} value={t.value}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <EditRow
+            Icon={Pen}
+            label="Signature"
+            value={drafts.signature}
+            placeholder="– Sarah, ABC Realty"
+            onSave={(signature) => void patch("/api/settings/drafts", { signature }).then((ok) => ok && setDrafts((d) => ({ ...d, signature })))}
+          />
+          <Row Icon={Mic} label="Train Aria on your voice" detail="Paste a few of your own texts so drafts sound like you." href="/settings/voice" />
+        </Group>
 
+        <Group title="Notifications">
+          <div className="flex min-h-[56px] items-center gap-3 px-4 py-3">
+            <RowIcon Icon={Mail} />
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-body-lg text-foreground">Daily follow-up email</p>
+              <p className="font-display text-caption text-muted-foreground">
+                {health && !health.emailConfigured
+                  ? "Email isn't configured on the server — alerts still appear in the app."
+                  : "Clients going quiet, each morning around 8 AM ET."}
+              </p>
+            </div>
+            <Toggle
+              label="Daily follow-up email"
+              on={notify.notifyFollowups}
+              onChange={(notifyFollowups) => {
+                setNotify((n) => ({ ...n, notifyFollowups }));
+                void patch("/api/settings/notifications", { notifyFollowups });
+              }}
+            />
+          </div>
+          <Row Icon={Inbox} label="In-app alerts" detail="New leads, showing requests, handoffs and signed BBAs appear in the bell on Today." />
+        </Group>
+
+        <Group title="Appearance">
+          <div className="grid grid-cols-3 gap-1.5 p-2">
+            {(
+              [
+                ["system", "System", Monitor],
+                ["light", "Light", Sun],
+                ["dark", "Dark", Moon],
+              ] as const
+            ).map(([value, label, Icon]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={theme === value}
+                onClick={() => {
+                  setTheme(value);
+                  applyThemePref(value);
+                }}
+                className={cn(
+                  "flex items-center justify-center gap-2 rounded-xl py-2.5 font-display text-body font-medium",
+                  theme === value ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary",
+                )}
+              >
+                <Icon className="size-4" /> {label}
+              </button>
+            ))}
+          </div>
+        </Group>
+
+        <Group title="Data">
+          <Row Icon={Upload} label="Import clients" detail="From a CSV export of your old CRM." href="/settings/import" />
+          <Row Icon={Download} label={exporting ? "Exporting…" : "Export clients"} detail="Download every client as CSV." onPress={exporting ? undefined : () => void exportClients()} />
+        </Group>
+
+        <Group title="Security">
+          <Row Icon={KeyRound} label="Change password" onPress={() => setPwOpen((v) => !v)} />
+          {pwOpen ? (
+            <form
+              className="flex gap-2 px-4 py-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void changePassword();
+              }}
+            >
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="New password (8+ characters)"
+                className="min-w-0 flex-1 rounded-xl bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+              />
+              <Button type="submit" className="rounded-xl">
+                Save
+              </Button>
+            </form>
+          ) : null}
+          <Row Icon={LogOut} label="Sign out everywhere" detail="Ends sessions on every device." onPress={() => void signOut("global")} />
+          <Row Icon={LogOut} label="Sign out" onPress={() => void signOut("local")} danger />
+        </Group>
+
+        <Group title="Danger zone">
+          <Row Icon={Trash2} label="Delete account" detail="Permanently deletes your account, clients, messages and documents." onPress={() => setDeleteOpen((v) => !v)} danger />
+          {deleteOpen ? (
+            <div className="space-y-2 px-4 py-3">
+              <p className="font-display text-caption text-muted-foreground">
+                Type <span className="font-semibold text-foreground">DELETE</span> to confirm. This can&apos;t be undone.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={deleteText}
+                  onChange={(e) => setDeleteText(e.target.value)}
+                  aria-label="Type DELETE to confirm"
+                  className="min-w-0 flex-1 rounded-xl bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+                />
+                <Button variant="destructive" disabled={deleteText !== "DELETE" || deleting} onClick={() => void deleteAccount()} className="rounded-xl">
+                  {deleting ? "Deleting…" : "Delete"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </Group>
+
+        <p className="text-center font-display text-caption text-muted-foreground/70">Aria · Made for New Jersey agents</p>
       </div>
+      <Toaster />
     </div>
   );
 }

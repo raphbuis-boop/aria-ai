@@ -42,11 +42,11 @@ export default function SavedPropertiesPage() {
       <BackButton label="Property Search" className="mb-4" />
       <div className="flex items-center gap-2">
         <Bookmark className="text-primary" size={22} />
-        <h1 className="text-[20px] font-semibold text-text-primary">
+        <h1 className="text-[20px] font-semibold text-foreground">
           Watchlist
         </h1>
       </div>
-      <p className="mt-1 text-[13px] text-text-dim">
+      <p className="mt-1 text-[13px] text-muted-foreground">
         Saved listings — tap to open full detail.
       </p>
       <div className="mt-3">
@@ -54,9 +54,9 @@ export default function SavedPropertiesPage() {
       </div>
 
       {loading ? (
-        <p className="mt-8 text-center text-[13px] text-text-dim">Loading…</p>
+        <p className="mt-8 text-center text-[13px] text-muted-foreground">Loading…</p>
       ) : rows.length === 0 ? (
-        <div className="mt-8 rounded-[14px] border border-border-card bg-bg-card px-4 py-8 text-center text-[13px] text-text-dim">
+        <div className="mt-8 rounded-[14px] border border-border bg-card px-4 py-8 text-center text-[13px] text-muted-foreground">
           No saved listings yet.{" "}
           <Link href="/listings" className="font-medium text-primary">
             Browse listings →
@@ -68,9 +68,9 @@ export default function SavedPropertiesPage() {
             <li key={r.mls_number}>
               <Link
                 href={`/properties/${encodeURIComponent(r.mls_number)}`}
-                className="flex gap-3 rounded-[14px] border border-border-card bg-bg-card p-3 transition hover:border-primary/30"
+                className="flex gap-3 rounded-[14px] border border-border bg-card p-3 transition hover:border-primary/30"
               >
-                <div className="h-20 w-24 flex-shrink-0 overflow-hidden rounded-[10px] bg-bg-deep">
+                <div className="h-20 w-24 flex-shrink-0 overflow-hidden rounded-[10px] bg-secondary">
                   {r.photo_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
@@ -79,16 +79,16 @@ export default function SavedPropertiesPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="flex h-full items-center justify-center text-[10px] text-text-dim">
+                    <div className="flex h-full items-center justify-center text-[10px] text-muted-foreground">
                       No photo
                     </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-medium text-text-primary">
+                  <p className="truncate text-[13px] font-medium text-foreground">
                     {r.address ?? "Listing"}
                   </p>
-                  <p className="text-[11px] text-text-dim">
+                  <p className="text-[11px] text-muted-foreground">
                     {r.town ?? ""} · Listing #{r.mls_number}
                   </p>
                   {r.price != null ? (
@@ -96,11 +96,11 @@ export default function SavedPropertiesPage() {
                       {fmtMoney(r.price)}
                     </p>
                   ) : null}
-                  <p className="mt-1 text-[11px] text-text-dim">
+                  <p className="mt-1 text-[11px] text-muted-foreground">
                     Listing brokerage:{" "}
                     {r.snapshot?.listingOffice?.name ?? "N/A"}
                   </p>
-                  <p className="mt-1 text-[11px] text-text-dim">
+                  <p className="mt-1 text-[11px] text-muted-foreground">
                     Last updated:{" "}
                     {r.snapshot?.listDate
                       ? new Date(r.snapshot.listDate).toLocaleString()

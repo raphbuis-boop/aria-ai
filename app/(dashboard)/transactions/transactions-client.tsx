@@ -137,31 +137,22 @@ export function TransactionsClient({
   }
 
   return (
-    <div
-      className="min-h-[100dvh] pb-[130px]"
-      style={{
-        background: `
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,0.10), transparent),
-          radial-gradient(ellipse 60% 50% at 80% 80%, rgba(167,139,250,0.06), transparent)
-        `,
-        color: "var(--oc-text-1)",
-      }}
-    >
+    <div className="min-h-[100dvh] bg-background pb-[130px] text-foreground">
       <div className="mx-auto max-w-lg px-5 pt-6">
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-center justify-between">
           <h1
             className="text-[22px] font-semibold leading-tight"
-            style={{ color: "#ffffff", letterSpacing: "-0.02em" }}
+            style={{ color: "var(--foreground)", letterSpacing: "-0.02em" }}
           >
             Transaction Copilot
           </h1>
           <button
             type="button"
             onClick={() => setOpen(true)}
-            className="text-[13px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-            style={{ background: "#3B82F6", padding: "8px 16px", borderRadius: 8 }}
+            className="text-[13px] font-semibold text-primary-foreground active:scale-[0.97] transition-transform duration-100"
+            style={{ background: "var(--primary)", padding: "8px 16px", borderRadius: 8 }}
           >
             + Add
           </button>
@@ -172,10 +163,10 @@ export function TransactionsClient({
           <div
             className="mb-4 px-4 py-3 text-[13px] font-medium"
             style={{
-              background: "rgba(239,68,68,0.12)",
-              border: "0.5px solid rgba(239,68,68,0.30)",
+              background: "color-mix(in srgb, var(--destructive) 12%, transparent)",
+              border: "1px solid var(--border)",
               borderRadius: 10,
-              color: "#EF4444",
+              color: "var(--destructive)",
             }}
           >
             At-risk: milestone within 48 hours — confirm status now.
@@ -188,11 +179,11 @@ export function TransactionsClient({
             <div className="mt-12 flex flex-col items-center text-center">
               <p
                 className="mb-1 text-[11px] font-semibold uppercase"
-                style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+                style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
               >
                 No Transactions
               </p>
-              <p className="text-[13px]" style={{ color: "#9CA3AF" }}>
+              <p className="text-[13px]" style={{ color: "var(--muted-foreground)" }}>
                 Tap + Add to create your first transaction
               </p>
             </div>
@@ -210,12 +201,12 @@ export function TransactionsClient({
                 <button
                   type="button"
                   onClick={() => setSelected(t)}
-                  className="w-full pr-10 text-left active:bg-white/[0.02]"
+                  className="w-full pr-10 text-left active:bg-secondary"
                   style={{
-                    background: isSelected ? "rgba(59,130,246,0.08)" : "rgba(20,20,22,0.7)",
+                    background: isSelected ? "color-mix(in srgb, var(--primary) 12%, transparent)" : "var(--card)",
                     border: isSelected
-                      ? "0.5px solid rgba(59,130,246,0.3)"
-                      : "0.5px solid rgba(255,255,255,0.06)",
+                      ? "1px solid color-mix(in srgb, var(--primary) 25%, transparent)"
+                      : "1px solid var(--border)",
                     borderRadius: 14,
                     padding: 16,
                     backdropFilter: "blur(20px)",
@@ -224,19 +215,19 @@ export function TransactionsClient({
                 >
                   <div
                     className="text-[15px] font-semibold"
-                    style={{ color: "#ffffff", letterSpacing: "-0.01em" }}
+                    style={{ color: "var(--foreground)", letterSpacing: "-0.01em" }}
                   >
                     {name}
                   </div>
-                  <div className="mt-0.5 text-[12px]" style={{ color: "#6B7280" }}>
+                  <div className="mt-0.5 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
                     {String(t.address)}
                   </div>
-                  <div className="mt-2 text-[14px] font-semibold" style={{ color: "#3B82F6" }}>
+                  <div className="mt-2 text-[14px] font-semibold" style={{ color: "var(--primary)" }}>
                     ${Number(t.contract_price ?? 0).toLocaleString()}
                   </div>
                   <div
                     className="mt-0.5 text-[12px] font-medium"
-                    style={{ color: isUrgent ? "#EF4444" : "#6B7280" }}
+                    style={{ color: isUrgent ? "var(--destructive)" : "var(--muted-foreground)" }}
                   >
                     {days != null ? `${days} days to closing` : "Closing TBD"}
                   </div>
@@ -272,7 +263,7 @@ export function TransactionsClient({
           <div className="space-y-3">
             <p
               className="text-[11px] font-semibold uppercase"
-              style={{ color: "#6B7280", letterSpacing: "0.08em" }}
+              style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}
             >
               Milestones
             </p>
@@ -283,10 +274,10 @@ export function TransactionsClient({
             <button
               type="button"
               onClick={draftEmail}
-              className="text-[13px] font-medium text-white active:scale-[0.97] transition-transform duration-100"
+              className="text-[13px] font-medium text-primary-foreground active:scale-[0.97] transition-transform duration-100"
               style={{
                 background: "transparent",
-                border: "0.5px solid rgba(255,255,255,0.15)",
+                border: "1px solid var(--border)",
                 borderRadius: 8,
                 padding: "9px 14px",
               }}
@@ -297,12 +288,12 @@ export function TransactionsClient({
               <div
                 className="p-4"
                 style={{
-                  background: "rgba(20,20,22,0.6)",
-                  border: "0.5px solid rgba(255,255,255,0.06)",
+                  background: "var(--card)",
+                  border: "1px solid var(--border)",
                   borderRadius: 12,
                 }}
               >
-                <p className="text-[13px]" style={{ color: "#9CA3AF" }}>{draft}</p>
+                <p className="text-[13px]" style={{ color: "var(--muted-foreground)" }}>{draft}</p>
                 <button
                   type="button"
                   onClick={() =>
@@ -311,8 +302,8 @@ export function TransactionsClient({
                   className="mt-3 text-[11px] font-medium active:scale-[0.97] transition-transform duration-100"
                   style={{
                     background: "transparent",
-                    border: "0.5px solid rgba(255,255,255,0.15)",
-                    color: "#9CA3AF",
+                    border: "1px solid var(--border)",
+                    color: "var(--muted-foreground)",
                     borderRadius: 6,
                     padding: "4px 10px",
                   }}
@@ -367,9 +358,9 @@ function AddTxModal({
   const [clients, setClients] = useState<{ id: string; name: string }[]>([]);
 
   const INPUT_STYLE_MODAL = {
-    background: "rgba(255,255,255,0.06)",
-    border: "0.5px solid rgba(255,255,255,0.08)",
-    color: "#ffffff",
+    background: "var(--secondary)",
+    border: "1px solid var(--border)",
+    color: "var(--foreground)",
     borderRadius: 10,
     padding: "10px 12px",
     fontSize: 14,
@@ -387,29 +378,29 @@ function AddTxModal({
   }, [supabase]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[3px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[3px]">
       <button type="button" aria-label="Close" className="absolute inset-0" onClick={onClose} />
       <div
         className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
         style={{
-          background: "rgba(20,20,22,0.95)",
+          background: "var(--card)",
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
-          border: "0.5px solid rgba(255,255,255,0.08)",
+          border: "1px solid var(--border)",
           borderBottom: "none",
         }}
       >
-        <div className="mx-auto mb-5 h-1 w-9 rounded-full" style={{ background: "rgba(255,255,255,0.15)" }} />
-        <p className="mb-4 text-[17px] font-semibold" style={{ color: "#ffffff", letterSpacing: "-0.02em" }}>
+        <div className="mx-auto mb-5 h-1 w-9 rounded-full" style={{ background: "var(--secondary)" }} />
+        <p className="mb-4 text-[17px] font-semibold" style={{ color: "var(--foreground)", letterSpacing: "-0.02em" }}>
           Add transaction
         </p>
         <div className="space-y-3">
           <select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} style={INPUT_STYLE_MODAL}>
-            <option value="" style={{ background: "#111111" }}>Select client</option>
-            {clients.map((c) => <option key={c.id} value={c.id} style={{ background: "#111111" }}>{c.name}</option>)}
+            <option value="" style={{ background: "var(--card)" }}>Select client</option>
+            {clients.map((c) => <option key={c.id} value={c.id} style={{ background: "var(--card)" }}>{c.name}</option>)}
           </select>
-          <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
-          <input value={form.contract_price} onChange={(e) => setForm({ ...form, contract_price: e.target.value })} placeholder="Contract price" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
+          <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input value={form.contract_price} onChange={(e) => setForm({ ...form, contract_price: e.target.value })} placeholder="Contract price" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
           {(
             [
               ["closing_date", "Closing date"],
@@ -419,7 +410,7 @@ function AddTxModal({
             ] as const
           ).map(([key, label]) => (
             <div key={key}>
-              <p className="mb-1 text-[11px] font-semibold uppercase" style={{ color: "#6B7280", letterSpacing: "0.08em" }}>{label}</p>
+              <p className="mb-1 text-[11px] font-semibold uppercase" style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}>{label}</p>
               <input
                 type="datetime-local"
                 value={form[key]}
@@ -428,20 +419,20 @@ function AddTxModal({
               />
             </div>
           ))}
-          <input value={form.attorney_name} onChange={(e) => setForm({ ...form, attorney_name: e.target.value })} placeholder="Attorney name" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
-          <input value={form.attorney_email} onChange={(e) => setForm({ ...form, attorney_email: e.target.value })} placeholder="Attorney email" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
-          <input value={form.lender_name} onChange={(e) => setForm({ ...form, lender_name: e.target.value })} placeholder="Lender name" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
-          <input value={form.lender_email} onChange={(e) => setForm({ ...form, lender_email: e.target.value })} placeholder="Lender email" className="placeholder-[#4B5563]" style={INPUT_STYLE_MODAL} />
+          <input value={form.attorney_name} onChange={(e) => setForm({ ...form, attorney_name: e.target.value })} placeholder="Attorney name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input value={form.attorney_email} onChange={(e) => setForm({ ...form, attorney_email: e.target.value })} placeholder="Attorney email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input value={form.lender_name} onChange={(e) => setForm({ ...form, lender_name: e.target.value })} placeholder="Lender name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input value={form.lender_email} onChange={(e) => setForm({ ...form, lender_email: e.target.value })} placeholder="Lender email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
         </div>
         <div className="mt-5 flex gap-2 pb-2">
           <button type="button" onClick={onSave}
-            className="flex-1 text-[14px] font-semibold text-white active:scale-[0.97] transition-transform duration-100"
-            style={{ background: "#3B82F6", borderRadius: 10, padding: "13px" }}>
+            className="flex-1 text-[14px] font-semibold text-primary-foreground active:scale-[0.97] transition-transform duration-100"
+            style={{ background: "var(--primary)", borderRadius: 10, padding: "13px" }}>
             Save
           </button>
           <button type="button" onClick={onClose}
             className="text-[14px] font-medium active:scale-[0.97] transition-transform duration-100"
-            style={{ background: "transparent", border: "0.5px solid rgba(255,255,255,0.15)", color: "#9CA3AF", borderRadius: 10, padding: "13px 18px" }}>
+            style={{ background: "transparent", border: "1px solid var(--border)", color: "var(--muted-foreground)", borderRadius: 10, padding: "13px 18px" }}>
             Cancel
           </button>
         </div>

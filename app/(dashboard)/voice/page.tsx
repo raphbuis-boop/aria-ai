@@ -2,16 +2,15 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { AlertCircle, ArrowLeft, ChevronRight, Mic, MicOff, Send, X } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronRight, Mic, MicOff, Send } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Mode = "chat" | "voice" | "live";
+type Mode = "chat" | "voice";
 type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
 type ChatAction = { label: string; href: string };
 type Msg = { role: "user" | "assistant"; content: string; id: string; action?: ChatAction | null };
@@ -41,8 +40,6 @@ declare global {
 // ── Constants ─────────────────────────────────────────────────────────────────
 
 const BAR_COUNT = 32;
-// Money-first, capped at 4 — pipeline summaries live on /pipeline (hidden until
-// core per VISION.md), not here.
 const DEFAULT_CHIPS = [
   "What should I do today?",
   "Review my pending drafts",
@@ -194,88 +191,6 @@ function ChatBubble({ msg }: { msg: Msg }) {
             <ChevronRight className="size-3.5" />
           </button>
         )}
-      </div>
-    </motion.div>
-  );
-}
-
-// ── Live mode (design shell) ──────────────────────────────────────────────────
-
-function LiveMode({ onExit }: { onExit: () => void }) {
-  const [elapsed, setElapsed] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setElapsed((s) => s + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const mm = String(Math.floor(elapsed / 60)).padStart(2, "0");
-  const ss = String(elapsed % 60).padStart(2, "0");
-
-  return (
-    <motion.div
-      key="live"
-      initial={{ opacity: 0, scale: 0.97 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.97 }}
-      transition={{ duration: 0.2 }}
-      className="flex flex-1 flex-col items-center justify-center px-5"
-    >
-      {/* Session card */}
-      <Card className="w-full max-w-sm px-6 py-6 mb-8">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="h-10 w-10 rounded-full flex items-center justify-center bg-primary/10">
-            <AriaSpark size={22} />
-          </div>
-          <div>
-            <p className="font-display text-body-lg font-semibold text-foreground">
-              Live with Aria
-            </p>
-            <p className="font-mono text-caption text-muted-foreground">
-              {mm}:{ss}
-            </p>
-          </div>
-          {/* Coming soon badge */}
-          <span className="ml-auto rounded-full bg-secondary px-2.5 py-1 font-display text-[10px] font-bold uppercase tracking-[0.06em] text-muted-foreground">
-            Soon
-          </span>
-        </div>
-
-        <p className="font-display text-body leading-relaxed text-muted-foreground">
-          Always-on Aria will monitor your business in real time — surfaces
-          opportunities, notifies you on showings, and answers instantly.
-        </p>
-      </Card>
-
-      {/* Control pill buttons — Gemini Live inspired */}
-      <div className="flex items-center gap-3">
-        {[
-          { icon: "📷", label: "Camera" },
-          { icon: "⬆", label: "Share" },
-          { icon: "🎙", label: "Mic" },
-        ].map(({ icon, label }) => (
-          <button
-            key={label}
-            type="button"
-            disabled
-            className="flex flex-col items-center gap-1.5 cursor-not-allowed opacity-40"
-          >
-            <div className="h-14 w-14 rounded-2xl flex items-center justify-center border border-border bg-secondary text-[20px]">
-              {icon}
-            </div>
-            <span className="font-display text-[11px] text-muted-foreground">{label}</span>
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={onExit}
-          className="flex flex-col items-center gap-1.5 active:opacity-70"
-        >
-          <div className="h-14 w-14 rounded-2xl flex items-center justify-center bg-destructive">
-            <X size={22} className="text-destructive-foreground" />
-          </div>
-          <span className="font-display text-[11px] text-muted-foreground">End</span>
-        </button>
       </div>
     </motion.div>
   );
@@ -611,7 +526,7 @@ export default function VoicePage() {
 
         {/* Mode switcher pill */}
         <div className="flex gap-0.5 rounded-full border border-border bg-secondary p-0.5">
-          {(["chat", "voice", "live"] as Mode[]).map((m) => (
+          {(["chat", "voice"] as Mode[]).map((m) => (
             <button
               key={m}
               type="button"
@@ -917,10 +832,6 @@ export default function VoicePage() {
           )}
 
           {/* ══ LIVE MODE ══════════════════════════════════════════════════════ */}
-          {mode === "live" && (
-            <LiveMode key="live" onExit={() => setMode("chat")} />
-          )}
-
         </AnimatePresence>
       </div>
     </div>

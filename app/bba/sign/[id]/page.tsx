@@ -3,10 +3,9 @@
 import SignatureCanvas from "react-signature-canvas";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import {
   Check,
-  ChevronLeft,
   Download,
   Eraser,
   FileSignature,
@@ -21,7 +20,7 @@ const BbaPdfViewer = dynamic(
 
 function PdfLoading() {
   return (
-    <div className="rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] py-10 text-center text-[12px] text-[#888898]">
+    <div className="rounded-[14px] border-[0.5px] border-border bg-card py-10 text-center text-[12px] text-muted-foreground">
       Loading agreement PDF…
     </div>
   );
@@ -62,7 +61,6 @@ function toYmd(d: Date) {
 export default function SignBbaPage() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
-  const router = useRouter();
   const clientId = params?.id;
   const templateOverride = search?.get("template");
   const sigRef = useRef<SignatureCanvas | null>(null);
@@ -193,18 +191,18 @@ export default function SignBbaPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] flex items-center justify-center px-5">
-        <p className="text-[13px] text-[#888898]">Loading agreement…</p>
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-5">
+        <p className="text-[13px] text-muted-foreground">Loading agreement…</p>
       </div>
     );
   }
 
   if (error && !data) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] flex items-center justify-center px-5">
-        <div className="max-w-sm rounded-[18px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] p-6 text-center">
-          <p className="text-[14px] text-[#ff6060] mb-1">{error}</p>
-          <p className="text-[12px] text-[#666680]">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-5">
+        <div className="max-w-sm rounded-[18px] border-[0.5px] border-border bg-card p-6 text-center">
+          <p className="text-[14px] text-destructive mb-1">{error}</p>
+          <p className="text-[12px] text-muted-foreground">
             Please contact your agent to resend the signing link.
           </p>
         </div>
@@ -214,15 +212,15 @@ export default function SignBbaPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] flex items-center justify-center px-5">
-        <div className="w-full max-w-sm rounded-[22px] border-[0.5px] border-[#1a2a1a] bg-[#0f1a10] p-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-[#50dc78]/15 text-[#50dc78]">
+      <div className="min-h-screen bg-background text-foreground flex items-center justify-center px-5">
+        <div className="w-full max-w-sm rounded-[22px] border-[0.5px] border-primary/30 bg-primary/10 p-8 text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
             <Check size={26} strokeWidth={2.5} />
           </div>
-          <h1 className="text-[20px] font-semibold text-[#f0eee8] mb-1">
+          <h1 className="text-[20px] font-semibold text-foreground mb-1">
             Agreement signed
           </h1>
-          <p className="text-[13px] text-[#9090a8] mb-6">
+          <p className="text-[13px] text-muted-foreground mb-6">
             Thanks, {form.clientName.split(" ")[0] || "there"}. Your Buyer Broker
             Agreement has been sent to {form.agentName}. A copy is saved on
             file.
@@ -232,18 +230,11 @@ export default function SignBbaPage() {
               href={done.signedPdfUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-2.5 text-[13px] font-semibold text-white"
+              className="mb-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-primary py-2.5 text-[13px] font-semibold text-primary-foreground"
             >
               <Download size={14} /> Download signed PDF
             </a>
           ) : null}
-          <button
-            type="button"
-            onClick={() => router.push(`/clients/${clientId}`)}
-            className="w-full rounded-[12px] border-[0.5px] border-[#2a2a3e] py-2.5 text-[13px] font-semibold text-[#9090a8]"
-          >
-            Return
-          </button>
         </div>
       </div>
     );
@@ -254,33 +245,24 @@ export default function SignBbaPage() {
   const templateName = data?.template?.name ?? null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0f] text-[#f0eee8] pb-10">
+    <div className="min-h-screen bg-background text-foreground pb-10">
       <div className="mx-auto w-full max-w-lg px-5 pt-6">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          aria-label="Back"
-          className="mb-4 inline-flex items-center gap-1 text-[#4f7bff] text-sm font-semibold"
-        >
-          <ChevronLeft size={18} strokeWidth={2.5} className="-ml-1" />
-          <span>Back</span>
-        </button>
-        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+        <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[1.2px] text-primary">
           <FileSignature size={14} /> NJ Buyer Broker Agreement
         </div>
-        <h1 className="mt-2 text-[24px] font-semibold leading-tight text-[#f0eee8]">
+        <h1 className="mt-2 text-[24px] font-semibold leading-tight text-foreground">
           Sign to continue your home search
         </h1>
-        <p className="mt-1 text-[13px] text-[#888898]">
+        <p className="mt-1 text-[13px] text-muted-foreground">
           Required by NAR settlement rules before any property showing.
         </p>
 
         {already ? (
-          <div className="mt-5 rounded-[18px] border-[0.5px] border-[#1a2a1a] bg-[#0f1a10] p-4 text-[13px] text-[#50dc78]">
+          <div className="mt-5 rounded-[18px] border-[0.5px] border-primary/30 bg-primary/10 p-4 text-[13px] text-primary">
             <div className="flex items-center gap-2 font-semibold">
               <ShieldCheck size={16} /> Already signed
             </div>
-            <p className="mt-1 text-[12px] text-[#7aa489]">
+            <p className="mt-1 text-[12px] text-primary">
               Signed{" "}
               {new Date(already.signed_at).toLocaleDateString("en-US", {
                 month: "short",
@@ -295,12 +277,12 @@ export default function SignBbaPage() {
                 href={data.signed_pdf_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-3 inline-flex items-center gap-1.5 rounded-[8px] border border-[#50dc78]/30 px-2.5 py-1 text-[11px] text-[#50dc78]"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-[8px] border border-primary/30 px-2.5 py-1 text-[11px] text-primary"
               >
                 <Download size={12} /> Download signed copy
               </a>
             ) : null}
-            <p className="mt-3 text-[11px] text-[#9090a8]">
+            <p className="mt-3 text-[11px] text-muted-foreground">
               Re-signing below will replace the current agreement.
             </p>
           </div>
@@ -310,53 +292,53 @@ export default function SignBbaPage() {
         {templateUrl ? (
           <div className="mt-5">
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+              <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-primary">
                 {templateName ?? "Your agent's BBA"}
               </p>
               <a
                 href={templateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-[11px] text-[#9090a8]"
+                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground"
               >
                 <Download size={11} /> Open full-screen
               </a>
             </div>
             <div
               id="bba-pdf-wrap"
-              className="rounded-[14px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] p-2"
+              className="rounded-[14px] border-[0.5px] border-border bg-background p-2"
             >
               <BbaPdfViewer url={templateUrl} width={pdfWidth - 16} />
             </div>
           </div>
         ) : (
-          <div className="mt-5 rounded-[18px] border-[0.5px] border-[#1e1e2e] bg-[#12121e] p-4 text-[12.5px] leading-[1.55] text-[#b6b6c8]">
-            <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px] text-[#4f7bff]">
+          <div className="mt-5 rounded-[18px] border-[0.5px] border-border bg-card p-4 text-[12.5px] leading-[1.55] text-muted-foreground">
+            <p className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px] text-primary">
               Agreement summary
             </p>
             <p>
-              <span className="text-[#f0eee8]">
+              <span className="text-foreground">
                 {form.clientName || "Client"}
               </span>{" "}
               (&ldquo;Buyer&rdquo;) engages{" "}
-              <span className="text-[#f0eee8]">
+              <span className="text-foreground">
                 {form.agentName || "Agent"}
               </span>{" "}
               as exclusive buyer-representative for the purchase of residential
               real property in{" "}
-              <span className="text-[#f0eee8]">
+              <span className="text-foreground">
                 {form.searchArea || "New Jersey"}
               </span>
               . Buyer agrees to a broker compensation of{" "}
-              <span className="text-[#f0eee8]">{form.commissionPct}%</span> of
+              <span className="text-foreground">{form.commissionPct}%</span> of
               the gross purchase price, payable at closing, for the term{" "}
-              <span className="text-[#f0eee8]">{form.termStart}</span> through{" "}
-              <span className="text-[#f0eee8]">{form.termEnd}</span>. Agent
+              <span className="text-foreground">{form.termStart}</span> through{" "}
+              <span className="text-foreground">{form.termEnd}</span>. Agent
               agrees to represent Buyer&apos;s interests with undivided loyalty,
               full disclosure, and confidentiality as required by New Jersey
               real estate law and the REALTOR® Code of Ethics.
             </p>
-            <p className="mt-2 text-[11px] text-[#666680]">
+            <p className="mt-2 text-[11px] text-muted-foreground">
               This is Aria&apos;s generic agreement summary. Your agent can
               upload their brokerage&apos;s custom PDF in Settings — it will
               appear here on the next signing link.
@@ -370,7 +352,7 @@ export default function SignBbaPage() {
             <input
               value={form.clientName}
               onChange={(e) => setForm({ ...form, clientName: e.target.value })}
-              className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
               autoComplete="name"
             />
           </Field>
@@ -378,7 +360,7 @@ export default function SignBbaPage() {
             <input
               value={form.agentName}
               onChange={(e) => setForm({ ...form, agentName: e.target.value })}
-              className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none focus:border-[#4f7bff]/40"
+              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
             />
           </Field>
           <div className="grid grid-cols-3 gap-2">
@@ -389,7 +371,7 @@ export default function SignBbaPage() {
                 onChange={(e) =>
                   setForm({ ...form, commissionPct: e.target.value })
                 }
-                className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none focus:border-[#4f7bff]/40"
+                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
               />
             </Field>
             <Field label="Term start">
@@ -397,7 +379,7 @@ export default function SignBbaPage() {
                 type="date"
                 value={form.termStart}
                 onChange={(e) => setForm({ ...form, termStart: e.target.value })}
-                className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none"
+                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
               />
             </Field>
             <Field label="Term end">
@@ -405,7 +387,7 @@ export default function SignBbaPage() {
                 type="date"
                 value={form.termEnd}
                 onChange={(e) => setForm({ ...form, termEnd: e.target.value })}
-                className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none"
+                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
               />
             </Field>
           </div>
@@ -414,7 +396,7 @@ export default function SignBbaPage() {
               value={form.searchArea}
               onChange={(e) => setForm({ ...form, searchArea: e.target.value })}
               placeholder="e.g. Bergen County, Westfield, Ridgewood"
-              className="w-full rounded-[10px] border-[0.5px] border-[#1e1e2e] bg-[#0a0a15] px-3 py-2.5 text-[14px] text-[#f0eee8] outline-none focus:border-[#4f7bff]/40 placeholder:text-[#444460]"
+              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground"
             />
           </Field>
         </div>
@@ -422,20 +404,20 @@ export default function SignBbaPage() {
         {/* Signature pad */}
         <div className="mt-6">
           <div className="flex items-center justify-between">
-            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+            <p className="text-[11px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
               Sign here
             </p>
             <button
               type="button"
               onClick={clear}
-              className="flex items-center gap-1 text-[11px] text-[#6f9bff]"
+              className="flex items-center gap-1 text-[11px] text-primary"
             >
               <Eraser size={12} /> Clear
             </button>
           </div>
           <div
             ref={wrapRef}
-            className="mt-2 rounded-[14px] border-[0.5px] border-[#2a2a3e] bg-white touch-none"
+            className="mt-2 rounded-[14px] border-[0.5px] border-input bg-white touch-none"
           >
             <SignatureCanvas
               ref={sigRef}
@@ -447,7 +429,7 @@ export default function SignBbaPage() {
               }}
             />
           </div>
-          <p className="mt-2 text-[11px] text-[#444460]">
+          <p className="mt-2 text-[11px] text-muted-foreground">
             By signing above, you acknowledge you&apos;ve read and agree to the
             Buyer Broker Agreement shown above. Your signature will be embedded
             onto the last page of the PDF.
@@ -455,7 +437,7 @@ export default function SignBbaPage() {
         </div>
 
         {error ? (
-          <div className="mt-4 rounded-[12px] border-[0.5px] border-red-500/30 bg-red-500/5 px-3 py-2.5 text-[12.5px] text-red-400">
+          <div className="mt-4 rounded-[12px] border-[0.5px] border-destructive/30 bg-destructive/5 px-3 py-2.5 text-[12.5px] text-destructive">
             {error}
           </div>
         ) : null}
@@ -464,12 +446,12 @@ export default function SignBbaPage() {
           type="button"
           onClick={submit}
           disabled={submitting}
-          className="mt-5 w-full rounded-[14px] bg-gradient-to-br from-[#4f7bff] to-[#7c5cfc] py-3 text-[14px] font-semibold text-white disabled:opacity-60"
+          className="mt-5 w-full rounded-[14px] bg-primary py-3 text-[14px] font-semibold text-primary-foreground disabled:opacity-60"
         >
           {submitting ? "Saving…" : "Sign & submit"}
         </button>
 
-        <p className="mt-4 text-center text-[10px] text-[#333350]">
+        <p className="mt-4 text-center text-[10px] text-muted-foreground/60">
           Powered by Aria · NJ Buyer Broker compliance
         </p>
       </div>
@@ -486,7 +468,7 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[10px] font-bold uppercase tracking-[1.2px] text-[#444460]">
+      <span className="mb-1 block text-[10px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
         {label}
       </span>
       {children}

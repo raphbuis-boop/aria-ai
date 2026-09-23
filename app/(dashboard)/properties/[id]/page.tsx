@@ -24,7 +24,7 @@ export default async function PropertyByIdPage({
     } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const [{ data: prop }, { data: matchRows }] = await Promise.all([
+    const [{ data: prop }, { data: matchRows }, { data: clientRows }] = await Promise.all([
       supabase
         .from("properties")
         .select("*")
@@ -38,6 +38,16 @@ export default async function PropertyByIdPage({
         .eq("property_id", id)
         .eq("agent_id", user.id)
         .order("match_score", { ascending: false }),
+
+      // Anyone the agent could text this home to (Aria's number needs a phone).
+      supabase
+        .from("clients")
+        .select("id, name")
+        .eq("agent_id", user.id)
+        .not("phone", "is", null)
+        .or("sms_opted_out.is.null,sms_opted_out.eq.false")
+        .neq("status", "closed")
+        .order("name"),
     ]);
 
     if (!prop) notFound();
@@ -71,6 +81,7 @@ export default async function PropertyByIdPage({
       <InternalPropertyDetail
         property={prop as Record<string, unknown>}
         matches={matches}
+        textableClients={(clientRows ?? []).map((c) => ({ id: String(c.id), name: String(c.name ?? "Client") }))}
         market={(market as Record<string, unknown> | null) ?? null}
         returnTo={returnTo}
       />

@@ -1,9 +1,15 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Home as HomeIcon, Search, Sparkles, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Pill } from "@/components/Section";
+import { Toaster, toast } from "@/components/ui/sonner";
+import { createClient } from "@/lib/supabase/client";
+import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { fmtMoney } from "@/lib/utils";
 import { humanizeMatchReasons } from "@/lib/match-language";
@@ -45,6 +51,19 @@ function bestMatchOf(matches: PropertyMatch[]): PropertyMatch | null {
 
 function MatchCue({ matches, property }: { matches: PropertyMatch[]; property: Property }) {
   const best = bestMatchOf(matches);
+  const byAria = matches.filter((m) => m.reasons.includes(ARIA_RECOMMENDED_REASON)).length;
+  const byAgent = matches.filter((m) => m.reasons.includes(AGENT_SENT_REASON) && !m.reasons.includes(ARIA_RECOMMENDED_REASON)).length;
+  const sentPills =
+    byAria || byAgent ? (
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {byAria ? (
+          <Pill tone="primary">
+            <Sparkles className="size-3" /> Sent by Aria · {byAria}
+          </Pill>
+        ) : null}
+        {byAgent ? <Pill>Sent by you · {byAgent}</Pill> : null}
+      </div>
+    ) : null;
   if (!best) {
     return (
       <p className="font-display text-caption text-muted-foreground/50 mt-2">No client matches yet</p>
@@ -67,6 +86,7 @@ function MatchCue({ matches, property }: { matches: PropertyMatch[]; property: P
         </p>
       </div>
       <p className="font-display text-caption text-muted-foreground mt-1 line-clamp-1">{reason}</p>
+      {sentPills}
     </div>
   );
 }
@@ -111,7 +131,104 @@ function PropertyRow({ p }: { p: Property }) {
   );
 }
 
+const STATUS_OPTIONS = [
+  ["available", "Available"],
+  ["pending", "Pending"],
+  ["sold", "Sold"],
+  ["off_market", "Off market"],
+] as const;
+
+const FIELD =
+  "w-full rounded-xl border border-transparent bg-secondary px-4 py-3 font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-input";
+
+/** Adds a home to the agent's own `properties` — the inventory Aria matches
+ * against and recommends from over SMS. */
+function AddPropertySheet({ onClose }: { onClose: () => void }) {
+  const router = useRouter();
+  const [saving, setSaving] = useState(false);
+  const [f, setF] = useState({ address: "", town: "", price: "", beds: "", baths: "", sqft: "", status: "available", photo: "", description: "" });
+  const num = (v: string) => (v.trim() && Number.isFinite(Number(v.replace(/[$,]/g, ""))) ? Number(v.replace(/[$,]/g, "")) : null);
+
+  async function save() {
+    if (!f.address.trim() || !f.town.trim()) {
+      toast.error("Address and town are required");
+      return;
+    }
+    setSaving(true);
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data, error } = await supabase
+      .from("properties")
+      .insert({
+        agent_id: user.id,
+        address: f.address.trim(),
+        town: f.town.trim(),
+        price: num(f.price),
+        beds: num(f.beds),
+        baths: num(f.baths),
+        sqft: num(f.sqft),
+        status: f.status,
+        description: f.description.trim() || null,
+        photos: f.photo.trim() ? [f.photo.trim()] : [],
+      })
+      .select("id")
+      .single();
+    setSaving(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success("Home added");
+    onClose();
+    router.push(`/properties/${data.id}`);
+    router.refresh();
+  }
+
+  return (
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Add a home">
+      <button type="button" aria-label="Close" className="absolute inset-0" onClick={onClose} />
+      <div className="relative z-10 max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] border border-border bg-card px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-5 sm:rounded-[28px]">
+        <p className="font-heading text-[22px] text-foreground">Add a home</p>
+        <p className="mb-5 font-display text-caption text-muted-foreground">Available homes are matched to clients and can be recommended by Aria.</p>
+        <div className="space-y-3">
+          <input className={FIELD} placeholder="Street address *" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} aria-label="Street address" />
+          <div className="grid grid-cols-2 gap-2">
+            <input className={FIELD} placeholder="Town *" value={f.town} onChange={(e) => setF({ ...f, town: e.target.value })} aria-label="Town" />
+            <input className={FIELD} placeholder="Price" inputMode="numeric" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} aria-label="Price" />
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <input className={FIELD} placeholder="Beds" inputMode="numeric" value={f.beds} onChange={(e) => setF({ ...f, beds: e.target.value })} aria-label="Beds" />
+            <input className={FIELD} placeholder="Baths" inputMode="decimal" value={f.baths} onChange={(e) => setF({ ...f, baths: e.target.value })} aria-label="Baths" />
+            <input className={FIELD} placeholder="Sq ft" inputMode="numeric" value={f.sqft} onChange={(e) => setF({ ...f, sqft: e.target.value })} aria-label="Square feet" />
+          </div>
+          <select className={FIELD} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} aria-label="Status">
+            {STATUS_OPTIONS.map(([v, l]) => (
+              <option key={v} value={v}>
+                {l}
+              </option>
+            ))}
+          </select>
+          <input className={FIELD} placeholder="Photo URL (optional)" inputMode="url" value={f.photo} onChange={(e) => setF({ ...f, photo: e.target.value })} aria-label="Photo URL" />
+          <textarea className={`${FIELD} resize-none`} rows={3} placeholder="Description (optional)" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} aria-label="Description" />
+        </div>
+        <div className="mt-5 flex gap-2">
+          <Button onClick={save} disabled={saving} className="h-12 flex-1 rounded-xl text-body-lg font-semibold">
+            {saving ? "Saving…" : "Save home"}
+          </Button>
+          <Button variant="outline" onClick={onClose} className="h-12 rounded-xl">
+            Cancel
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function PropertiesClient({ initial }: { initial: Property[] }) {
+  const [adding, setAdding] = useState(false);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [priceFilter, setPriceFilter] = useState<(typeof PRICE_FILTERS)[number]>("Any price");
@@ -125,8 +242,10 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
   const [nlParsing, setNlParsing] = useState(false);
   const [nlFilters, setNlFilters] = useState<ParsedSearchFilters | null>(null);
 
-  async function runNlSearch() {
-    const q = nlQuery.trim();
+  const nlRequest = useRef(0);
+  async function runNlSearch(query: string) {
+    const q = query.trim();
+    const requestId = ++nlRequest.current;
     if (!q || nlParsing) return;
     setNlParsing(true);
     try {
@@ -139,6 +258,8 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
         filters?: ParsedSearchFilters;
         keywordFallback?: string;
       };
+      // The agent kept typing or searched again — this answer is stale.
+      if (requestId !== nlRequest.current) return;
       const f = data.filters;
       const hasStructured =
         f && (f.towns.length > 0 || f.beds != null || f.baths != null || f.minPrice != null || f.maxPrice != null);
@@ -146,7 +267,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
         setNlFilters(f!);
       } else {
         setNlFilters(null);
-        setSearch(data.keywordFallback || q);
+        if (data.keywordFallback) setSearch(data.keywordFallback);
       }
     } finally {
       setNlParsing(false);
@@ -159,7 +280,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
       if (priceFilter === "Under $750k" && !(p.price != null && p.price < 750_000)) return false;
       if (priceFilter === "$750k–1M" && !(p.price != null && p.price >= 750_000 && p.price <= 1_000_000)) return false;
       if (priceFilter === "$1M+" && !(p.price != null && p.price > 1_000_000)) return false;
-      if (search) {
+      if (search && !nlFilters) {
         const s = search.toLowerCase();
         if (!p.address?.toLowerCase().includes(s) && !(p.town ?? "").toLowerCase().includes(s)) return false;
       }
@@ -184,58 +305,66 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
     <div className="min-h-[100dvh] bg-background text-foreground pb-[130px]">
       <div className="mx-auto max-w-2xl px-5 pt-10 sm:px-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="font-heading text-[34px] leading-tight text-foreground">Properties</h1>
-          <p className="font-display text-caption text-muted-foreground mt-1">
-            {initial.length} listing{initial.length === 1 ? "" : "s"}
-            {matchedCount > 0 ? ` · ${matchedCount} matched to clients` : ""}
-          </p>
+        <div className="mb-6 flex items-end justify-between gap-3">
+          <div>
+            <h1 className="font-heading text-[34px] leading-tight text-foreground">Properties</h1>
+            <p className="mt-1 font-display text-caption text-muted-foreground">
+              {initial.length} home{initial.length === 1 ? "" : "s"}
+              {matchedCount > 0 ? ` · ${matchedCount} matched to clients` : ""}
+            </p>
+          </div>
+          <div className="flex shrink-0 gap-2">
+            <Button asChild variant="outline" className="h-9 rounded-full px-4 text-caption font-semibold">
+              <Link href="/listings">Search MLS</Link>
+            </Button>
+            <Button onClick={() => setAdding(true)} className="h-9 rounded-full px-4 text-caption font-semibold">
+              <Plus className="size-3.5" /> Add
+            </Button>
+          </div>
         </div>
 
-        {/* Natural-language search */}
-        <div className="mb-2 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-          <Sparkles className="size-3.5 text-primary shrink-0" />
+        {/* Search — filters as you type; Enter asks Aria to read it ("3-bed under $900k in Tenafly") */}
+        <form
+          className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setNlQuery(search);
+            void runNlSearch(search);
+          }}
+        >
+          <Search className="size-3.5 shrink-0 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Describe it — “3-bed under $900k in Tenafly”"
-            value={nlQuery}
-            onChange={(e) => setNlQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                void runNlSearch();
-              }
+            placeholder="Search, or describe it — “3-bed under $900k in Tenafly”"
+            value={search}
+            onChange={(e) => {
+              nlRequest.current++;
+              setSearch(e.target.value);
+              if (nlFilters) setNlFilters(null);
             }}
             disabled={nlParsing}
-            className="flex-1 min-w-0 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
+            className="min-w-0 flex-1 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60"
           />
-          {nlFilters && (
+          {search || nlFilters ? (
             <button
               type="button"
-              onClick={() => { setNlFilters(null); setNlQuery(""); }}
-              aria-label="Clear AI search"
+              onClick={() => {
+                nlRequest.current++;
+                setSearch("");
+                setNlQuery("");
+                setNlFilters(null);
+              }}
+              aria-label="Clear search"
             >
               <X className="size-3.5 text-muted-foreground" />
             </button>
-          )}
-        </div>
-
-        {/* Search */}
-        <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
-          <Search className="size-3.5 text-muted-foreground shrink-0" />
-          <input
-            type="text"
-            placeholder="Search by address or town…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
-          />
-          {search && (
-            <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
-              <X className="size-3.5 text-muted-foreground" />
-            </button>
-          )}
-        </div>
+          ) : null}
+        </form>
+        {nlFilters ? (
+          <p className="-mt-1 mb-3 flex items-center gap-1.5 font-display text-caption text-primary">
+            <Sparkles className="size-3" /> Showing homes that fit “{nlQuery}”
+          </p>
+        ) : null}
 
         {/* Status filters */}
         <div className="mb-2 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
@@ -281,7 +410,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
             </div>
             <p className="font-display text-body text-muted-foreground/70">
               {initial.length === 0
-                ? "No saved properties yet — save a listing and Aria will match it to the right clients."
+                ? "No homes yet. Add one or save a listing from MLS search — Aria matches them to your clients."
                 : "Try adjusting your search or filters."}
             </p>
           </div>
@@ -297,6 +426,8 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           <IdxComplianceNotice compact />
         </div>
       </div>
+      {adding ? <AddPropertySheet onClose={() => setAdding(false)} /> : null}
+      <Toaster />
     </div>
   );
 }

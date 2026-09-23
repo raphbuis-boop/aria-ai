@@ -2,24 +2,20 @@
 
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
 import { createClient } from "@/lib/supabase/client";
-import { fmtMoney, formatPhoneE164, initials } from "@/lib/utils";
+import { fmtMoney, formatPhoneE164, humanizeSource, relTime } from "@/lib/utils";
 import { heatFromScore, computeLeadScore } from "@/lib/today-items";
 import type { TodayActivity, TodayTransaction, TodayClient } from "@/lib/today-items";
-import { statusLabel } from "@/lib/client-brief";
+import { statusShortLabel } from "@/lib/client-brief";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
-import { ChevronRight, Search, Users, X } from "lucide-react";
+import { Search, Sparkles, Users, X } from "lucide-react";
+import { Avatar, Pill } from "@/components/Section";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
-const STATUS_FILTERS = ["All", "Hot", "Follow Up", "Showing", "Under Contract", "Closed"] as const;
-
-const HEAT_DOT_COLOR: Record<"hot" | "warm", { fill: string; ring: string }> = {
-  hot: { fill: "var(--hot)", ring: "rgba(184, 75, 51, 0.15)" },
-  warm: { fill: "var(--warm)", ring: "rgba(184, 132, 46, 0.15)" },
-};
+const FILTERS = ["All", "New", "Aria texting", "Hot", "Showing", "Under contract", "Closed"] as const;
 
 // Shared input style — ivory design system.
 const INPUT =
@@ -29,68 +25,86 @@ type Row = {
   id: string;
   name: string;
   town: string | null;
+  preferred_towns?: string[] | null;
   status: string | null;
   lead_score: number | null;
   budget_min: number | null;
   budget_max: number | null;
   phone?: string | null;
   email?: string | null;
-  beds_wanted?: number | null;
-  baths_wanted?: number | null;
-  notes?: string | null;
   client_role?: string | null;
+  source?: string | null;
+  lead_source?: string | null;
+  aria_paused?: boolean | null;
+  sms_opted_out?: boolean | null;
+  created_at?: string | null;
   dealValue: number | null;
   dealValueIsReal: boolean;
   commissionEst: number | null;
+  lastText: { body: string | null; inbound: boolean } | null;
+  lastContactAt: string | null;
+  ariaThread: boolean;
 };
 
-function HeatDot({ score }: { score: number | null }) {
-  const heat = heatFromScore(score);
-  if (heat === "cold") return null;
-  const c = HEAT_DOT_COLOR[heat];
-  return (
-    <span
-      className="size-2 shrink-0 rounded-full"
-      style={{ background: c.fill, boxShadow: `0 0 0 3px ${c.ring}` }}
-      aria-hidden="true"
-    />
-  );
+function budgetLabel(min: number | null, max: number | null): string | null {
+  if (min && max) return `${fmtMoney(min)}–${fmtMoney(max)}`;
+  if (max) return `≤ ${fmtMoney(max)}`;
+  if (min) return `${fmtMoney(min)}+`;
+  return null;
+}
+
+function ariaState(c: Row): "texting" | "paused" | "opted_out" | null {
+  if (c.sms_opted_out) return "opted_out";
+  if (!c.ariaThread) return null;
+  return c.aria_paused ? "paused" : "texting";
 }
 
 function ClientRow({ client }: { client: Row }) {
+  const heat = heatFromScore(client.lead_score);
+  const aria = ariaState(client);
+  const towns = client.preferred_towns?.length ? client.preferred_towns.join(", ") : client.town;
+  const meta = [
+    humanizeSource(client.lead_source ?? client.source ?? null),
+    towns,
+    budgetLabel(client.budget_min, client.budget_max),
+  ].filter(Boolean);
+
   return (
-    <Link
-      href={`/clients/${client.id}`}
-      className="flex items-center gap-4 px-5 py-4 hover:bg-accent/50 transition-colors"
-    >
-      <div className="flex size-10 shrink-0 items-center justify-center rounded-full bg-secondary font-display text-caption font-semibold text-foreground">
-        {initials(client.name)}
-      </div>
-
+    <Link href={`/clients/${client.id}`} className="flex items-start gap-3.5 px-5 py-4 hover:bg-secondary/50">
+      <Avatar name={client.name} />
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="font-display text-body-lg font-semibold text-foreground truncate">{client.name}</p>
-          <HeatDot score={client.lead_score} />
+        <div className="flex items-center justify-between gap-3">
+          <p className="flex min-w-0 items-center gap-2">
+            <span className="truncate font-display text-body-lg font-semibold text-foreground">{client.name}</span>
+            {heat !== "cold" ? (
+              <span className={`size-2 shrink-0 rounded-full ${heat === "hot" ? "bg-hot" : "bg-warm"}`} aria-label={`${heat} lead`} />
+            ) : null}
+          </p>
+          <span className="shrink-0 font-display text-caption text-muted-foreground">
+            {client.lastContactAt ? relTime(client.lastContactAt) : "No contact"}
+          </span>
         </div>
-        <p className="font-display text-caption text-muted-foreground mt-0.5 truncate">
-          {client.town ?? "No town on file"} · {statusLabel(client.status)}
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3 shrink-0">
-        {client.dealValue ? (
-          <div className="text-right">
-            <p className="font-display text-body font-semibold text-primary">{fmtMoney(client.dealValue)}</p>
-            {client.commissionEst && (
-              <p className="font-display text-[11px] text-muted-foreground/70">
-                ~{fmtMoney(client.commissionEst)} comm.
-              </p>
-            )}
-          </div>
-        ) : (
-          <p className="font-display text-caption text-muted-foreground/50">No value on file</p>
-        )}
-        <ChevronRight className="size-4 text-muted-foreground/50" />
+        {meta.length ? (
+          <p className="mt-0.5 truncate font-display text-caption text-muted-foreground">{meta.join(" · ")}</p>
+        ) : null}
+        {client.lastText?.body ? (
+          <p className={`mt-1 line-clamp-1 font-display text-body ${client.lastText.inbound ? "text-foreground" : "text-muted-foreground"}`}>
+            {client.lastText.inbound ? "" : "↳ "}
+            {client.lastText.body}
+          </p>
+        ) : null}
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          <Pill>{statusShortLabel(client.status)}</Pill>
+          {aria === "texting" ? (
+            <Pill tone="primary">
+              <Sparkles className="size-3" /> Aria active
+            </Pill>
+          ) : aria === "paused" ? (
+            <Pill>Aria paused</Pill>
+          ) : aria === "opted_out" ? (
+            <Pill tone="hot">Opted out</Pill>
+          ) : null}
+        </div>
       </div>
     </Link>
   );
@@ -133,7 +147,7 @@ export function ClientsPageClient({
     [initial, activities, transactions],
   );
 
-  const [filter, setFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
 
@@ -160,19 +174,20 @@ export function ClientsPageClient({
   });
 
   const filtered = useMemo(() => {
-    return rows.filter((c) => {
-      if (filter === "Hot" && (c.lead_score ?? 0) < 7) return false;
-      if (filter === "Follow Up" && (c.lead_score ?? 0) >= 5) return false;
-      if (filter === "Showing" && c.status !== "showing") return false;
-      if (filter === "Under Contract" && c.status !== "under_contract") return false;
-      if (filter === "Closed" && c.status !== "closed") return false;
-      if (search) {
-        const s = search.toLowerCase();
-        if (!c.name?.toLowerCase().includes(s) && !(c.town ?? "").toLowerCase().includes(s))
-          return false;
-      }
-      return true;
-    });
+    const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
+    const s = search.trim().toLowerCase();
+    return rows
+      .filter((c) => {
+        if (filter === "New" && !((c.created_at ?? "") >= weekAgo || c.status === "new")) return false;
+        if (filter === "Aria texting" && ariaState(c) !== "texting") return false;
+        if (filter === "Hot" && (c.lead_score ?? 0) < 7) return false;
+        if (filter === "Showing" && c.status !== "showing") return false;
+        if (filter === "Under contract" && c.status !== "under_contract") return false;
+        if (filter === "Closed" && c.status !== "closed") return false;
+        if (s && ![c.name, c.town, c.phone, c.email].some((v) => (v ?? "").toLowerCase().includes(s))) return false;
+        return true;
+      })
+      .sort((a, b) => (b.lastContactAt ?? b.created_at ?? "").localeCompare(a.lastContactAt ?? a.created_at ?? ""));
   }, [rows, filter, search]);
 
   function toggleTown(t: string) {
@@ -239,7 +254,7 @@ export function ClientsPageClient({
           <Search className="size-3.5 text-muted-foreground shrink-0" />
           <input
             type="text"
-            placeholder="Search by name or town…"
+            placeholder="Search name, town, phone, email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
@@ -253,7 +268,7 @@ export function ClientsPageClient({
 
         {/* Filters */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {STATUS_FILTERS.map((f) => (
+          {FILTERS.map((f) => (
             <button
               key={f}
               type="button"
