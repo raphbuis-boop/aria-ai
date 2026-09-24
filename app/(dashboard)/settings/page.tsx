@@ -199,6 +199,44 @@ function CopyValue({ value }: { value: string }) {
   );
 }
 
+type TwilioCheckResult = { name: string; ok: boolean; detail: string };
+
+/** Runs /api/health/twilio: are SID, token and sending number one working account? */
+function TwilioCheckRow() {
+  const [busy, setBusy] = useState(false);
+  const [checks, setChecks] = useState<TwilioCheckResult[] | null>(null);
+  async function run() {
+    setBusy(true);
+    try {
+      const res = await fetch("/api/health/twilio", { cache: "no-store" });
+      const json = await res.json();
+      setChecks(json.checks ?? [{ name: "Check", ok: false, detail: json.error ?? "Failed" }]);
+    } catch {
+      setChecks([{ name: "Check", ok: false, detail: "Couldn't reach the server" }]);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <div>
+      <Row Icon={Webhook} label={busy ? "Checking Twilio…" : "Check Twilio setup"} detail="Verifies SID, auth token and sending number with Twilio. Sends nothing." onPress={busy ? undefined : () => void run()} />
+      {checks ? (
+        <ul className="space-y-2 px-4 pb-4">
+          {checks.map((c) => (
+            <li key={c.name} className="flex gap-2 font-display text-caption">
+              <span className={c.ok ? "text-primary" : "text-destructive"}>{c.ok ? "✓" : "✕"}</span>
+              <span className="min-w-0">
+                <span className="font-semibold text-foreground">{c.name}</span>
+                <span className="block break-words text-muted-foreground">{c.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
@@ -379,6 +417,7 @@ export default function SettingsPage() {
             }
             right={<Status tone={smsTone}>{smsLabel}</Status>}
           />
+          <TwilioCheckRow />
           <Row
             Icon={Mail}
             label="Gmail"
