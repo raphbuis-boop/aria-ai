@@ -38,6 +38,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("idx_listing_inquiries")
     .select("*")
+    .eq("agent_id", user.id)
     .order("created_at", { ascending: false });
 
   if (status && ["new", "contacted", "converted", "archived"].includes(status)) {
@@ -94,7 +95,10 @@ export async function POST(req: Request) {
 
   try {
     const admin = createAdminClient();
+    // The public IDX site belongs to one agent — the same one website leads go to.
+    const ownerId = defaultLeadAgentId();
     const { error } = await admin.from("idx_listing_inquiries").insert({
+      agent_id: ownerId,
       intent,
       visitor_name,
       visitor_email,
@@ -113,12 +117,11 @@ export async function POST(req: Request) {
       );
     }
 
-    // Notify all agents about the new inquiry (fire-and-forget)
+    // Notify the site owner only — never every account on the platform.
     try {
-      const { data: agentList } = await admin.auth.admin.listUsers({ perPage: 10 });
-      for (const agent of agentList?.users ?? []) {
+      if (ownerId) {
         await insertNotification(admin, {
-          agent_id: agent.id,
+          agent_id: ownerId,
           kind: "inquiry_received",
           title: `New inquiry: ${visitor_name}`,
           body: listing_address
@@ -126,6 +129,8 @@ export async function POST(req: Request) {
             : `${intent === "showing" ? "Showing request" : "Info request"}`,
           related_listing_id: listing_id,
         });
+      } else {
+        console.warn("[listing-inquiries] LEAD_DEFAULT_AGENT_ID unset — inquiry saved without an agent");
       }
     } catch (e) {
       console.error("[listing-inquiries] notification failed", e);

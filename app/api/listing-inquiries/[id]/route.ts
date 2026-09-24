@@ -38,7 +38,8 @@ export async function PATCH(
   const { error } = await supabase
     .from("idx_listing_inquiries")
     .update({ status })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("agent_id", user.id);
 
   if (error) {
     console.error("[listing-inquiries PATCH]", error);
