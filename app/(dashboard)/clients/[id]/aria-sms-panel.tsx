@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { Pill } from "@/components/Section";
 import { cn } from "@/lib/utils";
+import { twilioErrorHint } from "@/lib/twilio-errors";
 
 export type AriaThreadState = {
   phone: string | null;
@@ -46,8 +47,15 @@ function senderOf(m: TextMessage): "client" | "aria" | "agent" {
 function Bubble({ m, firstName }: { m: TextMessage; firstName: string }) {
   const who = senderOf(m);
   const mine = who !== "client";
-  const failed = mine && !m.sent;
-  const error = typeof m.metadata?.send_error === "string" ? (m.metadata.send_error as string) : null;
+  const deliveryFailed = m.metadata?.delivery_status === "failed" || m.metadata?.delivery_status === "undelivered";
+  const failed = mine && (!m.sent || deliveryFailed);
+  const deliveryCode = m.metadata?.delivery_error ? String(m.metadata.delivery_error) : null;
+  const error =
+    typeof m.metadata?.send_error === "string"
+      ? (m.metadata.send_error as string)
+      : deliveryFailed
+        ? `Carrier didn't deliver${deliveryCode ? ` (Twilio ${deliveryCode}${twilioErrorHint(deliveryCode) ? `: ${twilioErrorHint(deliveryCode)}` : ""})` : ""}`
+        : null;
   return (
     <div className={cn("flex flex-col", mine ? "items-end" : "items-start")}>
       <div
@@ -59,9 +67,12 @@ function Bubble({ m, firstName }: { m: TextMessage; firstName: string }) {
       >
         {m.body}
       </div>
+      {failed && error ? (
+        <p className="mt-1 max-w-[85%] px-1 text-right font-display text-[11px] text-hot">{error}</p>
+      ) : null}
       <p className="mt-1 flex items-center gap-1 px-1 font-display text-[11px] text-muted-foreground">
         {failed ? (
-          <span className="flex items-center gap-1 text-hot" title={error ?? undefined}>
+          <span className="flex items-center gap-1 text-hot">
             <AlertCircle className="size-3" /> Not delivered ·
           </span>
         ) : null}

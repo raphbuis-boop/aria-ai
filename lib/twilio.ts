@@ -1,18 +1,43 @@
 import twilio from "twilio";
+import { TWILIO_ERROR_HINTS, twilioErrorHint } from "@/lib/twilio-errors";
+
+export { twilioErrorHint };
 
 export const EMPTY_TWIML = '<?xml version="1.0" encoding="UTF-8"?><Response/>';
 
+/** Env values pasted into a dashboard often carry a trailing newline or
+ * space, which silently breaks Twilio auth (20003) or the From match. */
+function env(name: string): string | undefined {
+  const v = process.env[name]?.trim();
+  return v ? v : undefined;
+}
+
 function client() {
-  const sid = process.env.TWILIO_ACCOUNT_SID;
-  const token = process.env.TWILIO_AUTH_TOKEN;
+  const sid = env("TWILIO_ACCOUNT_SID");
+  const token = env("TWILIO_AUTH_TOKEN");
   if (!sid || !token) return null;
   return twilio(sid, token);
 }
 
 function usableNumber(value?: string | null) {
-  if (!value || value.startsWith("REPLACE_")) return undefined;
-  return value;
+  const v = value?.trim();
+  if (!v || v.startsWith("REPLACE_")) return undefined;
+  return v;
 }
+
+export type TwilioErrorInfo = { code: number | null; status: number | null; message: string; hint: string | null };
+
+export function twilioErrorInfo(error: unknown): TwilioErrorInfo {
+  const e = (error ?? {}) as { code?: unknown; status?: unknown; message?: unknown };
+  const code = typeof e.code === "number" ? e.code : Number(e.code) || null;
+  return {
+    code,
+    status: typeof e.status === "number" ? e.status : null,
+    message: typeof e.message === "string" ? e.message : String(error),
+    hint: code ? TWILIO_ERROR_HINTS[code] ?? null : null,
+  };
+}
+
 
 /** Env-level sending number. `TWILIO_PHONE_NUMBER` is accepted as an alias
  * because that's the name the production env already uses. */
@@ -55,17 +80,24 @@ export function verifyTwilioSignature(
   const signature = request.headers.get("x-twilio-signature");
   if (!signature) return false;
 
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const webhookSecret = process.env.TWILIO_WEBHOOK_SECRET;
-  const tokens = [authToken, webhookSecret].filter(
-    (t): t is string => Boolean(t),
-  );
-  if (tokens.length === 0) return false;
+  const authToken = env("TWILIO_AUTH_TOKEN");
+  const webhookSecret = env("TWILIO_WEBHOOK_SECRET");
+  if (!authToken && !webhookSecret) return false;
 
   const url = twilioRequestUrl(request);
-  return tokens.some((token) =>
-    twilio.validateRequest(token, signature, url, params),
-  );
+  if (authToken && twilio.validateRequest(authToken, signature, url, params)) return true;
+  if (webhookSecret && twilio.validateRequest(webhookSecret, signature, url, params)) {
+    // Outbound sends authenticate with TWILIO_AUTH_TOKEN only. If inbound
+    // only passes on the webhook secret, the auth token is not this
+    // number's account token and every send will fail with 20003.
+    if (authToken) {
+      console.warn(
+        "[twilio] inbound signature matched TWILIO_WEBHOOK_SECRET but not TWILIO_AUTH_TOKEN — the auth token does not belong to the account that owns this number",
+      );
+    }
+    return true;
+  }
+  return false;
 }
 
 export async function sendSms(input: {
@@ -85,9 +117,7 @@ export async function sendSms(input: {
     throw new Error("Set TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN");
   }
 
-  const messagingServiceSid = usableNumber(
-    process.env.TWILIO_MESSAGING_SERVICE_SID,
-  );
+  const messagingServiceSid = usableNumber(env("TWILIO_MESSAGING_SERVICE_SID"));
   const from = usableNumber(input.from) ?? defaultFromNumber();
 
   if (!messagingServiceSid && !from) {
@@ -98,7 +128,7 @@ export async function sendSms(input: {
 
   // Delivery receipts → /api/webhooks/twilio/status. Twilio needs a public
   // https URL, so this is skipped in local dev.
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const site = env("NEXT_PUBLIC_SITE_URL") ?? "";
   const statusCallback = site.startsWith("https://")
     ? `${site.replace(/\/$/, "")}/api/webhooks/twilio/status`
     : undefined;
@@ -109,4 +139,128 @@ export async function sendSms(input: {
     ...(statusCallback ? { statusCallback } : {}),
     ...(messagingServiceSid ? { messagingServiceSid } : { from }),
   });
+}
+
+export type TwilioCheck = { name: string; ok: boolean; detail: string };
+
+/**
+ * Live check that the configured SID, auth token, sending number and
+ * (optional) messaging service all belong to one working Twilio account.
+ * Read-only — sends nothing.
+ */
+export async function checkTwilioSetup(fromOverride?: string | null): Promise<TwilioCheck[]> {
+  const checks: TwilioCheck[] = [];
+  const sid = env("TWILIO_ACCOUNT_SID");
+  const token = env("TWILIO_AUTH_TOKEN");
+  const rawSid = process.env.TWILIO_ACCOUNT_SID ?? "";
+  const rawToken = process.env.TWILIO_AUTH_TOKEN ?? "";
+
+  checks.push({
+    name: "Account SID format",
+    ok: Boolean(sid && /^AC[0-9a-f]{32}$/i.test(sid)),
+    detail: !sid
+      ? "TWILIO_ACCOUNT_SID is not set"
+      : /^AC[0-9a-f]{32}$/i.test(sid)
+        ? `${sid.slice(0, 6)}…${sid.slice(-4)}${rawSid !== sid ? " (had surrounding whitespace — trimmed)" : ""}`
+        : `Doesn't look like an Account SID (should be AC + 32 hex chars; got ${sid.length} chars starting "${sid.slice(0, 2)}")`,
+  });
+  checks.push({
+    name: "Auth token format",
+    ok: Boolean(token && /^[0-9a-f]{32}$/i.test(token)),
+    detail: !token
+      ? "TWILIO_AUTH_TOKEN is not set"
+      : /^[0-9a-f]{32}$/i.test(token)
+        ? `32 chars${rawToken !== token ? " (had surrounding whitespace — trimmed)" : ""}`
+        : `Expected 32 hex chars, got ${token.length}${token.startsWith("SK") ? " — this looks like an API Key SID, not the account auth token" : ""}`,
+  });
+
+  const c = client();
+  if (!c || !sid) return checks;
+
+  let account: { status: string; type: string; friendlyName: string } | null = null;
+  try {
+    account = await c.api.v2010.accounts(sid).fetch();
+    checks.push({
+      name: "SID + auth token authenticate",
+      ok: account.status === "active",
+      detail: `${account.friendlyName} · status ${account.status}`,
+    });
+    checks.push({
+      name: "Account type",
+      ok: account.type !== "Trial",
+      detail:
+        account.type === "Trial"
+          ? "Trial account — it can only text verified numbers and prefixes every message. Upgrade in the Twilio console."
+          : account.type,
+    });
+  } catch (error) {
+    const info = twilioErrorInfo(error);
+    checks.push({
+      name: "SID + auth token authenticate",
+      ok: false,
+      detail: `Twilio ${info.code ?? info.status ?? ""}: ${info.hint ?? info.message}`,
+    });
+    return checks;
+  }
+
+  const serviceSid = usableNumber(env("TWILIO_MESSAGING_SERVICE_SID"));
+  const from = usableNumber(fromOverride) ?? defaultFromNumber();
+
+  if (serviceSid) {
+    try {
+      const service = await c.messaging.v1.services(serviceSid).fetch();
+      const senders = await c.messaging.v1.services(serviceSid).phoneNumbers.list({ limit: 20 });
+      checks.push({
+        name: "Messaging Service",
+        ok: senders.length > 0,
+        detail: `${service.friendlyName} · ${senders.length} sender number(s): ${senders.map((p) => p.phoneNumber).join(", ") || "none"}. Sends use this service, not TWILIO_FROM_NUMBER.`,
+      });
+    } catch (error) {
+      const info = twilioErrorInfo(error);
+      checks.push({
+        name: "Messaging Service",
+        ok: false,
+        detail: `TWILIO_MESSAGING_SERVICE_SID ${serviceSid} isn't usable on this account — Twilio ${info.code ?? ""}: ${info.hint ?? info.message}`,
+      });
+    }
+  }
+
+  if (from) {
+    try {
+      const owned = await c.api.v2010.accounts(sid).incomingPhoneNumbers.list({ phoneNumber: from, limit: 1 });
+      const n = owned[0];
+      checks.push({
+        name: "Sending number owned by this account",
+        ok: Boolean(n?.capabilities?.sms),
+        detail: !n
+          ? `${from} is not a number on this Twilio account${serviceSid ? " (unused while a Messaging Service is set)" : ""}`
+          : n.capabilities?.sms
+            ? `${from} · SMS capable`
+            : `${from} is on this account but not SMS-capable`,
+      });
+    } catch (error) {
+      const info = twilioErrorInfo(error);
+      checks.push({ name: "Sending number owned by this account", ok: false, detail: `Twilio ${info.code ?? ""}: ${info.message}` });
+    }
+  } else if (!serviceSid) {
+    checks.push({ name: "Sending number", ok: false, detail: "Set TWILIO_FROM_NUMBER (or TWILIO_MESSAGING_SERVICE_SID)" });
+  }
+
+  // Why the most recent sends failed, straight from Twilio.
+  try {
+    const recent = await c.api.v2010.accounts(sid).messages.list({ limit: 10 });
+    const failed = recent.filter((m) => m.direction !== "inbound" && (m.errorCode || m.status === "failed" || m.status === "undelivered"));
+    if (failed.length) {
+      const m = failed[0];
+      checks.push({
+        name: "Latest failed message on Twilio",
+        ok: false,
+        detail: `${m.status} · error ${m.errorCode ?? "—"}${twilioErrorHint(m.errorCode) ? ` — ${twilioErrorHint(m.errorCode)}` : ""} (to …${m.to.slice(-4)}, ${m.dateCreated?.toISOString?.() ?? ""})`,
+      });
+    }
+  } catch {
+    /* listing is best-effort */
+  }
+
+  return checks;
 }

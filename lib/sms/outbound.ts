@@ -1,5 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { sendSms } from "@/lib/twilio";
+import { sendSms, twilioErrorInfo } from "@/lib/twilio";
 
 export type SmsClient = {
   id: string;
@@ -80,11 +80,24 @@ export async function sendClientSms(
 
     return { ok: true, activityId: activity.id, sid: sent.sid };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
-    console.error("[sms] Twilio send failed; draft kept on timeline", message);
+    const info = twilioErrorInfo(error);
+    const message = info.code ? `Twilio ${info.code}: ${info.hint ?? info.message}` : info.message;
+    console.error("[sms] Twilio send failed; draft kept on timeline", {
+      code: info.code,
+      status: info.status,
+      message: info.message,
+    });
     await supabase
       .from("activities")
-      .update({ metadata: { channel: "twilio", ...opts.metadata, send_error: message } })
+      .update({
+        metadata: {
+          channel: "twilio",
+          ...opts.metadata,
+          send_error: message,
+          send_error_code: info.code,
+          send_error_raw: info.message,
+        },
+      })
       .eq("id", activity.id);
     return { ok: false, activityId: activity.id, error: message };
   }

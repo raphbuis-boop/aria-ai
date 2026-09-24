@@ -7,6 +7,7 @@ import { AlertCircle, ArrowRight, CalendarDays, ChevronRight, Sparkles, Upload, 
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 import { NotificationBell } from "@/components/NotificationPanel";
+import { LiveRefresh } from "@/components/LiveRefresh";
 import { Avatar, EmptyNote, Pill, Section } from "@/components/Section";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -344,6 +345,7 @@ export function TodayClient(props: Props) {
         )}
       </div>
 
+      <LiveRefresh />
       <DraftSheet item={activeDraftItem} onClose={() => setActiveDraftItem(null)} onSent={handleSent} />
       <Toaster />
     </div>
