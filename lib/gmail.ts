@@ -1,12 +1,22 @@
 import { google } from "googleapis";
 import { createAdminClient } from "@/lib/supabase/admin";
 
+/** Local end-to-end testing only: points every Google API call (OAuth token
+ * exchange, Gmail) at a stand-in server. Never set in production. */
+const TEST_API_BASE = process.env.GOOGLE_API_BASE_URL?.replace(/\/$/, "") || null;
+
 function makeOAuth2Client() {
-  return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID!,
-    process.env.GOOGLE_CLIENT_SECRET!,
-    process.env.GOOGLE_REDIRECT_URI!,
-  );
+  return new google.auth.OAuth2({
+    clientId: process.env.GOOGLE_CLIENT_ID!,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    redirectUri: process.env.GOOGLE_REDIRECT_URI!,
+    ...(TEST_API_BASE ? { endpoints: { oauth2TokenUrl: `${TEST_API_BASE}/token` } } : {}),
+  });
+}
+
+/** Gmail API client for an authorized OAuth client. */
+export function gmailFor(auth: InstanceType<typeof google.auth.OAuth2>) {
+  return google.gmail({ version: "v1", auth, ...(TEST_API_BASE ? { rootUrl: `${TEST_API_BASE}/` } : {}) });
 }
 
 /**
@@ -19,7 +29,7 @@ export async function getGoogleAuth(agentId: string) {
 
   const { data: integration, error } = await supabase
     .from("gmail_integrations")
-    .select("access_token, refresh_token, token_expiry, scope")
+    .select("email, access_token, refresh_token, token_expiry, scope")
     .eq("agent_id", agentId)
     .single();
 
@@ -61,7 +71,7 @@ export async function getGoogleAuth(agentId: string) {
   }
 
   const scopes = String(integration.scope ?? "").split(/\s+/).filter(Boolean);
-  return { auth, scopes };
+  return { auth, scopes, email: String(integration.email ?? "") };
 }
 
 /**
@@ -70,7 +80,16 @@ export async function getGoogleAuth(agentId: string) {
  */
 export async function getGmailClient(agentId: string) {
   const google_ = await getGoogleAuth(agentId);
-  return google_ ? google.gmail({ version: "v1", auth: google_.auth }) : null;
+  return google_ ? gmailFor(google_.auth) : null;
 }
+
+/** Gmail client plus the connected address (to tell the agent's own mail apart). */
+export async function getGmail(agentId: string) {
+  const google_ = await getGoogleAuth(agentId);
+  return google_ ? { gmail: gmailFor(google_.auth), email: google_.email.toLowerCase() } : null;
+}
+
+/** httpOnly cookie carrying the OAuth `state` nonce between connect and callback. */
+export const GOOGLE_OAUTH_COOKIE = "aria_google_oauth";
 
 export { makeOAuth2Client };

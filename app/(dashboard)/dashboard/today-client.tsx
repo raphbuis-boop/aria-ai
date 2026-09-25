@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, ArrowRight, CalendarDays, ChevronRight, Sparkles, Upload, UserPlus } from "lucide-react";
+import { AlertCircle, ArrowRight, CalendarDays, ChevronRight, Mail, Sparkles, Upload, UserPlus } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 import { NotificationBell } from "@/components/NotificationPanel";
@@ -88,6 +88,13 @@ function Header({ firstName, agentInitials }: { firstName: string; agentInitials
         </h1>
       </div>
       <div className="flex shrink-0 items-center gap-2">
+        <Link
+          href="/emails"
+          aria-label="Email inbox"
+          className="flex size-11 items-center justify-center rounded-full bg-secondary text-foreground"
+        >
+          <Mail className="size-[18px]" />
+        </Link>
         <NotificationBell />
         <Link
           href="/settings"
