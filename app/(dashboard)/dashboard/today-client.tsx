@@ -191,7 +191,7 @@ function ShowingsToday({ rows }: { rows: ShowingRow[] }) {
                 <p className="truncate font-display text-body font-semibold text-foreground">{s.address ?? "Address TBD"}</p>
                 <p className="truncate font-display text-caption text-muted-foreground">{s.client?.name ?? "No client linked"}</p>
               </div>
-              <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" />
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
             </Link>
           ))}
         </Card>

@@ -63,7 +63,7 @@ export function EditTransactionModal({
   });
 
   const inputClass =
-    "w-full rounded-[14px] border-[0.5px] border-border bg-card px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary/40";
+    "w-full rounded-[14px] border border-input bg-card px-4 py-3 text-sm text-foreground placeholder-muted-foreground outline-none focus:border-primary/40";
 
   async function save() {
     setSaving(true);
@@ -109,10 +109,11 @@ export function EditTransactionModal({
   ];
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Edit transaction">
       <button
         type="button"
         aria-label="Close"
+        tabIndex={-1}
         className="absolute inset-0"
         onClick={onClose}
       />
@@ -126,13 +127,13 @@ export function EditTransactionModal({
         </p>
 
         <div className="space-y-2.5">
-          <input
+          <input aria-label="Address"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Address"
             className={inputClass}
           />
-          <input
+          <input aria-label="Contract price"
             value={form.contract_price}
             onChange={(e) =>
               setForm({ ...form, contract_price: e.target.value })
@@ -147,6 +148,7 @@ export function EditTransactionModal({
               Status
             </p>
             <select
+              aria-label="Status"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
               className={`${inputClass} appearance-none`}
@@ -167,6 +169,7 @@ export function EditTransactionModal({
               <p className="mb-1 text-[11px] text-muted-foreground">{label}</p>
               <input
                 type="datetime-local"
+                aria-label={label}
                 value={form[k] as string}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, [k]: e.target.value }))
@@ -180,7 +183,7 @@ export function EditTransactionModal({
             Parties
           </p>
           <div className="flex gap-2">
-            <input
+            <input aria-label="Attorney name"
               value={form.attorney_name}
               onChange={(e) =>
                 setForm({ ...form, attorney_name: e.target.value })
@@ -188,7 +191,7 @@ export function EditTransactionModal({
               placeholder="Attorney name"
               className={`${inputClass} w-1/2`}
             />
-            <input
+            <input aria-label="Attorney email"
               value={form.attorney_email}
               onChange={(e) =>
                 setForm({ ...form, attorney_email: e.target.value })
@@ -199,7 +202,7 @@ export function EditTransactionModal({
             />
           </div>
           <div className="flex gap-2">
-            <input
+            <input aria-label="Lender name"
               value={form.lender_name}
               onChange={(e) =>
                 setForm({ ...form, lender_name: e.target.value })
@@ -207,7 +210,7 @@ export function EditTransactionModal({
               placeholder="Lender name"
               className={`${inputClass} w-1/2`}
             />
-            <input
+            <input aria-label="Lender email"
               value={form.lender_email}
               onChange={(e) =>
                 setForm({ ...form, lender_email: e.target.value })

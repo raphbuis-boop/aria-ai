@@ -116,7 +116,7 @@ export function BottomNav() {
     >
       <nav
         aria-label="Main"
-        className="relative flex items-center gap-1 rounded-[30px] border border-border bg-card/90 px-2.5 shadow-[0_1px_2px_rgba(43,36,25,0.06),0_18px_40px_-14px_rgba(43,36,25,0.28)] backdrop-blur-xl"
+        className="relative flex items-center gap-1 rounded-[30px] border border-border bg-card/90 px-2.5 shadow-float backdrop-blur-xl"
         style={{ height: 66 }}
       >
 
@@ -147,7 +147,7 @@ export function BottomNav() {
               if (pathname === "/voice" || pending) return;
               startTransition(() => router.push("/voice"));
             }}
-            className="relative flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--background),0_10px_24px_-6px_rgba(31,92,70,0.55)]"
+            className="relative flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_0_0_4px_var(--background),0_10px_24px_-6px_color-mix(in_srgb,var(--primary)_55%,transparent)]"
           >
             {pending ? (
               <LoaderCircle className="size-5 animate-spin" />

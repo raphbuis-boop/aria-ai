@@ -31,6 +31,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { applyThemePref, readThemePref, type ThemePref } from "@/lib/theme";
 import { cn, fmtPhone } from "@/lib/utils";
+import { Skeleton } from "@/components/Skeleton";
 
 // ── Types ─────────────────────────────────────────────────────────────────
 
@@ -66,7 +67,16 @@ function Group({ title, footer, children }: { title: string; footer?: React.Reac
 }
 
 type Tone = "ok" | "warn" | "off";
+const CHECKING = "Checking…";
+
 function Status({ tone, children }: { tone: Tone; children: React.ReactNode }) {
+  if (children === CHECKING)
+    return (
+      <span className="inline-flex shrink-0 items-center">
+        <Skeleton className="h-3.5 w-20" />
+        <span className="sr-only">{CHECKING}</span>
+      </span>
+    );
   return (
     <span
       className={cn(
@@ -113,7 +123,7 @@ function Row({
         {detail ? <div className="mt-0.5 font-display text-caption text-muted-foreground">{detail}</div> : null}
       </div>
       {right}
-      {href || onPress ? <ChevronRight className="size-4 shrink-0 text-muted-foreground/60" /> : null}
+      {href || onPress ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" /> : null}
     </div>
   );
   if (href) return <Link href={href} className="block hover:bg-secondary/40">{body}</Link>;
@@ -133,6 +143,7 @@ function EditRow({
   placeholder,
   inputMode,
   onSave,
+  loading,
 }: {
   Icon: React.ElementType;
   label: string;
@@ -140,6 +151,7 @@ function EditRow({
   placeholder: string;
   inputMode?: "text" | "tel";
   onSave: (v: string) => void;
+  loading?: boolean;
 }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
@@ -147,6 +159,11 @@ function EditRow({
     <label className="flex min-h-[56px] items-center gap-3 px-4 py-3">
       <RowIcon Icon={Icon} />
       <span className="shrink-0 font-display text-body-lg text-foreground">{label}</span>
+      {loading ? (
+        <span className="flex flex-1 justify-end">
+          <Skeleton className="h-4 w-28" />
+        </span>
+      ) : (
       <input
         value={draft}
         placeholder={placeholder}
@@ -155,8 +172,9 @@ function EditRow({
         onChange={(e) => setDraft(e.target.value)}
         onBlur={() => draft.trim() !== value.trim() && onSave(draft.trim())}
         onKeyDown={(e) => e.key === "Enter" && (e.target as HTMLInputElement).blur()}
-        className="min-w-0 flex-1 bg-transparent text-right font-display text-body text-muted-foreground outline-none placeholder:text-muted-foreground/50 focus:text-foreground"
+        className="min-w-0 flex-1 bg-transparent text-right font-display text-body text-muted-foreground outline-none placeholder:text-muted-foreground focus:text-foreground"
       />
+      )}
     </label>
   );
 }
@@ -173,7 +191,7 @@ function Toggle({ on, onChange, label }: { on: boolean; onChange: (v: boolean) =
     >
       <span
         className={cn(
-          "absolute left-0.5 top-0.5 size-6 rounded-full bg-white shadow-sm transition-transform",
+          "absolute left-0.5 top-0.5 size-6 rounded-full bg-paper shadow-sm transition-transform",
           on ? "translate-x-5" : "translate-x-0",
         )}
       />
@@ -243,6 +261,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
   const [profile, setProfile] = useState({ fullName: "", email: "", phone: "", brokerageName: "" });
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [google, setGoogle] = useState<Google | null>(null);
   const [notify, setNotify] = useState({ notifyFollowups: true });
@@ -265,7 +284,7 @@ export default function SettingsPage() {
         .catch(() => {});
     void get<typeof profile>("/api/settings/profile", (d) =>
       setProfile({ fullName: d.fullName ?? "", email: d.email ?? "", phone: d.phone ?? "", brokerageName: d.brokerageName ?? "" }),
-    );
+    ).finally(() => setProfileLoaded(true));
     void get<Health>("/api/health/env", setHealth);
     void get<Google>("/api/gmail/status", setGoogle);
     void get<typeof notify>("/api/settings/notifications", setNotify);
@@ -357,7 +376,7 @@ export default function SettingsPage() {
 
   const sms = health?.sms;
   const smsTone: Tone = !health ? "off" : sms?.configured ? (sms.dryRun ? "warn" : "ok") : "warn";
-  const smsLabel = !health ? "Checking…" : !sms?.configured ? "Not configured" : sms.dryRun ? "Test mode" : "Connected";
+  const smsLabel = !health ? CHECKING : !sms?.configured ? "Not configured" : sms.dryRun ? "Test mode" : "Connected";
   const calendarTone: Tone = !google?.connected ? "off" : google.calendarWrite ? "ok" : google.calendarRead ? "ok" : "warn";
   const calendarLabel = !google?.connected
     ? "Not connected"
@@ -374,23 +393,35 @@ export default function SettingsPage() {
 
         {/* Account card */}
         <div className="mb-8 flex items-center gap-4 rounded-2xl border border-border bg-card p-4">
-          <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary font-heading text-[22px] text-primary-foreground">
-            {(profile.fullName.trim()[0] ?? "?").toUpperCase()}
-          </span>
-          <div className="min-w-0">
-            <p className="truncate font-display text-title text-foreground">{profile.fullName || "Your name"}</p>
-            <p className="truncate font-display text-body text-muted-foreground">{profile.email}</p>
-          </div>
+          {profileLoaded ? (
+            <>
+              <span className="flex size-14 shrink-0 items-center justify-center rounded-full bg-primary font-heading text-[22px] text-primary-foreground">
+                {(profile.fullName.trim()[0] ?? "?").toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate font-display text-title text-foreground">{profile.fullName || "Your name"}</p>
+                <p className="truncate font-display text-body text-muted-foreground">{profile.email}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <Skeleton className="size-14 shrink-0 rounded-full" />
+              <div className="flex-1 space-y-2">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3.5 w-52" />
+              </div>
+            </>
+          )}
         </div>
 
         <Group title="Account">
-          <EditRow Icon={KeyRound} label="Name" value={profile.fullName} placeholder="Your name" onSave={(v) => void saveProfile("fullName", v)} />
-          <EditRow Icon={MessageSquare} label="Mobile" value={profile.phone} placeholder="(201) 555-0100" inputMode="tel" onSave={(v) => void saveProfile("phone", v)} />
-          <Row Icon={Mail} label="Email" right={<span className="truncate font-display text-body text-muted-foreground">{profile.email}</span>} />
+          <EditRow Icon={KeyRound} label="Name" value={profile.fullName} loading={!profileLoaded} placeholder="Your name" onSave={(v) => void saveProfile("fullName", v)} />
+          <EditRow Icon={MessageSquare} label="Mobile" value={profile.phone} loading={!profileLoaded} placeholder="(201) 555-0100" inputMode="tel" onSave={(v) => void saveProfile("phone", v)} />
+          <Row Icon={Mail} label="Email" right={profileLoaded ? <span className="truncate font-display text-body text-muted-foreground">{profile.email}</span> : <Skeleton className="h-4 w-36" />} />
         </Group>
 
         <Group title="Brokerage">
-          <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
+          <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} loading={!profileLoaded} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
         </Group>
 
         <Group
@@ -422,7 +453,7 @@ export default function SettingsPage() {
             Icon={Mail}
             label="Gmail"
             detail={google?.connected ? google.email : health && !health.googleConfigured ? "Google sign-in isn't configured on the server." : "Read and reply to client email."}
-            right={<Status tone={google?.connected ? "ok" : "off"}>{google === null ? "Checking…" : google.connected ? "Connected" : "Not connected"}</Status>}
+            right={<Status tone={google?.connected ? "ok" : "off"}>{google === null ? CHECKING : google.connected ? "Connected" : "Not connected"}</Status>}
           />
           <Row
             Icon={CalendarDays}
@@ -453,7 +484,7 @@ export default function SettingsPage() {
             Icon={Search}
             label="MLS / IDX"
             detail={health?.mlsConfigured ? "NJMLS listings via SimplyRETS. IDX disclaimer shown wherever listings appear." : "MLS search is off until the board's SimplyRETS credentials are set."}
-            right={<Status tone={health?.mlsConfigured ? "ok" : "off"}>{!health ? "Checking…" : health.mlsConfigured ? "Connected" : "Not configured"}</Status>}
+            right={<Status tone={health?.mlsConfigured ? "ok" : "off"}>{!health ? CHECKING : health.mlsConfigured ? "Connected" : "Not configured"}</Status>}
             href={health?.mlsConfigured ? "/listings" : undefined}
           />
           <Row
@@ -471,7 +502,7 @@ export default function SettingsPage() {
                 "External lead sources are off until LEAD_WEBHOOK_SECRET is set. Leads you add by hand still work."
               )
             }
-            right={<Status tone={health?.leads.webhookConfigured ? "ok" : "off"}>{!health ? "Checking…" : health.leads.webhookConfigured ? "On" : "Off"}</Status>}
+            right={<Status tone={health?.leads.webhookConfigured ? "ok" : "off"}>{!health ? CHECKING : health.leads.webhookConfigured ? "On" : "Off"}</Status>}
           />
         </Group>
 
@@ -498,7 +529,7 @@ export default function SettingsPage() {
             Icon={MessageSquare}
             label="AI replies"
             detail={health && !health.aiConfigured ? "Claude isn't configured on the server — Aria can't draft or reply." : "Claude drafts the first text and replies to leads."}
-            right={<Status tone={health?.aiConfigured ? "ok" : "warn"}>{!health ? "Checking…" : health.aiConfigured ? "On" : "Off"}</Status>}
+            right={<Status tone={health?.aiConfigured ? "ok" : "warn"}>{!health ? CHECKING : health.aiConfigured ? "On" : "Off"}</Status>}
           />
           <label className="flex min-h-[56px] items-center gap-3 px-4 py-3">
             <RowIcon Icon={MessageSquare} />
@@ -595,13 +626,13 @@ export default function SettingsPage() {
                 void changePassword();
               }}
             >
-              <input
+              <input aria-label="New password (8+ characters)"
                 type="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="New password (8+ characters)"
-                className="min-w-0 flex-1 rounded-xl bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+                className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
               />
               <Button type="submit" className="rounded-xl">
                 Save
@@ -624,7 +655,7 @@ export default function SettingsPage() {
                   value={deleteText}
                   onChange={(e) => setDeleteText(e.target.value)}
                   aria-label="Type DELETE to confirm"
-                  className="min-w-0 flex-1 rounded-xl bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+                  className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
                 />
                 <Button variant="destructive" disabled={deleteText !== "DELETE" || deleting} onClick={() => void deleteAccount()} className="rounded-xl">
                   {deleting ? "Deleting…" : "Delete"}
@@ -634,7 +665,7 @@ export default function SettingsPage() {
           ) : null}
         </Group>
 
-        <p className="text-center font-display text-caption text-muted-foreground/70">Aria · Made for New Jersey agents</p>
+        <p className="text-center font-display text-caption text-muted-foreground">Aria · Made for New Jersey agents</p>
       </div>
       <Toaster />
     </div>

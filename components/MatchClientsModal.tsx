@@ -184,10 +184,11 @@ export function MatchClientsModal({
   if (!open || !listing) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Match to clients">
       <button
         type="button"
         aria-label="Close"
+        tabIndex={-1}
         className="absolute inset-0"
         onClick={onClose}
       />

@@ -28,6 +28,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CLIENT_STATUSES } from "@/lib/client-brief";
 import { fmtMoney, fmtDateTime, formatPhoneE164, relTime } from "@/lib/utils";
 import type { SendableProperty } from "@/components/aria/SendPropertySheet";
+import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
 
 // ── Preferences ────────────────────────────────────────────────────────────
 
@@ -48,13 +49,13 @@ export type Preferences = {
 };
 
 const FIELD =
-  "w-full rounded-xl border border-transparent bg-secondary px-3.5 py-2.5 font-display text-body text-foreground outline-none focus:border-input";
+  "w-full rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body text-foreground outline-none focus:border-ring";
 
 function Fact({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="min-w-0">
       <p className="font-display text-caption text-muted-foreground">{label}</p>
-      <p className={`mt-0.5 break-words font-display text-body ${value ? "text-foreground" : "text-muted-foreground/60"}`}>
+      <p className={`mt-0.5 break-words font-display text-body ${value ? "text-foreground" : "text-muted-foreground"}`}>
         {value ?? "—"}
       </p>
     </div>
@@ -278,7 +279,7 @@ export function HomesCard({
                   </span>
                 </Link>
                 {canSend ? (
-                  <Button size="sm" variant={h.sent ? "outline" : "default"} onClick={() => onSend(h)} className="h-9 shrink-0 rounded-full px-3">
+                  <Button size="sm" variant="outline" onClick={() => onSend(h)} className="h-9 shrink-0 rounded-full px-3">
                     <Send className="size-3.5" /> {h.sent ? "Resend" : "Send"}
                   </Button>
                 ) : null}
@@ -491,7 +492,10 @@ export function BbaAndDocsCard({
         </div>
 
         {docs === null ? (
-          <p className="px-5 py-4 font-display text-caption text-muted-foreground">Loading documents…</p>
+          <SkeletonRegion label="Loading documents…" className="space-y-3 px-5 py-4">
+            <Skeleton className="h-3.5 w-2/3" />
+            <Skeleton className="h-3.5 w-1/2" />
+          </SkeletonRegion>
         ) : (
           docs.map((d) => (
             <a

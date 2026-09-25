@@ -75,7 +75,7 @@ export default function VoiceSettingsPage() {
     setPreviewOut(String(data.draft ?? ""));
   }
 
-  const inputBg: React.CSSProperties = { background: "var(--card)", border: "none", color: "var(--foreground)" };
+  const inputBg: React.CSSProperties = { background: "var(--card)", border: "1px solid var(--input)", color: "var(--foreground)" };
   const inputCls = "w-full rounded-[13px] px-4 py-3 text-base outline-none";
 
   return (
@@ -85,7 +85,7 @@ export default function VoiceSettingsPage() {
     >
       <div className="px-5">
         <BackButton className="mb-5" />
-        <h1 className="mb-2 text-[22px] font-semibold tracking-[-0.02em]">
+        <h1 className="mb-2 font-heading text-[34px] leading-tight text-foreground">
           Mirror My Voice
         </h1>
         <p className="mb-6 text-[13px] leading-relaxed" style={{ color: "var(--muted-foreground)" }}>
@@ -100,6 +100,7 @@ export default function VoiceSettingsPage() {
                 Sample {i + 1}
               </p>
               <textarea
+                aria-label={`Sample ${i + 1}`}
                 value={s}
                 onChange={(e) => {
                   const next = [...samples];
@@ -142,6 +143,7 @@ export default function VoiceSettingsPage() {
             Preview a draft
           </p>
           <input
+            aria-label="Preview a draft"
             value={previewQ}
             onChange={(e) => setPreviewQ(e.target.value)}
             className={inputCls}

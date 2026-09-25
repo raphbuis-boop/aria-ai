@@ -101,7 +101,7 @@ export default function SignupPage() {
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0"
-        style={{ background: "radial-gradient(ellipse 60% 40% at 50% -5%, rgba(31,92,70,0.10), transparent 65%)" }}
+        style={{ background: "radial-gradient(ellipse 60% 40% at 50% -5%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 65%)" }}
       />
       <div
         className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[400px] flex-col px-6"
@@ -116,7 +116,7 @@ export default function SignupPage() {
           transition={{ duration: 0.16, ease }}
           className="mb-8 flex flex-col items-center"
         >
-          <Link href="/login" className="transition hover:opacity-80">
+          <Link href="/login" aria-label="Aria — back to sign in" className="rounded-full transition hover:opacity-80">
             <span className="mb-4 block"><AriaMark size={60} /></span>
           </Link>
           <h1 className="font-heading text-[24px] font-semibold" style={{ color: INK }}>
@@ -155,7 +155,7 @@ export default function SignupPage() {
 
           {/* Secondary: email/password */}
           <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col space-y-3">
-            <input
+            <input aria-label="Work email"
               type="email"
               autoComplete="email"
               required
@@ -164,7 +164,7 @@ export default function SignupPage() {
               placeholder="Work email"
               style={inputStyle}
             />
-            <input
+            <input aria-label="Password"
               type="password"
               autoComplete="new-password"
               required

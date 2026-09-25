@@ -508,7 +508,7 @@ export default function VoicePage() {
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden bg-background text-foreground">
+    <div className="fixed inset-0 z-[100] flex flex-col select-none overflow-hidden bg-background text-foreground" role="dialog" aria-modal="true" aria-label="Ask Aria">
       {/* ── Top bar ── */}
       <div
         className="relative z-10 flex w-full items-center justify-between px-5 shrink-0"
@@ -675,7 +675,7 @@ export default function VoicePage() {
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 16px)", paddingTop: 12 }}
               >
                 <div className="flex items-center gap-2 rounded-full border border-border bg-card px-4 py-2">
-                  <input
+                  <input aria-label="Ask Aria"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => {
@@ -685,7 +685,8 @@ export default function VoicePage() {
                       }
                     }}
                     placeholder="Ask Aria…"
-                    className="flex-1 min-w-0 bg-transparent font-display text-body-lg text-foreground outline-none placeholder:text-muted-foreground/60"
+                    data-focus-parent
+            className="flex-1 min-w-0 bg-transparent font-display text-body-lg text-foreground outline-none placeholder:text-muted-foreground"
                     autoComplete="off"
                     autoCorrect="off"
                   />
@@ -754,7 +755,7 @@ export default function VoicePage() {
                 <button
                   type="button"
                   onClick={handleVoiceTap}
-                  className="flex flex-col items-center gap-6 outline-none active:opacity-80"
+                  className="flex flex-col items-center gap-6 rounded-3xl active:opacity-80"
                   aria-label={voiceState === "idle" ? "Tap to speak" : "Tap to stop"}
                   style={{ WebkitTapHighlightColor: "transparent" }}
                 >

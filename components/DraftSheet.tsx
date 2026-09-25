@@ -182,7 +182,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
   return (
     <Drawer.Root open={isOpen} noBodyStyles disablePreventScroll={false} onOpenChange={(open) => { if (!open) onClose(); }}>
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 z-40 bg-foreground/40 backdrop-blur-[2px]" />
+        <Drawer.Overlay className="fixed inset-0 z-40 bg-scrim backdrop-blur-[2px]" />
         <Drawer.Content
           onCloseAutoFocus={(event) => event.preventDefault()}
           className="fixed bottom-0 left-0 right-0 z-50 flex flex-col outline-none bg-card border border-border border-b-0 rounded-t-[28px]"
@@ -239,11 +239,12 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
             ) : (
               <textarea
                 ref={textareaRef}
+                aria-label="Message"
                 value={draftText}
                 onChange={(e) => setDraftText(e.target.value)}
                 readOnly={!isEditing}
                 rows={5}
-                className="w-full rounded-xl p-4 font-display text-body-lg leading-relaxed resize-none outline-none mb-5 bg-secondary border border-transparent focus:border-input text-foreground"
+                className="w-full rounded-xl p-4 font-display text-body-lg leading-relaxed resize-none outline-none mb-5 bg-secondary border border-input focus:border-ring text-foreground"
                 style={{ minHeight: "160px" }}
               />
             )}
@@ -276,7 +277,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
                 onClick={() => logAndOpen("whatsapp")}
                 disabled={!canSend}
                 className="flex-1 rounded-xl py-[15px] font-display text-body-lg font-semibold border disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
-                style={{ minHeight: "56px", borderColor: "#25D366", color: "#25D366", background: "transparent" }}
+                style={{ minHeight: "56px", borderColor: "var(--brand-whatsapp)", color: "var(--brand-whatsapp)", background: "transparent" }}
               >
                 WhatsApp
               </button>
@@ -306,7 +307,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
               <button
                 type="button"
                 onClick={onClose}
-                className="font-display text-caption text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+                className="font-display text-caption text-muted-foreground hover:text-muted-foreground transition-colors"
               >
                 Cancel
               </button>

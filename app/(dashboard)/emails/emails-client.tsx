@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { Avatar, EmptyNote, Pill, Section } from "@/components/Section";
 import { relTime } from "@/lib/utils";
+import { Skeleton, SkeletonRegion, SkeletonRows } from "@/components/Skeleton";
 
 type Urgency = "high" | "medium" | "low";
 type Row = {
@@ -159,7 +160,11 @@ function ThreadView({ row, onClose, onSent }: { row: Row; onClose: () => void; o
               <p className="mt-1 font-display text-caption text-muted-foreground">Why it matters: {assist.why}</p>
             </>
           ) : drafting ? (
-            <p className="font-display text-body text-muted-foreground">Reading the thread…</p>
+            <SkeletonRegion label="Reading the thread…" className="space-y-2 pt-1">
+              <Skeleton className="h-3.5 w-11/12" />
+              <Skeleton className="h-3.5 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </SkeletonRegion>
           ) : assistError ? (
             <p className="font-display text-body text-muted-foreground">{assistError}</p>
           ) : (
@@ -209,7 +214,7 @@ function ThreadView({ row, onClose, onSent }: { row: Row; onClose: () => void; o
               rows={8}
               aria-label="Reply"
               placeholder={drafting ? "Aria is drafting a reply…" : "Write your reply…"}
-              className="w-full resize-y rounded-2xl border border-border bg-card p-4 font-display text-body text-foreground outline-none focus:border-input"
+              className="w-full resize-y rounded-2xl border border-input bg-card p-4 font-display text-body text-foreground outline-none focus:border-ring"
             />
             <p className="mt-1 font-display text-caption text-muted-foreground">Sends from your Gmail, in this thread.</p>
             <Button onClick={() => void send()} disabled={sending || !reply.trim()} className="mt-3 h-12 w-full rounded-xl text-body-lg font-semibold">
@@ -277,7 +282,9 @@ export function EmailsClient() {
         </header>
 
         {inbox === null ? (
-          <p className="font-display text-body text-muted-foreground">Loading your inbox…</p>
+          <SkeletonRegion label="Loading your inbox…">
+            <SkeletonRows count={6} />
+          </SkeletonRegion>
         ) : !inbox.connected ? (
           <Card className="px-6 py-8 text-center">
             <Mail className="mx-auto mb-3 size-6 text-primary" />

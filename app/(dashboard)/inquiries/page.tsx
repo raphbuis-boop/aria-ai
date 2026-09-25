@@ -2,8 +2,9 @@
 
 import { useToast } from "@/components/ToastProvider";
 import { fmtMoney, relTime } from "@/lib/utils";
-import { Loader2, Mail, MessageSquare, Phone, X } from "lucide-react";
+import { Mail, MessageSquare, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { SkeletonRegion, SkeletonRows } from "@/components/Skeleton";
 
 type Inquiry = {
   id: string;
@@ -40,8 +41,8 @@ const STATUS_LABELS: Record<Inquiry["status"], string> = {
 
 const STATUS_COLORS: Record<Inquiry["status"], string> = {
   new: "bg-primary/15 text-primary",
-  contacted: "bg-amber-500/15 text-amber-400",
-  converted: "bg-emerald-500/15 text-emerald-400",
+  contacted: "bg-warning/15 text-warning",
+  converted: "bg-success/15 text-success",
   archived: "bg-input text-muted-foreground",
 };
 
@@ -79,10 +80,11 @@ function InquiryDetailPanel({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px] md:items-center">
+    <div className="fixed inset-0 z-[80] flex items-end justify-center bg-scrim backdrop-blur-[2px] md:items-center" role="dialog" aria-modal="true" aria-label="Inquiry">
       <button
         type="button"
         aria-label="Close"
+        tabIndex={-1}
         className="absolute inset-0"
         onClick={onClose}
       />
@@ -184,14 +186,6 @@ function InquiryDetailPanel({
           </div>
         </div>
 
-        {/* convert to client */}
-        <button
-          type="button"
-          onClick={() => toast.toast("Convert to Client coming in Session 2", "default")}
-          className="w-full rounded-[10px] border border-dashed border-border bg-secondary py-2.5 text-[13px] font-semibold text-muted-foreground"
-        >
-          + Convert to Client
-        </button>
       </div>
     </div>
   );
@@ -233,7 +227,7 @@ export default function InquiriesPage() {
     <div className="mx-auto max-w-lg px-4 pb-32 pt-6">
       {/* header */}
       <div className="mb-5 flex items-center gap-3">
-        <h1 className="text-[22px] font-semibold text-foreground">
+        <h1 className="font-heading text-[34px] leading-tight text-foreground">
           Inquiries
         </h1>
         {newCount > 0 && (
@@ -255,6 +249,7 @@ export default function InquiriesPage() {
               key={key}
               type="button"
               onClick={() => setTab(key)}
+              aria-pressed={tab === key}
               className={`flex-shrink-0 rounded-[8px] px-3 py-1.5 text-[12px] font-semibold transition ${
                 tab === key
                   ? "bg-primary text-primary-foreground"
@@ -263,7 +258,7 @@ export default function InquiriesPage() {
             >
               {label}
               {count > 0 ? (
-                <span className="ml-1.5 text-[11px] opacity-60">{count}</span>
+                <span className="ml-1.5 text-[11px]">{count}</span>
               ) : null}
             </button>
           );
@@ -272,9 +267,9 @@ export default function InquiriesPage() {
 
       {/* list */}
       {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="animate-spin text-muted-foreground" size={24} />
-        </div>
+        <SkeletonRegion label="Loading inquiries…">
+          <SkeletonRows count={4} />
+        </SkeletonRegion>
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center py-16 text-center">
           <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-[14px] bg-card text-muted-foreground">

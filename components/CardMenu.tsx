@@ -62,19 +62,21 @@ export function CardMenu({
       <button
         type="button"
         aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
           setOpen((v) => !v);
         }}
-        className="flex h-7 w-7 items-center justify-center rounded-full border-[0.5px] border-transparent text-muted-foreground transition hover:border-border hover:bg-secondary hover:text-foreground"
+        className="flex h-9 w-9 items-center justify-center rounded-full border-[0.5px] border-transparent text-muted-foreground transition hover:border-border hover:bg-secondary hover:text-foreground"
       >
         <MoreHorizontal size={16} />
       </button>
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-8 z-40 w-[152px] overflow-hidden rounded-[12px] border-[0.5px] border-border bg-card shadow-xl"
+          className="absolute right-0 top-8 z-40 w-[152px] overflow-hidden rounded-[12px] border-[0.5px] border-border bg-card shadow-pop"
           onClick={(e) => e.stopPropagation()}
         >
           {actions.map((a) => (

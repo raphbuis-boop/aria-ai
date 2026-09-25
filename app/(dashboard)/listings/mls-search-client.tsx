@@ -6,7 +6,8 @@ import { useToast } from "@/components/ToastProvider";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import type { ParsedSearchFilters } from "@/app/api/ai/search-parse/route";
 import { fmtMoney } from "@/lib/utils";
-import { Bookmark, Loader2, Search, Sparkles, X } from "lucide-react";
+import { Bookmark, Search, Sparkles, X } from "lucide-react";
+import { SkeletonCards, SkeletonRegion } from "@/components/Skeleton";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -43,7 +44,7 @@ const SORT_OPTS: { value: string; label: string }[] = [
 
 const INPUT_STYLE = {
   background: "var(--secondary)",
-  border: "1px solid var(--border)",
+  border: "1px solid var(--input)",
   color: "var(--foreground)",
   borderRadius: 10,
   padding: "10px 12px",
@@ -362,10 +363,7 @@ export function MlsSearchClient({
         <header className="mb-5">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <h1
-                className="text-[22px] font-semibold leading-tight"
-                style={{ color: "var(--foreground)", letterSpacing: "-0.02em" }}
-              >
+              <h1 className="font-heading text-[34px] leading-tight text-foreground">
                 Property Search
               </h1>
               <p className="mt-0.5 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
@@ -424,7 +422,7 @@ export function MlsSearchClient({
         <div className="mb-3 rounded-xl border border-border bg-card px-4 py-3">
           <div className="flex items-center gap-2">
             <Sparkles className="size-3.5 text-primary shrink-0" />
-            <input
+            <input aria-label="Describe it"
               value={nlQuery}
               onChange={(e) => setNlQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -434,7 +432,8 @@ export function MlsSearchClient({
                 }
               }}
               placeholder="Describe it — “3-bed under $900k in Tenafly with a pool”"
-              className="flex-1 min-w-0 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60"
+              data-focus-parent
+            className="flex-1 min-w-0 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground"
               disabled={nlParsing}
             />
             <button
@@ -459,7 +458,7 @@ export function MlsSearchClient({
               <button
                 type="button"
                 onClick={() => setNlKeywords([])}
-                className="flex items-center gap-0.5 font-display text-[11px] text-muted-foreground/70 hover:text-muted-foreground"
+                className="flex items-center gap-0.5 font-display text-[11px] text-muted-foreground hover:text-muted-foreground"
               >
                 <X className="size-3" /> Clear
               </button>
@@ -469,14 +468,14 @@ export function MlsSearchClient({
 
         {/* ── Search form ── */}
         <div className="grid grid-cols-2 gap-2 mb-2">
-          <input
+          <input aria-label="Town or city"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="Town or city"
             className="col-span-2 placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
-          <input
+          <input aria-label="Min $"
             type="number"
             value={minPrice}
             onChange={(e) => setMinPrice(e.target.value)}
@@ -484,7 +483,7 @@ export function MlsSearchClient({
             className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
-          <input
+          <input aria-label="Max $"
             type="number"
             value={maxPrice}
             onChange={(e) => setMaxPrice(e.target.value)}
@@ -492,7 +491,7 @@ export function MlsSearchClient({
             className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
-          <input
+          <input aria-label="Min beds"
             type="number"
             value={minBeds}
             onChange={(e) => setMinBeds(e.target.value)}
@@ -500,7 +499,7 @@ export function MlsSearchClient({
             className="placeholder-muted-foreground"
             style={INPUT_STYLE}
           />
-          <input
+          <input aria-label="Min baths"
             type="number"
             value={minBaths}
             onChange={(e) => setMinBaths(e.target.value)}
@@ -568,6 +567,7 @@ export function MlsSearchClient({
               </p>
               <input
                 type="number"
+                aria-label="Min sqft"
                 value={minSqft}
                 onChange={(e) => setMinSqft(e.target.value)}
                 className="placeholder-muted-foreground"
@@ -582,6 +582,7 @@ export function MlsSearchClient({
                 Status
               </p>
               <select
+                aria-label="Status"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 style={SELECT_STYLE}
@@ -601,6 +602,7 @@ export function MlsSearchClient({
                 Sort by
               </p>
               <select
+                aria-label="Sort by"
                 value={sortKey}
                 onChange={(e) => setSortKey(e.target.value)}
                 style={SELECT_STYLE}
@@ -642,9 +644,9 @@ export function MlsSearchClient({
 
         {/* ── Loading spinner ── */}
         {loading && listings.length === 0 && (
-          <div className="mt-12 flex justify-center">
-            <Loader2 className="animate-spin" size={22} style={{ color: "var(--muted-foreground)" }} />
-          </div>
+          <SkeletonRegion label="Loading listings…" className="mt-4">
+            <SkeletonCards count={3} />
+          </SkeletonRegion>
         )}
 
         {/* ── Empty state ── */}
@@ -673,18 +675,6 @@ export function MlsSearchClient({
             return (
               <div
                 key={l.id}
-                role="button"
-                tabIndex={0}
-                onClick={() =>
-                  router.push(`${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`)
-                }
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    router.push(`${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`);
-                  }
-                }}
-                className="cursor-pointer text-left outline-none"
                 style={{
                   background: "var(--card)",
                   border: "1px solid var(--border)",
@@ -694,6 +684,10 @@ export function MlsSearchClient({
                   WebkitBackdropFilter: "blur(20px)",
                 }}
               >
+                <Link
+                  href={`${listingDetailBase}/${encodeURIComponent(l.id)}?return=${returnToParam}`}
+                  className="block rounded-[10px] text-left"
+                >
                 {/* Photo */}
                 <div
                   className="relative w-full overflow-hidden"
@@ -712,7 +706,7 @@ export function MlsSearchClient({
                   <img
                     src="/IDX_logo.JPG"
                     alt="NJMLS IDX"
-                    className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
+                    className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
                     draggable={false}
                   />
                   {variant === "member" && saved && (
@@ -765,20 +759,18 @@ export function MlsSearchClient({
                   </div>
                 )}
 
+                </Link>
+
                 {/* CRM actions (member only) */}
                 {variant === "member" && (
-                  <div
-                    className="mt-3 flex flex-wrap gap-2"
-                    onClick={(e) => e.stopPropagation()}
-                    onKeyDown={(e) => e.stopPropagation()}
-                  >
+                  <div className="mt-3 flex flex-wrap gap-2">
                     <button
                       type="button"
                       onClick={() => setMatchListing(l)}
-                      className="text-[13px] font-medium text-primary-foreground active:scale-[0.97] transition-transform duration-100"
+                      className="text-[13px] font-medium text-foreground active:scale-[0.97] transition-transform duration-100"
                       style={{
                         background: "transparent",
-                        border: "1px solid var(--border)",
+                        border: "1px solid var(--input)",
                         borderRadius: 8,
                         padding: "9px 14px",
                       }}
@@ -807,9 +799,9 @@ export function MlsSearchClient({
         {/* ── Infinite scroll sentinel ── */}
         <div ref={sentinelRef} className="h-4 w-full" />
         {loadingMore && (
-          <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin" size={22} style={{ color: "var(--muted-foreground)" }} />
-          </div>
+          <SkeletonRegion label="Loading more listings…" className="py-3">
+            <SkeletonCards count={1} />
+          </SkeletonRegion>
         )}
 
         {/* ── Footer ── */}

@@ -66,7 +66,7 @@ function MatchCue({ matches, property }: { matches: PropertyMatch[]; property: P
     ) : null;
   if (!best) {
     return (
-      <p className="font-display text-caption text-muted-foreground/50 mt-2">No client matches yet</p>
+      <p className="font-display text-caption text-muted-foreground mt-2">No client matches yet</p>
     );
   }
   const reason = humanizeMatchReasons(best.clientName, best.reasons, {
@@ -101,7 +101,7 @@ function PropertyRow({ p }: { p: Property }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src={photo} alt="" className="size-full object-cover" onError={() => setFailed(true)} />
         ) : (
-          <HomeIcon className="size-5 text-muted-foreground/50" />
+          <HomeIcon className="size-5 text-muted-foreground" />
         )}
       </div>
 
@@ -139,7 +139,7 @@ const STATUS_OPTIONS = [
 ] as const;
 
 const FIELD =
-  "w-full rounded-xl border border-transparent bg-secondary px-4 py-3 font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60 focus:border-input";
+  "w-full rounded-xl border border-input bg-secondary px-4 py-3 font-display text-body text-foreground outline-none placeholder:text-muted-foreground focus:border-ring";
 
 /** Adds a home to the agent's own `properties` — the inventory Aria matches
  * against and recommends from over SMS. */
@@ -188,8 +188,9 @@ function AddPropertySheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Add a home">
-      <button type="button" aria-label="Close" className="absolute inset-0" onClick={onClose} />
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim sm:items-center" role="dialog" aria-modal="true" aria-label="Add a home">
+      <button type="button" aria-label="Close" tabIndex={-1}
+        className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] border border-border bg-card px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-5 sm:rounded-[28px]">
         <p className="font-heading text-[22px] text-foreground">Add a home</p>
         <p className="mb-5 font-display text-caption text-muted-foreground">Available homes are matched to clients and can be recommended by Aria.</p>
@@ -305,8 +306,8 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
     <div className="min-h-[100dvh] bg-background text-foreground pb-[130px]">
       <div className="mx-auto max-w-2xl px-5 pt-10 sm:px-8">
         {/* Header */}
-        <div className="mb-6 flex items-end justify-between gap-3">
-          <div>
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="font-heading text-[34px] leading-tight text-foreground">Properties</h1>
             <p className="mt-1 font-display text-caption text-muted-foreground">
               {initial.length} home{initial.length === 1 ? "" : "s"}
@@ -333,7 +334,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           }}
         >
           <Search className="size-3.5 shrink-0 text-muted-foreground" />
-          <input
+          <input aria-label="Search, or describe it"
             type="text"
             placeholder="Search, or describe it — “3-bed under $900k in Tenafly”"
             value={search}
@@ -343,7 +344,8 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
               if (nlFilters) setNlFilters(null);
             }}
             disabled={nlParsing}
-            className="min-w-0 flex-1 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground/60"
+            data-focus-parent
+            className="min-w-0 flex-1 bg-transparent font-display text-body text-foreground outline-none placeholder:text-muted-foreground"
           />
           {search || nlFilters ? (
             <button
@@ -366,40 +368,37 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           </p>
         ) : null}
 
-        {/* Status filters */}
-        <div className="mb-2 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {STATUS_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setStatusFilter(f)}
-              className={
-                statusFilter === f
-                  ? "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-primary text-primary-foreground transition-colors"
-                  : "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-secondary text-muted-foreground border border-transparent hover:border-input transition-colors"
-              }
-            >
-              {f}
-            </button>
-          ))}
-        </div>
-
-        {/* Price filters */}
-        <div className="mb-6 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {PRICE_FILTERS.map((f) => (
-            <button
-              key={f}
-              type="button"
-              onClick={() => setPriceFilter(f)}
-              className={
-                priceFilter === f
-                  ? "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-primary text-primary-foreground transition-colors"
-                  : "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-secondary text-muted-foreground border border-transparent hover:border-input transition-colors"
-              }
-            >
-              {f}
-            </button>
-          ))}
+        {/* Filters: status chips + price */}
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f}
+                type="button"
+                aria-pressed={statusFilter === f}
+                onClick={() => setStatusFilter(f)}
+                className={
+                  statusFilter === f
+                    ? "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-primary text-primary-foreground transition-colors"
+                    : "whitespace-nowrap rounded-full px-3.5 py-2 font-display text-caption font-semibold bg-secondary text-muted-foreground border border-transparent hover:border-input transition-colors"
+                }
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+          <select
+            aria-label="Price range"
+            value={priceFilter}
+            onChange={(e) => setPriceFilter(e.target.value as typeof priceFilter)}
+            className="mb-1 shrink-0 rounded-full border border-input bg-card py-1.5 pl-3.5 pr-2 font-display font-semibold text-foreground"
+          >
+            {PRICE_FILTERS.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </select>
         </div>
 
         {/* List */}
@@ -408,7 +407,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
             <div className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-secondary">
               <HomeIcon className="size-4 text-muted-foreground" />
             </div>
-            <p className="font-display text-body text-muted-foreground/70">
+            <p className="font-display text-body text-muted-foreground">
               {initial.length === 0
                 ? "No homes yet. Add one or save a listing from MLS search — Aria matches them to your clients."
                 : "Try adjusting your search or filters."}

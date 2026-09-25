@@ -121,8 +121,8 @@ export function PortalListingCard({
         <Heart
           className="size-5"
           style={{
-            fill: favorited ? "var(--accent-blue, #3B82F6)" : "transparent",
-            color: favorited ? "var(--accent-blue, #3B82F6)" : "#9aa0aa",
+            fill: favorited ? "var(--primary)" : "transparent",
+            color: favorited ? "var(--primary)" : "var(--muted-foreground)",
           }}
         />
       </button>

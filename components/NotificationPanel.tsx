@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, Calendar, CheckCheck, Clock, Home, Inbox, Users, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { relTime } from "@/lib/utils";
+import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
 
 type Notification = {
   id: string;
@@ -93,14 +94,14 @@ export function NotificationBell() {
       >
         <Bell className="size-[18px]" />
         {unread > 0 ? (
-          <span className="absolute right-1.5 top-1.5 flex min-w-[18px] items-center justify-center rounded-full bg-hot px-1 text-[10px] font-semibold leading-[18px] text-white">
+          <span className="absolute right-1.5 top-1.5 flex min-w-[18px] items-center justify-center rounded-full bg-hot px-1 text-[10px] font-semibold leading-[18px] text-hot-foreground">
             {unread > 9 ? "9+" : unread}
           </span>
         ) : null}
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[52px] z-50 w-[min(360px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-[0_24px_48px_-16px_rgba(0,0,0,0.25)]">
+        <div className="absolute right-0 top-[52px] z-50 w-[min(360px,calc(100vw-32px))] overflow-hidden rounded-2xl border border-border bg-popover text-popover-foreground shadow-pop">
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
             <p className="font-display text-body font-semibold">Notifications</p>
             <div className="flex items-center gap-1">
@@ -120,7 +121,17 @@ export function NotificationBell() {
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
             {items === null ? (
-              <p className="px-4 py-6 text-center font-display text-body text-muted-foreground">Loading…</p>
+              <SkeletonRegion label="Loading notifications…" className="space-y-4 px-4 py-4">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="flex items-start gap-3">
+                    <Skeleton className="size-8 shrink-0 rounded-full" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-3.5 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
+                  </div>
+                ))}
+              </SkeletonRegion>
             ) : items.length === 0 ? (
               <p className="px-4 py-6 text-center font-display text-body text-muted-foreground">
                 You&apos;re all caught up.
@@ -145,7 +156,7 @@ export function NotificationBell() {
                       {n.body ? (
                         <span className="mt-0.5 block truncate font-display text-caption text-muted-foreground">{n.body}</span>
                       ) : null}
-                      <span className="mt-0.5 block font-display text-[11px] text-muted-foreground/70">{relTime(n.created_at)}</span>
+                      <span className="mt-0.5 block font-display text-[11px] text-muted-foreground">{relTime(n.created_at)}</span>
                     </span>
                     {!n.read ? <span className="mt-2 size-2 shrink-0 rounded-full bg-primary" aria-label="Unread" /> : null}
                   </button>

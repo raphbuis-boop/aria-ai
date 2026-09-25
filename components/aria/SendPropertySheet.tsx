@@ -74,8 +74,9 @@ export function SendPropertySheet({
   }
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 sm:items-center" role="dialog" aria-modal="true" aria-label="Send home">
-      <button type="button" aria-label="Close" className="absolute inset-0" onClick={onClose} />
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim sm:items-center" role="dialog" aria-modal="true" aria-label="Send home">
+      <button type="button" aria-label="Close" tabIndex={-1}
+        className="absolute inset-0" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg rounded-t-[28px] border border-border bg-card px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-5 sm:rounded-[28px]">
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -92,7 +93,7 @@ export function SendPropertySheet({
           rows={5}
           maxLength={1000}
           aria-label="Message"
-          className="w-full resize-none rounded-xl border border-border bg-background p-4 font-display text-body text-foreground outline-none"
+          className="w-full resize-none rounded-xl border border-input bg-background p-4 font-display text-body text-foreground outline-none"
         />
         <p className="mt-2 font-display text-caption text-muted-foreground">
           Texted from Aria&apos;s number, in the same thread as Aria&apos;s messages.

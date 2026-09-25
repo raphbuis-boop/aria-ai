@@ -352,7 +352,7 @@ export default function SignBbaPage() {
             <input
               value={form.clientName}
               onChange={(e) => setForm({ ...form, clientName: e.target.value })}
-              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
+              className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
               autoComplete="name"
             />
           </Field>
@@ -360,7 +360,7 @@ export default function SignBbaPage() {
             <input
               value={form.agentName}
               onChange={(e) => setForm({ ...form, agentName: e.target.value })}
-              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
+              className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
             />
           </Field>
           <div className="grid grid-cols-3 gap-2">
@@ -371,7 +371,7 @@ export default function SignBbaPage() {
                 onChange={(e) =>
                   setForm({ ...form, commissionPct: e.target.value })
                 }
-                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
+                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
               />
             </Field>
             <Field label="Term start">
@@ -379,7 +379,7 @@ export default function SignBbaPage() {
                 type="date"
                 value={form.termStart}
                 onChange={(e) => setForm({ ...form, termStart: e.target.value })}
-                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
+                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
               />
             </Field>
             <Field label="Term end">
@@ -387,7 +387,7 @@ export default function SignBbaPage() {
                 type="date"
                 value={form.termEnd}
                 onChange={(e) => setForm({ ...form, termEnd: e.target.value })}
-                className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
+                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
               />
             </Field>
           </div>
@@ -396,7 +396,7 @@ export default function SignBbaPage() {
               value={form.searchArea}
               onChange={(e) => setForm({ ...form, searchArea: e.target.value })}
               placeholder="e.g. Bergen County, Westfield, Ridgewood"
-              className="w-full rounded-[10px] border-[0.5px] border-border bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground"
+              className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground"
             />
           </Field>
         </div>
@@ -417,7 +417,7 @@ export default function SignBbaPage() {
           </div>
           <div
             ref={wrapRef}
-            className="mt-2 rounded-[14px] border-[0.5px] border-input bg-white touch-none"
+            className="mt-2 rounded-[14px] border-[0.5px] border-input bg-paper touch-none"
           >
             <SignatureCanvas
               ref={sigRef}
@@ -451,7 +451,7 @@ export default function SignBbaPage() {
           {submitting ? "Saving…" : "Sign & submit"}
         </button>
 
-        <p className="mt-4 text-center text-[10px] text-muted-foreground/60">
+        <p className="mt-4 text-center text-[10px] text-muted-foreground">
           Powered by Aria · NJ Buyer Broker compliance
         </p>
       </div>

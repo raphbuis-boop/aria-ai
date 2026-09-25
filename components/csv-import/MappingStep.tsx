@@ -108,6 +108,7 @@ export function MappingStep({
             <span style={{ color: "var(--muted-foreground)", fontSize: 12, flexShrink: 0 }}>→</span>
             {/* Field selector */}
             <select
+              aria-label={`Field for ${m.header}`}
               value={m.field}
               onChange={(e) => updateField(i, e.target.value as AriaField)}
               style={{
