@@ -1,51 +1,48 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { OnboardingWizard } from "./onboarding-wizard";
+import { OnboardingWizard, type Tone, type WizardStep } from "./onboarding-wizard";
 
 export const dynamic = "force-dynamic";
 
-type SearchParams = Promise<{ gmail?: string }>;
+const TONES: Tone[] = ["warm", "professional", "direct", "casual"];
 
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: SearchParams;
+  searchParams: { gmail?: string; restart?: string };
 }) {
   const supabase = createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
   if (!user) redirect("/login");
 
-  const { data: profile } = await supabase
-    .from("agent_profiles")
-    .select("full_name, onboarding_complete")
-    .eq("id", user.id)
-    .maybeSingle();
+  const [{ data: profile }, { data: google }] = await Promise.all([
+    supabase
+      .from("agent_profiles")
+      .select("full_name, onboarding_complete, draft_tone, signature")
+      .eq("id", user.id)
+      .maybeSingle(),
+    supabase.from("gmail_integrations").select("agent_id").eq("agent_id", user.id).maybeSingle(),
+  ]);
 
-  // Already done — send to dashboard
-  if (profile?.onboarding_complete) redirect("/dashboard");
+  // Finished accounts go to Today unless they asked to run setup again
+  // (Today's empty state links here with ?restart=1).
+  if (profile?.onboarding_complete && searchParams.restart !== "1" && !searchParams.gmail) redirect("/dashboard");
 
-  // If Gmail OAuth just returned, route to the right step
-  const params = await searchParams;
-  const gmailResult = params.gmail; // "connected" | "error" | undefined
-  const initialStep = gmailResult === "connected" ? 3 : gmailResult === "error" ? 2 : 1;
-  const gmailConnected = gmailResult === "connected";
-  const gmailError = gmailResult === "error";
-
-  const fullName =
-    (profile?.full_name as string | undefined) ??
-    (user.user_metadata?.full_name as string | undefined) ??
-    "";
+  // Coming back from Google: success → pick clients, failure → retry screen.
+  const initialStep: WizardStep = searchParams.gmail === "connected" ? 3 : searchParams.gmail === "error" ? 2 : 1;
+  const tone = TONES.includes(profile?.draft_tone as Tone) ? (profile?.draft_tone as Tone) : "warm";
 
   return (
     <OnboardingWizard
       userId={user.id}
-      initialName={fullName}
-      initialStep={initialStep as 1 | 2 | 3 | 4}
-      gmailConnected={gmailConnected}
-      gmailError={gmailError}
+      initialName={(profile?.full_name as string | null) ?? (user.user_metadata?.full_name as string | undefined) ?? ""}
+      initialStep={initialStep}
+      googleConnected={Boolean(google) || searchParams.gmail === "connected"}
+      googleError={searchParams.gmail === "error"}
+      initialTone={tone}
+      initialSignature={(profile?.signature as string | null) ?? ""}
     />
   );
 }

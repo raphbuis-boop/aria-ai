@@ -280,7 +280,8 @@ function FollowUps({
 }
 
 const SETUP_STEPS = [
-  { Icon: Upload, title: "Import your clients", desc: "Upload a CSV export from your old CRM or spreadsheet.", href: "/settings/import" },
+  { Icon: Sparkles, title: "Guided setup", desc: "Connect Google, bring in your clients and set your voice — about 5 minutes.", href: "/onboarding?restart=1" },
+  { Icon: Upload, title: "Import your clients", desc: "From Google Contacts or a CSV export from your old CRM.", href: "/settings/import" },
   { Icon: UserPlus, title: "Add a client", desc: "Aria lines up who to follow up with each day and drafts the text in your voice.", href: "/clients?new=1" },
 ] as const;
 

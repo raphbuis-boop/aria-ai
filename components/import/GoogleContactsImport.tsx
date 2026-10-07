@@ -7,6 +7,8 @@ import { Skeleton, SkeletonRegion, SkeletonRows } from "@/components/Skeleton";
 import { fmtPhone } from "@/lib/utils";
 import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "./ImportSummary";
 
+const PRESELECT_MAX = 100;
+
 type Contact = {
   resourceName: string;
   name: string;
@@ -24,17 +26,22 @@ type Listing =
   | { status: "error"; error: string };
 
 /**
- * Pick people from Google Contacts and import them as clients. Everyone with
- * a phone or email is pre-selected except people already in Aria.
+ * Pick people from Google Contacts and import them as clients. A short list
+ * (≤ PRESELECT_MAX) starts fully selected; a long one — which will include
+ * the dentist and the plumber — starts empty. Existing clients are never
+ * selectable.
  * `returnTo` is the aria_return_to value for the Google connect round-trip.
  */
 export function GoogleContactsImport({
   returnTo,
   onDone,
+  onImported,
   doneLabel = "Continue",
 }: {
   returnTo: "onboarding" | "import";
   onDone: (result: ImportOutcome) => void;
+  /** Fires when the import finishes (before the agent taps Continue). */
+  onImported?: (result: ImportOutcome) => void;
   doneLabel?: string;
 }) {
   const [listing, setListing] = useState<Listing | null>(null);
@@ -51,7 +58,7 @@ export function GoogleContactsImport({
         const data = (await r.json().catch(() => ({}))) as Listing & { error?: string };
         if (!r.ok) return setListing({ status: "error", error: data.error ?? "Couldn't read your Google Contacts." });
         setListing(data);
-        if (data.status === "ok") {
+        if (data.status === "ok" && data.contacts.length <= PRESELECT_MAX) {
           setSelected(new Set(data.contacts.filter((c) => !c.alreadyClient && (c.phone || c.email)).map((c) => c.resourceName)));
         }
       })
@@ -63,7 +70,8 @@ export function GoogleContactsImport({
     const q = query.trim().toLowerCase();
     return q ? contacts.filter((c) => [c.name, c.email, c.phone, c.town].some((v) => v?.toLowerCase().includes(q))) : contacts;
   }, [contacts, query]);
-  const selectable = shown.filter((c) => !c.alreadyClient);
+  // Bulk select only takes people Aria can actually reach; others can still be ticked by hand.
+  const selectable = shown.filter((c) => !c.alreadyClient && (c.phone || c.email));
   const allShownSelected = selectable.length > 0 && selectable.every((c) => selected.has(c.resourceName));
 
   function connect() {
@@ -92,6 +100,7 @@ export function GoogleContactsImport({
       const data = (await res.json().catch(() => ({}))) as ImportOutcome & { error?: string };
       if (!res.ok) throw new Error(data.error ?? "Import failed. Try again.");
       setResult(data);
+      onImported?.(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Import failed. Try again.");
     } finally {
@@ -168,7 +177,10 @@ export function GoogleContactsImport({
 
       <div className="mb-2 flex items-center justify-between">
         <p className="font-display text-caption text-muted-foreground">
-          {selected.size} selected{listing.truncated ? " · showing your first 2,000" : ""}
+          {selected.size === 0 && contacts.length > PRESELECT_MAX
+            ? "Tick the people you work with"
+            : `${selected.size} selected`}
+          {listing.truncated ? " · showing your first 2,000" : ""}
         </p>
         <button
           type="button"
