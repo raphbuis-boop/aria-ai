@@ -36,7 +36,7 @@ export function BbaPdfViewer({
         width="100%"
         height={height}
         onError={() => setFailed(true)}
-        className="block w-full rounded-[10px] bg-white"
+        className="block w-full rounded-[10px] bg-paper"
       >
         {/* If the browser can't render PDFs inline, this inner content shows. */}
         <PdfFallback url={url} />

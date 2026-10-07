@@ -26,7 +26,7 @@ const INPUT_STYLE = {
 
 function SectionLabel({ label }: { label: string }) {
   return (
-    <p className="mb-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+    <p className="mb-2 font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
       {label}
     </p>
   );
@@ -163,7 +163,7 @@ export function ShowingsClient({
         {/* ── Header ── */}
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h1 className="font-heading text-[26px] leading-tight text-foreground">
+            <h1 className="font-heading text-[34px] leading-tight text-foreground">
               Timeline
             </h1>
             <p className="mt-0.5 font-display text-[12px] text-muted-foreground">
@@ -290,14 +290,15 @@ export function ShowingsClient({
 
       {/* ── Add showing sheet ── */}
       {open && (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
-          <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Log a showing">
+          <button type="button" aria-label="Close" tabIndex={-1}
+        className="absolute inset-0" onClick={() => setOpen(false)} />
           <div
             className="relative z-10 max-h-[88vh] w-full overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
             style={{
               background: "var(--card)",
               borderTop: "1px solid var(--border)",
-              boxShadow: "0 -8px 40px rgba(43,36,25,0.18)",
+              boxShadow: "0 -8px 40px rgb(var(--shadow-color) / 0.18)",
             }}
           >
             <div className="mx-auto mb-5 h-1 w-9 rounded-full" style={{ background: "var(--border)" }} />
@@ -306,6 +307,7 @@ export function ShowingsClient({
             </p>
             <div className="space-y-3">
               <select
+                aria-label="Client"
                 value={form.client_id}
                 onChange={(e) => setForm({ ...form, client_id: e.target.value })}
                 style={INPUT_STYLE}
@@ -315,21 +317,23 @@ export function ShowingsClient({
                   <option key={c.id} value={c.id}>{c.name}</option>
                 ))}
               </select>
-              <input
+              <input aria-label="Property address"
                 value={form.address}
                 onChange={(e) => setForm({ ...form, address: e.target.value })}
                 placeholder="Property address"
-                className="placeholder:text-muted-foreground/50"
+                className="placeholder:text-muted-foreground"
                 style={INPUT_STYLE}
               />
               <input
                 type="datetime-local"
+                aria-label="Showing date and time"
                 value={form.showing_date}
                 onChange={(e) => setForm({ ...form, showing_date: e.target.value })}
-                className="placeholder:text-muted-foreground/50"
+                className="placeholder:text-muted-foreground"
                 style={INPUT_STYLE}
               />
               <select
+                aria-label="Status"
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as typeof form.status })}
                 style={INPUT_STYLE}
@@ -338,20 +342,20 @@ export function ShowingsClient({
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
-              <textarea
+              <textarea aria-label="Notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes"
                 rows={2}
-                className="resize-none placeholder:text-muted-foreground/50"
+                className="resize-none placeholder:text-muted-foreground"
                 style={INPUT_STYLE}
               />
-              <textarea
+              <textarea aria-label="Feedback (optional"
                 value={form.feedback}
                 onChange={(e) => setForm({ ...form, feedback: e.target.value })}
                 placeholder="Feedback (optional — used for AI summary)"
                 rows={3}
-                className="resize-none placeholder:text-muted-foreground/50"
+                className="resize-none placeholder:text-muted-foreground"
                 style={INPUT_STYLE}
               />
             </div>

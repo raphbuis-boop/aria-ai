@@ -142,11 +142,8 @@ export function TransactionsClient({
 
         {/* ── Header ── */}
         <div className="mb-5 flex items-center justify-between">
-          <h1
-            className="text-[22px] font-semibold leading-tight"
-            style={{ color: "var(--foreground)", letterSpacing: "-0.02em" }}
-          >
-            Transaction Copilot
+          <h1 className="font-heading text-[34px] leading-tight text-foreground">
+            Transactions
           </h1>
           <button
             type="button"
@@ -359,7 +356,7 @@ function AddTxModal({
 
   const INPUT_STYLE_MODAL = {
     background: "var(--secondary)",
-    border: "1px solid var(--border)",
+    border: "1px solid var(--input)",
     color: "var(--foreground)",
     borderRadius: 10,
     padding: "10px 12px",
@@ -378,8 +375,9 @@ function AddTxModal({
   }, [supabase]);
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[3px]">
-      <button type="button" aria-label="Close" className="absolute inset-0" onClick={onClose} />
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[3px]" role="dialog" aria-modal="true" aria-label="Add transaction">
+      <button type="button" aria-label="Close" tabIndex={-1}
+        className="absolute inset-0" onClick={onClose} />
       <div
         className="relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-[24px] px-5 pb-10 pt-4"
         style={{
@@ -395,12 +393,12 @@ function AddTxModal({
           Add transaction
         </p>
         <div className="space-y-3">
-          <select value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} style={INPUT_STYLE_MODAL}>
+          <select aria-label="Client" value={form.client_id} onChange={(e) => setForm({ ...form, client_id: e.target.value })} style={INPUT_STYLE_MODAL}>
             <option value="" style={{ background: "var(--card)" }}>Select client</option>
             {clients.map((c) => <option key={c.id} value={c.id} style={{ background: "var(--card)" }}>{c.name}</option>)}
           </select>
-          <input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
-          <input value={form.contract_price} onChange={(e) => setForm({ ...form, contract_price: e.target.value })} placeholder="Contract price" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Address" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} placeholder="Address" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Contract price" value={form.contract_price} onChange={(e) => setForm({ ...form, contract_price: e.target.value })} placeholder="Contract price" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
           {(
             [
               ["closing_date", "Closing date"],
@@ -413,16 +411,17 @@ function AddTxModal({
               <p className="mb-1 text-[11px] font-semibold uppercase" style={{ color: "var(--muted-foreground)", letterSpacing: "0.08em" }}>{label}</p>
               <input
                 type="datetime-local"
+                aria-label={label}
                 value={form[key]}
                 onChange={(e) => setForm({ ...form, [key]: e.target.value } as TxForm)}
                 style={INPUT_STYLE_MODAL}
               />
             </div>
           ))}
-          <input value={form.attorney_name} onChange={(e) => setForm({ ...form, attorney_name: e.target.value })} placeholder="Attorney name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
-          <input value={form.attorney_email} onChange={(e) => setForm({ ...form, attorney_email: e.target.value })} placeholder="Attorney email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
-          <input value={form.lender_name} onChange={(e) => setForm({ ...form, lender_name: e.target.value })} placeholder="Lender name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
-          <input value={form.lender_email} onChange={(e) => setForm({ ...form, lender_email: e.target.value })} placeholder="Lender email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Attorney name" value={form.attorney_name} onChange={(e) => setForm({ ...form, attorney_name: e.target.value })} placeholder="Attorney name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Attorney email" value={form.attorney_email} onChange={(e) => setForm({ ...form, attorney_email: e.target.value })} placeholder="Attorney email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Lender name" value={form.lender_name} onChange={(e) => setForm({ ...form, lender_name: e.target.value })} placeholder="Lender name" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
+          <input aria-label="Lender email" value={form.lender_email} onChange={(e) => setForm({ ...form, lender_email: e.target.value })} placeholder="Lender email" className="placeholder-muted-foreground" style={INPUT_STYLE_MODAL} />
         </div>
         <div className="mt-5 flex gap-2 pb-2">
           <button type="button" onClick={onSave}

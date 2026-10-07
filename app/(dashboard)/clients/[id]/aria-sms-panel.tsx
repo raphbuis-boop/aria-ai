@@ -208,7 +208,7 @@ export function MessagesThread({
                 maxLength={1000}
                 aria-label={`Text ${firstName}`}
                 placeholder={`Text ${firstName}…`}
-                className="max-h-40 min-h-[44px] flex-1 resize-none rounded-2xl border border-border bg-background px-4 py-2.5 font-display text-body text-foreground outline-none [field-sizing:content]"
+                className="max-h-40 min-h-[44px] flex-1 resize-none rounded-2xl border border-input bg-background px-4 py-2.5 font-display text-body text-foreground outline-none [field-sizing:content]"
               />
               <Button
                 type="submit"

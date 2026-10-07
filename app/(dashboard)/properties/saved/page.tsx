@@ -6,6 +6,7 @@ import { fmtMoney } from "@/lib/utils";
 import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { SkeletonRegion, SkeletonRows } from "@/components/Skeleton";
 
 type SavedRow = {
   mls_number: string;
@@ -42,7 +43,7 @@ export default function SavedPropertiesPage() {
       <BackButton label="Property Search" className="mb-4" />
       <div className="flex items-center gap-2">
         <Bookmark className="text-primary" size={22} />
-        <h1 className="text-[20px] font-semibold text-foreground">
+        <h1 className="font-heading text-[34px] leading-tight text-foreground">
           Watchlist
         </h1>
       </div>
@@ -54,7 +55,9 @@ export default function SavedPropertiesPage() {
       </div>
 
       {loading ? (
-        <p className="mt-8 text-center text-[13px] text-muted-foreground">Loading…</p>
+        <SkeletonRegion label="Loading saved listings…" className="mt-6">
+          <SkeletonRows count={4} />
+        </SkeletonRegion>
       ) : rows.length === 0 ? (
         <div className="mt-8 rounded-[14px] border border-border bg-card px-4 py-8 text-center text-[13px] text-muted-foreground">
           No saved listings yet.{" "}

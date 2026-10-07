@@ -9,10 +9,11 @@ import { useToast } from "@/components/ToastProvider";
 import { Button } from "@/components/ui/button";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import { fmtMoney } from "@/lib/utils";
-import { Bookmark, CalendarPlus, Loader2, Sparkles } from "lucide-react";
+import { Bookmark, CalendarPlus, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
 
 function fmtDate(iso: string | null | undefined) {
   if (!iso) return "—";
@@ -241,15 +242,33 @@ export function PropertyPageClient({
         <div className="mx-auto max-w-lg px-4 pb-16 pt-6">
           <BackButton href={backHref} label="Back" className="mb-4" />
           <IdxComplianceNotice logoSize="prominent" />
-          <div className="mt-10 flex justify-center text-muted-foreground">
-            <Loader2 className="animate-spin" size={28} />
-          </div>
+          <SkeletonRegion label="Loading listing…" className="mt-4">
+            <Skeleton className="h-64 w-full rounded-2xl" />
+            <Skeleton className="mt-4 h-7 w-2/3" />
+            <Skeleton className="mt-2 h-4 w-1/3" />
+            <Skeleton className="mt-3 h-6 w-32" />
+            <div className="mt-5 grid grid-cols-3 gap-2">
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-16 rounded-xl" />
+              <Skeleton className="h-16 rounded-xl" />
+            </div>
+          </SkeletonRegion>
         </div>
       );
     }
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-muted-foreground">
-        <Loader2 className="animate-spin" size={28} />
+      <div className="mx-auto max-w-2xl px-5 pb-32 pt-6 sm:px-8">
+        <SkeletonRegion label="Loading listing…">
+          <Skeleton className="h-64 w-full rounded-2xl" />
+          <Skeleton className="mt-4 h-7 w-2/3" />
+          <Skeleton className="mt-2 h-4 w-1/3" />
+          <Skeleton className="mt-3 h-6 w-32" />
+          <div className="mt-5 grid grid-cols-3 gap-2">
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+            <Skeleton className="h-16 rounded-xl" />
+          </div>
+        </SkeletonRegion>
       </div>
     );
   }
@@ -318,7 +337,7 @@ export function PropertyPageClient({
 
       <PhotoCarousel photos={listing.photos ?? []} className="mb-4" />
 
-      <h1 className="text-[22px] font-semibold leading-tight text-foreground">
+      <h1 className="font-heading text-[28px] leading-tight text-foreground">
         {fmtMoney(listing.price)}
       </h1>
       <p className="mt-1 text-[15px] font-medium text-foreground">

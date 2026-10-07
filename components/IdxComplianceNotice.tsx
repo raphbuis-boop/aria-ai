@@ -31,7 +31,7 @@ export function IdxComplianceNotice({
           width={64}
           height={8}
           alt="NJMLS IDX"
-          className="h-auto w-16 flex-shrink-0 rounded-[3px] bg-white px-1.5 py-1 object-contain"
+          className="h-auto w-16 flex-shrink-0 rounded-[3px] bg-paper px-1.5 py-1 object-contain"
         />
         <span className="flex-1 text-[10px] text-muted-foreground">
           NJMLS IDX · Equal Housing Opportunity

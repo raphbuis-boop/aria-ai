@@ -135,7 +135,7 @@ export default async function PortalPage({
         {agent?.phone ? (
           <a
             href={`tel:${agent.phone}`}
-            className="rounded-[8px] bg-primary py-3 text-center text-[14px] font-medium text-white"
+            className="rounded-[8px] bg-primary py-3 text-center text-[14px] font-medium text-primary-foreground"
           >
             Message your agent
           </a>

@@ -19,7 +19,7 @@ const FILTERS = ["All", "New", "Aria texting", "Hot", "Showing", "Under contract
 
 // Shared input style — ivory design system.
 const INPUT =
-  "w-full rounded-xl px-4 py-3 outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60 bg-secondary border border-transparent focus:border-input";
+  "w-full rounded-xl px-4 py-3 outline-none font-display text-body text-foreground placeholder:text-muted-foreground bg-secondary border border-input focus:border-ring";
 
 type Row = {
   id: string;
@@ -252,12 +252,13 @@ export function ClientsPageClient({
         {/* Search */}
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
           <Search className="size-3.5 text-muted-foreground shrink-0" />
-          <input
+          <input aria-label="Search name, town, phone, email"
             type="text"
             placeholder="Search name, town, phone, email…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="flex-1 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
+            data-focus-parent
+            className="flex-1 bg-transparent outline-none font-display text-body text-foreground placeholder:text-muted-foreground"
           />
           {search && (
             <button type="button" onClick={() => setSearch("")} aria-label="Clear search">
@@ -272,6 +273,7 @@ export function ClientsPageClient({
             <button
               key={f}
               type="button"
+              aria-pressed={filter === f}
               onClick={() => setFilter(f)}
               className={
                 filter === f
@@ -290,7 +292,7 @@ export function ClientsPageClient({
             <div className="mx-auto mb-4 flex size-11 items-center justify-center rounded-full bg-secondary">
               <Users className="size-4 text-muted-foreground" />
             </div>
-            <p className="font-display text-body text-muted-foreground/70">
+            <p className="font-display text-body text-muted-foreground">
               {rows.length === 0 ? "No clients yet — tap Add to get started" : "Try adjusting your search or filters"}
             </p>
             {rows.length === 0 && (
@@ -310,8 +312,9 @@ export function ClientsPageClient({
 
       {/* Add client sheet */}
       {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
-          <button type="button" aria-label="Close" className="absolute inset-0" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Add client">
+          <button type="button" aria-label="Close" tabIndex={-1}
+        className="absolute inset-0" onClick={() => setOpen(false)} />
           <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-card border border-border border-b-0 px-5 pb-10 pt-4">
             <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-border" />
 
@@ -319,7 +322,7 @@ export function ClientsPageClient({
             <p className="font-display text-caption text-muted-foreground mb-5">Saved to your clients table.</p>
 
             <div className="space-y-3">
-              <input
+              <input aria-label="Full name"
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
                 placeholder="Full name *"
@@ -327,14 +330,14 @@ export function ClientsPageClient({
               />
 
               <div className="grid grid-cols-2 gap-2">
-                <input
+                <input aria-label="Phone"
                   value={form.phone}
                   onChange={(e) => setForm({ ...form, phone: e.target.value })}
                   placeholder="Phone"
                   inputMode="tel"
                   className={INPUT}
                 />
-                <input
+                <input aria-label="Email"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   placeholder="Email"
@@ -361,14 +364,14 @@ export function ClientsPageClient({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <input
+                <input aria-label="Budget min"
                   value={form.budget_min}
                   onChange={(e) => setForm({ ...form, budget_min: e.target.value })}
                   placeholder="Budget min"
                   inputMode="numeric"
                   className={INPUT}
                 />
-                <input
+                <input aria-label="Budget max"
                   value={form.budget_max}
                   onChange={(e) => setForm({ ...form, budget_max: e.target.value })}
                   placeholder="Budget max"
@@ -378,14 +381,14 @@ export function ClientsPageClient({
               </div>
 
               <div className="grid grid-cols-2 gap-2">
-                <input
+                <input aria-label="Beds"
                   value={form.beds}
                   onChange={(e) => setForm({ ...form, beds: e.target.value })}
                   placeholder="Beds"
                   inputMode="numeric"
                   className={INPUT}
                 />
-                <input
+                <input aria-label="Baths"
                   value={form.baths}
                   onChange={(e) => setForm({ ...form, baths: e.target.value })}
                   placeholder="Baths"
@@ -416,12 +419,12 @@ export function ClientsPageClient({
                 </div>
               </div>
 
-              <textarea
+              <textarea aria-label="Notes"
                 value={form.notes}
                 onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 placeholder="Notes — timeline, motivation, anything useful"
                 rows={3}
-                className="w-full resize-none rounded-xl bg-secondary p-4 outline-none font-display text-body text-foreground placeholder:text-muted-foreground/60"
+                className="w-full resize-none rounded-xl border border-input bg-secondary p-4 outline-none font-display text-body text-foreground placeholder:text-muted-foreground"
               />
             </div>
 

@@ -120,13 +120,33 @@ select {
   font-size: max(16px, 1em) !important;
 }
 
-/* Input focus — native-feeling highlight */
-input:focus,
-textarea:focus,
-select:focus {
-  outline: none;
+/* Keyboard focus — always visible (WCAG 2.4.7). Mouse/touch focus stays quiet. */
+:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Controls that set outline-none (class or inline) still get a ring on keyboard
+   focus. Fields inside a styled wrapper (search bars) opt out with
+   data-focus-parent and the wrapper draws the ring instead. */
+:is(a, button, input, textarea, select, summary, [role="button"], [role="menuitem"], [tabindex="0"]):focus-visible:not([data-focus-parent]) {
+  outline: 2px solid var(--ring) !important;
+}
+:has(> [data-focus-parent]:focus-visible) {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+/* Rows inside clipped cards/lists: draw the ring inside so it isn't cut off. */
+.overflow-hidden :focus-visible,
+[role="dialog"] :focus-visible {
+  outline-offset: -2px;
+}
+
+/* Text fields — highlight on any focus, ring on keyboard focus */
+input:focus:not([data-focus-parent]),
+textarea:focus:not([data-focus-parent]),
+select:focus:not([data-focus-parent]) {
   border-color: color-mix(in srgb, var(--ring) 45%, transparent) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 10%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ring) 18%, transparent);
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -191,31 +211,55 @@ select:focus {
   /* Ivory design system — warm ivory canvas, white cards, deep green as the
      one action accent, hot/warm pair for lead heat. `.dark` is applied on
      <html> by the Appearance setting (see components/ThemeScript.tsx). */
+  /* ── Semantic color tokens — the ONLY place colors are defined. ─────────
+     Every value below meets WCAG AA against the surfaces it's used on
+     (text 4.5:1, UI boundaries 3:1). Components use these via Tailwind
+     (bg-card, text-muted-foreground, text-success, bg-scrim…), never hex. */
   :root {
     color-scheme: light;
+    /* surfaces + text */
     --background:          #FAF6EE;   /* canvas — warm ivory */
-    --foreground:          #2B2419;   /* ink — warm near-black */
-    --card:                #FFFFFF;   /* surface — soft white */
+    --foreground:          #2B2419;   /* primary text — warm near-black */
+    --card:                #FFFFFF;
     --card-foreground:     #2B2419;
     --popover:             #FFFFFF;
     --popover-foreground:  #2B2419;
-    --primary:             #1F5C46;   /* deep green — actions + key numbers only */
-    --primary-foreground:  #FAF6EE;
-    --secondary:           #F1EAD9;   /* warm secondary surface — section dividers, chips */
+    --secondary:           #F1EAD9;   /* chips, fills, section dividers */
     --secondary-foreground:#2B2419;
     --muted:               #F1EAD9;
-    --muted-foreground:    #8A7F6C;   /* warm taupe secondary text */
-    --accent:              #F1EAD9;   /* neutral hover surface, not the action color */
+    --muted-foreground:    #6B6150;   /* secondary text — 5.1:1 on secondary, 5.6:1 on canvas */
+    --accent:              #F1EAD9;   /* hover surface */
     --accent-foreground:   #2B2419;
-    --destructive:         #B84B33;
-    --destructive-foreground: #FAF6EE;
-    --border:              rgba(43, 36, 25, 0.09);
-    --input:               rgba(43, 36, 25, 0.16);
-    --ring:                #1F5C46;
-    --hot:                 #B84B33;   /* lead-heat: hot — terracotta */
-    --warm:                #B8842E;   /* lead-heat: warm — muted gold */
-    --violet:              #6B5B95;   /* secondary decorative accent — signal lines */
-    --radius:              1.25rem;   /* 20px — soft rounded cards */
+    /* action */
+    --primary:             #1F5C46;   /* deep green — the one action color */
+    --primary-foreground:  #FAF6EE;
+    --ring:                #1F5C46;   /* focus ring */
+    /* status */
+    --success:             #1F5C46;
+    --success-foreground:  #FAF6EE;
+    --warning:             #8A5A10;   /* 4.8:1 even on its own 15% tint */
+    --warning-foreground:  #FFFFFF;
+    --danger:              #A8432D;
+    --danger-foreground:   #FFFFFF;
+    --info:                #2F5E8C;
+    --info-foreground:     #FFFFFF;
+    --destructive:         var(--danger);
+    --destructive-foreground: var(--danger-foreground);
+    /* lead heat (dots/pills) maps onto status */
+    --hot:                 var(--danger);
+    --hot-foreground:      var(--danger-foreground);
+    --warm:                var(--warning);
+    --violet:              #6B5B95;
+    /* lines */
+    --border:              rgba(43, 36, 25, 0.10);  /* decorative dividers */
+    --input:               #938978;   /* form control borders — 3:1 on card */
+    /* fixed surfaces */
+    --paper:               #FFFFFF;   /* always-white: MLS logo plates, signature pad, PDFs */
+    --paper-foreground:    #111111;
+    --scrim:               rgb(0 0 0 / 0.55);   /* over photos + behind modals */
+    --shadow-color:        43 36 25;  /* rgb triplet for rgb(var(--shadow-color) / a) */
+    --brand-whatsapp:      #0B7A5E;   /* WhatsApp green, darkened to AA */
+    --radius:              1.25rem;
   }
   .dark {
     color-scheme: dark;
@@ -225,22 +269,36 @@ select:focus {
     --card-foreground:     #F1EBDF;
     --popover:             #24211B;
     --popover-foreground:  #F1EBDF;
-    --primary:             #5FAE8C;
-    --primary-foreground:  #0F1A15;
     --secondary:           #2A261F;
     --secondary-foreground:#F1EBDF;
     --muted:               #2A261F;
-    --muted-foreground:    #A69C8A;
+    --muted-foreground:    #B3A995;   /* 5.5:1+ on every dark surface */
     --accent:              #2A261F;
     --accent-foreground:   #F1EBDF;
-    --destructive:         #D9745B;
-    --destructive-foreground: #15130F;
-    --border:              rgba(241, 235, 223, 0.10);
-    --input:               rgba(241, 235, 223, 0.18);
-    --ring:                #5FAE8C;
-    --hot:                 #E07F63;
-    --warm:                #D6A452;
+    --primary:             #5FAE8C;
+    --primary-foreground:  #0F1A15;
+    --ring:                #7CC4A4;
+    --success:             #5FAE8C;
+    --success-foreground:  #0F1A15;
+    --warning:             #D6A452;
+    --warning-foreground:  #15130F;
+    --danger:              #E07F63;
+    --danger-foreground:   #15130F;
+    --info:                #7FB0E0;
+    --info-foreground:     #15130F;
+    --destructive:         var(--danger);
+    --destructive-foreground: var(--danger-foreground);
+    --hot:                 var(--danger);
+    --hot-foreground:      var(--danger-foreground);
+    --warm:                var(--warning);
     --violet:              #9D8CC9;
+    --border:              rgba(241, 235, 223, 0.10);
+    --input:               #787060;   /* ≥3:1 on bg, card and popover */
+    --paper:               #FFFFFF;
+    --paper-foreground:    #111111;
+    --scrim:               rgb(0 0 0 / 0.65);
+    --shadow-color:        0 0 0;
+    --brand-whatsapp:      #3DDC84;
   }
   /* Plain CSS, not @apply — Tailwind 3.4's opacity-modifier plugin does not
      resolve custom outlineColor tokens reliably here, and this reset must

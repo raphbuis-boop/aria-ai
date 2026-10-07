@@ -109,7 +109,7 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                 >
                   {/* Name */}
                   <td style={{ padding: "6px 8px" }}>
-                    <input
+                    <input aria-label="Required"
                       value={row.name}
                       onChange={(e) => updateRow(row._id, { name: e.target.value })}
                       placeholder="Required"
@@ -144,6 +144,7 @@ export function PreviewStep({ rows, onUpdateRows, onBack, onImport, importing }:
                   {/* Type */}
                   <td style={{ padding: "6px 8px" }}>
                     <select
+                      aria-label="Client type"
                       value={row.client_role.toLowerCase() === "seller" ? "seller" : "buyer"}
                       onChange={(e) => updateRow(row._id, { client_role: e.target.value })}
                       style={{

@@ -15,8 +15,8 @@ type Props = {
 };
 
 const HEAT_DOT_COLOR: Record<"hot" | "warm", { fill: string; ring: string }> = {
-  hot: { fill: "var(--hot)", ring: "rgba(184, 75, 51, 0.15)" },
-  warm: { fill: "var(--warm)", ring: "rgba(184, 132, 46, 0.15)" },
+  hot: { fill: "var(--hot)", ring: "color-mix(in srgb, var(--hot) 15%, transparent)" },
+  warm: { fill: "var(--warm)", ring: "color-mix(in srgb, var(--warm) 15%, transparent)" },
 };
 
 const EASE = [0.25, 0.46, 0.45, 0.94] as const;
@@ -190,7 +190,7 @@ export function FollowUpsClient({ items: initialItems }: Props) {
             <div className="flex flex-col items-center text-center rounded-2xl border border-dashed border-border px-6 py-16">
               <CheckCircle2 className="size-8 text-primary mb-4" />
               <p className="font-heading text-[19px] text-foreground mb-1">You&apos;re all caught up</p>
-              <p className="font-display text-body text-muted-foreground/70">
+              <p className="font-display text-body text-muted-foreground">
                 Every follow-up worth sending has been sent. Nice work.
               </p>
             </div>

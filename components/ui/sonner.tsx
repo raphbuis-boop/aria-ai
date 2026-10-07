@@ -15,7 +15,7 @@ export function Toaster() {
           color: "var(--popover-foreground)",
           border: "1px solid var(--border)",
           borderRadius: 16,
-          boxShadow: "0 12px 32px -12px rgba(0,0,0,0.25)",
+          boxShadow: "0 12px 32px -12px rgb(var(--shadow-color) / 0.25)",
         },
         classNames: {
           toast:

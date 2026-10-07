@@ -4,6 +4,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useToast } from "@/components/ToastProvider";
 import { Check, FileText, Star, Trash2, Upload } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
 
 type TemplateDto = {
   id: string;
@@ -189,7 +190,10 @@ export function BbaTemplatesSection() {
 
       <div className="mt-4 space-y-2">
         {loading ? (
-          <p className="text-[12px] text-muted-foreground">Loading…</p>
+          <SkeletonRegion label="Loading templates…" className="space-y-2">
+            <Skeleton className="h-12 w-full rounded-[12px]" />
+            <Skeleton className="h-12 w-full rounded-[12px]" />
+          </SkeletonRegion>
         ) : templates.length === 0 ? (
           <p className="rounded-[12px] border border-border bg-card px-3 py-4 text-[12px] text-muted-foreground">
             No templates yet. Aria&apos;s generic NJ agreement is used as a
@@ -206,6 +210,7 @@ export function BbaTemplatesSection() {
                 {editingName?.id === t.id ? (
                   <input
                     autoFocus
+                    aria-label="Template name"
                     value={editingName.value}
                     onChange={(e) =>
                       setEditingName({ id: t.id, value: e.target.value })
@@ -273,7 +278,7 @@ export function BbaTemplatesSection() {
       </div>
 
       {preview && preview.signed_url ? (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-foreground/60 p-3">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-scrim p-3" role="dialog" aria-modal="true" aria-label="Template preview">
           <div className="flex h-full max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-[16px] border border-border bg-card">
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <div className="flex items-center gap-2 text-[13px] font-medium text-foreground">
@@ -291,7 +296,7 @@ export function BbaTemplatesSection() {
             <iframe
               src={preview.signed_url}
               title={preview.template_name}
-              className="flex-1 w-full bg-white"
+              className="flex-1 w-full bg-paper"
             />
           </div>
         </div>

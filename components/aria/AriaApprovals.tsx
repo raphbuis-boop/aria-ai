@@ -47,7 +47,7 @@ function TaskRow({ task }: { task: AriaTaskRow }) {
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-display text-body font-semibold text-foreground">{task.title}</p>
-        <p className="font-display text-caption text-muted-foreground/70">{relTime(task.createdAt)}</p>
+        <p className="font-display text-caption text-muted-foreground">{relTime(task.createdAt)}</p>
       </div>
       <div className="flex shrink-0 gap-2">
         {task.clientId ? (

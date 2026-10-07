@@ -223,7 +223,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             <label className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.08em]" style={{ color: "var(--muted-foreground)" }}>
               Your name
             </label>
-            <input
+            <input aria-label="Full name"
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -394,7 +394,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             {/* Aria orb */}
             <div
               className="mb-6 flex h-20 w-20 items-center justify-center rounded-full"
-              style={{ background: "var(--primary)", boxShadow: "0 16px 40px -12px rgba(31,92,70,0.55)" }}
+              style={{ background: "var(--primary)", boxShadow: "0 16px 40px -12px color-mix(in srgb, var(--primary) 55%, transparent)" }}
             >
               <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="36" height="36" aria-hidden>
                 <path d="M100 25 L165 175 L130 175 L120 150 L80 150 L70 175 L35 175 Z M90 125 L110 125 L100 100 Z" fill="var(--primary-foreground)" />

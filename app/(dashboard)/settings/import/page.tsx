@@ -143,7 +143,7 @@ export default function ImportPage() {
             <ArrowLeft size={15} />
             Settings
           </Link>
-          <h1 style={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.01em", marginBottom: 4 }}>
+          <h1 className="mb-1 font-heading text-[34px] leading-tight text-foreground">
             Import contacts
           </h1>
           <p style={{ color: "var(--muted-foreground)", fontSize: 14 }}>

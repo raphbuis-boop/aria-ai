@@ -72,7 +72,7 @@ export function PhotoCarousel({
       <img
         src="/IDX_logo.JPG"
         alt="NJMLS IDX"
-        className="absolute bottom-2 right-2 z-10 h-auto w-[96px] rounded-[4px] bg-white px-2 py-1 object-contain shadow-sm"
+        className="absolute bottom-2 right-2 z-10 h-auto w-[96px] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
         draggable={false}
       />
       {photos.length > 1 ? (
@@ -81,7 +81,7 @@ export function PhotoCarousel({
             type="button"
             aria-label="Previous photo"
             onClick={() => scrollTo(Math.max(0, index - 1))}
-            className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm"
+            className="absolute left-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-scrim text-paper backdrop-blur-sm"
           >
             <ChevronLeft size={18} />
           </button>
@@ -89,7 +89,7 @@ export function PhotoCarousel({
             type="button"
             aria-label="Next photo"
             onClick={() => scrollTo(Math.min(photos.length - 1, index + 1))}
-            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/55 text-white backdrop-blur-sm"
+            className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-scrim text-paper backdrop-blur-sm"
           >
             <ChevronRight size={18} />
           </button>
@@ -101,7 +101,7 @@ export function PhotoCarousel({
                 aria-label={`Photo ${i + 1}`}
                 onClick={() => scrollTo(i)}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-5 bg-white" : "w-1.5 bg-white/45"
+                  i === index ? "w-5 bg-paper" : "w-1.5 bg-paper/50"
                 }`}
               />
             ))}

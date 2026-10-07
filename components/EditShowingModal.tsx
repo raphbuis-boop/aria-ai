@@ -92,13 +92,14 @@ export function EditShowingModal({
   }
 
   const inputClass =
-    "w-full rounded-[14px] border border-input bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground/50 outline-none focus:border-primary/50";
+    "w-full rounded-[14px] border border-input bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground outline-none focus:border-primary/50";
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-foreground/40 backdrop-blur-[2px]">
+    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Edit showing">
       <button
         type="button"
         aria-label="Close"
+        tabIndex={-1}
         className="absolute inset-0"
         onClick={onClose}
       />
@@ -117,6 +118,7 @@ export function EditShowingModal({
               Client
             </p>
             <select
+              aria-label="Client"
               value={form.client_id}
               onChange={(e) =>
                 setForm({ ...form, client_id: e.target.value })
@@ -131,7 +133,7 @@ export function EditShowingModal({
               ))}
             </select>
           </div>
-          <input
+          <input aria-label="Property address"
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
             placeholder="Property address *"
@@ -139,6 +141,7 @@ export function EditShowingModal({
           />
           <input
             type="datetime-local"
+            aria-label="Showing date and time"
             value={form.showing_date}
             onChange={(e) =>
               setForm({ ...form, showing_date: e.target.value })
@@ -150,6 +153,7 @@ export function EditShowingModal({
               Status
             </p>
             <select
+              aria-label="Status"
               value={form.status}
               onChange={(e) => setForm({ ...form, status: e.target.value })}
               className={`${inputClass} appearance-none`}
@@ -161,7 +165,7 @@ export function EditShowingModal({
               ))}
             </select>
           </div>
-          <textarea
+          <textarea aria-label="Notes"
             value={form.notes}
             onChange={(e) => setForm({ ...form, notes: e.target.value })}
             placeholder="Notes"

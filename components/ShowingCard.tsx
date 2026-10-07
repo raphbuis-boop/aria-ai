@@ -45,7 +45,7 @@ export function ShowingCard({
         >
           {st}
         </span>
-        <span className="font-display text-[11px] text-muted-foreground/60">
+        <span className="font-display text-[11px] text-muted-foreground">
           {fmtDateTime(showing_date)}
         </span>
       </div>

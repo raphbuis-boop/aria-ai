@@ -48,8 +48,8 @@ export function SplashScreen() {
           to   { opacity: 1; }
         }
         @keyframes glowIn {
-          from { filter: drop-shadow(0 0 0px rgba(31,92,70,0)); }
-          to   { filter: drop-shadow(0 0 18px rgba(31,92,70,0.35)); }
+          from { filter: drop-shadow(0 0 0px color-mix(in srgb, var(--primary) 0%, transparent)); }
+          to   { filter: drop-shadow(0 0 18px color-mix(in srgb, var(--primary) 35%, transparent)); }
         }
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(10px); }
@@ -75,7 +75,7 @@ export function SplashScreen() {
         }
         .splash-logo-glow {
           animation: glowIn 0.8s ease-out 2.2s forwards;
-          filter: drop-shadow(0 0 0px rgba(31,92,70,0));
+          filter: drop-shadow(0 0 0px color-mix(in srgb, var(--primary) 0%, transparent));
         }
         .splash-wordmark {
           opacity: 0;
@@ -103,9 +103,9 @@ export function SplashScreen() {
         className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center ${fading ? "splash-screen-fade" : ""}`}
         style={{
           background: `
-            radial-gradient(ellipse 80% 50% at 50% 28%, rgba(31,92,70,0.10), transparent 60%),
-            radial-gradient(ellipse 60% 40% at 50% 82%, rgba(184,132,46,0.06), transparent),
-            #FAF6EE
+            radial-gradient(ellipse 80% 50% at 50% 28%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 60%),
+            radial-gradient(ellipse 60% 40% at 50% 82%, color-mix(in srgb, var(--warm) 6%, transparent), transparent),
+            var(--background)
           `,
         }}
       >
@@ -118,7 +118,7 @@ export function SplashScreen() {
               style={{
                 width: 80,
                 height: 80,
-                border: "1px solid rgba(31,92,70,0.35)",
+                border: "1px solid color-mix(in srgb, var(--primary) 35%, transparent)",
               }}
             />
           ))}
@@ -128,12 +128,12 @@ export function SplashScreen() {
             <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
               <defs>
                 <linearGradient id="splash-grad-fill" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#2E7D5B"/>
+                  <stop offset="0%" stop-color="var(--primary)"/>
                   <stop offset="100%" stop-color="var(--primary)"/>
                 </linearGradient>
                 <linearGradient id="splash-grad-stroke" x1="100" y1="20" x2="100" y2="180" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#3E9B72"/>
-                  <stop offset="100%" stop-color="#2E7D5B"/>
+                  <stop offset="0%" stop-color="var(--primary)"/>
+                  <stop offset="100%" stop-color="var(--primary)"/>
                 </linearGradient>
               </defs>
               {/* Filled path — fades in after outline draws */}
@@ -167,7 +167,7 @@ export function SplashScreen() {
         {/* Tagline */}
         <p
           className="splash-tagline mt-2 text-[14px]"
-          style={{ color: "#8A7F6C" }}
+          style={{ color: "var(--muted-foreground)" }}
         >
           Your real estate teammate.
         </p>

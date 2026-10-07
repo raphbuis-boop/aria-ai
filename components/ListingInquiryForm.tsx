@@ -114,7 +114,7 @@ export function ListingInquiryForm({
             <button
               type="button"
               onClick={() => openForm("info")}
-              className="flex-1 rounded-[10px] bg-primary px-4 py-3 text-[13px] font-semibold text-white"
+              className="flex-1 rounded-[10px] bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground"
             >
               Request Info
             </button>
@@ -156,26 +156,28 @@ export function ListingInquiryForm({
             />
             <div>
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                Name <span className="text-red-400">*</span>
+                Name <span className="text-danger">*</span>
               </label>
               <input
                 required
+                aria-label="Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="mt-1 w-full rounded-[8px] border border-border bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
+                className="mt-1 w-full rounded-[8px] border border-input bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
                 autoComplete="name"
               />
             </div>
             <div>
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
-                Email <span className="text-red-400">*</span>
+                Email <span className="text-danger">*</span>
               </label>
               <input
                 required
                 type="email"
+                aria-label="Email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-[8px] border border-border bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
+                className="mt-1 w-full rounded-[8px] border border-input bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
                 autoComplete="email"
               />
             </div>
@@ -185,9 +187,10 @@ export function ListingInquiryForm({
               </label>
               <input
                 type="tel"
+                aria-label="Phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full rounded-[8px] border border-border bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
+                className="mt-1 w-full rounded-[8px] border border-input bg-secondary px-3 py-2 text-[13px] text-foreground focus:border-primary/60 focus:outline-none"
                 autoComplete="tel"
               />
               {phone.trim() ? (
@@ -209,12 +212,12 @@ export function ListingInquiryForm({
               <label className="text-[10px] font-bold uppercase text-muted-foreground">
                 Message
               </label>
-              <textarea
+              <textarea aria-label="When would you like to see it? Any questions?"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}
                 placeholder="When would you like to see it? Any questions?"
-                className="mt-1 w-full resize-none rounded-[8px] border border-border bg-secondary px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
+                className="mt-1 w-full resize-none rounded-[8px] border border-input bg-secondary px-3 py-2 text-[13px] text-foreground placeholder:text-muted-foreground focus:border-primary/60 focus:outline-none"
               />
             </div>
             <p className="text-[11px] text-muted-foreground">
@@ -224,7 +227,7 @@ export function ListingInquiryForm({
             <button
               type="submit"
               disabled={sending}
-              className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3 text-[13px] font-semibold text-white disabled:opacity-60"
+              className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-primary py-3 text-[13px] font-semibold text-primary-foreground disabled:opacity-60"
             >
               {sending ? <Loader2 className="animate-spin" size={16} /> : null}
               {sending
@@ -251,12 +254,13 @@ export function ListingInquiryForm({
 
   if (modal) {
     return (
-      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-black/70 backdrop-blur-[2px]">
+      <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Contact agent">
         {/* backdrop dismiss */}
         <button
           type="button"
           aria-label="Close"
-          className="absolute inset-0"
+          tabIndex={-1}
+        className="absolute inset-0"
           onClick={onClose}
         />
         <div className="relative z-10 w-full max-w-lg rounded-t-[24px] border-[0.5px] border-b-0 border-border bg-card px-5 pb-10 pt-4">

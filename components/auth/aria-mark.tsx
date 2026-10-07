@@ -2,7 +2,7 @@
 export function AriaMark({ size = 72 }: { size?: number }) {
   return (
     <span
-      className="flex items-center justify-center rounded-[20px] border border-border bg-card shadow-[0_8px_24px_rgba(31,92,70,0.12)]"
+      className="flex items-center justify-center rounded-[20px] border border-border bg-card shadow-card"
       style={{ width: size, height: size }}
     >
       <svg viewBox="0 0 200 200" width={size * 0.55} height={size * 0.55} aria-hidden>

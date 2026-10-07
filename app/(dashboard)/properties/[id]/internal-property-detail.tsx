@@ -42,7 +42,7 @@ function Fact({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <div>
-      <p className="font-display text-caption text-muted-foreground/60 mb-0.5">{label}</p>
+      <p className="font-display text-caption text-muted-foreground mb-0.5">{label}</p>
       <p className="font-display text-body text-foreground">{value}</p>
     </div>
   );
@@ -52,7 +52,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-border bg-card px-2 py-3 text-center">
       <p className="font-heading text-[19px] leading-none text-foreground">{value}</p>
-      <p className="font-display text-[11px] text-muted-foreground/70 mt-1">{label}</p>
+      <p className="font-display text-[11px] text-muted-foreground mt-1">{label}</p>
     </div>
   );
 }
@@ -166,7 +166,7 @@ export function InternalPropertyDetail({
                 onError={() => markFailed(photos[Math.min(activePhoto, photos.length - 1)])}
               />
             ) : (
-              <HomeIcon className="size-10 text-muted-foreground/40" />
+              <HomeIcon className="size-10 text-muted-foreground" />
             )}
           </div>
           {photos.length > 1 && (
@@ -297,38 +297,39 @@ export function InternalPropertyDetail({
         </section>
 
         {/* Key facts */}
+        {titleCasePropertyType(propertyType) || description || mlsNumber ? (
         <section className="mb-8">
-          <p className="font-display text-section text-muted-foreground mb-3">Details</p>
-          <Card className="px-6 py-5 grid grid-cols-2 gap-x-6 gap-y-4">
-            <Fact label="Beds / baths" value={beds != null || baths != null ? `${beds ?? "—"} bed · ${baths ?? "—"} bath` : null} />
-            <Fact label="Square feet" value={sqft ? sqft.toLocaleString() : null} />
-            <Fact label="Price / sq ft" value={pricePerSqft ? `$${pricePerSqft.toLocaleString()}` : null} />
-            <Fact label="Property type" value={titleCasePropertyType(propertyType)} />
-          </Card>
+          <h2 className="mb-3 font-display text-section uppercase text-muted-foreground">Details</h2>
+          {titleCasePropertyType(propertyType) ? (
+            <Card className="px-6 py-5">
+              <Fact label="Property type" value={titleCasePropertyType(propertyType)} />
+            </Card>
+          ) : null}
           {description && (
             <Card className="px-6 py-5 mt-3">
               <p className="font-display text-body text-muted-foreground leading-relaxed">{description}</p>
             </Card>
           )}
           {mlsNumber && (
-            <p className="font-display text-[11px] text-muted-foreground/50 mt-3">
+            <p className="font-display text-[11px] text-muted-foreground mt-3">
               {mlsNumber.replace(/^mls-?/i, "MLS #")}
             </p>
           )}
         </section>
+        ) : null}
 
         {/* Market snapshot */}
         {(mktAvg != null || mktDom != null) && (
           <section className="mb-8">
-            <p className="font-display text-section text-muted-foreground mb-3">Market{town ? ` — ${town}` : ""}</p>
+            <h2 className="mb-3 font-display text-section uppercase text-muted-foreground">Market{town ? ` — ${town}` : ""}</h2>
             <Card className="px-6 py-5 grid grid-cols-3 gap-4">
               <div>
                 <p className="font-heading text-[19px] leading-none text-foreground">{mktAvg != null ? fmtMoney(mktAvg) : "—"}</p>
-                <p className="font-display text-[11px] text-muted-foreground/70 mt-1">Avg sale</p>
+                <p className="font-display text-[11px] text-muted-foreground mt-1">Avg sale</p>
               </div>
               <div>
                 <p className="font-heading text-[19px] leading-none text-foreground">{mktDom != null ? mktDom : "—"}</p>
-                <p className="font-display text-[11px] text-muted-foreground/70 mt-1">Days on market</p>
+                <p className="font-display text-[11px] text-muted-foreground mt-1">Days on market</p>
               </div>
               <div>
                 <p
@@ -338,7 +339,7 @@ export function InternalPropertyDetail({
                   {mktYoY != null ? (mktYoY < 0 ? <TrendingDown className="size-4" /> : <TrendingUp className="size-4" />) : null}
                   {mktYoY != null ? `${mktYoY > 0 ? "+" : ""}${mktYoY}%` : "—"}
                 </p>
-                <p className="font-display text-[11px] text-muted-foreground/70 mt-1">Price YoY</p>
+                <p className="font-display text-[11px] text-muted-foreground mt-1">Price YoY</p>
               </div>
             </Card>
           </section>

@@ -146,9 +146,9 @@ export function AriaOAuthLoginExperience() {
           className="mt-8 text-center text-[11px] leading-relaxed text-muted-foreground"
         >
           By continuing you agree to the{" "}
-          <Link href="/terms" className="text-foreground hover:text-primary">Terms</Link>{" "}
+          <Link href="/terms" className="text-foreground underline underline-offset-2 hover:text-primary">Terms</Link>{" "}
           &amp;{" "}
-          <Link href="/privacy" className="text-foreground hover:text-primary">Privacy Policy</Link>.
+          <Link href="/privacy" className="text-foreground underline underline-offset-2 hover:text-primary">Privacy Policy</Link>.
         </motion.p>
       </motion.div>
     </div>
