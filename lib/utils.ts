@@ -26,10 +26,13 @@ export function fmtPhone(raw: string | null | undefined): string {
 
 /** Normalizes a US phone number to E.164 (+1XXXXXXXXXX). Returns null if unparseable. */
 export function formatPhoneE164(raw: string): string | null {
-  const digits = raw.replace(/\D/g, "");
+  // Drop an extension ("201-555-0142 x12", "ext. 4") before counting digits.
+  const main = raw.split(/\s*(?:x|ext\.?|extension)\s*\d+\s*$/i)[0];
+  const digits = main.replace(/\D/g, "");
   if (digits.length === 10) return `+1${digits}`;
   if (digits.length === 11 && digits.startsWith("1")) return `+${digits}`;
-  if (raw.startsWith("+") && digits.length >= 10) return raw;
+  // International: keep only digits so the same number always compares equal.
+  if (main.trim().startsWith("+") && digits.length >= 10 && digits.length <= 15) return `+${digits}`;
   return null;
 }
 

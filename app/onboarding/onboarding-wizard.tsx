@@ -14,6 +14,7 @@ import {
   type PreviewRow,
 } from "@/components/csv-import/utils";
 import type { CsvMappingItem } from "@/app/api/ai/map-csv/route";
+import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "@/components/import/ImportSummary";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -21,11 +22,7 @@ type WizardStep = 1 | 2 | 3 | 4;
 
 type CsvSubStep = "upload" | "mapping" | "preview" | "done";
 
-type ImportResult = {
-  inserted: number;
-  skipped: number;
-  errors: { row: number; reason: string }[];
-};
+type ImportResult = ImportOutcome;
 
 type Props = {
   userId: string;
@@ -96,6 +93,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [group, setGroup] = useState<"leads" | "sphere">("sphere");
 
   // ── Finish: mark onboarding complete ──────────────────────────────────────
 
@@ -172,9 +170,9 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
       const res = await fetch("/api/clients/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: buildImportPayload(previewRows) }),
+        body: JSON.stringify({ rows: buildImportPayload(previewRows), group }),
       });
-      const data = (await res.json()) as ImportResult & { error?: string };
+      const data = (await res.json().catch(() => ({}))) as ImportResult & { error?: string };
       if (!res.ok) { setImportError(data.error ?? "Import failed."); return; }
       setImportResult(data);
       setCsvSubStep("done");
@@ -345,6 +343,9 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
 
             {csvSubStep === "preview" && (
               <>
+                <div className="mb-5">
+                  <ImportGroupPicker value={group} onChange={setGroup} />
+                </div>
                 <PreviewStep
                   rows={previewRows}
                   onUpdateRows={setPreviewRows}
@@ -361,21 +362,8 @@ export function OnboardingWizard({ userId, initialName, initialStep, gmailConnec
             )}
 
             {csvSubStep === "done" && importResult && (
-              <div className="flex flex-col items-center text-center pt-8">
-                <div
-                  className="mb-4 flex h-16 w-16 items-center justify-center rounded-full text-[28px]"
-                  style={{ background: "color-mix(in srgb, var(--primary) 12%, transparent)" }}
-                >
-                  ✓
-                </div>
-                <h2 className="mb-1 text-[22px] font-bold">
-                  {importResult.inserted} client{importResult.inserted !== 1 ? "s" : ""} imported
-                </h2>
-                {importResult.skipped > 0 && (
-                  <p className="mb-6 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
-                    {importResult.skipped} row{importResult.skipped !== 1 ? "s" : ""} skipped
-                  </p>
-                )}
+              <div className="flex flex-col pt-8">
+                <ImportSummary result={importResult} />
                 <button
                   type="button"
                   onClick={() => setStep(4)}

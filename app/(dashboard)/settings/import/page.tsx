@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { UploadStep } from "@/components/csv-import/UploadStep";
 import { MappingStep } from "@/components/csv-import/MappingStep";
 import { PreviewStep } from "@/components/csv-import/PreviewStep";
@@ -15,14 +15,18 @@ import {
   type PreviewRow,
 } from "@/components/csv-import/utils";
 import type { CsvMappingItem } from "@/app/api/ai/map-csv/route";
+import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "@/components/import/ImportSummary";
 
 type Step = "upload" | "mapping" | "preview" | "done";
 
-type ImportResult = {
-  inserted: number;
-  skipped: number;
-  errors: { row: number; reason: string }[];
-};
+type ImportResult = ImportOutcome;
+
+/** Only same-site paths are honored for ?next= (e.g. back into onboarding). */
+function safeNext(): string | null {
+  if (typeof window === "undefined") return null;
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+}
 
 const STEP_LABELS: Record<Step, string> = {
   upload: "Upload",
@@ -44,6 +48,7 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [group, setGroup] = useState<"leads" | "sphere">("sphere");
 
   // ── Step 1 → 2: file selected, call AI mapper ──────────────────────────────
   async function handleFile(parsed: ParsedCSV, fname: string) {
@@ -97,9 +102,9 @@ export default function ImportPage() {
       const res = await fetch("/api/clients/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: payload }),
+        body: JSON.stringify({ rows: payload, group }),
       });
-      const data = (await res.json()) as ImportResult & { error?: string };
+      const data = (await res.json().catch(() => ({}))) as ImportResult & { error?: string };
       if (!res.ok) {
         setImportError(data.error ?? "Import failed. Try again.");
         return;
@@ -240,6 +245,9 @@ export default function ImportPage() {
 
           {step === "preview" && (
             <>
+              <div className="mb-5">
+                <ImportGroupPicker value={group} onChange={setGroup} />
+              </div>
               <PreviewStep
                 rows={previewRows}
                 onUpdateRows={setPreviewRows}
@@ -266,35 +274,8 @@ export default function ImportPage() {
           )}
 
           {step === "done" && result && (
-            <div style={{ textAlign: "center", padding: "12px 0 4px" }}>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: "color-mix(in srgb, var(--primary) 12%, transparent)",
-                  border: "1px solid var(--border)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                }}
-              >
-                <CheckCircle size={26} color="var(--primary)" />
-              </div>
-              <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>
-                {result.inserted} client{result.inserted !== 1 ? "s" : ""} imported
-              </p>
-              {result.skipped > 0 && (
-                <p style={{ color: "var(--muted-foreground)", fontSize: 13, marginBottom: 4 }}>
-                  {result.skipped} duplicate{result.skipped !== 1 ? "s" : ""} skipped
-                </p>
-              )}
-              {result.errors.length > 0 && (
-                <p style={{ color: "var(--warm)", fontSize: 13, marginBottom: 4 }}>
-                  {result.errors.length} row{result.errors.length !== 1 ? "s" : ""} could not be imported
-                </p>
-              )}
+            <div style={{ padding: "12px 0 4px" }}>
+              <ImportSummary result={result} />
               <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
                 <button
                   type="button"
@@ -308,9 +289,9 @@ export default function ImportPage() {
                   style={{
                     flex: 1,
                     background: "transparent",
-                    border: "1px solid var(--border)",
+                    border: "1px solid var(--input)",
                     borderRadius: 9,
-                    color: "var(--muted-foreground)",
+                    color: "var(--foreground)",
                     fontSize: 14,
                     fontWeight: 500,
                     padding: "12px 16px",
@@ -321,7 +302,7 @@ export default function ImportPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push("/clients")}
+                  onClick={() => router.push(safeNext() ?? "/dashboard")}
                   style={{
                     flex: 1,
                     background: "var(--primary)",
@@ -334,7 +315,7 @@ export default function ImportPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Go to contacts →
+                  {safeNext() ? "Continue →" : "See today's follow-ups →"}
                 </button>
               </div>
             </div>
