@@ -3,28 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Building2,
-  CalendarDays,
-  ChevronRight,
-  Copy,
-  Download,
-  FileSignature,
-  Inbox,
-  KeyRound,
-  LogOut,
-  Mail,
-  MessageSquare,
-  Mic,
-  PenLine as Pen,
-  Monitor,
-  Moon,
-  Search,
-  Sun,
-  Trash2,
-  Upload,
-  Webhook,
-} from "lucide-react";
+import { Building2, CalendarDays, ChevronRight, Copy, Download, FileSignature, Inbox, KeyRound, LogOut, Mail, MessageSquare, Mic, Monitor, Moon, PenLine as Pen, RotateCcw, Search, Sun, Trash2, Upload, Webhook } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { Button } from "@/components/ui/button";
@@ -270,6 +249,9 @@ export default function SettingsPage() {
   const [exporting, setExporting] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [password, setPassword] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetText, setResetText] = useState("");
+  const [resetting, setResetting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -354,6 +336,26 @@ export default function SettingsPage() {
   async function signOut(scope: "local" | "global") {
     await createClient().auth.signOut({ scope });
     router.push("/login");
+    router.refresh();
+  }
+
+  async function resetData() {
+    setResetting(true);
+    const res = await fetch("/api/account/reset", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ confirm: resetText }),
+    });
+    const data = await res.json().catch(() => ({}));
+    setResetting(false);
+    if (!res.ok) {
+      toast.error(data.error ?? "Couldn't clear your data");
+      return;
+    }
+    setResetOpen(false);
+    setResetText("");
+    toast.success("All clients and activity cleared — you're starting fresh");
+    router.push("/dashboard");
     router.refresh();
   }
 
@@ -655,6 +657,32 @@ export default function SettingsPage() {
         </Group>
 
         <Group title="Danger zone">
+          <Row
+            Icon={RotateCcw}
+            label="Clear all data"
+            detail="Removes every client, message, task, showing, transaction, property and document. Keeps your account, settings, voice and Google connection."
+            onPress={() => setResetOpen((v) => !v)}
+            danger
+          />
+          {resetOpen ? (
+            <div className="space-y-2 px-4 py-3">
+              <p className="font-display text-caption text-muted-foreground">
+                Type <span className="font-semibold text-foreground">RESET</span> to confirm. This can&apos;t be undone — export your clients first if you want a copy.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  value={resetText}
+                  onChange={(e) => setResetText(e.target.value)}
+                  aria-label="Type RESET to confirm"
+                  autoCapitalize="characters"
+                  className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+                />
+                <Button variant="destructive" disabled={resetText !== "RESET" || resetting} onClick={() => void resetData()} className="rounded-xl">
+                  {resetting ? "Clearing…" : "Clear"}
+                </Button>
+              </div>
+            </div>
+          ) : null}
           <Row Icon={Trash2} label="Delete account" detail="Permanently deletes your account, clients, messages and documents." onPress={() => setDeleteOpen((v) => !v)} danger />
           {deleteOpen ? (
             <div className="space-y-2 px-4 py-3">
