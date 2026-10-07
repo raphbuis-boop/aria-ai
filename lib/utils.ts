@@ -89,6 +89,8 @@ const SOURCE_LABELS: Record<string, string> = {
   sign_call: "Sign call",
   past_client: "Past client",
   sphere: "Sphere of influence",
+  google_contacts: "Google Contacts",
+  csv_import: "Imported",
   realtor: "Realtor.com",
   meta: "Meta ad",
   sms: "Texted in",

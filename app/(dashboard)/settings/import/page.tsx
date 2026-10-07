@@ -16,6 +16,7 @@ import {
 } from "@/components/csv-import/utils";
 import type { CsvMappingItem } from "@/app/api/ai/map-csv/route";
 import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "@/components/import/ImportSummary";
+import { GoogleContactsImport } from "@/components/import/GoogleContactsImport";
 
 type Step = "upload" | "mapping" | "preview" | "done";
 
@@ -49,6 +50,7 @@ export default function ImportPage() {
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
   const [group, setGroup] = useState<"leads" | "sphere">("sphere");
+  const [source, setSource] = useState<"google" | "csv">("google");
 
   // ── Step 1 → 2: file selected, call AI mapper ──────────────────────────────
   async function handleFile(parsed: ParsedCSV, fname: string) {
@@ -118,6 +120,12 @@ export default function ImportPage() {
     }
   }
 
+  // Imported clients change Today/Follow-ups — skip the router's cached copy.
+  function goNext() {
+    router.push(safeNext() ?? "/dashboard");
+    router.refresh();
+  }
+
   const stepIndex = STEP_ORDER.indexOf(step);
 
   return (
@@ -152,9 +160,40 @@ export default function ImportPage() {
             Import contacts
           </h1>
           <p style={{ color: "var(--muted-foreground)", fontSize: 14 }}>
-            Upload a CSV to add clients to your pipeline.
+            Bring in your clients from Google Contacts or a CSV export from your old CRM.
           </p>
         </div>
+
+        {step === "upload" ? (
+          <div role="tablist" aria-label="Import from" className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
+            {(
+              [
+                ["google", "Google Contacts"],
+                ["csv", "CSV file"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={source === v}
+                onClick={() => setSource(v)}
+                className={`rounded-lg py-2 font-display text-caption font-semibold ${source === v ? "bg-card text-foreground shadow-card" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {source === "google" && step === "upload" ? (
+          <GoogleContactsImport
+            returnTo="import"
+            doneLabel={safeNext() ? "Continue →" : "See today's follow-ups →"}
+            onDone={() => goNext()}
+          />
+        ) : (
+        <>
 
         {/* Step indicator */}
         {step !== "done" && (
@@ -302,7 +341,7 @@ export default function ImportPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push(safeNext() ?? "/dashboard")}
+                  onClick={() => goNext()}
                   style={{
                     flex: 1,
                     background: "var(--primary)",
@@ -321,6 +360,8 @@ export default function ImportPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

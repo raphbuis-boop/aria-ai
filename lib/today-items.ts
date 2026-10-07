@@ -838,7 +838,8 @@ export function buildTodayItems(
     .slice(0, KEEP_IN_TOUCH_CAP);
   for (const { c: client, days } of quiet) {
     const { score, reason: scoreReason } = computeLeadScore(client, activities, transactions, engagement);
-    const firstName = client.name.split(" ")[0];
+    // Email-only contacts carry the address as their name.
+    const firstName = client.name.includes("@") ? "them" : client.name.split(" ")[0];
     items.push({
       id: `touch-${client.id}`,
       clientId: client.id,
