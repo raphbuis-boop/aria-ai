@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { PropertyPageClient } from "./property-page-client";
 import { InternalPropertyDetail } from "./internal-property-detail";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -42,7 +43,7 @@ export default async function PropertyByIdPage({
       // Anyone the agent could text this home to (Aria's number needs a phone).
       supabase
         .from("clients")
-        .select("id, name")
+        .select("id, name, phone")
         .eq("agent_id", user.id)
         .not("phone", "is", null)
         .or("sms_opted_out.is.null,sms_opted_out.eq.false")
@@ -81,7 +82,8 @@ export default async function PropertyByIdPage({
       <InternalPropertyDetail
         property={prop as Record<string, unknown>}
         matches={matches}
-        textableClients={(clientRows ?? []).map((c) => ({ id: String(c.id), name: String(c.name ?? "Client") }))}
+        textableClients={(clientRows ?? []).map((c) => ({ id: String(c.id), name: String(c.name ?? "Client"), phone: (c.phone as string | null) ?? null }))}
+        smsEnabled={ariaSmsEnabled()}
         market={(market as Record<string, unknown> | null) ?? null}
         returnTo={returnTo}
       />

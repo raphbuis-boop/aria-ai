@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ClientsPageClient } from "./clients-client";
 import { commissionFor } from "@/lib/today-items";
 import type { TodayActivity, TodayTransaction } from "@/lib/today-items";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 function normalizePhone(p: string | null | undefined): string {
   return (p ?? "").replace(/\D/g, "");
@@ -77,6 +78,7 @@ export default async function ClientsPage() {
     if (!lastTextByClient.has(id)) lastTextByClient.set(id, { body: t.body as string | null, inbound: t.direction === "inbound" });
   }
   const lastContactByClient = new Map<string, string>();
+  const smsEnabled = ariaSmsEnabled();
   const ariaThreadClientIds = new Set<string>();
   for (const a of activities ?? []) {
     if (a.type === "text" && a.channel === "twilio") ariaThreadClientIds.add(String(a.client_id));
@@ -107,9 +109,9 @@ export default async function ClientsPage() {
       commissionEst: commissionFor(dealValue, commissionPctByClient.get(c.id as string)),
       lastText: lastTextByClient.get(c.id as string) ?? null,
       lastContactAt: lastContactByClient.get(c.id as string) ?? null,
-      ariaThread: ariaThreadClientIds.has(c.id as string),
+      ariaThread: smsEnabled && ariaThreadClientIds.has(c.id as string),
     };
   });
 
-  return <ClientsPageClient initial={rows} activities={clientActivities} transactions={transactions} />;
+  return <ClientsPageClient initial={rows} activities={clientActivities} transactions={transactions} smsEnabled={smsEnabled} />;
 }

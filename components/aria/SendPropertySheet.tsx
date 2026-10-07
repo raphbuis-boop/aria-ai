@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/sonner";
 import { fmtMoney } from "@/lib/utils";
+import { smsUrl } from "@/lib/messaging-links";
 
 export type SendableProperty = {
   id: string;
@@ -16,7 +17,7 @@ export type SendableProperty = {
   baths: number | null;
 };
 
-export type SendTarget = { id: string; name: string };
+export type SendTarget = { id: string; name: string; phone?: string | null };
 
 function defaultMessage(firstName: string, p: SendableProperty): string {
   const facts = [
@@ -29,18 +30,21 @@ function defaultMessage(firstName: string, p: SendableProperty): string {
 }
 
 /**
- * Texts a home to a client from Aria's Twilio number (same thread Aria uses)
- * via the existing /api/clients/[id]/aria "send" action, which also marks the
- * home as sent on the client's matches.
+ * Sends a home to a client. With Aria texting on, it goes from Aria's Twilio
+ * number via /api/clients/[id]/aria "send". Off (the default), it opens the
+ * agent's Messages app prefilled and logs the send — either way the home is
+ * marked as sent on the client's matches.
  */
 export function SendPropertySheet({
   property,
   target,
   onClose,
+  smsEnabled = false,
 }: {
   property: SendableProperty | null;
   target: SendTarget | null;
   onClose: () => void;
+  smsEnabled?: boolean;
 }) {
   const router = useRouter();
   const [text, setText] = useState("");
@@ -53,7 +57,22 @@ export function SendPropertySheet({
 
   if (!open || !property || !target) return null;
 
+  function openInMessages() {
+    if (!target?.phone) return;
+    void fetch("/api/activities/log-send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId: target.id, body: text, channel: "sms", propertyId: property!.id }),
+    });
+    window.location.href = smsUrl(target.phone, text);
+    setTimeout(() => {
+      onClose();
+      router.refresh();
+    }, 600);
+  }
+
   async function send() {
+    if (!smsEnabled) return openInMessages();
     setBusy(true);
     try {
       const res = await fetch(`/api/clients/${target!.id}/aria`, {
@@ -96,10 +115,18 @@ export function SendPropertySheet({
           className="w-full resize-none rounded-xl border border-input bg-background p-4 font-display text-body text-foreground outline-none"
         />
         <p className="mt-2 font-display text-caption text-muted-foreground">
-          Texted from Aria&apos;s number, in the same thread as Aria&apos;s messages.
+          {smsEnabled
+            ? "Texted from Aria's number, in the same thread as Aria's messages."
+            : target.phone
+              ? "Opens in your Messages app with this text filled in — you hit send."
+              : `No phone number for ${target.name.split(" ")[0]} — add one to text them.`}
         </p>
-        <Button onClick={send} disabled={busy || !text.trim()} className="mt-4 h-12 w-full rounded-xl text-body-lg font-semibold">
-          {busy ? "Sending…" : "Send text"}
+        <Button
+          onClick={send}
+          disabled={busy || !text.trim() || (!smsEnabled && !target.phone)}
+          className="mt-4 h-12 w-full rounded-xl text-body-lg font-semibold"
+        >
+          {busy ? "Sending…" : smsEnabled ? "Send text" : "Open in Messages"}
         </Button>
       </div>
     </div>

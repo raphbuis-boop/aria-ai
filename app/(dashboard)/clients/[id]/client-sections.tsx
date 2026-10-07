@@ -29,6 +29,7 @@ import { CLIENT_STATUSES } from "@/lib/client-brief";
 import { fmtMoney, fmtDateTime, formatPhoneE164, relTime } from "@/lib/utils";
 import type { SendableProperty } from "@/components/aria/SendPropertySheet";
 import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
+import { smsUrl } from "@/lib/messaging-links";
 
 // ── Preferences ────────────────────────────────────────────────────────────
 
@@ -370,11 +371,15 @@ export function BbaAndDocsCard({
   firstName,
   bba,
   canText,
+  smsEnabled,
+  phone,
 }: {
   clientId: string;
   firstName: string;
   bba: SignedBba;
   canText: boolean;
+  smsEnabled: boolean;
+  phone: string | null;
 }) {
   const router = useRouter();
   const [docs, setDocs] = useState<Doc[] | null>(null);
@@ -417,15 +422,23 @@ export function BbaAndDocsCard({
   }
 
   async function textLink() {
+    const body = `Hi ${firstName} — before we tour, NJ requires a quick Buyer Broker Agreement. It takes 30 seconds on your phone: ${signingUrl}`;
+    if (!smsEnabled) {
+      if (!phone) return;
+      void fetch("/api/activities/log-send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clientId, body, channel: "sms" }),
+      });
+      window.location.href = smsUrl(phone, body);
+      return;
+    }
     setSending(true);
     try {
       const res = await fetch(`/api/clients/${clientId}/aria`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "send",
-          body: `Hi ${firstName} — before we tour, NJ requires a quick Buyer Broker Agreement. It takes 30 seconds on your phone: ${signingUrl}`,
-        }),
+        body: JSON.stringify({ action: "send", body }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(json.error ?? "Couldn't send");
@@ -464,7 +477,9 @@ export function BbaAndDocsCard({
             ) : (
               <>
                 <p className="font-display text-caption text-muted-foreground">
-                  Aria texts the signing link automatically when you approve a showing.
+                  {smsEnabled
+                    ? "Aria texts the signing link automatically when you approve a showing."
+                    : `Send ${firstName} the signing link before your first showing.`}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {canText ? (

@@ -114,10 +114,12 @@ export function ClientsPageClient({
   initial,
   activities,
   transactions,
+  smsEnabled,
 }: {
   initial: Row[];
   activities: TodayActivity[];
   transactions: TodayTransaction[];
+  smsEnabled: boolean;
 }) {
   const supabase = createClient();
   const router = useRouter();
@@ -269,7 +271,7 @@ export function ClientsPageClient({
 
         {/* Filters */}
         <div className="mb-6 flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
-          {FILTERS.map((f) => (
+          {FILTERS.filter((f) => smsEnabled || f !== "Aria texting").map((f) => (
             <button
               key={f}
               type="button"

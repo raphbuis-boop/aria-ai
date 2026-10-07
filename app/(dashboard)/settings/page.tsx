@@ -41,7 +41,7 @@ type Health = {
   mlsConfigured: boolean;
   googleConfigured: boolean;
   calendarWriteEnabled: boolean;
-  sms: { configured: boolean; fromNumber: string | null; messagingService: boolean; dryRun: boolean };
+  sms: { enabled: boolean; configured: boolean; fromNumber: string | null; messagingService: boolean; dryRun: boolean };
   leads: { webhookConfigured: boolean; defaultAgent: boolean; metaConfigured: boolean };
 };
 type Google = { connected: boolean; email?: string; calendarRead?: boolean; calendarWrite?: boolean };
@@ -428,6 +428,15 @@ export default function SettingsPage() {
           title="Integrations"
           footer="Status is read live from the server. Keys and secrets are set in the deployment's environment, never here."
         >
+          {health && !sms?.enabled ? (
+            <Row
+              Icon={MessageSquare}
+              label="Texting"
+              detail="Aria drafts each text in your voice. Tap send and it opens in your Messages app — nothing is sent without you."
+              right={<Status tone="ok">Your phone</Status>}
+            />
+          ) : (
+          <>
           <Row
             Icon={MessageSquare}
             label="Twilio SMS"
@@ -449,6 +458,8 @@ export default function SettingsPage() {
             right={<Status tone={smsTone}>{smsLabel}</Status>}
           />
           <TwilioCheckRow />
+          </>
+          )}
           <Row
             Icon={Mail}
             label="Gmail"
@@ -528,7 +539,7 @@ export default function SettingsPage() {
           <Row
             Icon={MessageSquare}
             label="AI replies"
-            detail={health && !health.aiConfigured ? "Claude isn't configured on the server — Aria can't draft or reply." : "Claude drafts the first text and replies to leads."}
+            detail={health && !health.aiConfigured ? "Claude isn't configured on the server — Aria can't draft or reply." : sms?.enabled ? "Claude drafts the first text and replies to leads." : "Claude drafts your texts and follow-ups in your voice."}
             right={<Status tone={health?.aiConfigured ? "ok" : "warn"}>{!health ? CHECKING : health.aiConfigured ? "On" : "Off"}</Status>}
           />
           <label className="flex min-h-[56px] items-center gap-3 px-4 py-3">

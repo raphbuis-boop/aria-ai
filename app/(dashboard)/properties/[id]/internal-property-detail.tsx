@@ -61,12 +61,14 @@ export function InternalPropertyDetail({
   property,
   matches,
   textableClients,
+  smsEnabled,
   market,
   returnTo,
 }: {
   property: Record<string, unknown>;
   matches: Match[];
   textableClients: SendTarget[];
+  smsEnabled: boolean;
   market: Record<string, unknown> | null;
   returnTo: string | null;
 }) {
@@ -283,7 +285,7 @@ export function InternalPropertyDetail({
                       <Button
                         size="sm"
                         variant={sent ? "outline" : "default"}
-                        onClick={() => setSendTo({ id: m.clientId, name: m.clientName })}
+                        onClick={() => setSendTo(textableClients.find((c) => c.id === m.clientId) ?? null)}
                         className="h-9 shrink-0 rounded-full px-3"
                       >
                         <Send className="size-3.5" /> {sent ? "Resend" : "Send"}
@@ -365,6 +367,7 @@ export function InternalPropertyDetail({
         property={sendTo ? { id: String(property.id), address, town, price, beds, baths } : null}
         target={sendTo}
         onClose={() => setSendTo(null)}
+        smsEnabled={smsEnabled}
       />
       <Toaster />
     </div>

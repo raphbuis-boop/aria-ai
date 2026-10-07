@@ -22,7 +22,7 @@ export default function TermsPage() {
             Terms of Service
           </h1>
           <p className="mt-2 text-[13px] text-muted-foreground">
-            Effective date: {new Date().toLocaleDateString("en-US")}
+            Effective date: October 7, 2026
           </p>
         </header>
 
@@ -55,6 +55,20 @@ export default function TermsPage() {
               You agree not to misuse Aria, including unauthorized access attempts,
               unlawful communications, scraping, reverse engineering, or use that
               violates applicable real estate, privacy, or anti-spam laws.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-[15px] font-semibold text-foreground">
+              Messages you send
+            </h2>
+            <p className="mt-2">
+              Aria drafts texts and emails; you review and send them. Texts open
+              in your phone&apos;s Messages app and are sent by you, from your
+              number. You are responsible for the messages you send and for
+              having your clients&apos; consent to contact them, including under
+              the TCPA and New Jersey law. AI drafts can be wrong — read them
+              before you send.
             </p>
           </section>
 
