@@ -4,6 +4,7 @@ import {
   describeSimplyRetsEnv,
   getSimplyRetsAuthHeader,
   isSimplyRetsConfigured,
+  logSimplyRetsFailure,
   mapSimplyRetsListing,
   MLS_SORT_PARAM,
   resolveSimplyRetsCredentials,
@@ -116,12 +117,7 @@ export async function GET(req: Request) {
   }
 
   if (!response.ok) {
-    const errText = await response.text();
-    console.error("[mls] SimplyRETS non-2xx", {
-      endpoint,
-      status: response.status,
-      body: errText.slice(0, 500),
-    });
+    logSimplyRetsFailure("mls", endpoint, response, await response.text().catch(() => ""));
     return NextResponse.json(
       {
         error: "Could not load listings. Please try again shortly.",

@@ -44,6 +44,8 @@ export type ShowingRow = {
 export type TaskDueRow = { id: string; clientId: string | null; clientName: string | null; title: string; dueAt: string | null };
 
 type Props = {
+  /** Aria texts leads over Twilio (ARIA_SMS_ENABLED). Off → draft-only. */
+  smsEnabled: boolean;
   firstName: string;
   agentInitials: string;
   hasAnyClients: boolean;
@@ -108,7 +110,7 @@ function Header({ firstName, agentInitials }: { firstName: string; agentInitials
   );
 }
 
-function NewLeads({ leads }: { leads: NewLeadRow[] }) {
+function NewLeads({ leads, smsEnabled }: { leads: NewLeadRow[]; smsEnabled: boolean }) {
   if (!leads.length) return null;
   return (
     <Section label="New leads" count={leads.length} action={{ href: "/clients", label: "All clients →" }}>
@@ -122,7 +124,9 @@ function NewLeads({ leads }: { leads: NewLeadRow[] }) {
                 {[humanizeSource(l.source), l.town, relTime(l.createdAt)].filter(Boolean).join(" · ")}
               </p>
             </div>
-            {l.ariaTexted ? (
+            {!smsEnabled ? (
+              l.ariaTexted ? <Pill>Texted</Pill> : <Pill tone="warm">Not texted</Pill>
+            ) : l.ariaTexted ? (
               <Pill tone={l.ariaPaused ? "neutral" : "primary"}>
                 <Sparkles className="size-3" /> {l.ariaPaused ? "Paused" : "Aria texting"}
               </Pill>
@@ -276,8 +280,9 @@ function FollowUps({
 }
 
 const SETUP_STEPS = [
-  { Icon: UserPlus, title: "Add your first client", desc: "Aria texts new leads and keeps the thread going.", href: "/clients?new=1" },
-  { Icon: Upload, title: "Import clients", desc: "Upload a CSV from your old CRM.", href: "/settings/import" },
+  { Icon: Sparkles, title: "Guided setup", desc: "Connect Google, bring in your clients and set your voice — about 5 minutes.", href: "/onboarding?restart=1" },
+  { Icon: Upload, title: "Import your clients", desc: "From Google Contacts or a CSV export from your old CRM.", href: "/settings/import" },
+  { Icon: UserPlus, title: "Add a client", desc: "Aria lines up who to follow up with each day and drafts the text in your voice.", href: "/clients?new=1" },
 ] as const;
 
 function EmptyState() {
@@ -342,8 +347,8 @@ export function TodayClient(props: Props) {
 
         {props.hasAnyClients ? (
           <>
-            <NewLeads leads={props.newLeads} />
-            <Conversations rows={props.conversations} />
+            <NewLeads leads={props.newLeads} smsEnabled={props.smsEnabled} />
+            {props.smsEnabled ? <Conversations rows={props.conversations} /> : null}
             <ShowingsToday rows={props.showingsToday} />
             <FollowUps items={followUps} tasks={props.tasksDue} onAct={handleAct} onSkip={handleSkip} />
           </>

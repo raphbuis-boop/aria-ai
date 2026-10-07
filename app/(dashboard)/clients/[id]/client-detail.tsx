@@ -2,7 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Mail, Phone } from "lucide-react";
+import { ArrowLeft, Mail, MessageSquare, Phone, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { DraftSheet } from "@/components/DraftSheet";
+import type { TodayItem } from "@/lib/today-items";
 import { Pill } from "@/components/Section";
 import { Toaster } from "@/components/ui/sonner";
 import { AriaApprovals, type AriaTaskRow } from "@/components/aria/AriaApprovals";
@@ -36,6 +40,8 @@ type Activity = {
 };
 
 type Props = {
+  /** Aria texts this client over Twilio (ARIA_SMS_ENABLED). Off → draft, then send from your phone. */
+  smsEnabled: boolean;
   client: Record<string, unknown>;
   activities: Activity[];
   homes: MatchedHome[];
@@ -48,9 +54,10 @@ type Props = {
 const str = (v: unknown) => (typeof v === "string" && v ? v : null);
 const num = (v: unknown) => (typeof v === "number" ? v : v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null);
 
-export function ClientDetail({ client, activities, homes, showings, ariaTasks, ariaThread, bba }: Props) {
+export function ClientDetail({ smsEnabled, client, activities, homes, showings, ariaTasks, ariaThread, bba }: Props) {
   const router = useRouter();
   const [sending, setSending] = useState<MatchedHome | null>(null);
+  const [drafting, setDrafting] = useState<TodayItem | null>(null);
 
   const id = String(client.id);
   const name = str(client.name) ?? "Client";
@@ -59,6 +66,30 @@ export function ClientDetail({ client, activities, homes, showings, ariaTasks, a
   const email = str(client.email);
   const source = humanizeSource(str(client.lead_source) ?? str(client.source));
   const canText = Boolean(phone) && !ariaThread.optedOut;
+  const lastSentText = [...activities].reverse().find((a) => (a.type === "sms" || a.type === "text") && a.sent && a.direction !== "inbound");
+
+  function openDraft() {
+    setDrafting({
+      id: `client-text-${id}`,
+      clientId: id,
+      clientName: name,
+      clientPhone: phone,
+      clientTown: str(client.town),
+      clientBudgetMax: num(client.budget_max),
+      clientStatus: str(client.status),
+      reason: lastContactReason(lastSentText?.created_at ?? null),
+      context: str(client.notes),
+      actionLabel: `Text ${firstName}`,
+      actionType: "text",
+      navigateTo: null,
+      urgencyRank: 0,
+      leadScore: null,
+      leadHeat: "cold",
+      leadScoreReason: null,
+      activitySignal: null,
+      commissionEst: null,
+    });
+  }
 
   // Unapproved AI drafts were never sent — they aren't part of the thread.
   const texts: TextMessage[] = activities
@@ -109,9 +140,35 @@ export function ClientDetail({ client, activities, homes, showings, ariaTasks, a
           ) : null}
         </header>
 
-        <AriaApprovals showingRequests={showingRequests} tasks={ariaTasks} />
-
-        <MessagesThread clientId={id} firstName={firstName} state={ariaThread} messages={texts} />
+        {smsEnabled ? (
+          <>
+            <AriaApprovals showingRequests={showingRequests} tasks={ariaTasks} />
+            <MessagesThread clientId={id} firstName={firstName} state={ariaThread} messages={texts} />
+          </>
+        ) : (
+          <Card className="mb-10 px-5 py-4">
+            <div className="flex items-start gap-3">
+              <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                <Sparkles className="size-3.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="font-display text-body font-semibold text-foreground">Text {firstName}</p>
+                <p className="font-display text-caption text-muted-foreground">
+                  {!phone
+                    ? "Add a phone number below to text this client."
+                    : lastSentText
+                      ? `Last text ${relTime(lastSentText.created_at)}. Aria drafts it in your voice; you send it from your phone.`
+                      : "Aria drafts it in your voice; you send it from your phone."}
+                </p>
+              </div>
+            </div>
+            {phone ? (
+              <Button onClick={openDraft} className="mt-4 h-11 w-full rounded-xl font-semibold">
+                <MessageSquare className="size-4" /> Draft a text
+              </Button>
+            ) : null}
+          </Card>
+        )}
 
         <PreferencesCard
           key={String(client.updated_at ?? "")}
@@ -137,13 +194,32 @@ export function ClientDetail({ client, activities, homes, showings, ariaTasks, a
 
         <ShowingsCard showings={showings} />
 
-        <BbaAndDocsCard clientId={id} firstName={firstName} bba={bba} canText={canText} />
+        <BbaAndDocsCard clientId={id} firstName={firstName} bba={bba} canText={canText} smsEnabled={smsEnabled} phone={phone} />
 
         <TimelineCard items={timeline} />
       </div>
 
-      <SendPropertySheet property={sending} target={sending ? { id, name } : null} onClose={() => setSending(null)} />
+      <SendPropertySheet
+        property={sending}
+        target={sending ? { id, name, phone } : null}
+        onClose={() => setSending(null)}
+        smsEnabled={smsEnabled}
+      />
+      <DraftSheet
+        item={drafting}
+        onClose={() => setDrafting(null)}
+        onSent={() => {
+          setDrafting(null);
+          router.refresh();
+        }}
+      />
       <Toaster />
     </div>
   );
+}
+
+function lastContactReason(lastTextAt: string | null): string {
+  if (!lastTextAt) return "First text — introduce yourself and ask what they're looking for";
+  const days = Math.floor((Date.now() - new Date(lastTextAt).getTime()) / 86_400_000);
+  return days >= 7 ? `Check in — no text in ${days} days` : "Quick follow-up on your last conversation";
 }
