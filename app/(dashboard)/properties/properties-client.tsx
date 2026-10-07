@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
@@ -230,6 +230,10 @@ function AddPropertySheet({ onClose }: { onClose: () => void }) {
 
 export function PropertiesClient({ initial }: { initial: Property[] }) {
   const [adding, setAdding] = useState(false);
+  // /properties?add=1 (from "Add a property" on the MLS screen) opens the sheet.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("add") === "1") setAdding(true);
+  }, []);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<(typeof STATUS_FILTERS)[number]>("All");
   const [priceFilter, setPriceFilter] = useState<(typeof PRICE_FILTERS)[number]>("Any price");

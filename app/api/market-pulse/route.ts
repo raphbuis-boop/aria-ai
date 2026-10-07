@@ -3,6 +3,7 @@ import { getRouteSupabase } from "@/lib/api-auth";
 import {
   getSimplyRetsAuthHeader,
   isSimplyRetsConfigured,
+  logSimplyRetsFailure,
   mapSimplyRetsListing,
   SIMPLYRETS_API_BASE,
 } from "@/lib/simplyrets";
@@ -80,7 +81,10 @@ export async function GET() {
       headers: { Authorization: auth, Accept: "application/json" },
       cache: "no-store",
     });
-    if (!res.ok) return [];
+    if (!res.ok) {
+      logSimplyRetsFailure("market-pulse", `${base}/properties?${params}`, res, await res.text().catch(() => ""));
+      return [];
+    }
     const data = await res.json();
     return parseListingsPayload(data) as Record<string, unknown>[];
   }
