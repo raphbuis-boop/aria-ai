@@ -20,7 +20,13 @@ export type TodayClient = {
   phone: string | null;
   birthday: string | null;
   home_purchase_date: string | null;
+  /** Last time the agent contacted them (any channel). Older than the activity window the pages load. */
+  last_engagement_at?: string | null;
 };
+
+/** Check-ins suggested per day for people who've gone quiet or were never contacted. */
+const KEEP_IN_TOUCH_CAP = 8;
+const KEEP_IN_TOUCH_AFTER_DAYS = 30;
 
 export type TodayTransaction = {
   id: string;
@@ -710,6 +716,9 @@ export function buildTodayItems(
     if (items.some((i) => i.clientId === client.id)) continue;
     if (bbaSignedClientIds.includes(client.id)) continue;
     if (!ACTIVE_BUYER_STATUSES.includes(client.status ?? "")) continue;
+    // Asking someone you've never spoken to for a signature is noise — wait
+    // for a first contact unless they're already touring or offering.
+    if (lastContactDays(client, activities, now) === null && client.status !== "showing" && client.status !== "offer") continue;
 
     // Compute real lead score for BBA items
     const { score: bbaScore, reason: bbaReason } = computeLeadScore(client, activities, transactions, engagement);
@@ -817,7 +826,56 @@ export function buildTodayItems(
     });
   }
 
+  // ── 7. Keep in touch — never contacted, or quiet 30+ days ────────────────
+  // What makes a freshly imported list useful on day one: real people, a
+  // real reason (no contact on record), and a draft. Textable people first,
+  // then the longest-quiet.
+  const quiet = clients
+    .filter((c) => c.status !== "closed" && c.status !== "under_contract" && !items.some((i) => i.clientId === c.id))
+    .map((c) => ({ c, days: lastContactDays(c, activities, now) }))
+    .filter(({ days }) => days === null || days >= KEEP_IN_TOUCH_AFTER_DAYS)
+    .sort((a, b) => Number(Boolean(b.c.phone)) - Number(Boolean(a.c.phone)) || (b.days ?? Infinity) - (a.days ?? Infinity))
+    .slice(0, KEEP_IN_TOUCH_CAP);
+  for (const { c: client, days } of quiet) {
+    const { score, reason: scoreReason } = computeLeadScore(client, activities, transactions, engagement);
+    const firstName = client.name.split(" ")[0];
+    items.push({
+      id: `touch-${client.id}`,
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      clientTown: client.town,
+      clientBudgetMax: client.budget_max,
+      clientStatus: client.status,
+      leadScore: score,
+      leadHeat: heatFromScore(score),
+      leadScoreReason: scoreReason,
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
+      reason:
+        days === null
+          ? client.status === "new"
+            ? "New lead — no contact yet"
+            : "No contact logged yet — a friendly check-in"
+          : `No contact in ${days} days`,
+      context: client.town ?? null,
+      actionLabel: `Text ${firstName}`,
+      actionType: "text",
+      navigateTo: null,
+      urgencyRank: 7,
+    });
+  }
+
   // ── Sort by urgency, return all items (no cap) ────────────────────────────
   items.sort((a, b) => a.urgencyRank - b.urgencyRank);
   return items;
+}
+
+/** Days since the agent last contacted this client: activity in the loaded window or last_engagement_at. Null = never. */
+function lastContactDays(client: TodayClient, activities: TodayActivity[], now: Date): number | null {
+  const fromActivity = daysSinceContact(client.id, activities);
+  const fromField = client.last_engagement_at ? differenceInCalendarDays(now, new Date(client.last_engagement_at)) : null;
+  if (fromActivity === null) return fromField;
+  if (fromField === null) return fromActivity;
+  return Math.min(fromActivity, fromField);
 }

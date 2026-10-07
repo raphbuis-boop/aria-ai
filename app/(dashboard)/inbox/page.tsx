@@ -26,7 +26,7 @@ export default async function FollowUpsPage() {
     await Promise.all([
       supabase
         .from("clients")
-        .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
+        .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, last_engagement_at")
         .eq("agent_id", user.id)
         .neq("status", "closed"),
 
@@ -95,7 +95,7 @@ export default async function FollowUpsPage() {
   // against. Separate from `clients` above, which excludes closed status.
   const { data: closedClientRows } = await supabase
     .from("clients")
-    .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date")
+    .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, last_engagement_at")
     .eq("agent_id", user.id)
     .eq("status", "closed");
   const closedClients = (closedClientRows ?? []) as TodayClient[];

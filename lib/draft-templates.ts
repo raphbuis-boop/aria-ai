@@ -19,7 +19,7 @@ export function isGenericAiFallback(draft: string): boolean {
 }
 
 function firstNameOf(name: string): string {
-  return name.split(" ")[0];
+  return name.includes("@") ? "there" : name.split(" ")[0];
 }
 
 /** "Tenafly" / "$1.2M–1.5M" / "Tenafly, budget up to $1.2M" — whatever real fields exist. */

@@ -13,7 +13,7 @@ type Rel<T> = T | T[] | null | undefined;
 const one = <T,>(rel: Rel<T>): T | null => (Array.isArray(rel) ? rel[0] ?? null : rel ?? null);
 
 const CLIENT_COLS =
-  "id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, created_at, lead_source, source, aria_paused, sms_opted_out";
+  "id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, last_engagement_at, created_at, lead_source, source, aria_paused, sms_opted_out";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -216,7 +216,8 @@ export default async function DashboardPage() {
       .map((a) => a.client_id),
   );
   const newLeads: NewLeadRow[] = clients
-    .filter((c) => c.created_at >= minus7ISO)
+    // Only actual leads — an imported list of past clients isn't "new leads".
+    .filter((c) => c.created_at >= minus7ISO && c.status === "new")
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 5)
     .map((c) => ({
