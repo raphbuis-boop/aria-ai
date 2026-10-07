@@ -251,6 +251,8 @@ export function ClientsPageClient({
           </Button>
         </div>
 
+        {rows.length > 0 ? (
+        <>
         {/* Search */}
         <div className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3">
           <Search className="size-3.5 text-muted-foreground shrink-0" />
@@ -287,6 +289,8 @@ export function ClientsPageClient({
             </button>
           ))}
         </div>
+        </>
+        ) : null}
 
         {/* List */}
         {filtered.length === 0 ? (
@@ -295,12 +299,19 @@ export function ClientsPageClient({
               <Users className="size-4 text-muted-foreground" />
             </div>
             <p className="font-display text-body text-muted-foreground">
-              {rows.length === 0 ? "No clients yet — tap Add to get started" : "Try adjusting your search or filters"}
+              {rows.length === 0
+                ? "No clients yet. Import your list from your old CRM, or add someone by hand."
+                : "Try adjusting your search or filters"}
             </p>
             {rows.length === 0 && (
-              <Button onClick={() => setOpen(true)} className="mt-6 rounded-full h-10 px-5 text-body font-semibold">
-                + Add your first client
-              </Button>
+              <div className="mt-6 flex flex-wrap justify-center gap-2">
+                <Button asChild className="rounded-full h-10 px-5 text-body font-semibold">
+                  <Link href="/settings/import">Import clients</Link>
+                </Button>
+                <Button variant="outline" onClick={() => setOpen(true)} className="rounded-full h-10 px-5 text-body font-semibold">
+                  Add a client
+                </Button>
+              </div>
             )}
           </div>
         ) : (

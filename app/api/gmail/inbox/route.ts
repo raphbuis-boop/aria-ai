@@ -54,7 +54,8 @@ export async function GET() {
     .sort((a, b) => b.priority - a.priority);
 
   const important = threads.filter((t) => !t.lowReason && (t.client || t.needsReply)).slice(0, DIGEST_MAX);
-  const key = (t: InboxThread) => `${user.id}:${t.threadId}:${t.lastMessageId}`;
+  // The matched client is part of the key so a deleted/renamed client never leaves a stale "why".
+  const key = (t: InboxThread) => `${user.id}:${t.threadId}:${t.lastMessageId}:${t.client?.id ?? ""}`;
   const missing = important.filter((t) => !digestCache.has(key(t)));
   if (missing.length) {
     const fresh = await digestThreads(

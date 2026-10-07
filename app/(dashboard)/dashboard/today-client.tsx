@@ -280,8 +280,8 @@ function FollowUps({
 }
 
 const SETUP_STEPS = [
-  { Icon: UserPlus, title: "Add your first client", desc: "Aria texts new leads and keeps the thread going.", href: "/clients?new=1" },
-  { Icon: Upload, title: "Import clients", desc: "Upload a CSV from your old CRM.", href: "/settings/import" },
+  { Icon: Upload, title: "Import your clients", desc: "Upload a CSV export from your old CRM or spreadsheet.", href: "/settings/import" },
+  { Icon: UserPlus, title: "Add a client", desc: "Aria lines up who to follow up with each day and drafts the text in your voice.", href: "/clients?new=1" },
 ] as const;
 
 function EmptyState() {

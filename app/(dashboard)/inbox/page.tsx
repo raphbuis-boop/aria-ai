@@ -127,5 +127,5 @@ export default async function FollowUpsPage() {
     .sort((a, b) => (b.commissionEst ?? 0) - (a.commissionEst ?? 0));
 
 
-  return <FollowUpsClient items={items} />;
+  return <FollowUpsClient items={items} hasClients={(clientsRes.data ?? []).length > 0} />;
 }

@@ -324,6 +324,8 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           </div>
         </div>
 
+        {initial.length > 0 ? (
+        <>
         {/* Search — filters as you type; Enter asks Aria to read it ("3-bed under $900k in Tenafly") */}
         <form
           className="mb-3 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3"
@@ -400,6 +402,9 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
             ))}
           </select>
         </div>
+
+        </>
+        ) : null}
 
         {/* List */}
         {filtered.length === 0 ? (
