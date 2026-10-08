@@ -3,28 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Building2,
-  CalendarDays,
-  ChevronRight,
-  Copy,
-  Download,
-  FileSignature,
-  Inbox,
-  KeyRound,
-  LogOut,
-  Mail,
-  MessageSquare,
-  Mic,
-  PenLine as Pen,
-  Monitor,
-  Moon,
-  Search,
-  Sun,
-  Trash2,
-  Upload,
-  Webhook,
-} from "lucide-react";
+import { Building2, CalendarDays, ChevronRight, Copy, CreditCard, Download, FileSignature, Inbox, KeyRound, LogOut, Mail, MessageSquare, Mic, Monitor, Moon, PenLine as Pen, Search, Sun, Trash2, Upload, Webhook } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { Button } from "@/components/ui/button";
@@ -43,6 +22,13 @@ type Health = {
   calendarWriteEnabled: boolean;
   sms: { configured: boolean; fromNumber: string | null; messagingService: boolean; dryRun: boolean };
   leads: { webhookConfigured: boolean; defaultAgent: boolean; metaConfigured: boolean };
+};
+type Billing = {
+  billingEnabled: boolean;
+  reason: "ok" | "exempt" | "subscribed" | "trial" | "not_allowlisted" | "payment_required";
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
 };
 type Google = { connected: boolean; email?: string; calendarRead?: boolean; calendarWrite?: boolean };
 type DraftTone = "warm" | "professional" | "direct" | "casual";
@@ -64,6 +50,19 @@ function Group({ title, footer, children }: { title: string; footer?: React.Reac
       {footer ? <div className="mt-2 px-4 font-display text-caption text-muted-foreground">{footer}</div> : null}
     </section>
   );
+}
+
+const shortDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+
+function billingLabel(b: Billing): string {
+  return { subscribed: "Active", exempt: "Included", trial: "Free trial", payment_required: "Ended", not_allowlisted: "No access", ok: "—" }[b.reason];
+}
+
+function billingDetail(b: Billing): string {
+  if (b.reason === "subscribed") return b.cancelAtPeriodEnd ? `Ends ${shortDate(b.currentPeriodEnd)}` : `Renews ${shortDate(b.currentPeriodEnd)} · card, invoices, cancel`;
+  if (b.reason === "trial") return `Free until ${shortDate(b.trialEndsAt)} · subscribe anytime`;
+  if (b.reason === "exempt") return "Your account is complimentary.";
+  return "Subscribe to keep using Aria.";
 }
 
 type Tone = "ok" | "warn" | "off";
@@ -264,6 +263,7 @@ export default function SettingsPage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [google, setGoogle] = useState<Google | null>(null);
+  const [billing, setBilling] = useState<Billing | null>(null);
   const [notify, setNotify] = useState({ notifyFollowups: true });
   const [drafts, setDrafts] = useState<{ draftTone: DraftTone; signature: string }>({ draftTone: "warm", signature: "" });
   const [theme, setTheme] = useState<ThemePref>("system");
@@ -287,6 +287,7 @@ export default function SettingsPage() {
     ).finally(() => setProfileLoaded(true));
     void get<Health>("/api/health/env", setHealth);
     void get<Google>("/api/gmail/status", setGoogle);
+    void get<Billing>("/api/billing/status", setBilling);
     void get<typeof notify>("/api/settings/notifications", setNotify);
     void get<typeof drafts>("/api/settings/drafts", (d) => setDrafts({ draftTone: d.draftTone ?? "warm", signature: d.signature ?? "" }));
 
@@ -423,6 +424,18 @@ export default function SettingsPage() {
         <Group title="Brokerage">
           <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} loading={!profileLoaded} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
         </Group>
+
+        {billing?.billingEnabled ? (
+          <Group title="Plan">
+            <Row
+              Icon={CreditCard}
+              label="Aria subscription"
+              detail={billingDetail(billing)}
+              right={<Status tone={billing.reason === "subscribed" || billing.reason === "exempt" ? "ok" : "warn"}>{billingLabel(billing)}</Status>}
+              href="/billing"
+            />
+          </Group>
+        ) : null}
 
         <Group
           title="Integrations"
