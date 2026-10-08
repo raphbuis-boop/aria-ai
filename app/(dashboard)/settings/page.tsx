@@ -3,28 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  Building2,
-  CalendarDays,
-  ChevronRight,
-  Copy,
-  Download,
-  FileSignature,
-  Inbox,
-  KeyRound,
-  LogOut,
-  Mail,
-  MessageSquare,
-  Mic,
-  PenLine as Pen,
-  Monitor,
-  Moon,
-  Search,
-  Sun,
-  Trash2,
-  Upload,
-  Webhook,
-} from "lucide-react";
+import { Building2, CalendarDays, ChevronRight, Copy, CreditCard, Download, FileSignature, Inbox, KeyRound, LogOut, Mail, MessageSquare, Mic, Monitor, Moon, PenLine as Pen, Search, Sun, Trash2, Upload, Webhook } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
 import { Button } from "@/components/ui/button";
@@ -43,6 +22,13 @@ type Health = {
   calendarWriteEnabled: boolean;
   sms: { configured: boolean; fromNumber: string | null; messagingService: boolean; dryRun: boolean };
   leads: { webhookConfigured: boolean; defaultAgent: boolean; metaConfigured: boolean };
+};
+type Billing = {
+  billingEnabled: boolean;
+  reason: "ok" | "exempt" | "subscribed" | "trial" | "not_allowlisted" | "payment_required";
+  trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
 };
 type Google = { connected: boolean; email?: string; calendarRead?: boolean; calendarWrite?: boolean };
 type DraftTone = "warm" | "professional" | "direct" | "casual";
@@ -64,6 +50,19 @@ function Group({ title, footer, children }: { title: string; footer?: React.Reac
       {footer ? <div className="mt-2 px-4 font-display text-caption text-muted-foreground">{footer}</div> : null}
     </section>
   );
+}
+
+const shortDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "");
+
+function billingLabel(b: Billing): string {
+  return { subscribed: "Active", exempt: "Included", trial: "Free trial", payment_required: "Ended", not_allowlisted: "No access", ok: "—" }[b.reason];
+}
+
+function billingDetail(b: Billing): string {
+  if (b.reason === "subscribed") return b.cancelAtPeriodEnd ? `Ends ${shortDate(b.currentPeriodEnd)}` : `Renews ${shortDate(b.currentPeriodEnd)} · card, invoices, cancel`;
+  if (b.reason === "trial") return `Free until ${shortDate(b.trialEndsAt)} · subscribe anytime`;
+  if (b.reason === "exempt") return "Your account is complimentary.";
+  return "Subscribe to keep using Aria.";
 }
 
 type Tone = "ok" | "warn" | "off";
@@ -264,12 +263,18 @@ export default function SettingsPage() {
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [google, setGoogle] = useState<Google | null>(null);
+  const [billing, setBilling] = useState<Billing | null>(null);
   const [notify, setNotify] = useState({ notifyFollowups: true });
   const [drafts, setDrafts] = useState<{ draftTone: DraftTone; signature: string }>({ draftTone: "warm", signature: "" });
   const [theme, setTheme] = useState<ThemePref>("system");
   const [exporting, setExporting] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [hasPassword, setHasPassword] = useState(true);
+  const [emailOpen, setEmailOpen] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleteText, setDeleteText] = useState("");
   const [deleting, setDeleting] = useState(false);
@@ -287,6 +292,15 @@ export default function SettingsPage() {
     ).finally(() => setProfileLoaded(true));
     void get<Health>("/api/health/env", setHealth);
     void get<Google>("/api/gmail/status", setGoogle);
+    void get<Billing>("/api/billing/status", setBilling);
+    // Google/Apple-only accounts have no password yet: "Set a password", no current-password field.
+    void createClient()
+      .auth.getUser()
+      .then(({ data }) => {
+        setHasPassword((data.user?.identities ?? []).some((i) => i.provider === "email"));
+        const pending = (data.user as { new_email?: string } | null)?.new_email;
+        if (pending) setPendingEmail(pending);
+      });
     void get<typeof notify>("/api/settings/notifications", setNotify);
     void get<typeof drafts>("/api/settings/drafts", (d) => setDrafts({ draftTone: d.draftTone ?? "warm", signature: d.signature ?? "" }));
 
@@ -342,13 +356,46 @@ export default function SettingsPage() {
       toast.error("Use at least 8 characters");
       return;
     }
-    const { error } = await createClient().auth.updateUser({ password });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("Password updated");
-      setPassword("");
-      setPwOpen(false);
+    const res = await fetch("/api/account/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current: currentPassword, next: password }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string; signedOut?: boolean };
+    if (!res.ok) {
+      toast.error(data.error ?? "Couldn't update your password");
+      return;
     }
+    if (data.signedOut) {
+      toast.success("Password updated — sign in again with your new password");
+      await createClient().auth.signOut().catch(() => {});
+      window.location.href = "/login";
+      return;
+    }
+    // A changed password should end every other session.
+    await createClient().auth.signOut({ scope: "others" }).catch(() => {});
+    toast.success(hasPassword ? "Password updated — other devices signed out" : "Password set");
+    setHasPassword(true);
+    setPassword("");
+    setCurrentPassword("");
+    setPwOpen(false);
+  }
+
+  async function changeEmail() {
+    const res = await fetch("/api/account/email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: newEmail }),
+    });
+    const data = (await res.json().catch(() => ({}))) as { error?: string; pending?: string };
+    if (!res.ok) {
+      toast.error(data.error ?? "Couldn't change your email");
+      return;
+    }
+    setPendingEmail(data.pending ?? newEmail);
+    setNewEmail("");
+    setEmailOpen(false);
+    toast.success("Check your inbox to confirm the new email");
   }
 
   async function signOut(scope: "local" | "global") {
@@ -417,12 +464,52 @@ export default function SettingsPage() {
         <Group title="Account">
           <EditRow Icon={KeyRound} label="Name" value={profile.fullName} loading={!profileLoaded} placeholder="Your name" onSave={(v) => void saveProfile("fullName", v)} />
           <EditRow Icon={MessageSquare} label="Mobile" value={profile.phone} loading={!profileLoaded} placeholder="(201) 555-0100" inputMode="tel" onSave={(v) => void saveProfile("phone", v)} />
-          <Row Icon={Mail} label="Email" right={profileLoaded ? <span className="truncate font-display text-body text-muted-foreground">{profile.email}</span> : <Skeleton className="h-4 w-36" />} />
+          <Row
+            Icon={Mail}
+            label="Email"
+            detail={pendingEmail ? `Confirm ${pendingEmail} from the link we emailed to finish the change.` : undefined}
+            right={profileLoaded ? <span className="truncate font-display text-body text-muted-foreground">{profile.email}</span> : <Skeleton className="h-4 w-36" />}
+            onPress={() => setEmailOpen((v) => !v)}
+          />
+          {emailOpen ? (
+            <form
+              className="flex gap-2 px-4 py-3"
+              onSubmit={(e) => {
+                e.preventDefault();
+                void changeEmail();
+              }}
+            >
+              <input
+                aria-label="New email address"
+                type="email"
+                autoComplete="email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
+                placeholder="New email address"
+                className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+              />
+              <Button type="submit" disabled={!newEmail.trim()} className="rounded-xl">
+                Change
+              </Button>
+            </form>
+          ) : null}
         </Group>
 
         <Group title="Brokerage">
           <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} loading={!profileLoaded} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
         </Group>
+
+        {billing?.billingEnabled ? (
+          <Group title="Plan">
+            <Row
+              Icon={CreditCard}
+              label="Aria subscription"
+              detail={billingDetail(billing)}
+              right={<Status tone={billing.reason === "subscribed" || billing.reason === "exempt" ? "ok" : "warn"}>{billingLabel(billing)}</Status>}
+              href="/billing"
+            />
+          </Group>
+        ) : null}
 
         <Group
           title="Integrations"
@@ -617,15 +704,26 @@ export default function SettingsPage() {
         </Group>
 
         <Group title="Security">
-          <Row Icon={KeyRound} label="Change password" onPress={() => setPwOpen((v) => !v)} />
+          <Row Icon={KeyRound} label={hasPassword ? "Change password" : "Set a password"} onPress={() => setPwOpen((v) => !v)} />
           {pwOpen ? (
             <form
-              className="flex gap-2 px-4 py-3"
+              className="flex flex-col gap-2 px-4 py-3"
               onSubmit={(e) => {
                 e.preventDefault();
                 void changePassword();
               }}
             >
+              {hasPassword ? (
+                <input
+                  aria-label="Current password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Current password"
+                  className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
+                />
+              ) : null}
               <input aria-label="New password (8+ characters)"
                 type="password"
                 autoComplete="new-password"
@@ -635,7 +733,7 @@ export default function SettingsPage() {
                 className="min-w-0 flex-1 rounded-xl border border-input bg-secondary px-3.5 py-2.5 font-display text-body outline-none"
               />
               <Button type="submit" className="rounded-xl">
-                Save
+                {hasPassword ? "Update password" : "Set password"}
               </Button>
             </form>
           ) : null}
@@ -644,7 +742,7 @@ export default function SettingsPage() {
         </Group>
 
         <Group title="Danger zone">
-          <Row Icon={Trash2} label="Delete account" detail="Permanently deletes your account, clients, messages and documents." onPress={() => setDeleteOpen((v) => !v)} danger />
+          <Row Icon={Trash2} label="Delete account" detail="Permanently deletes your account, clients, messages and documents, cancels any subscription and disconnects Google." onPress={() => setDeleteOpen((v) => !v)} danger />
           {deleteOpen ? (
             <div className="space-y-2 px-4 py-3">
               <p className="font-display text-caption text-muted-foreground">

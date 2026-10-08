@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { releaseExternalData } from "@/lib/account-delete";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /**
  * DELETE /api/account  { confirm: "DELETE" }
- * Permanently deletes the signed-in agent. Every agent-owned table cascades
- * from auth.users except IDX listing inquiries, which are cleared first.
+ * Permanently deletes the signed-in agent. Cancels billing, revokes Google
+ * and removes uploaded files first (lib/account-delete.ts); every
+ * agent-owned table cascades from auth.users except IDX listing inquiries,
+ * which are cleared explicitly.
  */
 export async function DELETE(request: Request) {
   const { user } = await getRouteSupabase();
@@ -20,6 +23,7 @@ export async function DELETE(request: Request) {
   }
 
   const admin = createAdminClient();
+  await releaseExternalData(admin, user.id);
   const { error: inquiriesError } = await admin.from("idx_listing_inquiries").delete().eq("agent_id", user.id);
   if (inquiriesError) {
     console.error("[account] clearing inquiries failed", inquiriesError.message);
