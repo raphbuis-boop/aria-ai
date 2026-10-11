@@ -11,6 +11,7 @@ export const dynamic = "force-dynamic";
 function returnPath(returnTo: string | undefined): string {
   if (returnTo === "onboarding") return "/onboarding";
   if (returnTo === "inbox") return "/emails";
+  if (returnTo === "import") return "/settings/import";
   return "/settings";
 }
 

@@ -19,5 +19,16 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
+  // First run: a brand-new account (setup not finished, no clients yet) goes
+  // through onboarding — this also catches Google/Apple sign-ups, which land
+  // here directly. Anyone with clients is never bounced.
+  const [{ data: profile }, { count }] = await Promise.all([
+    supabase.from("agent_profiles").select("onboarding_complete").eq("id", user.id).maybeSingle(),
+    supabase.from("clients").select("id", { count: "exact", head: true }).eq("agent_id", user.id),
+  ]);
+  if (!profile?.onboarding_complete && (count ?? 0) === 0) {
+    redirect("/onboarding");
+  }
+
   return <AppShell>{children}</AppShell>;
 }

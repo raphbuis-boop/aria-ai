@@ -14,7 +14,7 @@
 
 DO $$
 DECLARE
-  v_agent_id UUID := '653cc608-a055-406b-9de1-310bf76a4e75';
+  v_agent_id UUID := NULL; -- set to the DEMO account's auth.users.id
 BEGIN
 
   UPDATE public.properties SET photos = '["https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&q=80","https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1200&q=80"]'::jsonb

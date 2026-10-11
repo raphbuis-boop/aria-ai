@@ -3,6 +3,7 @@ import { formatPhoneE164 } from "@/lib/utils";
 import { insertNotification } from "@/lib/notifications";
 import { draftFirstTouchSms } from "@/lib/sms/conversation";
 import { sendClientSms, type SendResult } from "@/lib/sms/outbound";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 import { clientSourceFor, type LeadSource } from "@/lib/sms/lead-sources";
 
 export type LeadInput = {
@@ -143,6 +144,7 @@ export async function ingestLead(
     clientId: client!.id, created, duplicate: false,
     firstText: { ok: false as const, activityId: null, error },
   });
+  if (!ariaSmsEnabled()) return noText("Not texted: Aria texting is off");
   if (input.autoText === false) return noText("Not texted: no SMS consent for this lead");
   if (!client.phone) return noText("Not texted: lead has no phone number");
 

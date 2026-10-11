@@ -110,6 +110,41 @@ export function resolveSimplyRetsCredentials(): CredentialPair | null {
   return null;
 }
 
+/**
+ * Everything needed to diagnose a failed SimplyRETS call from the server log,
+ * without secrets: upstream status + body, auth challenge, which env pair was
+ * used and a 4-char preview of the username. Shared by every SimplyRETS fetch.
+ */
+export function logSimplyRetsFailure(
+  tag: string,
+  endpoint: string,
+  res: { status: number; statusText?: string; headers: Headers },
+  body: string,
+): void {
+  const creds = resolveSimplyRetsCredentials();
+  const hint =
+    res.status === 401
+      ? "401 — SimplyRETS rejected the credentials (wrong/expired API key or secret)."
+      : res.status === 403
+        ? "403 — credentials accepted but this account/feed isn't authorized (subscription or board approval)."
+        : res.status === 429
+          ? "429 — rate limited."
+          : res.status >= 500
+            ? "SimplyRETS server error."
+            : null;
+  console.error(`[${tag}] SimplyRETS ${res.status}`, {
+    endpoint: endpoint.replace(/\/\/[^@/]+@/, "//"),
+    status: res.status,
+    statusText: res.statusText ?? null,
+    hint,
+    contentType: res.headers.get("content-type"),
+    wwwAuthenticate: res.headers.get("www-authenticate"),
+    body: body.slice(0, 1000),
+    credentialSource: creds?.source ?? null,
+    usernamePreview: creds ? `${creds.username.slice(0, 4)}… (${creds.username.length} chars)` : null,
+  });
+}
+
 export function isSimplyRetsConfigured(): boolean {
   return resolveSimplyRetsCredentials() !== null;
 }
@@ -237,7 +272,10 @@ export async function fetchMlsListingsForClient(opts: {
     },
     cache: "no-store",
   });
-  if (!res.ok) return [];
+  if (!res.ok) {
+    logSimplyRetsFailure("simplyrets/client-matches", `${base}/properties?${params}`, res, await res.text().catch(() => ""));
+    return [];
+  }
   const data = (await res.json()) as unknown;
   const rawListings = Array.isArray(data)
     ? data
@@ -531,6 +569,7 @@ export async function fetchSimplyRetsSingleProperty(
 
   if (!response.ok) {
     const text = await response.text();
+    logSimplyRetsFailure("simplyrets/listing", endpoint, response, text);
     return {
       ok: false,
       failure: {

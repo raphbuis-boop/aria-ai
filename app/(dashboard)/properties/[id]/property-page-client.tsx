@@ -49,6 +49,7 @@ export function PropertyPageClient({
   const [loading, setLoading] = useState(mode === "mls");
   const [notFound, setNotFound] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [feedUnavailable, setFeedUnavailable] = useState(false);
   const [matchOpen, setMatchOpen] = useState(false);
   const [saved, setSaved] = useState(false);
   const [draftPreview, setDraftPreview] = useState<string | null>(null);
@@ -122,13 +123,19 @@ export function PropertyPageClient({
           data = (await res.json()) as typeof data;
         } catch {
           if (!cancelled) {
-            setLoadError("Invalid response from listing service.");
+            if (res.status === 502 || res.status === 503) setFeedUnavailable(true);
+            else setLoadError("Invalid response from listing service.");
           }
           return;
         }
         if (!res.ok) {
           if (res.status === 404 || data.code === "LISTING_GONE") {
             if (!cancelled) setNotFound(true);
+            return;
+          }
+          // 503 = no MLS credentials, 502 = SimplyRETS rejecting them.
+          if (res.status === 502 || res.status === 503) {
+            if (!cancelled) setFeedUnavailable(true);
             return;
           }
           const msg =
@@ -269,6 +276,29 @@ export function PropertyPageClient({
             <Skeleton className="h-16 rounded-xl" />
           </div>
         </SkeletonRegion>
+      </div>
+    );
+  }
+
+  if (feedUnavailable) {
+    return (
+      <div className="mx-auto max-w-lg px-4 py-16">
+        <BackButton href={backHref} label="Back" className="mb-6" />
+        <div className="rounded-[14px] border border-border bg-card px-4 py-6 text-center">
+          <p className="text-[15px] font-medium text-foreground">
+            {viewerContext === "public" ? "Listing unavailable" : "MLS feed not connected"}
+          </p>
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            {viewerContext === "public"
+              ? "This listing can't be shown right now. Please check back later."
+              : "MLS listings can't be loaded until your MLS feed is connected. Homes you add yourself still work in Properties."}
+          </p>
+          {viewerContext !== "public" ? (
+            <Link href="/properties" className="mt-4 inline-block text-[13px] font-semibold text-primary">
+              Go to my properties →
+            </Link>
+          ) : null}
+        </div>
       </div>
     );
   }

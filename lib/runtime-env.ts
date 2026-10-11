@@ -13,7 +13,23 @@ export function allowMlsDiagnostics(): boolean {
   );
 }
 
-/** POST /api/seed — off in production unless ALLOW_DEMO_SEED=true */
+/**
+ * POST /api/seed — writes fake demo clients into the caller's account, so it
+ * must never touch a real one. Allowed only when ALL of these hold:
+ *  - not running on Vercel (production *and* preview deployments are out —
+ *    previews share the production database), and
+ *  - Supabase is a local instance (localhost / 127.0.0.1), and
+ *  - `next dev`, or ALLOW_DEMO_SEED=true for a local production build.
+ * No env var can turn it on against a hosted database.
+ */
 export function allowDemoSeed(): boolean {
-  return process.env.ALLOW_DEMO_SEED === "true" || !isProduction();
+  if (process.env.VERCEL || process.env.VERCEL_ENV) return false;
+  let host = "";
+  try {
+    host = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "").hostname;
+  } catch {
+    return false;
+  }
+  if (host !== "localhost" && host !== "127.0.0.1") return false;
+  return !isProduction() || process.env.ALLOW_DEMO_SEED === "true";
 }

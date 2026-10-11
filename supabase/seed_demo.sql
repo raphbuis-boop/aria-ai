@@ -2,11 +2,16 @@
 -- ARIA DEMO SEED — 25 NJ Clients, 6 months of history
 -- Agent: Sarah Levine, RE/MAX Bergen County
 --
--- HOW TO RUN:
+-- !! DESTRUCTIVE: this DELETES every client, property, listing, BBA and
+-- !! notification of the target agent before inserting fake data. Only ever
+-- !! run it against a throwaway DEMO account — never a real agent's account.
+--
+-- HOW TO RUN (demo accounts only):
 --   1. Open Supabase SQL Editor for your project
---   2. Replace 'REPLACE-WITH-YOUR-AGENT-UUID' on the next line with your
---      auth.users.id (find it in Authentication > Users)
---   3. Run the entire script
+--   2. Set v_agent_id to the demo account's auth.users.id
+--   3. Set v_confirm_email to that same account's email, typed out — the
+--      script refuses to run if it doesn't match
+--   4. Run the entire script
 --
 -- DATES ARE ALWAYS RELATIVE TO "TODAY" — never stale.
 --   The original narrative was written against a fixed anchor date of
@@ -35,8 +40,9 @@
 
 DO $$
 DECLARE
-  -- *** REPLACE THIS WITH YOUR ACTUAL auth.users.id ***
-  v_agent_id UUID := '653cc608-a055-406b-9de1-310bf76a4e75';
+  -- *** SET BOTH to the DEMO account (never a real agent) ***
+  v_agent_id UUID := NULL;
+  v_confirm_email TEXT := '';
 
   -- The narrative was originally written anchored to 2026-06-22 ("today" at
   -- the time it was drafted). v_shift is the day-count between that anchor
@@ -94,6 +100,13 @@ DECLARE
   l03 UUID := gen_random_uuid(); -- 308 Anderson Ave, Fort Lee (Thomas - under contract)
 
 BEGIN
+
+  -- Safety: refuse unless the operator named the demo account twice (id + email).
+  IF v_agent_id IS NULL OR NOT EXISTS (
+    SELECT 1 FROM auth.users WHERE id = v_agent_id AND lower(email) = lower(trim(v_confirm_email))
+  ) THEN
+    RAISE EXCEPTION 'seed_demo.sql refused: set v_agent_id AND v_confirm_email to the same DEMO account. This script deletes that account''s data.';
+  END IF;
 
   -- ===========================================================================
   -- CLEANUP: wipe this agent's PRIOR demo data, then reseed fresh.

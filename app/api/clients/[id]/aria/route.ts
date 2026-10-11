@@ -5,6 +5,7 @@ import { ingestLead } from "@/lib/sms/lead";
 import { sendClientSms } from "@/lib/sms/outbound";
 import { closeAriaTasks } from "@/lib/sms/tasks";
 import { recordAgentSentProperty } from "@/lib/sms/recommend";
+import { ARIA_SMS_OFF_MESSAGE, ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -38,6 +39,10 @@ export async function POST(request: Request, { params }: { params: { id: string 
     .eq("agent_id", user.id)
     .maybeSingle();
   if (!client) return NextResponse.json({ error: "Client not found" }, { status: 404 });
+
+  if ((payload.action === "start" || payload.action === "send") && !ariaSmsEnabled()) {
+    return NextResponse.json({ error: ARIA_SMS_OFF_MESSAGE }, { status: 409 });
+  }
 
   switch (payload.action) {
     case "start": {

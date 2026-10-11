@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
+import { recordAgentSentProperty } from "@/lib/sms/recommend";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
   const messageBody = String(body.body ?? "");
   const channel = String(body.channel ?? "sms");
   const activityId = body.activityId as string | undefined;
+  const propertyId = typeof body.propertyId === "string" ? body.propertyId : null;
 
   if (!clientId || !messageBody) {
     return NextResponse.json({ error: "clientId and body required" }, { status: 400 });
@@ -38,6 +40,17 @@ export async function POST(req: Request) {
       sent: true,
     });
   }
+
+  // Same bookkeeping as an Aria-sent text: the client was just contacted, and
+  // a shared home counts as sent so it isn't suggested again.
+  const { data: client } = await supabase
+    .from("clients")
+    .update({ last_engagement_at: new Date().toISOString() })
+    .eq("id", clientId)
+    .eq("agent_id", user.id)
+    .select("id, agent_id, status, town, preferred_towns, budget_min, budget_max, beds_wanted, baths_wanted, nearby_towns_ok, budget_flex_pct, bed_flex, bath_flex")
+    .maybeSingle();
+  if (client && propertyId) await recordAgentSentProperty(supabase, client, propertyId);
 
   return NextResponse.json({ logged: true });
 }

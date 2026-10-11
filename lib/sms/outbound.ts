@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { sendSms, twilioErrorInfo } from "@/lib/twilio";
+import { ARIA_SMS_OFF_MESSAGE, ariaSmsEnabled } from "@/lib/feature-flags";
 
 export type SmsClient = {
   id: string;
@@ -24,6 +25,8 @@ export async function sendClientSms(
   body: string,
   opts: { aiDraft?: boolean; metadata?: Record<string, unknown> } = {},
 ): Promise<SendResult> {
+  // Flag off: nothing is written or sent; callers already treat !ok as "not texted".
+  if (!ariaSmsEnabled()) return { ok: false, activityId: null, error: ARIA_SMS_OFF_MESSAGE };
   if (!client.phone) {
     return { ok: false, activityId: null, error: "Client has no phone number" };
   }

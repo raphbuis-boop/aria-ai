@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { isSimplyRetsConfigured } from "@/lib/simplyrets";
 import { defaultFromNumber } from "@/lib/twilio";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -30,6 +31,7 @@ export async function GET() {
     emailConfigured: set(process.env.RESEND_API_KEY),
     mlsConfigured: isSimplyRetsConfigured(),
     sms: {
+      enabled: ariaSmsEnabled(),
       configured:
         set(process.env.TWILIO_ACCOUNT_SID) &&
         set(process.env.TWILIO_AUTH_TOKEN) &&

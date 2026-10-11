@@ -66,7 +66,8 @@ export async function POST(req: Request) {
   const activitySignal = String(body.activitySignal ?? "");
   const commissionEst = toFiniteNumber(body.commissionEst);
 
-  const firstName = clientName.split(/\s+/)[0] || "there";
+  // A contact saved by email only has the address as their name — never greet "Hi joe@ex.com".
+  const firstName = clientName.includes("@") ? "there" : clientName.split(/\s+/)[0] || "there";
 
   const samplesBlock = voiceSamples
     .map((s: string, i: number) => `Sample ${i + 1}: ${s}`)
@@ -102,7 +103,7 @@ Property details:
 ${propertyContext || context}
 
 Write ONE warm SMS introducing this property. Under 320 characters.`
-    : `Client: ${clientName}
+    : `Client: ${clientName.includes("@") ? "(name unknown — greet without a name)" : clientName}
 Scenario: ${scenario}
 Context: ${context}${propertyContext ? `\nProperty: ${propertyContext}` : ""}
 Client context: ${clientContext.join(" | ") || "Limited context available"}

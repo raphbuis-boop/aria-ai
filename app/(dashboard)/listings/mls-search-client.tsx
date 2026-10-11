@@ -58,6 +58,11 @@ const SELECT_STYLE = {
   appearance: "none" as const,
 };
 
+/** 503 = no credentials set; 502 = SimplyRETS rejected/failed. Both mean "no working feed". */
+function isFeedUnavailable(status: number | undefined): boolean {
+  return status === 502 || status === 503;
+}
+
 function buildListingsQuery(sp: URLSearchParams): string {
   const q = new URLSearchParams();
   q.set("limit", String(PAGE_SIZE));
@@ -157,7 +162,8 @@ export function MlsSearchClient({
       const base = buildListingsQuery(searchParams);
       const url = `/api/mls/listings?${base}&offset=${nextOffset}`;
       const res = await fetch(url);
-      const data = (await res.json()) as {
+      // A gateway error page isn't JSON — treat it like any other failed status.
+      const data = (await res.json().catch(() => ({}))) as {
         error?: string;
         listings?: MlsListingPayload[];
         total?: number | null;
@@ -202,8 +208,9 @@ export function MlsSearchClient({
         setMlsUnconfigured(false);
       } catch (e) {
         const status = (e as { status?: number })?.status;
-        if (status === 503) {
-          // MLS feed not connected — show the friendly empty state, not an error.
+        if (isFeedUnavailable(status)) {
+          // No working MLS feed (not configured, or SimplyRETS rejecting the
+          // credentials) — show the connect state, not an error.
           setMlsUnconfigured(true);
           setErrorMessage(null);
         } else {
@@ -233,8 +240,13 @@ export function MlsSearchClient({
     setLoadingMore(true);
     try {
       await fetchPage(offset, true);
-    } catch {
-      toast.toast("Could not load more", "warn");
+    } catch (e) {
+      if (isFeedUnavailable((e as { status?: number })?.status)) {
+        setHasMore(false);
+        setMlsUnconfigured(true);
+      } else {
+        toast.toast("Could not load more", "warn");
+      }
     } finally {
       setLoadingMore(false);
     }
@@ -398,20 +410,28 @@ export function MlsSearchClient({
           <div className="rounded-[18px] border border-border bg-card p-6 text-center">
             <Search size={28} className="mx-auto text-muted-foreground" />
             <p className="mt-3 font-display text-[15px] font-semibold text-foreground">
-              The MLS feed isn&apos;t connected yet
+              {variant === "member" ? "Connect your MLS feed" : "Listing search is unavailable"}
             </p>
             <p className="mt-1.5 font-display text-[13px] leading-[1.55] text-muted-foreground">
-              Once it&apos;s connected, you&apos;ll be able to search live
-              listings and match them to your clients here. Your saved
-              properties and manual listings still work below.
+              {variant === "member"
+                ? "Live MLS search isn't connected yet. Add the homes you're working with yourself — Aria matches them to your clients the same way."
+                : "Live listings aren't available right now. Please check back later."}
             </p>
             {variant === "member" && (
-              <Link
-                href="/properties"
-                className="mt-4 inline-block font-display text-[13px] font-semibold text-primary"
-              >
-                Go to my tracked properties →
-              </Link>
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                <Link
+                  href="/properties?add=1"
+                  className="inline-flex h-10 items-center rounded-full bg-primary px-5 font-display text-[13px] font-semibold text-primary-foreground"
+                >
+                  Add a property
+                </Link>
+                <Link
+                  href="/properties"
+                  className="inline-flex h-10 items-center rounded-full border border-input px-5 font-display text-[13px] font-semibold text-foreground"
+                >
+                  My properties
+                </Link>
+              </div>
             )}
           </div>
         )}

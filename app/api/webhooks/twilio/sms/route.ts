@@ -1,6 +1,7 @@
 import { waitUntil } from "@vercel/functions";
 import { EMPTY_TWIML, parseTwilioForm, verifyTwilioSignature } from "@/lib/twilio";
 import { recordInboundSms, respondToInboundSms } from "@/lib/sms/inbound";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -17,6 +18,11 @@ export async function POST(request: Request) {
 
   if (!verifyTwilioSignature(request, params)) {
     return new Response("Unauthorized", { status: 403 });
+  }
+
+  // Flag off: acknowledge Twilio, create nothing, reply to no one.
+  if (!ariaSmsEnabled()) {
+    return new Response(EMPTY_TWIML, { headers: { "Content-Type": "text/xml" } });
   }
 
   try {

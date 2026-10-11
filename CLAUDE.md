@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. Agent-composed SMS opens in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`). The Aria SMS lead flow (`lib/sms/`) is the one exception: it texts leads server-side over Twilio — lead intake (`POST /api/leads`), inbound webhook (`/api/webhooks/twilio/sms`) with Claude replies, showing approvals (`/api/showings/[id]/approve|decline`), and BBA link follow-through. Anything Aria needs the agent for (showing approvals, handoffs, failed texts) is a `showings` row with status `requested` or a `tasks` row with `kind` `aria_*`, surfaced on Today under "Aria needs you".
+**Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. Agent-composed SMS opens in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`). The Aria SMS lead flow (`lib/sms/`) is the one exception, and it is **off unless `ARIA_SMS_ENABLED=1`** (`lib/feature-flags.ts`; the number needs A2P 10DLC registration first). When on, it texts leads server-side over Twilio — lead intake (`POST /api/leads`), inbound webhook (`/api/webhooks/twilio/sms`) with Claude replies, showing approvals (`/api/showings/[id]/approve|decline`), and BBA link follow-through. Anything Aria needs the agent for (showing approvals, handoffs, failed texts) is a `showings` row with status `requested` or a `tasks` row with `kind` `aria_*`, surfaced on Today under "Aria needs you".
 
 ## Commands
 
@@ -92,6 +92,7 @@ SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY
 NEXT_PUBLIC_SITE_URL
 SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
+ARIA_SMS_ENABLED=1                             # turn on the Twilio lead flow (default off → draft-only)
 TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN          # Aria SMS lead flow
 TWILIO_FROM_NUMBER (or TWILIO_PHONE_NUMBER) or TWILIO_MESSAGING_SERVICE_SID
 LEAD_WEBHOOK_SECRET                            # bearer token for external lead sources → POST /api/leads

@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion, MotionConfig } from "motion/react";
-import { CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { CheckCircle2, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
 import { Card } from "@/components/ui/card";
@@ -12,6 +14,7 @@ import { smartTemplateDraft, isGenericAiFallback } from "@/lib/draft-templates";
 
 type Props = {
   items: TodayItem[];
+  hasClients: boolean;
 };
 
 const HEAT_DOT_COLOR: Record<"hot" | "warm", { fill: string; ring: string }> = {
@@ -90,7 +93,7 @@ function FollowUpRow({
   );
 }
 
-export function FollowUpsClient({ items: initialItems }: Props) {
+export function FollowUpsClient({ items: initialItems, hasClients }: Props) {
   const [items, setItems] = useState(initialItems);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [activeDraftItem, setActiveDraftItem] = useState<TodayItem | null>(null);
@@ -181,17 +184,33 @@ export function FollowUpsClient({ items: initialItems }: Props) {
                 <span className="text-foreground font-semibold">{items.length}</span>{" "}
                 {items.length === 1 ? "client needs" : "clients need"} a check-in, most valuable first.
               </p>
-            ) : (
+            ) : hasClients ? (
               <p className="font-display text-body-lg text-muted-foreground">Nothing on the table right now.</p>
-            )}
+            ) : null}
           </header>
 
-          {items.length === 0 ? (
+          {items.length === 0 && !hasClients ? (
+            <div className="flex flex-col items-center text-center rounded-2xl border border-dashed border-border px-6 py-14">
+              <Users className="size-8 text-primary mb-4" />
+              <p className="font-heading text-[19px] text-foreground mb-1">No clients yet</p>
+              <p className="mb-5 max-w-xs font-display text-body text-muted-foreground">
+                Add or import your clients and Aria lines up who to text each day, with a draft in your voice.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button asChild className="rounded-full px-5">
+                  <Link href="/clients?new=1">Add a client</Link>
+                </Button>
+                <Button asChild variant="outline" className="rounded-full px-5">
+                  <Link href="/settings/import">Import clients</Link>
+                </Button>
+              </div>
+            </div>
+          ) : items.length === 0 ? (
             <div className="flex flex-col items-center text-center rounded-2xl border border-dashed border-border px-6 py-16">
               <CheckCircle2 className="size-8 text-primary mb-4" />
               <p className="font-heading text-[19px] text-foreground mb-1">You&apos;re all caught up</p>
               <p className="font-display text-body text-muted-foreground">
-                Every follow-up worth sending has been sent. Nice work.
+                No one is due for a check-in today. New follow-ups show up here as clients go quiet.
               </p>
             </div>
           ) : (

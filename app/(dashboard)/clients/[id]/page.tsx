@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ClientDetail, type MatchedHome, type ShowingItem } from "./client-detail";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +108,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
   return (
     <ClientDetail
+      smsEnabled={ariaSmsEnabled()}
       client={client}
       activities={allActivities}
       homes={homes}

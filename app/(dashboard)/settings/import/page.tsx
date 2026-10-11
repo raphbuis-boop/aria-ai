@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CheckCircle, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { UploadStep } from "@/components/csv-import/UploadStep";
 import { MappingStep } from "@/components/csv-import/MappingStep";
 import { PreviewStep } from "@/components/csv-import/PreviewStep";
@@ -15,14 +15,19 @@ import {
   type PreviewRow,
 } from "@/components/csv-import/utils";
 import type { CsvMappingItem } from "@/app/api/ai/map-csv/route";
+import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "@/components/import/ImportSummary";
+import { GoogleContactsImport } from "@/components/import/GoogleContactsImport";
 
 type Step = "upload" | "mapping" | "preview" | "done";
 
-type ImportResult = {
-  inserted: number;
-  skipped: number;
-  errors: { row: number; reason: string }[];
-};
+type ImportResult = ImportOutcome;
+
+/** Only same-site paths are honored for ?next= (e.g. back into onboarding). */
+function safeNext(): string | null {
+  if (typeof window === "undefined") return null;
+  const n = new URLSearchParams(window.location.search).get("next");
+  return n && n.startsWith("/") && !n.startsWith("//") ? n : null;
+}
 
 const STEP_LABELS: Record<Step, string> = {
   upload: "Upload",
@@ -44,6 +49,8 @@ export default function ImportPage() {
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [importError, setImportError] = useState<string | null>(null);
+  const [group, setGroup] = useState<"leads" | "sphere">("sphere");
+  const [source, setSource] = useState<"google" | "csv">("google");
 
   // ── Step 1 → 2: file selected, call AI mapper ──────────────────────────────
   async function handleFile(parsed: ParsedCSV, fname: string) {
@@ -97,9 +104,9 @@ export default function ImportPage() {
       const res = await fetch("/api/clients/import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: payload }),
+        body: JSON.stringify({ rows: payload, group }),
       });
-      const data = (await res.json()) as ImportResult & { error?: string };
+      const data = (await res.json().catch(() => ({}))) as ImportResult & { error?: string };
       if (!res.ok) {
         setImportError(data.error ?? "Import failed. Try again.");
         return;
@@ -111,6 +118,12 @@ export default function ImportPage() {
     } finally {
       setImporting(false);
     }
+  }
+
+  // Imported clients change Today/Follow-ups — skip the router's cached copy.
+  function goNext() {
+    router.push(safeNext() ?? "/dashboard");
+    router.refresh();
   }
 
   const stepIndex = STEP_ORDER.indexOf(step);
@@ -147,9 +160,40 @@ export default function ImportPage() {
             Import contacts
           </h1>
           <p style={{ color: "var(--muted-foreground)", fontSize: 14 }}>
-            Upload a CSV to add clients to your pipeline.
+            Bring in your clients from Google Contacts or a CSV export from your old CRM.
           </p>
         </div>
+
+        {step === "upload" ? (
+          <div role="tablist" aria-label="Import from" className="mb-6 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
+            {(
+              [
+                ["google", "Google Contacts"],
+                ["csv", "CSV file"],
+              ] as const
+            ).map(([v, label]) => (
+              <button
+                key={v}
+                type="button"
+                role="tab"
+                aria-selected={source === v}
+                onClick={() => setSource(v)}
+                className={`rounded-lg py-2 font-display text-caption font-semibold ${source === v ? "bg-card text-foreground shadow-card" : "text-muted-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        {source === "google" && step === "upload" ? (
+          <GoogleContactsImport
+            returnTo="import"
+            doneLabel={safeNext() ? "Continue →" : "See today's follow-ups →"}
+            onDone={() => goNext()}
+          />
+        ) : (
+        <>
 
         {/* Step indicator */}
         {step !== "done" && (
@@ -240,6 +284,9 @@ export default function ImportPage() {
 
           {step === "preview" && (
             <>
+              <div className="mb-5">
+                <ImportGroupPicker value={group} onChange={setGroup} />
+              </div>
               <PreviewStep
                 rows={previewRows}
                 onUpdateRows={setPreviewRows}
@@ -266,35 +313,8 @@ export default function ImportPage() {
           )}
 
           {step === "done" && result && (
-            <div style={{ textAlign: "center", padding: "12px 0 4px" }}>
-              <div
-                style={{
-                  width: 52,
-                  height: 52,
-                  borderRadius: "50%",
-                  background: "color-mix(in srgb, var(--primary) 12%, transparent)",
-                  border: "1px solid var(--border)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  margin: "0 auto 16px",
-                }}
-              >
-                <CheckCircle size={26} color="var(--primary)" />
-              </div>
-              <p style={{ fontSize: 18, fontWeight: 600, marginBottom: 6 }}>
-                {result.inserted} client{result.inserted !== 1 ? "s" : ""} imported
-              </p>
-              {result.skipped > 0 && (
-                <p style={{ color: "var(--muted-foreground)", fontSize: 13, marginBottom: 4 }}>
-                  {result.skipped} duplicate{result.skipped !== 1 ? "s" : ""} skipped
-                </p>
-              )}
-              {result.errors.length > 0 && (
-                <p style={{ color: "var(--warm)", fontSize: 13, marginBottom: 4 }}>
-                  {result.errors.length} row{result.errors.length !== 1 ? "s" : ""} could not be imported
-                </p>
-              )}
+            <div style={{ padding: "12px 0 4px" }}>
+              <ImportSummary result={result} />
               <div style={{ display: "flex", gap: 10, marginTop: 22 }}>
                 <button
                   type="button"
@@ -308,9 +328,9 @@ export default function ImportPage() {
                   style={{
                     flex: 1,
                     background: "transparent",
-                    border: "1px solid var(--border)",
+                    border: "1px solid var(--input)",
                     borderRadius: 9,
-                    color: "var(--muted-foreground)",
+                    color: "var(--foreground)",
                     fontSize: 14,
                     fontWeight: 500,
                     padding: "12px 16px",
@@ -321,7 +341,7 @@ export default function ImportPage() {
                 </button>
                 <button
                   type="button"
-                  onClick={() => router.push("/clients")}
+                  onClick={() => goNext()}
                   style={{
                     flex: 1,
                     background: "var(--primary)",
@@ -334,12 +354,14 @@ export default function ImportPage() {
                     cursor: "pointer",
                   }}
                 >
-                  Go to contacts →
+                  {safeNext() ? "Continue →" : "See today's follow-ups →"}
                 </button>
               </div>
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
     </div>
   );

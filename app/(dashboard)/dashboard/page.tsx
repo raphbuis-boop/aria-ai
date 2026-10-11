@@ -5,14 +5,18 @@ import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem, TodayE
 import { TodayClient as TodayClientComponent, type NewLeadRow, type ConversationRow, type ShowingRow, type TaskDueRow } from "./today-client";
 import { initials } from "@/lib/utils";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
+import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
+
+/** clients.source values written by bulk imports (lib/client-import.ts callers). */
+const IMPORT_SOURCES = new Set(["csv_import", "sphere", "google_contacts", "past_client"]);
 
 type Rel<T> = T | T[] | null | undefined;
 const one = <T,>(rel: Rel<T>): T | null => (Array.isArray(rel) ? rel[0] ?? null : rel ?? null);
 
 const CLIENT_COLS =
-  "id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, created_at, lead_source, source, aria_paused, sms_opted_out";
+  "id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, last_engagement_at, created_at, lead_source, source, aria_paused, sms_opted_out";
 
 export default async function DashboardPage() {
   const supabase = createClient();
@@ -207,11 +211,16 @@ export default async function DashboardPage() {
   }
 
   // ── New leads: clients created in the last 7 days ──
+  // Texted = any outbound text actually sent: Aria's Twilio texts ("text") or
+  // ones the agent sent from their phone via the draft sheet ("sms").
   const textedClientIds = new Set(
-    activities.filter((a) => a.type === "text" && a.direction === "outbound" && a.sent).map((a) => a.client_id),
+    activities
+      .filter((a) => ((a.type === "text" && a.direction === "outbound") || a.type === "sms") && a.sent)
+      .map((a) => a.client_id),
   );
   const newLeads: NewLeadRow[] = clients
-    .filter((c) => c.created_at >= minus7ISO)
+    // Leads that arrived this week — a bulk import of her contact list isn't "new leads".
+    .filter((c) => c.created_at >= minus7ISO && !IMPORT_SOURCES.has(String(c.source ?? "")))
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 5)
     .map((c) => ({
@@ -263,15 +272,18 @@ export default async function DashboardPage() {
   const fullName =
     (profileRes.data?.full_name as string | undefined) ?? (user.user_metadata?.full_name as string | undefined) ?? null;
 
+  const smsEnabled = ariaSmsEnabled();
+
   return (
     <TodayClientComponent
+      smsEnabled={smsEnabled}
       firstName={fullName?.split(" ")[0] ?? "there"}
       agentInitials={initials(fullName)}
       hasAnyClients={clients.length > 0}
       newLeads={newLeads}
-      conversations={conversations}
-      ariaShowingRequests={ariaShowingRequests}
-      ariaTasks={ariaTasks}
+      conversations={smsEnabled ? conversations : []}
+      ariaShowingRequests={smsEnabled ? ariaShowingRequests : []}
+      ariaTasks={smsEnabled ? ariaTasks : []}
       showingsToday={showingsToday}
       tasksDue={tasksDue}
       followUps={items}
