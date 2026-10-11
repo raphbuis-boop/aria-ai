@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
+import { ExternalLink, Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/Section";
@@ -11,6 +11,7 @@ import { Toaster, toast } from "@/components/ui/sonner";
 import { createClient } from "@/lib/supabase/client";
 import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
+import { MLS_PORTAL_URL } from "@/lib/mls-portal";
 import { fmtMoney } from "@/lib/utils";
 import { humanizeMatchReasons } from "@/lib/match-language";
 import type { PropertyMatch } from "./page";
@@ -228,7 +229,7 @@ function AddPropertySheet({ onClose }: { onClose: () => void }) {
   );
 }
 
-export function PropertiesClient({ initial }: { initial: Property[] }) {
+export function PropertiesClient({ initial, mlsAvailable }: { initial: Property[]; mlsAvailable: boolean }) {
   const [adding, setAdding] = useState(false);
   // /properties?add=1 (from "Add a property" on the MLS screen) opens the sheet.
   useEffect(() => {
@@ -320,7 +321,15 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           </div>
           <div className="flex shrink-0 gap-2">
             <Button asChild variant="outline" className="h-9 rounded-full px-4 text-caption font-semibold">
-              <Link href="/listings">Search MLS</Link>
+              {/* No working feed → the agent's own NJMLS portal; live feed → in-app search. */}
+              {mlsAvailable ? (
+                <Link href="/listings">Search MLS</Link>
+              ) : (
+                <a href={MLS_PORTAL_URL} target="_blank" rel="noopener noreferrer">
+                  Search MLS <ExternalLink className="size-3" aria-hidden />
+                  <span className="sr-only">(opens NJMLS in a new tab)</span>
+                </a>
+              )}
             </Button>
             <Button onClick={() => setAdding(true)} className="h-9 rounded-full px-4 text-caption font-semibold">
               <Plus className="size-3.5" /> Add

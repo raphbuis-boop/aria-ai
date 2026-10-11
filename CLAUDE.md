@@ -92,6 +92,7 @@ SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY
 NEXT_PUBLIC_SITE_URL
 SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
+NEXT_PUBLIC_MLS_PORTAL_URL                     # where "Search MLS" opens while the SimplyRETS feed isn't working (default https://www.njmls.com)
 ARIA_SMS_ENABLED=1                             # turn on the Twilio lead flow (default off → draft-only)
 TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN          # Aria SMS lead flow
 TWILIO_FROM_NUMBER (or TWILIO_PHONE_NUMBER) or TWILIO_MESSAGING_SERVICE_SID

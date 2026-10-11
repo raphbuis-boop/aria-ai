@@ -145,6 +145,34 @@ export function logSimplyRetsFailure(
   });
 }
 
+let availability: { at: number; ok: boolean } | null = null;
+const AVAILABILITY_TTL_MS = 10 * 60_000;
+
+/**
+ * Whether the live feed actually answers — not just whether credentials are
+ * set (stale credentials still 401 → our routes 502). One tiny request,
+ * cached 10 minutes per server instance, 4 s timeout.
+ */
+export async function simplyRetsAvailable(): Promise<boolean> {
+  if (!isSimplyRetsConfigured()) return false;
+  if (availability && Date.now() - availability.at < AVAILABILITY_TTL_MS) return availability.ok;
+  const base = process.env.SIMPLYRETS_API_URL?.trim().replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
+  let ok = false;
+  try {
+    const res = await fetch(`${base}/properties?limit=1`, {
+      headers: { Authorization: getSimplyRetsAuthHeader(), Accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(4000),
+    });
+    ok = res.ok;
+    if (!ok) logSimplyRetsFailure("simplyrets/availability", `${base}/properties?limit=1`, res, await res.text().catch(() => ""));
+  } catch {
+    ok = false;
+  }
+  availability = { at: Date.now(), ok };
+  return ok;
+}
+
 export function isSimplyRetsConfigured(): boolean {
   return resolveSimplyRetsCredentials() !== null;
 }
