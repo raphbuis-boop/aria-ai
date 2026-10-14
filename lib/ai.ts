@@ -2,9 +2,10 @@ import Anthropic from "@anthropic-ai/sdk";
 
 /**
  * Model for Aria's general Claude calls (callClaude, the Ask Aria agent, inbox
- * drafts). The previous model, claude-sonnet-4-20250514, was retired on
- * June 15, 2026 — every request to it fails, which silently turned these
- * features into their canned fallbacks.
+ * drafts). The previous model, Claude Sonnet 4, was retired on June 15, 2026
+ * — every request to it fails, which silently turned these features into
+ * their canned fallbacks. Check Anthropic's model deprecations page before
+ * changing this.
  */
 export const AI_MODEL = "claude-sonnet-5-5";
 
