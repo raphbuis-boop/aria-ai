@@ -123,6 +123,7 @@ export const ariaTools: Tool[] = [
           default: 5,
         },
       },
+      required: ["clientId"],
     },
   },
   {
@@ -162,4 +163,56 @@ export const ariaTools: Tool[] = [
       },
     },
   },
+  {
+    name: "get_hottest_leads",
+    description:
+      "Get the agent's hottest active leads (status new/contacted/showing/offer), ranked by lead_score, each with a one-line reason from real data (stage, upcoming showing, listing activity, last contact). Use for 'who's my hottest lead', 'who's most likely to buy', 'top leads'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "How many leads to return (1–10)",
+          default: 3,
+        },
+      },
+    },
+  },
+  {
+    name: "get_stale_clients",
+    description:
+      "Get the active clients the agent hasn't talked to in the longest time (unsent AI drafts and internal notes don't count as contact), plus how many have no contact logged at all. Use for 'who haven't I talked to in a while', 'who's gone quiet', 'who should I check in with'.",
+    input_schema: {
+      type: "object",
+      properties: {
+        limit: {
+          type: "number",
+          description: "How many clients to return (1–15)",
+          default: 5,
+        },
+      },
+    },
+  },
+  {
+    name: "get_today_priorities",
+    description:
+      "Get today's real priorities (New Jersey time): showings today, things Aria needs the agent for, tasks due or overdue, closings this week, new leads not yet contacted, hot leads going quiet, and pending follow-up drafts summarized by client. Use for 'what should I do today', 'what's on my plate', 'what should I focus on'.",
+    input_schema: {
+      type: "object",
+      properties: {},
+    },
+  },
 ];
+
+/** Tools that only read data — what Ask Aria gets, since it answers questions rather than taking actions. */
+const READ_ONLY_TOOL_NAMES = new Set([
+  "get_client_profile",
+  "search_clients",
+  "get_property_matches",
+  "get_agent_performance",
+  "get_hottest_leads",
+  "get_stale_clients",
+  "get_today_priorities",
+]);
+
+export const readOnlyAriaTools: Tool[] = ariaTools.filter((t) => READ_ONLY_TOOL_NAMES.has(t.name));

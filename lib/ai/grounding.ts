@@ -1,14 +1,12 @@
 // Shared "data grounding" for every Aria AI surface.
 //
-// This is the single source of truth that was previously duplicated/forked
-// between /api/ai/assistant (great data grounding, no tools) and /api/ai
-// (tool loop, but started "blank"). It fetches the agent's live CRM state from
-// Supabase and renders it into prompt fragments + a deterministic fallback.
+// Fetches the agent's live CRM state from Supabase and renders it into a
+// prompt context block + a deterministic fallback.
 //
 // Consumers:
-//   - lib/ai/agent.ts          → prepends the context block to the tool-rules
-//                                 system prompt so the agent never starts blank.
-//   - app/api/ai/assistant     → renders the full grounded prompt (no tools).
+//   - lib/ai/agent.ts → prepends the context block to the tool-rules system
+//                       prompt so the agent never starts blank (used by
+//                       /api/ai/assistant — Ask Aria).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
 
@@ -24,6 +22,7 @@ type ClientRow = {
   lead_score: number | null;
   budget_min: number | null;
   budget_max: number | null;
+  last_engagement_at: string | null;
 };
 
 type ShowingRow = {
@@ -38,10 +37,13 @@ export type AgentSnapshot = {
   clients: ClientRow[];
   showings: ShowingRow[];
   pendingDraftCount: number;
+  /** Distinct clients with a pending draft, hottest first (names). */
+  draftClientNames: string[];
+  draftClientCount: number;
   recentMatches: { client_id: string | null }[];
   /** clientId → unnotified-match count (last 24h). */
   matchCountMap: Map<string, number>;
-  /** clientId → ISO of most recent activity (last 7d). */
+  /** clientId → ISO of the last real contact (unsent drafts and notes don't count). */
   lastContactMap: Map<string, string>;
 };
 
@@ -62,6 +64,7 @@ function fmtShowingDate(iso: string | null): string {
   if (!iso) return "TBD";
   try {
     return new Date(iso).toLocaleDateString("en-US", {
+      timeZone: "America/New_York",
       weekday: "short",
       month: "short",
       day: "numeric",
@@ -93,7 +96,7 @@ export async function fetchAgentSnapshot(
 ): Promise<AgentSnapshot> {
   const now = new Date();
   const nowISO = now.toISOString();
-  const minus7d = new Date(Date.now() - 7 * 86_400_000).toISOString();
+  const minus30d = new Date(Date.now() - 30 * 86_400_000).toISOString();
   const minus24h = new Date(Date.now() - 86_400_000).toISOString();
   const plus7d = new Date(Date.now() + 7 * 86_400_000).toISOString();
 
@@ -111,11 +114,13 @@ export async function fetchAgentSnapshot(
       .eq("id", agentId)
       .maybeSingle(),
 
+    // Closed clients aren't leads; null scores sort last, not first.
     supabase
       .from("clients")
-      .select("id, name, town, status, lead_score, budget_min, budget_max")
+      .select("id, name, town, status, lead_score, budget_min, budget_max, last_engagement_at")
       .eq("agent_id", agentId)
-      .order("lead_score", { ascending: false })
+      .neq("status", "closed")
+      .order("lead_score", { ascending: false, nullsFirst: false })
       .limit(10),
 
     supabase
@@ -130,7 +135,7 @@ export async function fetchAgentSnapshot(
 
     supabase
       .from("activities")
-      .select("id", { count: "exact" })
+      .select("client_id, clients(name, lead_score, status)", { count: "exact" })
       .eq("agent_id", agentId)
       .eq("ai_draft", true)
       .eq("approved", false)
@@ -145,11 +150,11 @@ export async function fetchAgentSnapshot(
 
     supabase
       .from("activities")
-      .select("client_id, type, created_at")
+      .select("client_id, type, created_at, ai_draft, sent")
       .eq("agent_id", agentId)
-      .gte("created_at", minus7d)
+      .gte("created_at", minus30d)
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(500),
   ]);
 
   const agentName =
@@ -182,14 +187,42 @@ export async function fetchAgentSnapshot(
     recentActivitiesRes.status === "fulfilled"
       ? (recentActivitiesRes.value.data ?? [])
       : []
-  ) as { client_id: string | null; type: string; created_at: string }[];
+  ) as { client_id: string | null; type: string; created_at: string; ai_draft: boolean | null; sent: boolean | null }[];
 
+  // A queued AI draft or an internal note isn't contact with the client.
   const lastContactMap = new Map<string, string>();
   for (const act of recentActivities) {
+    if (act.ai_draft && !act.sent) continue;
+    if (act.type === "note") continue;
     if (act.client_id && !lastContactMap.has(act.client_id)) {
       lastContactMap.set(act.client_id, act.created_at);
     }
   }
+  // Older contact lives on clients.last_engagement_at.
+  for (const c of clients) {
+    const fromActivity = lastContactMap.get(c.id);
+    if (c.last_engagement_at && (!fromActivity || c.last_engagement_at > fromActivity)) {
+      lastContactMap.set(c.id, c.last_engagement_at);
+    }
+  }
+
+  type DraftClient = { name: string | null; lead_score: number | null; status: string | null };
+  type DraftRow = { client_id: string; clients: DraftClient | DraftClient[] | null };
+  const draftRows = (
+    pendingDraftsRes.status === "fulfilled" ? (pendingDraftsRes.value.data ?? []) : []
+  ) as DraftRow[];
+  const draftClients = new Map<string, { name: string; score: number }>();
+  for (const d of draftRows) {
+    const c = Array.isArray(d.clients) ? d.clients[0] : d.clients;
+    if (!draftClients.has(d.client_id)) {
+      // Past (closed) clients rank after the active pipeline.
+      const score = (c?.lead_score ?? -1) - (c?.status === "closed" ? 100 : 0);
+      draftClients.set(d.client_id, { name: c?.name ?? "a client", score });
+    }
+  }
+  const draftClientNames = [...draftClients.values()]
+    .sort((a, b) => b.score - a.score)
+    .map((c) => c.name);
 
   const matchCountMap = new Map<string, number>();
   for (const m of recentMatches) {
@@ -199,6 +232,7 @@ export async function fetchAgentSnapshot(
   }
 
   const todayLabel = now.toLocaleDateString("en-US", {
+    timeZone: "America/New_York",
     weekday: "long",
     year: "numeric",
     month: "long",
@@ -211,6 +245,8 @@ export async function fetchAgentSnapshot(
     clients,
     showings,
     pendingDraftCount,
+    draftClientNames,
+    draftClientCount: draftClients.size,
     recentMatches,
     matchCountMap,
     lastContactMap,
@@ -225,7 +261,7 @@ function clientLines(snap: AgentSnapshot): string[] {
     const days = lastContactISO ? daysSince(lastContactISO) : null;
     const contactNote =
       days === null
-        ? "never contacted"
+        ? "no contact logged"
         : days === 0
           ? "contacted today"
           : days === 1
@@ -251,13 +287,25 @@ function showingLines(snap: AgentSnapshot): string[] {
   );
 }
 
-/** The single highest-leverage thing to surface for "what should I do today?". */
+/** "Marcus, Rachel and 20 others" — drafts described by who they're for, never a raw count. */
+function draftsPhrase(snap: AgentSnapshot): string | null {
+  if (snap.draftClientCount === 0) return null;
+  const named = snap.draftClientNames.slice(0, 2);
+  const others = snap.draftClientCount - named.length;
+  return others > 0 ? `${named.join(", ")} and ${others} other${others > 1 ? "s" : ""}` : named.join(" and ");
+}
+
+/**
+ * The single highest-leverage thing to surface for "what should I do today?".
+ * Pending drafts are a background chore — they only win when nothing more
+ * specific (a showing, a hot lead going quiet, a new match) is pending.
+ */
 export function priorityHint(snap: AgentSnapshot): string {
-  if (snap.pendingDraftCount > 0) {
-    return `TOP PRIORITY TODAY: ${snap.pendingDraftCount} AI draft${snap.pendingDraftCount > 1 ? "s" : ""} in the inbox need approval before they expire.`;
-  }
+  // Calendar day in New Jersey — showings are upcoming, so daysSince() would be negative.
+  const njDay = (iso: string) => new Date(iso).toLocaleDateString("en-US", { timeZone: "America/New_York" });
+  const today = njDay(new Date().toISOString());
   const todayShowing = snap.showings.find(
-    (s) => s.showing_date && daysSince(s.showing_date) === 0,
+    (s) => s.showing_date && njDay(s.showing_date) === today,
   );
   if (todayShowing) {
     return `TOP PRIORITY TODAY: Showing at ${todayShowing.address ?? "an address"} today — confirm details and prep notes.`;
@@ -265,19 +313,23 @@ export function priorityHint(snap: AgentSnapshot): string {
   if (snap.recentMatches.length > 0) {
     return `TOP PRIORITY TODAY: ${snap.recentMatches.length} new property match${snap.recentMatches.length > 1 ? "es" : ""} — notify the relevant client${snap.matchCountMap.size > 1 ? "s" : ""}.`;
   }
+  const daysQuiet = (id: string) =>
+    snap.lastContactMap.has(id) ? daysSince(snap.lastContactMap.get(id)!) : 999;
   const uncontactedHot = snap.clients
-    .filter((c) => c.lead_score != null && c.lead_score >= 7)
-    .sort((a, b) => {
-      const da = snap.lastContactMap.has(a.id)
-        ? daysSince(snap.lastContactMap.get(a.id)!)
-        : 999;
-      const db = snap.lastContactMap.has(b.id)
-        ? daysSince(snap.lastContactMap.get(b.id)!)
-        : 999;
-      return db - da;
-    })[0];
+    .filter(
+      (c) =>
+        c.lead_score != null &&
+        c.lead_score >= 7 &&
+        ["new", "contacted", "showing", "offer"].includes(c.status ?? "new") &&
+        daysQuiet(c.id) >= 5,
+    )
+    .sort((a, b) => daysQuiet(b.id) - daysQuiet(a.id))[0];
   if (uncontactedHot) {
     return `TOP PRIORITY TODAY: ${uncontactedHot.name} is a hot lead — reach out to re-engage.`;
+  }
+  const drafts = draftsPhrase(snap);
+  if (drafts) {
+    return `TOP PRIORITY TODAY: nothing urgent — clear follow-up drafts for ${drafts}.`;
   }
   return "";
 }
@@ -300,9 +352,9 @@ export function renderContextBlock(snap: AgentSnapshot): string {
       ? `UPCOMING SHOWINGS (next 7 days):\n${showingLines(snap).join("\n")}`
       : "UPCOMING SHOWINGS: None scheduled in the next 7 days.",
     "",
-    snap.pendingDraftCount > 0
-      ? `INBOX: ${snap.pendingDraftCount} AI draft${snap.pendingDraftCount > 1 ? "s" : ""} awaiting approval.`
-      : "INBOX: All drafts reviewed.",
+    snap.draftClientCount > 0
+      ? `FOLLOW-UP DRAFTS: ready to review for ${draftsPhrase(snap)} (${snap.draftClientCount} client${snap.draftClientCount > 1 ? "s" : ""}). Background chore — bring up only when asked about drafts/follow-ups or when nothing more specific is pending; never lead with a raw draft count.`
+      : "FOLLOW-UP DRAFTS: none waiting.",
     snap.recentMatches.length > 0
       ? `PROPERTY MATCHES: ${snap.recentMatches.length} new match${snap.recentMatches.length > 1 ? "es" : ""} across ${snap.matchCountMap.size} client${snap.matchCountMap.size > 1 ? "s" : ""} in the last 24 hours.`
       : "PROPERTY MATCHES: None in the last 24 hours.",
@@ -315,39 +367,12 @@ export function renderContextBlock(snap: AgentSnapshot): string {
 }
 
 /**
- * The full grounded system prompt used by /api/ai/assistant (persona + context
- * + response-style rules). Preserves that route's original behavior.
- */
-export function renderAssistantSystemPrompt(
-  snap: AgentSnapshot,
-  mode: GroundingMode,
-): string {
-  return [
-    `You are Aria, the AI revenue operating system for ${snap.agentName}'s New Jersey real estate business.`,
-    renderContextBlock(snap),
-    "",
-    "RESPONSE RULES:",
-    "— Answer from the real data above. Reference clients by first name. Reference addresses directly.",
-    "— When asked 'What should I do today?' — surface the TOP PRIORITY above, then briefly explain why.",
-    "— Never say 'I don't have access to your data' — you do, it is above.",
-    "— Never give generic real estate advice when specific client data is available.",
-    "— If asked about data not in context (specific MLS price, legal advice, market stats), say so in one sentence and suggest where to look.",
-    "— No bullet lists or markdown in responses. Write in natural sentences.",
-    mode === "voice"
-      ? "— VOICE MODE: 1–2 sentences only. Spoken prose. No lists."
-      : "— CHAT MODE: 2–4 sentences. Direct and specific. Revenue-focused.",
-  ].join("\n");
-}
-
-/**
  * Deterministic, data-aware fallback for when Claude is unavailable (no API key
  * or an API error). Surfaces the most urgent real data point — never generic
- * advice.
+ * advice, and never the drafts backlog ahead of something specific.
+ * (/api/ai/assistant answers the question itself via lib/ai/insights instead.)
  */
 export function deterministicFallback(snap: AgentSnapshot): string {
-  if (snap.pendingDraftCount > 0) {
-    return `You have ${snap.pendingDraftCount} AI draft${snap.pendingDraftCount > 1 ? "s" : ""} in your inbox waiting for approval. Open Follow-ups to review and send.`;
-  }
   if (snap.showings.length > 0) {
     const next = snap.showings[0];
     return `Your next showing is at ${next.address ?? "an address"} with ${extractClientName(next.clients)} on ${fmtShowingDate(next.showing_date)}.`;
@@ -358,6 +383,10 @@ export function deterministicFallback(snap: AgentSnapshot): string {
   if (snap.clients.length > 0) {
     const top = snap.clients[0];
     return `Your top lead right now is ${top.name}, searching in ${top.town ?? "NJ"} with a ${fmtBudget(top.budget_min, top.budget_max)} budget.`;
+  }
+  const drafts = draftsPhrase(snap);
+  if (drafts) {
+    return `Follow-up drafts are ready for ${drafts} — open Follow-ups to review and send.`;
   }
   return "No client data yet. Add your first client to get started.";
 }

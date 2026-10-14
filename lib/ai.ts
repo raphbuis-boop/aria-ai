@@ -1,11 +1,32 @@
 import Anthropic from "@anthropic-ai/sdk";
 
-const MODEL = "claude-sonnet-4-20250514";
+/**
+ * Model for Aria's general Claude calls (callClaude, the Ask Aria agent, inbox
+ * drafts). The previous model, claude-sonnet-4-20250514, was retired on
+ * June 15, 2026 — every request to it fails, which silently turned these
+ * features into their canned fallbacks.
+ */
+export const AI_MODEL = "claude-sonnet-5-5";
+
+/**
+ * Thinking counts toward max_tokens on current models. Callers size
+ * max_tokens for the reply; this headroom keeps thinking from cutting it off.
+ */
+export const THINKING_HEADROOM_TOKENS = 2048;
 
 export function getAnthropic(): Anthropic | null {
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key || key === "your_anthropic_api_key") return null;
   return new Anthropic({ apiKey: key });
+}
+
+/** All text blocks of a response, in order (a response can open with a thinking block). */
+export function responseText(msg: Anthropic.Message): string {
+  return msg.content
+    .filter((b): b is Anthropic.TextBlock => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
 }
 
 export async function callClaude(
@@ -15,19 +36,22 @@ export async function callClaude(
 ): Promise<string> {
   const client = getAnthropic();
   if (!client) {
+    console.error("[ai] ANTHROPIC_API_KEY is not set — AI features are returning fallbacks.");
     return "";
   }
   try {
     const msg = await client.messages.create({
-      model: MODEL,
-      max_tokens: maxTokens,
+      model: AI_MODEL,
+      max_tokens: maxTokens + THINKING_HEADROOM_TOKENS,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
       system,
       messages: [{ role: "user", content: user }],
     });
-    const block = msg.content[0];
-    if (block && block.type === "text") return block.text;
-    return "";
-  } catch {
+    if (msg.stop_reason === "refusal") return "";
+    return responseText(msg);
+  } catch (err) {
+    console.error("[ai] Claude call failed:", err instanceof Anthropic.APIError ? `${err.status} ${err.message}` : err);
     return "";
   }
 }
