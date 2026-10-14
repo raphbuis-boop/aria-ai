@@ -31,7 +31,8 @@ No test suite is configured.
 
 | File | Purpose |
 |------|---------|
-| `lib/ai.ts` | Claude SDK wrapper — `callClaude(system, user, maxTokens)` and `safeJsonParse<T>()` |
+| `lib/ai.ts` | Claude SDK wrapper — `AI_MODEL`, `callClaude(system, user, maxTokens)` and `safeJsonParse<T>()` |
+| `lib/ai/insights.ts` | Read-only answers for Ask Aria: hottest leads, stale clients, today's priorities (shared by the agent tools and the no-AI fallback) |
 | `lib/api-auth.ts` | `getRouteSupabase()` — used in every API route to get `{ supabase, user }` or return 401 |
 | `lib/matching.ts` | `scoreFuzzyMatch(client, property)` — weighted score 0–100 (town 35, budget 35, beds 20, baths 10); `MATCH_MIN_SCORE = 60`; handles flex budgets, adjacent towns, bed/bath flex |
 | `lib/nj-towns.ts` | NJ town adjacency graph — `normalizeTown()`, `isTownAdjacentOrEqual()`, `getAdjacentTowns()` |
@@ -58,7 +59,8 @@ Broad founder or product language should be **decomposed into investigations**, 
 
 ### API Routes (`app/api/`)
 
-- **`/api/ai/`** — All routes use `callClaude()` from `lib/ai.ts`. Model: `claude-sonnet-4-6`.
+- **`/api/ai/`** — Routes use `callClaude()` from `lib/ai.ts`. Model: `AI_MODEL` in `lib/ai.ts` (`claude-sonnet-5-5`; check the deprecations page before changing — a retired model fails every call silently into fallbacks).
+  - `POST /api/ai/assistant` — Ask Aria. Tool-calling agent (`lib/ai/agent.ts`) with the read-only tools in `lib/ai/tools`; answers from `lib/ai/insights.ts` when Claude is unreachable
   - `POST /api/ai` — General Aria Q&A (max 500 tokens, last 6 message history)
   - `POST /api/ai/draft-text` — Ghost-write SMS (max 150 tokens, saves to `activities` as unapproved AI draft)
   - `analyze-tone`, `cma`, `listing-narrative`, `showing-summary`, `extract-dates`, `market-insight`

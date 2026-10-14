@@ -1,7 +1,7 @@
-import { getAnthropic, sanitizeDraft } from "@/lib/ai";
+import { AI_MODEL, THINKING_HEADROOM_TOKENS, getAnthropic, responseText, sanitizeDraft } from "@/lib/ai";
 import { fmtMoney } from "@/lib/utils";
 
-export const INBOX_DRAFT_MODEL = "claude-sonnet-4-20250514";
+export const INBOX_DRAFT_MODEL = AI_MODEL;
 
 /** True if body looks like an automation placeholder, not real copy. */
 export function isPlaceholderDraftBody(body: string | null | undefined): boolean {
@@ -84,18 +84,20 @@ Write ONE text message.`;
   try {
     const msg = await anthropic.messages.create({
       model: INBOX_DRAFT_MODEL,
-      max_tokens: 400,
+      max_tokens: 400 + THINKING_HEADROOM_TOKENS,
+      thinking: { type: "adaptive" },
+      output_config: { effort: "low" },
       system,
       messages: [{ role: "user", content: user }],
     });
-    const block = msg.content[0];
-    const raw = block && block.type === "text" ? block.text : "";
+    const raw = msg.stop_reason === "refusal" ? "" : responseText(msg);
     const text = sanitizeDraft(raw);
     if (!text) {
       return `Hey ${first} — circling back on ${town}. Still in the market around ${budgetLine}? I can send a few fresh listings if you’re game.`;
     }
     return text;
-  } catch {
+  } catch (err) {
+    console.error("[inbox-drafts] Claude call failed:", err);
     return `Hey ${first} — circling back on ${town}. Still in the market around ${budgetLine}? I can send a few fresh listings if you’re game.`;
   }
 }

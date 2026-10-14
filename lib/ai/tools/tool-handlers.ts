@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getHottestLeads, getStaleClients, getTodayPriorities } from "@/lib/ai/insights";
 
 export interface ToolContext {
   supabase: SupabaseClient;
@@ -36,14 +37,17 @@ export async function executeTool(
 
     case "search_clients": {
       const { query = "", limit = 10 } = input as { query?: string; limit?: number };
+      // Commas/parens/wildcards would break out of the PostgREST or() filter.
+      const q = String(query).replace(/[,()%*\\]/g, " ").trim();
 
       // Search by name, town, or other fields
-      const { data, error } = await supabase
+      let builder = supabase
         .from("clients")
         .select("id, name, town, status, lead_score, budget_min, budget_max")
-        .eq("agent_id", ctx.agentId)
-        .or(`name.ilike.%${query}%,town.ilike.%${query}%`)
-        .order("lead_score", { ascending: false })
+        .eq("agent_id", ctx.agentId);
+      if (q) builder = builder.or(`name.ilike.%${q}%,town.ilike.%${q}%`);
+      const { data, error } = await builder
+        .order("lead_score", { ascending: false, nullsFirst: false })
         .limit(limit);
 
       if (error) {
@@ -159,30 +163,10 @@ export async function executeTool(
 
       const { data, error } = await supabase
         .from("property_matches")
-        .select(`
-          id,
-          address,
-          price,
-          beds,
-          baths,
-          town,
-          status,
-          score,
-          listings!inner (
-            mls_id,
-            list_price,
-            bedrooms,
-            bathrooms,
-            property_type,
-            street,
-            city,
-            state,
-            zip_code
-          )
-        `)
+        .select("match_score, match_reasons, created_at, properties(address, town, price, beds, baths, status, mls_number)")
         .eq("client_id", clientId)
         .eq("agent_id", ctx.agentId)
-        .order("score", { ascending: false })
+        .order("match_score", { ascending: false })
         .limit(limit);
 
       if (error) {
@@ -295,6 +279,32 @@ export async function executeTool(
         }
       };
     }
+    case "get_hottest_leads": {
+      const { limit = 3 } = (input ?? {}) as { limit?: number };
+      try {
+        return { success: true, ...(await getHottestLeads(supabase, ctx.agentId, limit)) };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    case "get_stale_clients": {
+      const { limit = 5 } = (input ?? {}) as { limit?: number };
+      try {
+        return { success: true, ...(await getStaleClients(supabase, ctx.agentId, limit)) };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    case "get_today_priorities": {
+      try {
+        return { success: true, ...(await getTodayPriorities(supabase, ctx.agentId)) };
+      } catch (err) {
+        return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
     default:
       return { success: false, error: `Unknown tool: ${name}` };
   }

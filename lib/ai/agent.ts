@@ -1,6 +1,6 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { SupabaseClient } from "@supabase/supabase-js";
-import { getAnthropic } from "@/lib/ai";
+import { AI_MODEL, THINKING_HEADROOM_TOKENS, getAnthropic } from "@/lib/ai";
 import { ariaTools } from "./tools/tool-definitions";
 import { executeTool } from "./tools/tool-handlers";
 import {
@@ -28,7 +28,6 @@ export interface ToolContext {
  * structurally prevented from hallucinating completed actions.
  */
 
-const MODEL = "claude-sonnet-4-20250514";
 const DEFAULT_MAX_ITERATIONS = 6;
 
 export type AgentMessage = { role: "user" | "assistant"; content: string };
@@ -44,8 +43,10 @@ export type AgentRunResult = {
   toolCalls: ToolCallLog[];
   /** Number of LLM round-trips taken (1 = answered with no tools). */
   iterations: number;
-  /** True when no API key was configured and a fallback string was returned. */
+  /** True when Claude couldn't be used (no API key, or the API call failed) and a fallback string was returned. */
   usedFallback: boolean;
+  /** Why the fallback was used, when it was ("no_answer": the model replied with no text, e.g. a refusal). */
+  fallbackReason?: "no_api_key" | "api_error" | "no_answer";
 };
 
 export type RunAgentOptions = {
@@ -56,6 +57,8 @@ export type RunAgentOptions = {
   /** The new user turn. */
   userMessage: string;
   ctx: ToolContext;
+  /** Tools the model may call. Defaults to every Aria tool (reads and writes). */
+  tools?: Anthropic.Tool[];
   maxTokens?: number;
   maxIterations?: number;
   fallbackReply?: string;
@@ -87,6 +90,7 @@ export async function runAriaAgent(
     history = [],
     userMessage,
     ctx,
+    tools = ariaTools,
     maxTokens = 600,
     maxIterations = DEFAULT_MAX_ITERATIONS,
     ground = true,
@@ -116,11 +120,15 @@ export async function runAriaAgent(
 
   const client = getAnthropic();
   if (!client) {
+    console.error(
+      "[aria-agent] ANTHROPIC_API_KEY is not set — Aria AI is OFF and every question gets a fallback reply. Set it in the deployment environment.",
+    );
     return {
       reply: fallbackReply,
       toolCalls: [],
       iterations: 0,
       usedFallback: true,
+      fallbackReason: "no_api_key",
     };
   }
 
@@ -132,18 +140,30 @@ export async function runAriaAgent(
   const toolCalls: ToolCallLog[] = [];
   let iterations = 0;
 
+  // Short Q&A over tool results: low effort keeps latency down. Thinking
+  // counts toward max_tokens, so leave room for it on top of the reply.
+  const request = {
+    model: AI_MODEL,
+    max_tokens: maxTokens + THINKING_HEADROOM_TOKENS,
+    thinking: { type: "adaptive" as const },
+    output_config: { effort: "low" as const },
+    system: groundedSystem,
+    tools,
+  };
+
+  const finish = (content: Anthropic.ContentBlock[]): AgentRunResult => {
+    const text = collectText(content);
+    return text
+      ? { reply: text, toolCalls, iterations, usedFallback: false }
+      : { reply: fallbackReply, toolCalls, iterations, usedFallback: true, fallbackReason: "no_answer" };
+  };
+
   for (let i = 0; i < maxIterations; i++) {
     iterations += 1;
 
     let response: Anthropic.Message;
     try {
-      response = await client.messages.create({
-        model: MODEL,
-        max_tokens: maxTokens,
-        system: groundedSystem,
-        tools: ariaTools,
-        messages,
-      });
+      response = await client.messages.create({ ...request, messages });
     } catch (err) {
       console.error("[aria-agent] Claude call failed:", err);
       return {
@@ -151,21 +171,16 @@ export async function runAriaAgent(
         toolCalls,
         iterations,
         usedFallback: true,
+        fallbackReason: "api_error",
       };
     }
 
     // No tool requested → this is the final answer.
-    if (response.stop_reason !== "tool_use") {
-      return {
-        reply: collectText(response.content) || fallbackReply,
-        toolCalls,
-        iterations,
-        usedFallback: false,
-      };
-    }
+    if (response.stop_reason !== "tool_use") return finish(response.content);
 
     // Record the assistant's tool-call turn verbatim (required for the next
-    // request so the tool_result blocks line up with their tool_use ids).
+    // request so the tool_result blocks line up with their tool_use ids, and
+    // thinking blocks must be passed back unchanged).
     messages.push({ role: "assistant", content: response.content });
 
     const toolUseBlocks = response.content.filter(
@@ -188,22 +203,23 @@ export async function runAriaAgent(
   }
 
   // Exhausted the loop budget — ask the model for a final answer without tools
-  // so we never leave the agent mid-loop.
+  // so we never leave the agent mid-loop. The instruction rides on the newest
+  // (not yet sent) user turn: editing system/tools or an earlier turn would
+  // invalidate the thinking blocks already in the history.
+  const last = messages[messages.length - 1];
+  if (last.role === "user" && Array.isArray(last.content)) {
+    last.content.push({
+      type: "text",
+      text: "You have used the maximum number of tool calls. Give your best final answer now based on the tool results already gathered.",
+    });
+  }
   try {
     const finalResp = await client.messages.create({
-      model: MODEL,
-      max_tokens: maxTokens,
-      system:
-        groundedSystem +
-        "\n\nYou have used the maximum number of tool calls. Give your best final answer now based on the tool results already gathered. Do not request more tools.",
+      ...request,
+      tool_choice: { type: "none" },
       messages,
     });
-    return {
-      reply: collectText(finalResp.content) || fallbackReply,
-      toolCalls,
-      iterations,
-      usedFallback: false,
-    };
+    return finish(finalResp.content);
   } catch (err) {
     console.error("[aria-agent] final synthesis failed:", err);
     return {
@@ -211,6 +227,7 @@ export async function runAriaAgent(
       toolCalls,
       iterations,
       usedFallback: true,
+      fallbackReason: "api_error",
     };
   }
 }

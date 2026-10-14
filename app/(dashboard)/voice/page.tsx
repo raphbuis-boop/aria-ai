@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 type Mode = "chat" | "voice";
 type VoiceState = "idle" | "listening" | "thinking" | "speaking" | "error";
 type ChatAction = { label: string; href: string };
-type Msg = { role: "user" | "assistant"; content: string; id: string; action?: ChatAction | null };
+type Msg = { role: "user" | "assistant"; content: string; id: string; action?: ChatAction | null; degraded?: boolean };
 
 type SpeechRecognitionResult = { transcript: string };
 type SpeechRecognitionEvent = {
@@ -174,6 +174,12 @@ function ChatBubble({ msg }: { msg: Msg }) {
         >
           {msg.content}
         </div>
+        {!isUser && msg.degraded && (
+          <p className="flex items-center gap-1 font-display text-caption text-muted-foreground">
+            <AlertCircle className="size-3.5" />
+            Aria&apos;s AI is offline — this answer came straight from your data.
+          </p>
+        )}
         {!isUser && msg.action && (
           <button
             type="button"
@@ -382,7 +388,7 @@ export default function VoicePage() {
 
   // ── Call assistant route ──────────────────────────────────────────────────
   const callAssistant = useCallback(
-    async (question: string, mode: "chat" | "voice"): Promise<{ reply: string; action: ChatAction | null }> => {
+    async (question: string, mode: "chat" | "voice"): Promise<{ reply: string; action: ChatAction | null; degraded: boolean }> => {
       const res = await fetch("/api/ai/assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -395,8 +401,8 @@ export default function VoicePage() {
         }),
       });
       if (!res.ok) throw new Error(`Assistant error ${res.status}`);
-      const data = (await res.json()) as { reply?: string; action?: ChatAction | null };
-      return { reply: String(data.reply ?? ""), action: data.action ?? null };
+      const data = (await res.json()) as { reply?: string; action?: ChatAction | null; degraded?: string | null };
+      return { reply: String(data.reply ?? ""), action: data.action ?? null, degraded: Boolean(data.degraded) };
     },
     []
   );
@@ -411,10 +417,10 @@ export default function VoicePage() {
       const userMsg: Msg = { role: "user", content: q, id: crypto.randomUUID() };
       setMessages((prev) => [...prev, userMsg]);
       try {
-        const { reply, action } = await callAssistant(q, "chat");
+        const { reply, action, degraded } = await callAssistant(q, "chat");
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: reply, id: crypto.randomUUID(), action },
+          { role: "assistant", content: reply, id: crypto.randomUUID(), action, degraded },
         ]);
       } catch {
         setMessages((prev) => [
