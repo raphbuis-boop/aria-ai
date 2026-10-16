@@ -24,6 +24,14 @@ export async function POST(request: Request) {
 
   try {
     const result = await wipeAgentData(createAdminClient(), user.id);
+    if (result.failed.length) {
+      console.error("[account/reset] incomplete", user.id, JSON.stringify(result));
+      const what = [...new Set(result.failed.map((f) => f.target))].join(", ");
+      return NextResponse.json(
+        { error: `Couldn't clear ${what}. Everything else was cleared — try again.`, ...result },
+        { status: 500 },
+      );
+    }
     console.info("[account/reset] cleared", user.id, result);
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
