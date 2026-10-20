@@ -35,7 +35,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     .maybeSingle();
   if (!client) notFound();
 
-  const [{ data: activities }, { data: matchRows }, { data: showings }, { data: bba }, { data: ariaTasks }] =
+  const [{ data: activities }, { data: matchRows }, { data: showings }, { data: bba }, { data: openTasks }, { data: bbaRequest }] =
     await Promise.all([
       supabase
         .from("activities")
@@ -62,15 +62,47 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         .eq("client_id", params.id)
         .eq("agent_id", user.id)
         .maybeSingle(),
+      // Every open task for this client, whatever created it.
       supabase
         .from("tasks")
-        .select("id, kind, title, client_id, created_at")
+        .select("id, kind, title, client_id, created_at, due_at")
         .eq("client_id", params.id)
         .eq("agent_id", user.id)
         .eq("done", false)
-        .in("kind", ARIA_TASK_KINDS.filter((k) => k !== "aria_showing_approval"))
         .order("created_at", { ascending: true }),
+      // The signing link the agent issued, while it can still be signed.
+      supabase
+        .from("bba_requests")
+        .select("token, commission_pct, term_start, term_end, search_area, expires_at")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .is("signed_at", null)
+        .is("voided_at", null)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle(),
     ]);
+
+  const smsEnabled = ariaSmsEnabled();
+  const ariaKinds = new Set<string>(ARIA_TASK_KINDS);
+  const taskRows = (openTasks ?? []).map((t) => ({
+    id: String(t.id),
+    kind: String(t.kind ?? ""),
+    title: t.title as string,
+    clientId: params.id,
+    clientName: null,
+    createdAt: t.created_at as string,
+    dueAt: (t.due_at as string | null) ?? null,
+  }));
+  // With Aria texting on, its hand-offs sit under "Aria needs you" (showing
+  // approvals are the request cards there); everything else is a plain task.
+  const ariaTasks = smsEnabled
+    ? taskRows.filter((t) => ariaKinds.has(t.kind) && t.kind !== "aria_showing_approval")
+    : [];
+  const tasks = taskRows.filter(
+    (t) => !ariaTasks.includes(t) && !(smsEnabled && t.kind === "aria_showing_approval"),
+  );
 
   // Short-lived link to the signed PDF (private bucket; ownership checked above).
   let signedPdfUrl: string | null = null;
@@ -108,19 +140,25 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
 
   return (
     <ClientDetail
-      smsEnabled={ariaSmsEnabled()}
+      smsEnabled={smsEnabled}
       client={client}
       activities={allActivities}
       homes={homes}
       showings={(showings ?? []) as ShowingItem[]}
-      ariaTasks={(ariaTasks ?? []).map((t) => ({
-        id: String(t.id),
-        kind: String(t.kind),
-        title: t.title as string,
-        clientId: params.id,
-        clientName: null,
-        createdAt: t.created_at as string,
-      }))}
+      ariaTasks={ariaTasks}
+      tasks={tasks}
+      bbaRequest={
+        bbaRequest
+          ? {
+              token: bbaRequest.token as string,
+              commission_pct: Number(bbaRequest.commission_pct),
+              term_start: bbaRequest.term_start as string,
+              term_end: bbaRequest.term_end as string,
+              search_area: (bbaRequest.search_area as string | null) ?? null,
+              expires_at: bbaRequest.expires_at as string,
+            }
+          : null
+      }
       ariaThread={{
         phone: (client.phone as string | null) ?? null,
         paused: Boolean(client.aria_paused),

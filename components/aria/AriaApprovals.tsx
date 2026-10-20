@@ -1,13 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { MessageSquareWarning } from "lucide-react";
 import { Section } from "@/components/Section";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { toast } from "@/components/ui/sonner";
+import { TaskDoneButton } from "@/components/TaskDoneButton";
 import { relTime } from "@/lib/utils";
 import { ShowingApprovalCard, type ShowingRequestRow } from "./ShowingApprovalCard";
 
@@ -21,25 +19,6 @@ export type AriaTaskRow = {
 };
 
 function TaskRow({ task }: { task: AriaTaskRow }) {
-  const router = useRouter();
-  const [busy, setBusy] = useState(false);
-
-  async function markDone() {
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/tasks/${task.id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: true }),
-      });
-      if (!res.ok) throw new Error("Could not update");
-      router.refresh();
-    } catch {
-      toast.error("Could not mark done");
-      setBusy(false);
-    }
-  }
-
   return (
     <div className="flex items-start gap-3 px-5 py-4">
       <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/10">
@@ -55,9 +34,7 @@ function TaskRow({ task }: { task: AriaTaskRow }) {
             <Link href={`/clients/${task.clientId}`}>Open</Link>
           </Button>
         ) : null}
-        <Button size="sm" variant="outline" onClick={markDone} disabled={busy}>
-          Done
-        </Button>
+        <TaskDoneButton taskId={task.id} />
       </div>
     </div>
   );

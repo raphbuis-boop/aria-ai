@@ -8,6 +8,18 @@ export const runtime = "nodejs";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Showings that are actually on the calendar. Requested ones aren't confirmed
+ * yet; cancelled, declined and completed ones don't need a reminder. */
+const ACTIVE_SHOWING_STATUSES = ["scheduled"];
+
+/**
+ * Activities that are real contact with the client: messages and emails that
+ * were sent or received, and calls/showings the agent logged as done. Unsent
+ * AI drafts, automation drafts and notes don't count. (PostgREST `or` filter.)
+ */
+const REAL_CONTACT_FILTER =
+  "and(type.in.(text,sms,whatsapp,email),or(sent.is.true,direction.eq.inbound)),and(type.in.(call,showing),sent.is.true)";
+
 function todayKey() {
   return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 }
@@ -67,22 +79,31 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
   const { data: showings } = await supabase
     .from("showings")
     .select("id, agent_id, client_id, address, showing_date, clients(name)")
+    .in("status", ACTIVE_SHOWING_STATUSES)
     .gte("showing_date", windowStart)
     .lte("showing_date", windowEnd);
 
   if (!showings?.length) return NextResponse.json({ processed: 0 });
 
-  // Get agent emails
+  // Agent emails: agent_profiles.email, else the sign-in address.
   const agentIdSet = new Set<string>();
   for (const s of showings) agentIdSet.add(s.agent_id);
   const agentIds = Array.from(agentIdSet);
   const { data: agentRows } = await supabase
-    .from("profiles")
+    .from("agent_profiles")
     .select("id, email, full_name")
     .in("id", agentIds);
-  const agentMap = new Map(
-    (agentRows ?? []).map((a) => [a.id, { email: a.email, name: a.full_name ?? "Agent" }]),
-  );
+  const profileById = new Map((agentRows ?? []).map((a) => [a.id as string, a]));
+  const agentMap = new Map<string, { email: string | null; name: string }>();
+  for (const id of agentIds) {
+    const profile = profileById.get(id);
+    let email = (profile?.email as string | null) ?? null;
+    if (!email) {
+      const { data } = await supabase.auth.admin.getUserById(id);
+      email = data?.user?.email ?? null;
+    }
+    agentMap.set(id, { email, name: (profile?.full_name as string | null) ?? "Agent" });
+  }
 
   let processed = 0;
   for (const showing of showings) {
@@ -195,11 +216,23 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
   for (const user of userList) {
     const { data: clients } = await supabase
       .from("clients")
-      .select("id, name, agent_id")
+      .select("id, name, agent_id, created_at")
       .eq("agent_id", user.id)
       .in("status", ["new", "contacted", "showing"]);
 
     if (!clients?.length) continue;
+
+    // Completed showings count as contact too.
+    const { data: completedShowings } = await supabase
+      .from("showings")
+      .select("client_id, showing_date")
+      .eq("agent_id", user.id)
+      .eq("status", "completed");
+    const lastShowingAt = new Map<string, number>();
+    for (const s of completedShowings ?? []) {
+      const t = s.showing_date ? new Date(s.showing_date).getTime() : 0;
+      if (t > (lastShowingAt.get(s.client_id) ?? 0)) lastShowingAt.set(s.client_id, t);
+    }
 
     const staleClients: { name: string; days: number; id: string }[] = [];
 
@@ -208,13 +241,16 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
         .from("activities")
         .select("created_at")
         .eq("client_id", client.id)
+        .or(REAL_CONTACT_FILTER)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
 
-      const lastTs = latest?.created_at
-        ? new Date(latest.created_at).getTime()
-        : 0;
+      // Never contacted → count from when the client was added.
+      const lastTs = Math.max(
+        latest?.created_at ? new Date(latest.created_at).getTime() : 0,
+        lastShowingAt.get(client.id) ?? 0,
+      ) || new Date(client.created_at).getTime();
       const days = Math.floor((now - lastTs) / DAY_MS);
 
       if (days >= 21) {

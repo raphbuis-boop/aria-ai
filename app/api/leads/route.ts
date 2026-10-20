@@ -22,7 +22,28 @@ export const maxDuration = 60;
  * Body: the provider's JSON payload (Zillow / Realtor.com shapes are
  * recognized), or a flat { name, phone, email?, message?, town?, budgetMax?,
  * propertyAddress?, eventId? }. Meta Lead Ads use /api/leads/meta instead.
+ * Signed-in agents may also send { towns[], budgetMin, beds, baths, notes,
+ * clientRole, autoText } — the Clients "New client" form does.
  */
+const positive = (v: unknown) => {
+  const n = typeof v === "number" ? v : typeof v === "string" && v.trim() ? Number(v) : NaN;
+  return Number.isFinite(n) && n > 0 ? n : null;
+};
+
+/** Search-profile fields a signed-in agent can set when adding a client. */
+function agentProfileFields(body: Record<string, unknown>) {
+  return {
+    preferredTowns: Array.isArray(body.towns)
+      ? body.towns.filter((t): t is string => typeof t === "string" && t.trim() !== "").map((t) => t.trim())
+      : null,
+    budgetMin: positive(body.budgetMin),
+    bedsWanted: positive(body.beds),
+    bathsWanted: positive(body.baths),
+    notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
+    clientRole: body.clientRole === "seller" ? ("seller" as const) : ("buyer" as const),
+  };
+}
+
 export async function POST(request: Request) {
   const url = new URL(request.url);
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
@@ -55,8 +76,10 @@ export async function POST(request: Request) {
       agentId,
       source,
       ...lead,
-      // Partners must say the lead agreed to texts; agents attest for their own.
-      autoText: fromAgent || body.smsConsent !== false,
+      // Partners must say the lead agreed to texts; agents attest for their
+      // own, and can opt out (the Clients "New client" form does).
+      autoText: fromAgent ? body.autoText !== false : body.smsConsent !== false,
+      profile: fromAgent ? agentProfileFields(body) : undefined,
     });
     return NextResponse.json({ ok: true, ...result }, { status: result.created ? 201 : 200 });
   } catch (error) {

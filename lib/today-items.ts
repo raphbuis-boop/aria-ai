@@ -3,7 +3,7 @@ import { sellerPropensity } from "./ai/seller-propensity";
 
 // Client status values (as of May 2026):
 //   new | contacted | showing | offer | under_contract | closed
-// "showing" or lead_score >= 8 = hot lead candidate
+// "showing" or computed lead score >= 8 = hot lead candidate
 // "new" through "offer" = active buyer (eligible for MLS match nudges + BBA reminders)
 // "under_contract" / "closed" = handled by transactions or excluded
 
@@ -163,9 +163,10 @@ function closingLabel(name: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function isHot(c: TodayClient): boolean {
+/** `score` is the computed lead score (computeLeadScore), not clients.lead_score. */
+function isHot(c: TodayClient, score: number): boolean {
   if (c.status === "under_contract" || c.status === "closed") return false;
-  return c.status === "showing" || (c.lead_score ?? 0) >= 8;
+  return c.status === "showing" || score >= 8;
 }
 
 const ACTIVE_BUYER_STATUSES = ["new", "contacted", "showing", "offer"];
@@ -608,7 +609,8 @@ export function buildTodayItems(
 
   // ── 2. Hot leads quiet for 5+ days ────────────────────────────────────────
   for (const client of clients) {
-    if (!isHot(client)) continue;
+    const { score: hotScore, reason: hotReason } = computeLeadScore(client, activities, transactions, engagement);
+    if (!isHot(client, hotScore)) continue;
     if (items.some((i) => i.clientId === client.id)) continue;
 
     const days = daysSinceContact(client.id, activities);
@@ -618,9 +620,6 @@ export function buildTodayItems(
     const daysPhrase =
       days === null ? "You haven't reached out yet" : `Hasn't heard from you in ${days} days`;
     const budget = fmtBudget(client.budget_min, client.budget_max);
-
-    // Compute real lead score for hot lead items
-    const { score: hotScore, reason: hotReason } = computeLeadScore(client, activities, transactions, engagement);
 
     items.push({
       id: `hot-${client.id}`,

@@ -1,10 +1,8 @@
 "use client";
 
 import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
-import { createClient } from "@/lib/supabase/client";
 import { fmtMoney, formatPhoneE164, humanizeSource, relTime } from "@/lib/utils";
-import { heatFromScore, computeLeadScore } from "@/lib/today-items";
-import type { TodayActivity, TodayTransaction, TodayClient } from "@/lib/today-items";
+import { heatFromScore } from "@/lib/today-items";
 import { statusShortLabel } from "@/lib/client-brief";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,42 +110,16 @@ function ClientRow({ client }: { client: Row }) {
 
 export function ClientsPageClient({
   initial,
-  activities,
-  transactions,
   smsEnabled,
 }: {
+  /** lead_score is already the computed score (lib/lead-score.ts), the same
+   * one Ask Aria and voice use — not the clients.lead_score column. */
   initial: Row[];
-  activities: TodayActivity[];
-  transactions: TodayTransaction[];
   smsEnabled: boolean;
 }) {
-  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-
-  // Same behavior + timing model as Home and Client-detail — a client's heat
-  // dot, "Hot"/"Follow Up" filter, and hot count all agree with the rest of
-  // the app instead of trusting the hand-typed clients.lead_score column.
-  const rows = useMemo(
-    () =>
-      initial.map((c) => {
-        const todayClient: TodayClient = {
-          id: c.id,
-          name: c.name,
-          town: c.town,
-          status: c.status,
-          lead_score: c.lead_score,
-          budget_min: c.budget_min,
-          budget_max: c.budget_max,
-          phone: c.phone ?? null,
-          birthday: null,
-          home_purchase_date: null,
-        };
-        const { score } = computeLeadScore(todayClient, activities, transactions);
-        return { ...c, lead_score: score };
-      }),
-    [initial, activities, transactions],
-  );
+  const rows = initial;
 
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
@@ -200,36 +172,38 @@ export function ClientsPageClient({
   }
 
   async function saveClient() {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
     if (!form.name.trim()) { toast.warning("Name is required"); return; }
-    const phoneE164 = form.phone.trim() ? formatPhoneE164(form.phone) : null;
-    const townJoined = form.towns.length > 0 ? form.towns.join(", ") : null;
 
-    const payload: Record<string, unknown> = {
-      agent_id: user.id,
-      name: form.name.trim(),
-      phone: phoneE164,
-      email: form.email.trim() || null,
-      town: townJoined,
-      budget_min: form.budget_min ? Number(form.budget_min) : null,
-      budget_max: form.budget_max ? Number(form.budget_max) : null,
-      beds_wanted: form.beds ? Number(form.beds) : null,
-      baths_wanted: form.baths ? Number(form.baths) : null,
-      notes: form.notes.trim() || null,
-      source: "manual",
-      status: "new",
-      client_role: form.client_role,
-    };
-
-    const { data: created, error } = await supabase
-      .from("clients").insert(payload).select("id").single();
-    if (error) { toast.warning(error.message); return; }
+    // Same intake path as every other lead (lib/sms/lead.ts ingestLead):
+    // de-dupe on phone/email, lead_source "manual", an intake entry on the
+    // timeline. autoText: false — adding a client never texts them.
+    const res = await fetch("/api/leads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source: "manual",
+        autoText: false,
+        name: form.name.trim(),
+        phone: form.phone.trim() ? formatPhoneE164(form.phone) ?? form.phone.trim() : "",
+        email: form.email.trim() || null,
+        town: form.towns.length > 0 ? form.towns.join(", ") : null,
+        towns: form.towns,
+        budgetMin: form.budget_min || null,
+        budgetMax: form.budget_max || null,
+        beds: form.beds || null,
+        baths: form.baths || null,
+        notes: form.notes.trim() || null,
+        clientRole: form.client_role,
+      }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { clientId?: string; created?: boolean; error?: string };
+    if (!res.ok || !json.clientId) { toast.warning(json.error ?? "Couldn't add the client"); return; }
 
     setOpen(false);
     setForm({ name: "", phone: "", email: "", budget_min: "", budget_max: "", towns: [], beds: "", baths: "", client_role: "buyer", notes: "" });
-    toast.success("Client created");
-    router.push(`/clients/${created.id}`);
+    if (json.created) toast.success("Client created");
+    else toast.info("Already in your clients — opened their profile");
+    router.push(`/clients/${json.clientId}`);
     router.refresh();
   }
 

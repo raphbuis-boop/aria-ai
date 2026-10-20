@@ -19,6 +19,16 @@ export type LeadInput = {
   providerEventId?: string | null;
   /** false → create/log the lead but don't text (e.g. no SMS consent). */
   autoText?: boolean;
+  /** Extra profile fields an agent fills in when adding a client by hand.
+   * Only used when a new client is created. */
+  profile?: {
+    preferredTowns?: string[] | null;
+    budgetMin?: number | null;
+    bedsWanted?: number | null;
+    bathsWanted?: number | null;
+    notes?: string | null;
+    clientRole?: "buyer" | "seller";
+  };
 };
 
 export type LeadResult = {
@@ -38,6 +48,9 @@ const CLIENT_COLUMNS = "id, agent_id, name, phone, email, sms_opted_out, town";
  *
  * - A provider redelivery (same providerEventId) is a no-op.
  * - Clients already mid-thread don't get a second intro text.
+ * - Agent-added ("manual") leads: a name alone is enough, a match on an
+ *   existing client is returned as-is, and the agent isn't notified of
+ *   their own entry.
  */
 export async function ingestLead(
   supabase: SupabaseClient,
@@ -49,7 +62,8 @@ export async function ingestLead(
   if (rawPhone && !phone && !email) {
     throw new LeadError("Phone number isn't a valid US number", 400);
   }
-  if (!phone && !email) throw new LeadError("A phone number or email is required", 400);
+  const manual = input.source === "manual";
+  if (!phone && !email && !manual) throw new LeadError("A phone number or email is required", 400);
   const name = input.name.trim() || email || phone || "";
   if (name.length < 2) throw new LeadError("Name is required", 400);
 
@@ -88,8 +102,12 @@ export async function ingestLead(
   }
 
   const created = !client;
+  if (client && manual) {
+    return { clientId: client.id, created: false, duplicate: true, firstText: null };
+  }
   if (!client) {
     const town = input.town?.trim() || null;
+    const profile = input.profile ?? {};
     const { data, error } = await supabase
       .from("clients")
       .insert({
@@ -100,10 +118,14 @@ export async function ingestLead(
         source: clientSourceFor(input.source),
         lead_source: input.source,
         status: "new",
-        client_role: "buyer",
+        client_role: profile.clientRole ?? "buyer",
         town,
-        preferred_towns: town ? [town] : null,
+        preferred_towns: profile.preferredTowns?.length ? profile.preferredTowns : town ? [town] : null,
+        budget_min: profile.budgetMin ?? null,
         budget_max: input.budgetMax ?? null,
+        beds_wanted: profile.bedsWanted ?? null,
+        baths_wanted: profile.bathsWanted ?? null,
+        notes: profile.notes ?? null,
       })
       .select(CLIENT_COLUMNS)
       .single();
@@ -132,13 +154,15 @@ export async function ingestLead(
     return { clientId: client.id, created, duplicate: true, firstText: null };
   }
 
-  await insertNotification(supabase, {
-    agent_id: client.agent_id,
-    kind: "inquiry_received",
-    title: created ? `New lead: ${client.name}` : `${client.name} inquired again`,
-    body: inquiry || `Source: ${sourceLabel(input.source)}.`,
-    related_client_id: client.id,
-  });
+  if (!manual) {
+    await insertNotification(supabase, {
+      agent_id: client.agent_id,
+      kind: "inquiry_received",
+      title: created ? `New lead: ${client.name}` : `${client.name} inquired again`,
+      body: inquiry || `Source: ${sourceLabel(input.source)}.`,
+      related_client_id: client.id,
+    });
+  }
 
   const noText = (error: string) => ({
     clientId: client!.id, created, duplicate: false,

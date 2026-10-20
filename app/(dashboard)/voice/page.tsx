@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { loadLeadScores } from "@/lib/lead-score";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -260,10 +261,9 @@ export default function VoicePage() {
             .maybeSingle(),
           supabase
             .from("clients")
-            .select("name, lead_score, town")
+            .select("id, name, status, town")
             .eq("agent_id", user.id)
-            .order("lead_score", { ascending: false })
-            .limit(3),
+            .neq("status", "closed"),
           supabase
             .from("showings")
             .select("address")
@@ -284,8 +284,13 @@ export default function VoicePage() {
           setAgentName(profileRes.value.data.full_name.split(" ")[0]);
         }
 
-        const topClients =
+        // Hottest first, by the same computed score the Clients screen shows.
+        const activeClients =
           clientsRes.status === "fulfilled" ? clientsRes.value.data ?? [] : [];
+        const scores = await loadLeadScores(supabase, user.id, activeClients);
+        const topClients = [...activeClients]
+          .sort((a, b) => (scores.get(b.id)?.score ?? -1) - (scores.get(a.id)?.score ?? -1))
+          .slice(0, 3);
         const nextShowing =
           showingsRes.status === "fulfilled" ? showingsRes.value.data?.[0] : null;
         const draftCount =

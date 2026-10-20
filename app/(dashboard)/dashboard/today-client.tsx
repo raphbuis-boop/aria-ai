@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { humanizeSource, relTime } from "@/lib/utils";
 import { AriaApprovals, type AriaTaskRow } from "@/components/aria/AriaApprovals";
+import { TaskDoneButton } from "@/components/TaskDoneButton";
 import type { ShowingRequestRow } from "@/components/aria/ShowingApprovalCard";
 
 export type NewLeadRow = {
@@ -226,21 +227,23 @@ function FollowUps({
       ) : (
         <Card className="divide-y divide-border overflow-hidden">
           {tasks.map((t) => (
-            <Link
-              key={t.id}
-              href={t.clientId ? `/clients/${t.clientId}` : "/clients"}
-              className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-secondary/50"
-            >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary">
-                <CalendarDays className="size-3.5 text-muted-foreground" />
-              </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-display text-body font-semibold text-foreground">{t.title}</p>
-                <p className="truncate font-display text-caption text-muted-foreground">
-                  {[t.clientName, t.dueAt ? `Due ${relTime(t.dueAt)}` : null].filter(Boolean).join(" · ")}
-                </p>
-              </div>
-            </Link>
+            <div key={t.id} className="flex items-center gap-3.5 px-5 py-3.5">
+              <Link
+                href={t.clientId ? `/clients/${t.clientId}` : "/clients"}
+                className="flex min-w-0 flex-1 items-center gap-3.5"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-display text-body font-semibold text-foreground">{t.title}</p>
+                  <p className="truncate font-display text-caption text-muted-foreground">
+                    {[t.clientName, t.dueAt ? `Due ${relTime(t.dueAt)}` : null].filter(Boolean).join(" · ")}
+                  </p>
+                </div>
+              </Link>
+              <TaskDoneButton taskId={t.id} />
+            </div>
           ))}
           {shown.map((item) => (
             <div key={item.id} className="flex items-center gap-3.5 px-5 py-3.5">

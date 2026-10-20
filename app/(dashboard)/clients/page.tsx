@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { ClientsPageClient } from "./clients-client";
 import { commissionFor } from "@/lib/today-items";
-import type { TodayActivity, TodayTransaction } from "@/lib/today-items";
+import { loadLeadScores } from "@/lib/lead-score";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 function normalizePhone(p: string | null | undefined): string {
@@ -38,17 +38,15 @@ export default async function ClientsPage() {
       .eq("agent_id", user.id)
       .order("last_engagement_at", { ascending: false }),
 
-    // Active deals — real contract_price beats a budget-based estimate, and
-    // closing_date feeds computeLeadScore's closing-proximity boost.
+    // Active deals — real contract_price beats a budget-based estimate.
     supabase
       .from("transactions")
       .select("id, client_id, contract_price, address, closing_date, status")
       .eq("agent_id", user.id)
       .eq("status", "active"),
 
-    // Full activity history — computeLeadScore needs the true last-contact
-    // date, not a rolling window, so a client gone quiet for months still
-    // scores as stale rather than reading as "no data".
+    // Full activity history — the true last-contact date, not a rolling
+    // window, plus which clients are in an Aria thread.
     supabase
       .from("activities")
       .select("client_id, created_at, type, direction, channel:metadata->>channel")
@@ -97,13 +95,20 @@ export default async function ClientsPage() {
     if (b.commission_pct != null) commissionPctByClient.set(String(b.client_id), Number(b.commission_pct));
   }
 
-  const transactions = (activeTransactions ?? []) as TodayTransaction[];
-  const clientActivities = (activities ?? []) as TodayActivity[];
+  // Heat dot, "Hot" filter and hot count use the computed lead score — the
+  // same one Ask Aria and voice read (lib/lead-score.ts) — never the
+  // clients.lead_score column.
+  const scores = await loadLeadScores(
+    supabase,
+    user.id,
+    (clients ?? []).map((c) => ({ id: c.id as string, status: (c.status as string | null) ?? null })),
+  );
 
   const rows = dedupeClients(clients ?? []).map((c) => {
     const dealValue = dealValueByClient.get(c.id as string) ?? (c.budget_max as number | null) ?? null;
     return {
       ...c,
+      lead_score: scores.get(c.id as string)?.score ?? null,
       dealValue,
       dealValueIsReal: dealValueByClient.has(c.id as string),
       commissionEst: commissionFor(dealValue, commissionPctByClient.get(c.id as string)),
@@ -113,5 +118,5 @@ export default async function ClientsPage() {
     };
   });
 
-  return <ClientsPageClient initial={rows} activities={clientActivities} transactions={transactions} smsEnabled={smsEnabled} />;
+  return <ClientsPageClient initial={rows} smsEnabled={smsEnabled} />;
 }
