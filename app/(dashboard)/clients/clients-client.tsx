@@ -1,23 +1,17 @@
 "use client";
 
-import { NJ_TOWN_OPTIONS } from "@/lib/nj-towns";
-import { fmtMoney, formatPhoneE164, humanizeSource, relTime } from "@/lib/utils";
+import { fmtMoney, humanizeSource, relTime } from "@/lib/utils";
 import { heatFromScore } from "@/lib/today-items";
 import { statusShortLabel } from "@/lib/client-brief";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Toaster, toast } from "@/components/ui/sonner";
-import { Search, Sparkles, Users, X } from "lucide-react";
+import { Search, Sparkles, Upload, Users, X } from "lucide-react";
 import { Avatar, Pill } from "@/components/Section";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { openQuickAdd } from "@/components/QuickAddClient";
 
 const FILTERS = ["All", "New", "Aria texting", "Hot", "Showing", "Under contract", "Closed"] as const;
-
-// Shared input style — ivory design system.
-const INPUT =
-  "w-full rounded-xl px-4 py-3 outline-none font-display text-body text-foreground placeholder:text-muted-foreground bg-secondary border border-input focus:border-ring";
 
 type Row = {
   id: string;
@@ -117,36 +111,10 @@ export function ClientsPageClient({
   initial: Row[];
   smsEnabled: boolean;
 }) {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const rows = initial;
 
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>("All");
   const [search, setSearch] = useState("");
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("new") === "1") {
-      setOpen(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("new");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [searchParams]);
-
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    budget_min: "",
-    budget_max: "",
-    towns: [] as string[],
-    beds: "",
-    baths: "",
-    client_role: "buyer" as "buyer" | "seller",
-    notes: "",
-  });
-
   const filtered = useMemo(() => {
     const weekAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
     const s = search.trim().toLowerCase();
@@ -164,49 +132,6 @@ export function ClientsPageClient({
       .sort((a, b) => (b.lastContactAt ?? b.created_at ?? "").localeCompare(a.lastContactAt ?? a.created_at ?? ""));
   }, [rows, filter, search]);
 
-  function toggleTown(t: string) {
-    setForm((f) => ({
-      ...f,
-      towns: f.towns.includes(t) ? f.towns.filter((x) => x !== t) : [...f.towns, t],
-    }));
-  }
-
-  async function saveClient() {
-    if (!form.name.trim()) { toast.warning("Name is required"); return; }
-
-    // Same intake path as every other lead (lib/sms/lead.ts ingestLead):
-    // de-dupe on phone/email, lead_source "manual", an intake entry on the
-    // timeline. autoText: false — adding a client never texts them.
-    const res = await fetch("/api/leads", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        source: "manual",
-        autoText: false,
-        name: form.name.trim(),
-        phone: form.phone.trim() ? formatPhoneE164(form.phone) ?? form.phone.trim() : "",
-        email: form.email.trim() || null,
-        town: form.towns.length > 0 ? form.towns.join(", ") : null,
-        towns: form.towns,
-        budgetMin: form.budget_min || null,
-        budgetMax: form.budget_max || null,
-        beds: form.beds || null,
-        baths: form.baths || null,
-        notes: form.notes.trim() || null,
-        clientRole: form.client_role,
-      }),
-    });
-    const json = (await res.json().catch(() => ({}))) as { clientId?: string; created?: boolean; error?: string };
-    if (!res.ok || !json.clientId) { toast.warning(json.error ?? "Couldn't add the client"); return; }
-
-    setOpen(false);
-    setForm({ name: "", phone: "", email: "", budget_min: "", budget_max: "", towns: [], beds: "", baths: "", client_role: "buyer", notes: "" });
-    if (json.created) toast.success("Client created");
-    else toast.info("Already in your clients — opened their profile");
-    router.push(`/clients/${json.clientId}`);
-    router.refresh();
-  }
-
   const hotCount = rows.filter((c) => (c.lead_score ?? 0) >= 7).length;
 
   return (
@@ -220,9 +145,16 @@ export function ClientsPageClient({
               {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
             </p>
           </div>
-          <Button onClick={() => setOpen(true)} className="rounded-full h-9 px-4 text-caption font-semibold">
-            + Add
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="outline" className="rounded-full h-9 px-3.5 text-caption font-semibold">
+              <Link href="/clients/import">
+                <Upload className="size-3.5" /> Import
+              </Link>
+            </Button>
+            <Button onClick={openQuickAdd} className="rounded-full h-9 px-4 text-caption font-semibold">
+              + Add
+            </Button>
+          </div>
         </div>
 
         {rows.length > 0 ? (
@@ -274,15 +206,15 @@ export function ClientsPageClient({
             </div>
             <p className="font-display text-body text-muted-foreground">
               {rows.length === 0
-                ? "No clients yet. Import your list from your old CRM, or add someone by hand."
+                ? "No clients yet. Import your contacts (Google, your phone, a spreadsheet) or add someone by hand."
                 : "Try adjusting your search or filters"}
             </p>
             {rows.length === 0 && (
               <div className="mt-6 flex flex-wrap justify-center gap-2">
                 <Button asChild className="rounded-full h-10 px-5 text-body font-semibold">
-                  <Link href="/settings/import">Import clients</Link>
+                  <Link href="/clients/import">Import contacts</Link>
                 </Button>
-                <Button variant="outline" onClick={() => setOpen(true)} className="rounded-full h-10 px-5 text-body font-semibold">
+                <Button variant="outline" onClick={openQuickAdd} className="rounded-full h-10 px-5 text-body font-semibold">
                   Add a client
                 </Button>
               </div>
@@ -297,132 +229,6 @@ export function ClientsPageClient({
         )}
       </div>
 
-      {/* Add client sheet */}
-      {open ? (
-        <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim backdrop-blur-[2px]" role="dialog" aria-modal="true" aria-label="Add client">
-          <button type="button" aria-label="Close" tabIndex={-1}
-        className="absolute inset-0" onClick={() => setOpen(false)} />
-          <div className="relative z-10 max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] bg-card border border-border border-b-0 px-5 pb-10 pt-4">
-            <div className="mx-auto mb-5 h-1 w-9 rounded-full bg-border" />
-
-            <p className="font-heading text-[22px] text-foreground mb-0.5">New client</p>
-            <p className="font-display text-caption text-muted-foreground mb-5">Saved to your clients table.</p>
-
-            <div className="space-y-3">
-              <input aria-label="Full name"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Full name *"
-                className={INPUT}
-              />
-
-              <div className="grid grid-cols-2 gap-2">
-                <input aria-label="Phone"
-                  value={form.phone}
-                  onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                  placeholder="Phone"
-                  inputMode="tel"
-                  className={INPUT}
-                />
-                <input aria-label="Email"
-                  value={form.email}
-                  onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="Email"
-                  inputMode="email"
-                  className={INPUT}
-                />
-              </div>
-
-              <div className="flex gap-2">
-                {(["buyer", "seller"] as const).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => setForm({ ...form, client_role: r })}
-                    className={
-                      form.client_role === r
-                        ? "flex-1 rounded-xl py-2.5 font-display text-body font-semibold capitalize bg-primary text-primary-foreground transition-colors"
-                        : "flex-1 rounded-xl py-2.5 font-display text-body font-semibold capitalize bg-secondary text-muted-foreground transition-colors"
-                    }
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <input aria-label="Budget min"
-                  value={form.budget_min}
-                  onChange={(e) => setForm({ ...form, budget_min: e.target.value })}
-                  placeholder="Budget min"
-                  inputMode="numeric"
-                  className={INPUT}
-                />
-                <input aria-label="Budget max"
-                  value={form.budget_max}
-                  onChange={(e) => setForm({ ...form, budget_max: e.target.value })}
-                  placeholder="Budget max"
-                  inputMode="numeric"
-                  className={INPUT}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2">
-                <input aria-label="Beds"
-                  value={form.beds}
-                  onChange={(e) => setForm({ ...form, beds: e.target.value })}
-                  placeholder="Beds"
-                  inputMode="numeric"
-                  className={INPUT}
-                />
-                <input aria-label="Baths"
-                  value={form.baths}
-                  onChange={(e) => setForm({ ...form, baths: e.target.value })}
-                  placeholder="Baths"
-                  inputMode="decimal"
-                  className={INPUT}
-                />
-              </div>
-
-              <div>
-                <p className="font-display text-caption uppercase tracking-[0.06em] text-muted-foreground mb-2">
-                  Preferred towns
-                </p>
-                <div className="flex max-h-36 flex-wrap gap-1.5 overflow-y-auto rounded-xl bg-secondary p-2.5">
-                  {NJ_TOWN_OPTIONS.map((t) => (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => toggleTown(t)}
-                      className={
-                        form.towns.includes(t)
-                          ? "rounded-full px-2.5 py-1 font-display text-[11px] font-medium bg-primary text-primary-foreground transition-colors"
-                          : "rounded-full px-2.5 py-1 font-display text-[11px] font-medium bg-card text-muted-foreground transition-colors"
-                      }
-                    >
-                      {t}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <textarea aria-label="Notes"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Notes — timeline, motivation, anything useful"
-                rows={3}
-                className="w-full resize-none rounded-xl border border-input bg-secondary p-4 outline-none font-display text-body text-foreground placeholder:text-muted-foreground"
-              />
-            </div>
-
-            <Button onClick={saveClient} className="w-full h-12 rounded-xl mt-5 text-body-lg font-semibold">
-              Save client
-            </Button>
-          </div>
-        </div>
-      ) : null}
-
-      <Toaster />
     </div>
   );
 }

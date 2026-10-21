@@ -11,6 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
 import { loadLeadScores } from "@/lib/lead-score";
+import { isBulkImported } from "@/lib/client-import";
 
 const TZ = "America/New_York";
 const DAY_MS = 86_400_000;
@@ -18,8 +19,6 @@ const DAY_MS = 86_400_000;
 /** Statuses that are still a lead (under_contract/closed are deals, not leads). */
 const ACTIVE_LEAD_STATUSES = new Set(["new", "contacted", "showing", "offer"]);
 
-/** clients.source values written by bulk imports — same set Today uses for "New leads". */
-const IMPORT_SOURCES = new Set(["csv_import", "sphere", "google_contacts", "past_client"]);
 
 const STAGE_RANK: Record<string, number> = { offer: 4, showing: 3, contacted: 2, new: 1 };
 
@@ -150,9 +149,10 @@ type ClientRow = {
   last_engagement_at: string | null;
   created_at: string;
   source: string | null;
+  lead_source: string | null;
 };
 
-type PipelineClient = ClientInsight & { createdAt: string; source: string | null; stageRank: number };
+type PipelineClient = ClientInsight & { createdAt: string; source: string | null; leadSource: string | null; stageRank: number };
 
 /**
  * A real touch: anything but an unsent AI draft (a queued draft isn't
@@ -168,7 +168,7 @@ async function loadPipeline(supabase: SupabaseClient, agentId: string, now: Date
   const [clientsRes, actsRes] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, name, town, status, budget_min, budget_max, last_engagement_at, created_at, source")
+      .select("id, name, town, status, budget_min, budget_max, last_engagement_at, created_at, source, lead_source")
       .eq("agent_id", agentId)
       .neq("status", "closed"),
     supabase
@@ -205,6 +205,7 @@ async function loadPipeline(supabase: SupabaseClient, agentId: string, now: Date
       why: "",
       createdAt: c.created_at,
       source: c.source,
+      leadSource: c.lead_source,
       stageRank: STAGE_RANK[c.status ?? ""] ?? 0,
     };
   });
@@ -444,7 +445,7 @@ export async function getTodayPriorities(
   }));
 
   const newLeadsUncontacted = pipeline
-    .filter((c) => c.createdAt >= minus7d && !IMPORT_SOURCES.has(c.source ?? "") && c.daysSinceContact === null)
+    .filter((c) => c.createdAt >= minus7d && !isBulkImported({ source: c.source, lead_source: c.leadSource }) && c.daysSinceContact === null)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 5)
     .map((c) => ({ id: c.id, name: c.name, source: c.source, town: c.town }));

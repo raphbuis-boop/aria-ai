@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getHottestLeads, getStaleClients, getTodayPriorities } from "@/lib/ai/insights";
 import { loadLeadScores } from "@/lib/lead-score";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { ingestLead, LeadError } from "@/lib/sms/lead";
+import { formatPhoneE164 } from "@/lib/utils";
 
 export interface ToolContext {
   supabase: SupabaseClient;
@@ -305,6 +308,57 @@ export async function executeTool(
         return { success: true, ...(await getStaleClients(supabase, ctx.agentId, limit)) };
       } catch (err) {
         return { success: false, error: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    case "create_client": {
+      const i = (input ?? {}) as Record<string, unknown>;
+      const text = (v: unknown) => (typeof v === "string" && v.trim() ? v.trim() : null);
+      const money = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? Math.round(v) : null);
+      const name = text(i.name);
+      const rawPhone = text(i.phone);
+      const phone = rawPhone ? formatPhoneE164(rawPhone) : null;
+      const email = text(i.email)?.toLowerCase() ?? null;
+      if (!name) return { success: false, error: "Ask the agent for the person's name." };
+      if (rawPhone && !phone) return { success: false, error: `"${rawPhone}" isn't a full phone number — ask for all 10 digits.` };
+      if (!phone && !email) return { success: false, error: "Ask the agent for a phone number or email — one is needed to add a client." };
+      const towns = Array.isArray(i.towns) ? i.towns.map(text).filter((t): t is string => Boolean(t)).slice(0, 8) : [];
+      const role = i.clientRole === "seller" || i.clientRole === "renter" ? i.clientRole : "buyer";
+      try {
+        // Same intake as Quick add (/api/leads): de-dupe on any phone/email,
+        // lead_source "manual", status "new", never texted. agentId is the
+        // signed-in agent; the service client mirrors /api/leads.
+        const result = await ingestLead(createAdminClient(), {
+          agentId: ctx.agentId,
+          source: "manual",
+          name,
+          phone,
+          email,
+          town: towns.length ? towns.join(", ") : null,
+          budgetMax: money(i.budgetMax),
+          autoText: false,
+          origin: "Ask Aria",
+          profile: {
+            preferredTowns: towns,
+            budgetMin: money(i.budgetMin),
+            notes: text(i.notes),
+            clientRole: role,
+          },
+        });
+        const { data: client } = await supabase
+          .from("clients")
+          .select("id, name, status, client_role, phone, email, preferred_towns")
+          .eq("id", result.clientId)
+          .eq("agent_id", ctx.agentId)
+          .maybeSingle();
+        return {
+          success: true,
+          created: result.created,
+          alreadyExisted: !result.created,
+          client: client ?? { id: result.clientId, name },
+        };
+      } catch (err) {
+        return { success: false, error: err instanceof LeadError ? err.message : "Couldn't add the client." };
       }
     }
 

@@ -19,6 +19,9 @@ export type LeadInput = {
   providerEventId?: string | null;
   /** false → create/log the lead but don't text (e.g. no SMS consent). */
   autoText?: boolean;
+  /** How the agent met a client they add by hand ("Referral", "Open house"…),
+   * noted on the intake entry; lead_source stays "manual". */
+  origin?: string | null;
   /** Extra profile fields an agent fills in when adding a client by hand.
    * Only used when a new client is created. */
   profile?: {
@@ -27,7 +30,7 @@ export type LeadInput = {
     bedsWanted?: number | null;
     bathsWanted?: number | null;
     notes?: string | null;
-    clientRole?: "buyer" | "seller";
+    clientRole?: "buyer" | "seller" | "renter";
   };
 };
 
@@ -81,17 +84,18 @@ export async function ingestLead(
     id: string; agent_id: string; name: string; phone: string | null;
     email: string | null; sms_opted_out: boolean; town: string | null;
   };
+  // Match on any number or address the client has (clients.phones / emails).
   if (phone) {
     const { data } = await supabase
       .from("clients").select(CLIENT_COLUMNS)
-      .eq("agent_id", input.agentId).eq("phone", phone)
+      .eq("agent_id", input.agentId).contains("phones", [phone])
       .order("created_at", { ascending: false }).limit(1).maybeSingle();
     client = data;
   }
   if (!client && email) {
     const { data } = await supabase
       .from("clients").select(CLIENT_COLUMNS)
-      .eq("agent_id", input.agentId).ilike("email", email)
+      .eq("agent_id", input.agentId).contains("emails", [email])
       .order("created_at", { ascending: false }).limit(1).maybeSingle();
     client = data;
     // Fill in a phone the existing record was missing.
@@ -142,12 +146,12 @@ export async function ingestLead(
     agent_id: client.agent_id,
     type: "note",
     direction: "inbound",
-    body: `New lead (${sourceLabel(input.source)})${inquiry ? `: ${inquiry}` : "."}`,
+    body: `New lead (${sourceLabel(input.source)}${input.origin ? ` · ${input.origin}` : ""})${inquiry ? `: ${inquiry}` : "."}`,
     ai_draft: false,
     approved: true,
     sent: false,
     external_id: eventKey,
-    metadata: { kind: "lead_intake", source: input.source },
+    metadata: { kind: "lead_intake", source: input.source, ...(input.origin ? { origin: input.origin } : {}) },
   });
   // 23505: a concurrent redelivery of the same provider event won the race.
   if (intakeError?.code === "23505") {

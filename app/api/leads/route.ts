@@ -23,7 +23,7 @@ export const maxDuration = 60;
  * recognized), or a flat { name, phone, email?, message?, town?, budgetMax?,
  * propertyAddress?, eventId? }. Meta Lead Ads use /api/leads/meta instead.
  * Signed-in agents may also send { towns[], budgetMin, beds, baths, notes,
- * clientRole, autoText } — the Clients "New client" form does.
+ * clientRole, origin, autoText } — Quick add does.
  */
 const positive = (v: unknown) => {
   const n = typeof v === "number" ? v : typeof v === "string" && v.trim() ? Number(v) : NaN;
@@ -40,8 +40,13 @@ function agentProfileFields(body: Record<string, unknown>) {
     bedsWanted: positive(body.beds),
     bathsWanted: positive(body.baths),
     notes: typeof body.notes === "string" && body.notes.trim() ? body.notes.trim() : null,
-    clientRole: body.clientRole === "seller" ? ("seller" as const) : ("buyer" as const),
+    clientRole: (body.clientRole === "seller" || body.clientRole === "renter" ? body.clientRole : "buyer") as "buyer" | "seller" | "renter",
   };
+}
+
+/** How the agent met someone they add by hand ("Referral", "Open house"). */
+function agentOrigin(body: Record<string, unknown>): string | null {
+  return typeof body.origin === "string" && body.origin.trim() ? body.origin.trim().slice(0, 60) : null;
 }
 
 export async function POST(request: Request) {
@@ -80,6 +85,7 @@ export async function POST(request: Request) {
       // own, and can opt out (the Clients "New client" form does).
       autoText: fromAgent ? body.autoText !== false : body.smsConsent !== false,
       profile: fromAgent ? agentProfileFields(body) : undefined,
+      origin: fromAgent ? agentOrigin(body) : null,
     });
     return NextResponse.json({ ok: true, ...result }, { status: result.created ? 201 : 200 });
   } catch (error) {

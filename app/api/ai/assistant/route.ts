@@ -4,6 +4,8 @@
 // agent (lib/ai/agent.ts): it starts grounded in the live CRM snapshot, then
 // calls read-only tools (hottest leads, stale clients, today's priorities,
 // client lookups) to answer from real rows. The client never supplies context.
+// The one write it can make is create_client ("add Dana Mockley, 201-555-0134,
+// buyer in Teaneck"), through the same intake as Quick add.
 //
 // If Claude can't be reached (no ANTHROPIC_API_KEY, or the API call fails) the
 // common questions are still answered straight from the data
@@ -20,7 +22,7 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { runAriaAgent, type AgentMessage, type ToolCallLog } from "@/lib/ai/agent";
-import { readOnlyAriaTools } from "@/lib/ai/tools/tool-definitions";
+import { askAriaTools } from "@/lib/ai/tools/tool-definitions";
 import { answerFromData, detectIntent, type AskIntent } from "@/lib/ai/insights";
 
 type ChatAction = { label: string; href: string };
@@ -34,7 +36,8 @@ function askAriaSystemPrompt(mode: "chat" | "voice"): string {
     "— Name specific clients and give the one-line reason from the data (lead score, stage, upcoming showing, last contact). For today's priorities, lead with the most time-sensitive real item (a showing, something Aria needs them for, a closing, a new lead, a task due).",
     "— Pending follow-up drafts are a background chore, not an answer. Mention them only when asked about drafts, follow-ups or the inbox, or when nothing more specific is pending — and describe them by who they're for, never by a raw count.",
     "— If the data and tools can't answer the question, say so plainly in one sentence and ask one short clarifying question. Never substitute an unrelated stat.",
-    "— You can only read data here, not send messages or change records. If asked to, say where in the app to do it.",
+    "— ADDING A CLIENT: when the agent asks you to add someone, call create_client with what they said (name, phone and/or email, buyer/seller/renter, towns, budget, a one-line note). It needs a phone or email — if neither was given, ask for one. After it returns, confirm in one sentence what was saved (or that they were already in the clients). Never claim a client was added unless create_client returned success.",
+    "— Apart from adding a client, you can only read data here, not send messages or change records. If asked to, say where in the app to do it.",
     "— No markdown or bullet lists. Use the names exactly as they appear in the data.",
     mode === "voice"
       ? "— VOICE: 1–2 short spoken sentences."
@@ -111,7 +114,7 @@ export async function POST(req: Request) {
     history,
     userMessage: question,
     ctx: { supabase, agentId: user.id },
-    tools: readOnlyAriaTools,
+    tools: askAriaTools,
     maxTokens: 1024,
     mode,
   });
@@ -137,5 +140,13 @@ export async function POST(req: Request) {
   const degraded =
     result.fallbackReason === "no_api_key" || result.fallbackReason === "api_error" ? result.fallbackReason : null;
 
-  return NextResponse.json({ reply, action: deriveAction(intent, focusClient), degraded });
+  // A client was just added (or found): offer to open them.
+  const added = [...result.toolCalls].reverse().find((t) => t.name === "create_client" && t.result.success);
+  const addedClient = added?.result.client as { id?: unknown; name?: unknown } | undefined;
+  const action =
+    !result.usedFallback && typeof addedClient?.id === "string" && typeof addedClient.name === "string"
+      ? clientAction({ id: addedClient.id, name: addedClient.name })
+      : deriveAction(intent, focusClient);
+
+  return NextResponse.json({ reply, action, degraded });
 }

@@ -5,19 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
-import { UploadStep } from "@/components/csv-import/UploadStep";
-import { MappingStep } from "@/components/csv-import/MappingStep";
-import { PreviewStep } from "@/components/csv-import/PreviewStep";
-import {
-  buildImportPayload,
-  buildPreviewRows,
-  type FieldMapping,
-  type ParsedCSV,
-  type PreviewRow,
-} from "@/components/csv-import/utils";
-import type { CsvMappingItem } from "@/app/api/ai/map-csv/route";
-import { ImportGroupPicker, ImportSummary, type ImportOutcome } from "@/components/import/ImportSummary";
-import { GoogleContactsImport } from "@/components/import/GoogleContactsImport";
+import { ContactImporter } from "@/components/import/ContactImporter";
 
 /**
  * First run: name → Google → import clients → voice → Today.
@@ -26,7 +14,6 @@ import { GoogleContactsImport } from "@/components/import/GoogleContactsImport";
  */
 
 export type WizardStep = 1 | 2 | 3 | 4 | 5;
-type CsvSubStep = "upload" | "mapping" | "preview" | "done";
 export type Tone = "warm" | "professional" | "direct" | "casual";
 
 const TONES: { value: Tone; label: string; example: string }[] = [
@@ -97,18 +84,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, googleConne
   const [imported, setImported] = useState(0);
 
   // Step 3 — import
-  const [source, setSource] = useState<"google" | "csv">(googleConnected ? "google" : "csv");
-  const [csvSubStep, setCsvSubStep] = useState<CsvSubStep>("upload");
-  const [csv, setCsv] = useState<ParsedCSV | null>(null);
-  const [filename, setFilename] = useState("");
-  const [mapping, setMapping] = useState<FieldMapping[]>([]);
-  const [previewRows, setPreviewRows] = useState<PreviewRow[]>([]);
-  const [mappingLoading, setMappingLoading] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [csvResult, setCsvResult] = useState<ImportOutcome | null>(null);
-  const [importError, setImportError] = useState<string | null>(null);
-  const [group, setGroup] = useState<"leads" | "sphere">("sphere");
-  const [googleImportDone, setGoogleImportDone] = useState(false);
+  const [importDone, setImportDone] = useState(false);
 
   // Step 4 — voice
   const [tone, setTone] = useState<Tone>(initialTone);
@@ -130,54 +106,6 @@ export function OnboardingWizard({ userId, initialName, initialStep, googleConne
     // Tells the OAuth callback to come back here; the page then opens step 3.
     document.cookie = "aria_return_to=onboarding; path=/; max-age=600; SameSite=Lax";
     window.location.href = "/api/auth/google/connect";
-  }
-
-  async function handleFile(parsed: ParsedCSV, fname: string) {
-    setCsv(parsed);
-    setFilename(fname);
-    setMappingLoading(true);
-    try {
-      const res = await fetch("/api/ai/map-csv", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ headers: parsed.headers }),
-      });
-      const data = (await res.json()) as { mapping?: CsvMappingItem[] };
-      const aiMapping: FieldMapping[] = (data.mapping ?? []).map((m) => ({
-        header: m.header,
-        field: m.field as FieldMapping["field"],
-        confidence: m.confidence,
-      }));
-      const mapped = new Set(aiMapping.map((m) => m.header));
-      for (const h of parsed.headers) if (!mapped.has(h)) aiMapping.push({ header: h, field: "skip", confidence: "low" });
-      setMapping(aiMapping);
-    } catch {
-      setMapping(parsed.headers.map((h) => ({ header: h, field: "skip" as const, confidence: "low" as const })));
-    } finally {
-      setMappingLoading(false);
-    }
-    setCsvSubStep("mapping");
-  }
-
-  async function importCsv() {
-    setImporting(true);
-    setImportError(null);
-    try {
-      const res = await fetch("/api/clients/import", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rows: buildImportPayload(previewRows), group }),
-      });
-      const data = (await res.json().catch(() => ({}))) as ImportOutcome & { error?: string };
-      if (!res.ok) throw new Error(data.error ?? "Import failed.");
-      setCsvResult(data);
-      setImported((n) => n + data.inserted);
-      setCsvSubStep("done");
-    } catch (e) {
-      setImportError(e instanceof Error ? e.message : "Import failed.");
-    } finally {
-      setImporting(false);
-    }
   }
 
   async function saveVoice() {
@@ -263,7 +191,7 @@ export function OnboardingWizard({ userId, initialName, initialStep, googleConne
             />
             {googleError ? (
               <p role="alert" className="mb-4 rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 font-display text-body text-danger">
-                Google didn&apos;t connect. Try again, or skip and import a CSV instead.
+                Google didn&apos;t connect. Try again, or skip and import a file or list instead.
               </p>
             ) : null}
             <Button onClick={connectGoogle} variant="outline" className="h-12 w-full gap-3 rounded-xl border-input bg-card text-body-lg font-semibold">
@@ -281,102 +209,26 @@ export function OnboardingWizard({ userId, initialName, initialStep, googleConne
 
         {step === 3 ? (
           <section>
-            {csvSubStep === "upload" ? (
+            {importDone ? null : (
               <>
-                {googleImportDone ? null : (
-                <>
                 {googleConnected ? (
                   <p className="mb-4 flex items-center gap-2 font-display text-body font-semibold text-primary">
                     <Check className="size-4" /> Google connected
                   </p>
                 ) : null}
                 <Heading title="Bring in your clients" body="Pick the people you work with. Aria lines up who to text first." />
-                <div role="tablist" aria-label="Import from" className="mb-5 grid grid-cols-2 gap-1 rounded-xl bg-secondary p-1">
-                  {(
-                    [
-                      ["google", "Google Contacts"],
-                      ["csv", "CSV file"],
-                    ] as const
-                  ).map(([v, label]) => (
-                    <button
-                      key={v}
-                      type="button"
-                      role="tab"
-                      aria-selected={source === v}
-                      onClick={() => setSource(v)}
-                      className={`rounded-lg py-2 font-display text-caption font-semibold ${source === v ? "bg-card text-foreground shadow-card" : "text-muted-foreground"}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                </>
-                )}
-                {source === "google" ? (
-                  <GoogleContactsImport
-                    returnTo="onboarding"
-                    doneLabel="Continue"
-                    onImported={() => setGoogleImportDone(true)}
-                    onDone={(r) => {
-                      setImported((n) => n + r.inserted);
-                      setStep(4);
-                    }}
-                  />
-                ) : (
-                  <>
-                    <p className="mb-3 font-display text-body text-muted-foreground">
-                      Export a CSV from your old CRM or spreadsheet. Aria maps the columns for you.
-                    </p>
-                    <UploadStep onFile={handleFile} />
-                  </>
-                )}
-                {googleImportDone ? null : <Skip onClick={() => setStep(4)} label="I'll add clients later" />}
               </>
-            ) : null}
-
-            {csvSubStep === "mapping" && csv ? (
-              <MappingStep
-                mapping={mapping}
-                filename={filename}
-                rowCount={csv.rows.length}
-                onUpdateMapping={setMapping}
-                onBack={() => setCsvSubStep("upload")}
-                onContinue={() => {
-                  setPreviewRows(buildPreviewRows(csv.headers, csv.rows, mapping));
-                  setCsvSubStep("preview");
-                }}
-                loading={mappingLoading}
-              />
-            ) : null}
-
-            {csvSubStep === "preview" ? (
-              <>
-                <div className="mb-5">
-                  <ImportGroupPicker value={group} onChange={setGroup} />
-                </div>
-                <PreviewStep
-                  rows={previewRows}
-                  onUpdateRows={setPreviewRows}
-                  onBack={() => setCsvSubStep("mapping")}
-                  onImport={() => void importCsv()}
-                  importing={importing}
-                />
-                {importError ? (
-                  <p role="alert" className="mt-3 text-center font-display text-body text-danger">
-                    {importError}
-                  </p>
-                ) : null}
-              </>
-            ) : null}
-
-            {csvSubStep === "done" && csvResult ? (
-              <>
-                <ImportSummary result={csvResult} />
-                <Button onClick={() => setStep(4)} className="mt-6 h-12 w-full rounded-xl text-body-lg font-semibold">
-                  Continue
-                </Button>
-              </>
-            ) : null}
+            )}
+            <ContactImporter
+              returnTo="onboarding"
+              initialMethod={googleConnected ? "google" : undefined}
+              onImported={() => setImportDone(true)}
+              onDone={(r) => {
+                setImported((n) => n + r.inserted);
+                setStep(4);
+              }}
+            />
+            {importDone ? null : <Skip onClick={() => setStep(4)} label="I'll add clients later" />}
           </section>
         ) : null}
 
