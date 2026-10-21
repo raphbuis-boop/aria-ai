@@ -201,7 +201,7 @@ export function FollowUpsClient({ items: initialItems, hasClients }: Props) {
                   <Link href="/clients?new=1">Add a client</Link>
                 </Button>
                 <Button asChild variant="outline" className="rounded-full px-5">
-                  <Link href="/settings/import">Import clients</Link>
+                  <Link href="/clients/import">Import clients</Link>
                 </Button>
               </div>
             </div>

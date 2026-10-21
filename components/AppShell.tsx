@@ -4,6 +4,7 @@
 //   - Background automation tasks (invisible)
 //   - Page fade animation shell
 //   - Fixed bottom navigation
+//   - Quick add (floating "+ Add client" above the nav, and its sheet)
 //
 // Each page owns its own title, header area, and top spacing.
 // There is no global website-style header.
@@ -17,6 +18,7 @@
 import { AutomationRunner } from "@/components/AutomationRunner";
 import { BottomNav } from "@/components/BottomNav";
 import { PageShell } from "@/components/PageShell";
+import { QuickAdd } from "@/components/QuickAddClient";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
@@ -24,6 +26,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <AutomationRunner />
       <PageShell>{children}</PageShell>
       <BottomNav />
+      <QuickAdd />
     </div>
   );
 }

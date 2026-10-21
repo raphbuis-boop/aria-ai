@@ -194,6 +194,25 @@ export const ariaTools: Tool[] = [
     },
   },
   {
+    name: "create_client",
+    description:
+      "Add a person to the agent's clients when they ask you to (e.g. 'add Dana Mockley, 201-555-0134, buyer looking in Teaneck'). Needs a name and a phone number or email — if neither was given, ask for one instead of calling this. Someone already in the clients with that phone or email is returned as-is, not duplicated. Never texts the person.",
+    input_schema: {
+      type: "object",
+      properties: {
+        name: { type: "string", description: "Full name as the agent said it" },
+        phone: { type: "string", description: "Phone number, any format" },
+        email: { type: "string", description: "Email address" },
+        clientRole: { type: "string", enum: ["buyer", "seller", "renter"], description: "Lead type, if the agent said" },
+        towns: { type: "array", items: { type: "string" }, description: "Towns they're looking in (buyers/renters) or selling in" },
+        budgetMin: { type: "number", description: "Budget floor in dollars" },
+        budgetMax: { type: "number", description: "Budget ceiling in dollars" },
+        notes: { type: "string", description: "Anything else the agent said about them, one line" },
+      },
+      required: ["name"],
+    },
+  },
+  {
     name: "get_today_priorities",
     description:
       "Get today's real priorities (New Jersey time): showings today, things Aria needs the agent for, tasks due or overdue, closings this week, new leads not yet contacted, hot leads going quiet, and pending follow-up drafts summarized by client. Use for 'what should I do today', 'what's on my plate', 'what should I focus on'.",
@@ -216,3 +235,6 @@ const READ_ONLY_TOOL_NAMES = new Set([
 ]);
 
 export const readOnlyAriaTools: Tool[] = ariaTools.filter((t) => READ_ONLY_TOOL_NAMES.has(t.name));
+
+/** Ask Aria: the read-only tools, plus adding a client the agent names. */
+export const askAriaTools: Tool[] = ariaTools.filter((t) => READ_ONLY_TOOL_NAMES.has(t.name) || t.name === "create_client");

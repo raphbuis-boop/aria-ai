@@ -625,7 +625,7 @@ export default function SettingsPage() {
         </Group>
 
         <Group title="Data">
-          <Row Icon={Upload} label="Import clients" detail="From a CSV export of your old CRM." href="/settings/import" />
+          <Row Icon={Upload} label="Import contacts" detail="Google Contacts, a spreadsheet or .vcf, or a pasted list." href="/clients/import" />
           <Row Icon={Download} label={exporting ? "Exporting…" : "Export clients"} detail="Download every client as CSV." onPress={exporting ? undefined : () => void exportClients()} />
         </Group>
 

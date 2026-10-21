@@ -94,6 +94,10 @@ const SOURCE_LABELS: Record<string, string> = {
   realtor: "Realtor.com",
   meta: "Meta ad",
   sms: "Texted in",
+  import_google: "Google Contacts",
+  import_file: "Imported file",
+  import_paste: "Pasted list",
+  import_phone: "iPhone contacts",
 };
 
 /** Raw DB lead-source enum → display label: "google" → "Google". */

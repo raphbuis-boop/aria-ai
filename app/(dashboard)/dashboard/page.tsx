@@ -6,11 +6,10 @@ import { TodayClient as TodayClientComponent, type NewLeadRow, type Conversation
 import { initials } from "@/lib/utils";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
+import { isBulkImported } from "@/lib/client-import";
 
 export const dynamic = "force-dynamic";
 
-/** clients.source values written by bulk imports (lib/client-import.ts callers). */
-const IMPORT_SOURCES = new Set(["csv_import", "sphere", "google_contacts", "past_client"]);
 
 type Rel<T> = T | T[] | null | undefined;
 const one = <T,>(rel: Rel<T>): T | null => (Array.isArray(rel) ? rel[0] ?? null : rel ?? null);
@@ -220,7 +219,7 @@ export default async function DashboardPage() {
   );
   const newLeads: NewLeadRow[] = clients
     // Leads that arrived this week — a bulk import of her contact list isn't "new leads".
-    .filter((c) => c.created_at >= minus7ISO && !IMPORT_SOURCES.has(String(c.source ?? "")))
+    .filter((c) => c.created_at >= minus7ISO && !isBulkImported(c))
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
     .slice(0, 5)
     .map((c) => ({

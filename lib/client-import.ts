@@ -1,159 +1,167 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { formatPhoneE164 } from "@/lib/utils";
+import type { ContactGroup, ImportSource, ParsedContact } from "@/lib/contacts/types";
+import { planImport, type ExistingClient } from "@/lib/contacts/plan";
+import { birthdayForDb } from "@/lib/contacts/normalize";
 
 /**
- * One import path for every source (CSV, Google Contacts): normalize phone
- * and email, drop rows with nothing usable, skip people the agent already
- * has (or that appear twice in the same file), and report each decision by
- * row so the agent can see exactly what happened. Nothing is invented — no
- * lead scores, no guessed fields.
+ * The one bulk intake path for every import source (Google Contacts, CSV /
+ * XLSX / vCard files, pasted lists, the iPhone address book). Each contact is
+ * normalized and de-duplicated against the agent's clients on ANY email or
+ * phone (lib/contacts/plan.ts — the same planner the import screen previews
+ * with). New clients are tagged lead_source = `import_<source>` and the group
+ * the agent picked. Imports are never texted, never notified one by one, and
+ * never get drip drafts (see isBulkImported / api/automation/run).
  */
 
 export const MAX_IMPORT_ROWS = 2000;
 const INSERT_CHUNK = 500;
-
-/** "leads" = people actively buying/selling; "sphere" = past clients, friends, contacts. */
-export type ImportGroup = "leads" | "sphere";
-
-export type IncomingContact = {
-  name?: unknown;
-  email?: unknown;
-  phone?: unknown;
-  client_role?: unknown;
-  budget_min?: unknown;
-  budget_max?: unknown;
-  town?: unknown;
-  notes?: unknown;
-  source?: unknown;
-};
+const PAGE = 1000;
 
 export type ImportNote = { row: number; name: string; reason: string };
 
-export type ImportResult = {
+export type ImportOutcome = {
   inserted: number;
-  skipped: ImportNote[]; // not imported (duplicate / unusable)
-  warnings: ImportNote[]; // imported, but a field was dropped
+  existing: number;
+  noContact: number;
+  duplicates: number;
+  /** Not imported: already a client, or no phone/email. */
+  skipped: ImportNote[];
+  /** Imported, but a value was dropped (an unreadable phone or email). */
+  warnings: ImportNote[];
   insertedIds: string[];
 };
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+/** clients.source values the importer wrote before lead_source carried `import_*`. */
+const LEGACY_IMPORT_SOURCES = new Set(["csv_import", "sphere", "google_contacts", "past_client"]);
 
-export function normalizeEmail(raw: unknown): string | null {
-  const v = typeof raw === "string" ? raw.trim().toLowerCase().replace(/^mailto:/, "") : "";
-  return EMAIL_RE.test(v) ? v : null;
+/** True for anyone who came in through a bulk import (old or new). */
+export function isBulkImported(c: { source?: string | null; lead_source?: string | null }): boolean {
+  return (c.lead_source ?? "").startsWith("import_") || LEGACY_IMPORT_SOURCES.has(c.source ?? "");
 }
 
-/** Collapses whitespace and strips stray quotes: '  "Dana   Reyes" ' → 'Dana Reyes'. */
-export function normalizeName(raw: unknown): string {
-  return typeof raw === "string" ? raw.trim().replace(/^["']+|["']+$/g, "").replace(/\s+/g, " ").trim() : "";
+/**
+ * clients.source keeps its constrained vocabulary (zillow/google/facebook/
+ * referral/other/manual); the precise origin lives in lead_source.
+ */
+function clientSourceFor(source: ImportSource): string {
+  return source === "google" ? "google" : "other";
 }
 
-function str(raw: unknown, max = 500): string | null {
-  if (typeof raw !== "string" && typeof raw !== "number") return null;
-  const v = String(raw).trim();
-  return v ? v.slice(0, max) : null;
+/** Every client's contact points, all pages (PostgREST returns at most 1,000 rows per request). */
+export async function loadExistingContacts(supabase: SupabaseClient, agentId: string): Promise<ExistingClient[]> {
+  const out: ExistingClient[] = [];
+  for (let from = 0; ; from += PAGE) {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("id, name, email, phone, emails, phones")
+      .eq("agent_id", agentId)
+      .order("created_at", { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) throw new Error(error.message);
+    out.push(...((data ?? []) as ExistingClient[]));
+    if (!data || data.length < PAGE) break;
+  }
+  return out;
 }
 
-function money(raw: unknown): number | null {
-  if (typeof raw === "number") return Number.isFinite(raw) && raw > 0 ? Math.round(raw) : null;
-  if (typeof raw !== "string") return null;
-  const t = raw.trim().toLowerCase().replace(/[$,\s]/g, "");
-  const m = t.match(/^(\d+(?:\.\d+)?)([km])?$/);
-  if (!m) return null;
-  const n = Number(m[1]) * (m[2] === "m" ? 1_000_000 : m[2] === "k" ? 1_000 : 1);
-  return n > 0 ? Math.round(n) : null;
-}
-
-export async function importClients(
+export async function importContacts(
   supabase: SupabaseClient,
   agentId: string,
-  rows: IncomingContact[],
-  opts: { group: ImportGroup; defaultSource: string },
-): Promise<ImportResult> {
-  const { data: existing, error: loadError } = await supabase
-    .from("clients")
-    .select("name, email, phone")
-    .eq("agent_id", agentId);
-  if (loadError) throw new Error(loadError.message);
-
-  // Existing rows may hold phones in older formats — normalize before comparing.
-  const seenEmail = new Map<string, string>();
-  const seenPhone = new Map<string, string>();
-  const seenNameOnly = new Set<string>();
-  for (const c of existing ?? []) {
-    const name = String(c.name ?? "");
-    const e = normalizeEmail(c.email);
-    const p = c.phone ? formatPhoneE164(String(c.phone)) : null;
-    if (e) seenEmail.set(e, name);
-    if (p) seenPhone.set(p, name);
-    if (!e && !p) seenNameOnly.add(name.toLowerCase());
-  }
+  contacts: ParsedContact[],
+  opts: { group: ContactGroup; source: ImportSource },
+): Promise<ImportOutcome> {
+  const existing = await loadExistingContacts(supabase, agentId);
+  const { items, counts } = planImport(existing, contacts);
 
   const skipped: ImportNote[] = [];
   const warnings: ImportNote[] = [];
   const toInsert: Record<string, unknown>[] = [];
 
-  rows.forEach((row, i) => {
-    const n = i + 1;
-    const email = normalizeEmail(row.email);
-    const rawPhone = str(row.phone, 40);
-    const phone = rawPhone ? formatPhoneE164(rawPhone) : null;
-    const name = normalizeName(row.name) || (email ?? "");
-
-    if (!name) {
-      skipped.push({ row: n, name: "", reason: "No name, email or phone" });
-      return;
+  for (const it of items) {
+    const row = it.index + 1;
+    const c = it.contact;
+    if (it.status === "existing") {
+      skipped.push({ row, name: c.name, reason: `Already in Aria${it.existingName && it.existingName !== c.name ? ` as ${it.existingName}` : ""}` });
+      continue;
     }
-    if (!email && !phone && !str(row.notes)) {
-      // A bare name can't be contacted and can't be de-duplicated reliably.
-      if (seenNameOnly.has(name.toLowerCase())) {
-        skipped.push({ row: n, name, reason: "Already in your clients" });
-        return;
-      }
+    if (it.status === "no_contact") {
+      skipped.push({ row, name: c.name, reason: "No phone or email" });
+      continue;
     }
-    const dupOf = (email ? seenEmail.get(email) : undefined) ?? (phone ? seenPhone.get(phone) : undefined);
-    if (dupOf !== undefined) {
-      skipped.push({ row: n, name, reason: `Already in your clients${dupOf && dupOf !== name ? ` as ${dupOf}` : ""}` });
-      return;
-    }
+    if (it.status === "duplicate") continue; // merged into an earlier row
+    for (const bad of c.invalid) warnings.push({ row, name: c.name, reason: `"${bad}" isn't a full phone number or email — left out` });
 
-    if (rawPhone && !phone) warnings.push({ row: n, name, reason: `Phone "${rawPhone}" isn't a full number — left blank` });
-    const rawEmail = str(row.email, 200);
-    if (rawEmail && !email) warnings.push({ row: n, name, reason: `Email "${rawEmail}" isn't valid — left blank` });
-
-    const town = str(row.town, 80);
+    const lead = opts.group === "lead";
     toInsert.push({
       agent_id: agentId,
-      name: name.slice(0, 120),
-      email,
-      phone,
-      client_role: String(row.client_role ?? "").toLowerCase() === "seller" ? "seller" : "buyer",
-      budget_min: money(row.budget_min),
-      budget_max: money(row.budget_max),
-      town,
-      preferred_towns: town ? [town] : null,
-      notes: str(row.notes, 2000),
-      source: str(row.source, 40) ?? opts.defaultSource,
-      // Known people from her sphere aren't "new leads".
-      status: opts.group === "sphere" ? "contacted" : "new",
+      name: c.name,
+      email: c.emails[0] ?? null,
+      phone: c.phones[0] ?? null,
+      emails: c.emails,
+      phones: c.phones,
+      address: c.address,
+      town: c.town,
+      // Where a lead wants to buy; for people she knows the city is just where they live.
+      preferred_towns: lead && c.town ? [c.town] : null,
+      notes: [c.notes, c.company ? `Company: ${c.company}` : null].filter(Boolean).join("\n") || null,
+      birthday: birthdayForDb(c.birthday),
+      client_role: c.role ?? "buyer",
+      budget_min: c.budgetMin,
+      budget_max: c.budgetMax,
+      source: clientSourceFor(opts.source),
+      lead_source: `import_${opts.source}`,
+      contact_group: opts.group,
+      // Known people (sphere, past clients) aren't brand-new leads.
+      status: lead ? "new" : "contacted",
     });
-    if (email) seenEmail.set(email, name);
-    if (phone) seenPhone.set(phone, name);
-    if (!email && !phone) seenNameOnly.add(name.toLowerCase());
-  });
+  }
 
   const insertedIds: string[] = [];
   for (let i = 0; i < toInsert.length; i += INSERT_CHUNK) {
-    const { data, error } = await supabase.from("clients").insert(toInsert.slice(i, i + INSERT_CHUNK)).select("id");
+    const chunk = toInsert.slice(i, i + INSERT_CHUNK);
+    const { data, error } = await supabase.from("clients").insert(chunk).select("id");
     if (error) {
       // Report the failed chunk instead of failing the rows that already went in.
-      for (let j = i; j < Math.min(i + INSERT_CHUNK, toInsert.length); j++) {
-        skipped.push({ row: j + 1, name: String(toInsert[j].name), reason: `Couldn't save: ${error.message}` });
-      }
+      console.error("[client-import] insert failed", error.message);
+      for (const r of chunk) skipped.push({ row: 0, name: String(r.name), reason: `Couldn't save: ${error.message}` });
       continue;
     }
     for (const r of data ?? []) insertedIds.push(String(r.id));
   }
 
-  return { inserted: insertedIds.length, skipped, warnings, insertedIds };
+  return {
+    inserted: insertedIds.length,
+    existing: counts.existing,
+    noContact: counts.noContact,
+    duplicates: counts.duplicate,
+    skipped,
+    warnings,
+    insertedIds,
+  };
+}
+
+/** Request bodies come from the browser: keep only the fields and shapes we expect. */
+export function sanitizeContacts(raw: unknown): ParsedContact[] {
+  if (!Array.isArray(raw)) return [];
+  const str = (v: unknown, max: number) => (typeof v === "string" ? v.slice(0, max) : typeof v === "number" ? String(v) : null);
+  const list = (v: unknown) => (Array.isArray(v) ? v.map((x) => str(x, 200)).filter((x): x is string => Boolean(x)).slice(0, 10) : []);
+  const numOrNull = (v: unknown) => (typeof v === "number" && Number.isFinite(v) && v > 0 ? v : null);
+  return raw.slice(0, MAX_IMPORT_ROWS).map((r) => {
+    const o = (r && typeof r === "object" ? r : {}) as Record<string, unknown>;
+    const role = o.role === "seller" || o.role === "renter" || o.role === "buyer" ? o.role : null;
+    const birthday = str(o.birthday, 10);
+    return {
+      name: str(o.name, 200) ?? "",
+      emails: list(o.emails),
+      phones: list(o.phones),
+      address: str(o.address, 300),
+      town: str(o.town, 80),
+      notes: str(o.notes, 2000),
+      birthday: birthday && /^(\d{4}-\d{2}-\d{2}|--\d{2}-\d{2})$/.test(birthday) ? birthday : null,
+      company: str(o.company, 120),
+      role,
+      budgetMin: numOrNull(o.budgetMin),
+      budgetMax: numOrNull(o.budgetMax),
+    };
+  });
 }

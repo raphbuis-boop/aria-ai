@@ -66,7 +66,8 @@ export async function recordInboundSms(params: Record<string, string>): Promise<
     ? await supabase.from("agent_profiles").select("id").eq("twilio_from_number", to).maybeSingle()
     : { data: null };
 
-  let query = supabase.from("clients").select(CLIENT_COLUMNS).eq("phone", from);
+  // Any of the client's numbers, not just the primary one.
+  let query = supabase.from("clients").select(CLIENT_COLUMNS).contains("phones", [from]);
   if (owningAgent) query = query.eq("agent_id", owningAgent.id);
   const { data: found } = await query
     .order("last_engagement_at", { ascending: false, nullsFirst: false })

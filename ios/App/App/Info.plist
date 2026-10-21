@@ -53,6 +53,8 @@
 	<string>Aria uses speech recognition to convert your voice to text.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Aria accesses your photo library so you can upload listing photos.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Aria reads your contacts so you can pick people to add as clients. Nothing is changed or uploaded until you choose who to import.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Aria uses your camera so you can take listing photos directly in the app.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>

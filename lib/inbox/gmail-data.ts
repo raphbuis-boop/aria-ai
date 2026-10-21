@@ -2,23 +2,24 @@ import type { gmail_v1 } from "googleapis";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { header, messageText, parseAddress, stripQuoted, type ClientRef } from "@/lib/inbox/triage";
 
-/** The agent's clients keyed by lowercased email. Scoped to that agent only. */
+/** The agent's clients keyed by every lowercased email they have. Scoped to that agent only. */
 export async function clientsByEmail(supabase: SupabaseClient, agentId: string) {
   const { data } = await supabase
     .from("clients")
-    .select("id, name, email, status, town, budget_max")
-    .eq("agent_id", agentId)
-    .not("email", "is", null);
+    .select("id, name, email, emails, status, town, budget_max")
+    .eq("agent_id", agentId);
   const map = new Map<string, ClientRef & { status: string | null; town: string | null; budget_max: number | null }>();
   for (const c of data ?? []) {
-    if (c.email) {
-      map.set(String(c.email).trim().toLowerCase(), {
-        id: String(c.id),
-        name: (c.name as string | null) ?? "Client",
-        status: (c.status as string | null) ?? null,
-        town: (c.town as string | null) ?? null,
-        budget_max: (c.budget_max as number | null) ?? null,
-      });
+    const ref = {
+      id: String(c.id),
+      name: (c.name as string | null) ?? "Client",
+      status: (c.status as string | null) ?? null,
+      town: (c.town as string | null) ?? null,
+      budget_max: (c.budget_max as number | null) ?? null,
+    };
+    for (const e of [c.email, ...((c.emails as string[] | null) ?? [])]) {
+      const key = typeof e === "string" ? e.trim().toLowerCase() : "";
+      if (key && !map.has(key)) map.set(key, ref);
     }
   }
   return map;
