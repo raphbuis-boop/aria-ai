@@ -1,0 +1,38 @@
+BEGIN:VCARD
+VERSION:3.0
+PRODID:-//Apple Inc.//iPhone OS 18.0//EN
+N:Fakename;Taylor;;;
+FN:Taylor Fakename
+ORG:Sample Lending;
+item1.EMAIL;type=INTERNET;type=HOME:taylor.home@example.com
+item2.EMAIL;type=INTERNET;type=WORK;type=pref:Taylor@Lending.Example.org
+TEL;type=CELL;type=VOICE;type=pref:(201) 555-0140
+TEL;type=HOME;type=VOICE:201-555-0141
+item3.ADR;type=HOME;type=pref:;;45 Example Ave\nApt 2;Testville;NJ;07002;United States
+item3.X-ABADR:us
+NOTE:Buying in spring\, first-time buyer\nLikes older homes
+BDAY;X-APPLE-OMIT-YEAR=1604:1604-07-04
+PHOTO;ENCODING=b;TYPE=JPEG:/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a
+ HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIy
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:;;;;
+FN:Placeholder Inspections
+ORG:Placeholder Inspections;
+TEL;type=WORK:+1 (862) 555-0150
+EMAIL;type=INTERNET:office@inspect.example.com
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Nobody;Sam;;;
+FN:Sam Nobody
+NOTE:No phone or email on this one
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Fakename;Taylor;;;
+FN:Taylor Fakename
+TEL;type=CELL:2015550142
+EMAIL:taylor.home@example.com
+END:VCARD

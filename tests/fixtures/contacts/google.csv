@@ -1,0 +1,6 @@
+First Name,Middle Name,Last Name,Phonetic First Name,Name Prefix,Name Suffix,Nickname,File As,Organization Name,Organization Title,Birthday,Notes,Labels,E-mail 1 - Label,E-mail 1 - Value,E-mail 2 - Label,E-mail 2 - Value,Phone 1 - Label,Phone 1 - Value,Phone 2 - Label,Phone 2 - Value,Address 1 - Label,Address 1 - Formatted,Address 1 - Street,Address 1 - City,Address 1 - PO Box,Address 1 - Region,Address 1 - Postal Code,Address 1 - Country
+Avery,Q,Fakename,,Dr.,,Ave,,Testco Holdings,Owner,1985-07-04,"Met at open house, wants 4BR",* myContacts,* Home,Avery.Fakename@Example.com,Work,avery@testco.example.org,Mobile,(201) 555-0134 ::: 201.555.0135,Home,201-555-0136,Home,"12 Sample Lane
+Testville, NJ 07000",12 Sample Lane,Testville,,NJ,07000,US
+Jordan,,Sample,,,,,,,,--09-15,,* myContacts,,,,,Mobile,+1 973 555 0199,,,,,,,,,,
+Riley,,Placeholder,,,,,,,,,No way to reach,* myContacts,,,,,,,,,,,,,,,,
+,,,,,,,,Acme Title Example,,,,* myContacts,Work,closings@acmetitle.example.com,,,Work,201-555-0177,,,,,,,,,,
