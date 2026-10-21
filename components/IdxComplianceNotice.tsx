@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { getIdxDisclaimerText, AGENT_NAME, AGENT_LICENSE, EQUAL_HOUSING_DISCLOSURE } from "@/lib/compliance";
+import { useMlsLive } from "@/components/MlsStatus";
 
+/** NJMLS IDX logo + disclaimer. Renders nothing when no MLS feed is configured. */
 export function IdxComplianceNotice({
   brokerageName,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -17,6 +19,8 @@ export function IdxComplianceNotice({
   includeAgentAttribution?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
+  const mlsLive = useMlsLive();
+  if (!mlsLive) return null;
 
   return (
     <div className="border-t border-border pt-3">

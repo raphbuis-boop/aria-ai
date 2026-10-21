@@ -11,8 +11,11 @@ import {
   SIMPLYRETS_API_BASE,
 } from "@/lib/simplyrets";
 import type { MlsListingPayload } from "@/lib/simplyrets";
+import { mlsNotConnected } from "@/lib/mls-response";
 
 export const dynamic = "force-dynamic";
+
+const NO_LISTINGS = { listings: [] as MlsListingPayload[], total: 0, hasMore: false };
 export const runtime = "nodejs";
 
 export type { MlsListingPayload } from "@/lib/simplyrets";
@@ -27,22 +30,16 @@ function parseListingsPayload(data: unknown): unknown[] {
   return [];
 }
 
-/** Public read access allowed for NJMLS IDX; no user secrets in response. */
+/**
+ * Public read access allowed for NJMLS IDX; no user secrets in response.
+ * No working feed → 200 `{ connected: false, reason, listings: [] }` (lib/mls-response).
+ */
 export async function GET(req: Request) {
-  const envSummary = describeSimplyRetsEnv();
-
   if (!isSimplyRetsConfigured()) {
-    console.error("[mls] SimplyRETS not configured", envSummary);
-    return NextResponse.json(
-      {
-        error: isProduction()
-          ? "Listing search is temporarily unavailable."
-          : "SimplyRETS is not configured. Set credential env vars (see /api/mls-test when diagnostics are enabled).",
-        listings: [] as MlsListingPayload[],
-        total: 0,
-      },
-      { status: 503 },
-    );
+    if (!isProduction()) {
+      console.warn("[mls] SimplyRETS not configured — see /api/mls-test", describeSimplyRetsEnv());
+    }
+    return mlsNotConnected("not_configured", NO_LISTINGS);
   }
 
   const url = new URL(req.url);
@@ -106,26 +103,12 @@ export async function GET(req: Request) {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error("[mls] fetch threw", { endpoint, message });
-    return NextResponse.json(
-      {
-        error: "Could not load listings. Please try again shortly.",
-        listings: [] as MlsListingPayload[],
-        total: 0,
-      },
-      { status: 502 },
-    );
+    return mlsNotConnected("unavailable", NO_LISTINGS);
   }
 
   if (!response.ok) {
     logSimplyRetsFailure("mls", endpoint, response, await response.text().catch(() => ""));
-    return NextResponse.json(
-      {
-        error: "Could not load listings. Please try again shortly.",
-        listings: [] as MlsListingPayload[],
-        total: 0,
-      },
-      { status: 502 },
-    );
+    return mlsNotConnected("unavailable", NO_LISTINGS);
   }
 
   const data = (await response.json()) as unknown;
@@ -160,6 +143,7 @@ export async function GET(req: Request) {
   }
 
   return NextResponse.json({
+    connected: true,
     listings,
     /** Total count when SimplyRETS sends X-Total-Count; omit otherwise. */
     total,

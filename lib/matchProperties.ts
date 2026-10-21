@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { insertNotification } from "@/lib/notifications";
 import {
   scoreFuzzyMatch,
   matchBadgeReasons,
@@ -124,4 +125,29 @@ export async function runPropertyMatching(
   }
 
   return { matched };
+}
+
+/**
+ * Matches one saved property against the agent's active clients and, when it
+ * matched anyone, tells the agent — otherwise the matches sit unseen. Every
+ * way a property gets saved (MLS, link, MLS #, by hand) ends here.
+ */
+export async function matchAndNotify(
+  supabase: SupabaseClient,
+  agentId: string,
+  propertyId: string,
+  address: string | null,
+): Promise<number> {
+  const { matched } = await runPropertyMatching(supabase, agentId, propertyId);
+  if (matched > 0) {
+    await insertNotification(supabase, {
+      agent_id: agentId,
+      kind: "match_found",
+      title: `${matched} client${matched === 1 ? "" : "s"} matched to ${address ?? "a new listing"}`,
+      body: "Review the matches and reach out while it's fresh.",
+      related_listing_id: propertyId,
+      dedup_key: `match_found::${propertyId}`,
+    });
+  }
+  return matched;
 }

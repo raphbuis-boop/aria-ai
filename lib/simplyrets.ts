@@ -588,3 +588,8 @@ export async function fetchSimplyRetsSingleProperty(
     raw,
   };
 }
+
+/** Where "Search NJMLS" points while no MLS feed is connected (env NJMLS_SEARCH_URL). */
+export function njmlsSearchUrl(): string {
+  return process.env.NJMLS_SEARCH_URL?.trim() || "https://www.njmls.com";
+}

@@ -2,18 +2,23 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useMlsLive } from "@/components/MlsStatus";
 
 export function PhotoCarousel({
   photos,
   className = "",
   aspectClass = "aspect-[4/3]",
+  idxMark = true,
 }: {
   photos: string[];
   className?: string;
   aspectClass?: string;
+  /** NJMLS IDX mark on the photos — for MLS listings, and only when a feed is live. */
+  idxMark?: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   const [index, setIndex] = useState(0);
+  const showIdxMark = useMlsLive() && idxMark;
 
   const scrollTo = useCallback((i: number) => {
     const el = scrollerRef.current;
@@ -67,14 +72,16 @@ export function PhotoCarousel({
           </div>
         ))}
       </div>
-      {/* NJMLS IDX trademark — required on every photo per IDX agreement */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
-        src="/IDX_logo.JPG"
-        alt="NJMLS IDX"
-        className="absolute bottom-2 right-2 z-10 h-auto w-[96px] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
-        draggable={false}
-      />
+      {/* NJMLS IDX trademark — required on every MLS photo per IDX agreement */}
+      {showIdxMark ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src="/IDX_logo.JPG"
+          alt="NJMLS IDX"
+          className="absolute bottom-2 right-2 z-10 h-auto w-[96px] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
+          draggable={false}
+        />
+      ) : null}
       {photos.length > 1 ? (
         <>
           <button

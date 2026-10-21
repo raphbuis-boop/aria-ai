@@ -27,11 +27,12 @@ export async function GET() {
     return NextResponse.json(
       {
         ok: false,
-        reason:
+        connected: false,
+        reason: "not_configured",
+        detail:
           "No SimplyRETS credential pair detected. Expected one of: (SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_PASSWORD), (SIMPLYRETS_USERNAME + SIMPLYRETS_PASSWORD), (SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_KEY), (SIMPLYRETS_API_USERNAME + SIMPLYRETS_API_SECRET), or (SIMPLYRETS_API_KEY + SIMPLYRETS_API_SECRET).",
         env,
       },
-      { status: 503 },
     );
   }
 
@@ -75,9 +76,12 @@ export async function GET() {
   const elapsedMs = Date.now() - startedAt;
   const ok = upstreamStatus !== null && upstreamStatus >= 200 && upstreamStatus < 300;
 
+  // Always 200: `ok`/`connected` carry the verdict (no 502s from a diagnostics probe).
   return NextResponse.json(
     {
       ok,
+      connected: ok,
+      ...(ok ? {} : { reason: "unavailable" }),
       env,
       request: {
         endpoint,
@@ -93,6 +97,5 @@ export async function GET() {
       fetchError,
       elapsedMs,
     },
-    { status: ok ? 200 : 502 },
   );
 }

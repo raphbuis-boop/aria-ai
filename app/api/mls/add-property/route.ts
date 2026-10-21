@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
-import { runPropertyMatching } from "@/lib/matchProperties";
-import { insertNotification } from "@/lib/notifications";
+import { matchAndNotify } from "@/lib/matchProperties";
 import type { MlsListingPayload } from "../listings/route";
 
 function mapMlsStatusToPropertyStatus(
@@ -63,20 +62,7 @@ export async function POST(req: Request) {
     propertyId = created.id as string;
   }
 
-  const { matched } = await runPropertyMatching(supabase, user.id, propertyId);
-
-  // Tell the agent when tracking a property surfaced client matches —
-  // otherwise the matches sit unseen in the database.
-  if (matched > 0) {
-    await insertNotification(supabase, {
-      agent_id: user.id,
-      kind: "match_found",
-      title: `${matched} client${matched === 1 ? "" : "s"} matched to ${listing.address ?? "a new listing"}`,
-      body: "Review the matches and reach out while it's fresh.",
-      related_listing_id: propertyId,
-      dedup_key: `match_found::${propertyId}`,
-    });
-  }
+  const matched = await matchAndNotify(supabase, user.id, propertyId, listing.address ?? null);
 
   return NextResponse.json({ propertyId, matched });
 }
