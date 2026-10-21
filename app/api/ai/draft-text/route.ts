@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { callClaude, getAnthropic, sanitizeDraft } from "@/lib/ai";
 import { getRouteSupabase } from "@/lib/api-auth";
+import { loadWhatsAppThread, renderThread } from "@/lib/whatsapp/thread";
 
 const DRAFT_RULES = `Rules:
 - Plain text only. No markdown, bullets, labels, or "Draft:" / "SMS:" prefixes.
@@ -84,7 +85,24 @@ export async function POST(req: Request) {
 
   const toneDirective = TONE_DIRECTIVES[draftTone] ?? TONE_DIRECTIVES.warm;
 
-  const system = matchPing
+  // Replying to a client's WhatsApp message: ground the draft in the thread.
+  const replyChannel = body.replyChannel === "whatsapp" && clientId ? "whatsapp" : null;
+  let thread = "";
+  if (replyChannel && clientId) {
+    try {
+      thread = renderThread(await loadWhatsAppThread(supabase, user.id, clientId, 30), firstName === "there" ? "Client" : firstName);
+    } catch (error) {
+      console.error("[draft-text] whatsapp thread load failed:", error instanceof Error ? error.message : error);
+    }
+  }
+
+  const system = thread
+    ? `You ghost-write a New Jersey real estate agent's next WhatsApp reply to a client, continuing the conversation below.
+Answer what the client actually said or asked in their latest message(s). Use only facts that are in the conversation or the client context — never invent prices, availability, addresses or times; if something needs checking, say you'll check and get back to them.
+1–3 sentences, the way she'd type on her phone.
+${toneDirective}
+${DRAFT_RULES}`
+    : matchPing
     ? `You ghost-write a single SMS for a New Jersey real estate agent introducing a specific property to a buyer client.
 Keep it under 320 characters. Conversational — the agent knows this client personally.
 Use the client's context to make the message personal and relevant.
@@ -96,7 +114,18 @@ Use the client's context to make the message personal and relevant.
 ${toneDirective}
 ${DRAFT_RULES}`;
 
-  const userMsg = matchPing
+  const userMsg = thread
+    ? `Client: ${clientName.includes("@") ? "(name unknown — greet without a name)" : clientName}
+Client context: ${clientContext.join(" | ") || "Limited context available"}${context ? `\nNotes: ${context}` : ""}
+
+WhatsApp conversation (oldest first):
+${thread}
+
+Voice samples (match this tone):
+${samplesBlock || "(no samples — use warm, concise NJ agent tone)"}
+
+Write the agent's reply to the client's latest message.`
+    : matchPing
     ? `Client first name: ${firstName}
 Client context: ${clientContext.join(" | ") || "Limited context available"}
 Property details:
@@ -118,12 +147,17 @@ Write ONE short text message.`;
   const anthropic = getAnthropic();
   if (anthropic) {
     try {
-      const rawDraft = await callClaude(system, userMsg, matchPing ? 220 : 150);
+      const rawDraft = await callClaude(system, userMsg, thread ? 220 : matchPing ? 220 : 150);
       draft = sanitizeDraft(rawDraft);
     } catch (error) {
       console.error("[draft-text] AI generation failed:", error);
       // Will fall back to smart templates below
     }
+  }
+
+  // A reply with no AI available: acknowledge rather than guess at an answer.
+  if (!draft && replyChannel) {
+    draft = `Hi ${firstName} — thanks for your message! Let me look into it and get right back to you.`;
   }
 
   // Fallback to smart templates if AI failed or not available

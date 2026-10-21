@@ -51,6 +51,11 @@ export function smartTemplateDraft(item: TodayItem): string {
   const first = firstNameOf(item.clientName);
   const seed = item.clientId || item.clientName;
 
+  // 0 — replying to their WhatsApp message (the AI reply couldn't be drafted)
+  if (item.replyChannel === "whatsapp") {
+    return `Hi ${first} — thanks for your message! Let me look into it and get right back to you.`;
+  }
+
   switch (item.urgencyRank) {
     // 1 — closing at risk
     case 1: {

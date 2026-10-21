@@ -42,6 +42,7 @@ type ClientRow = {
   source: string | null;
   lead_source: string | null;
   contact_group: string | null;
+  drip_paused_at: string | null;
 };
 
 /**
@@ -50,7 +51,8 @@ type ClientRow = {
  * day 30). Runs when the agent opens the app.
  *
  * - Only active leads (status new/contacted/active/showing). Never sphere or
- *   past clients, never bulk imports, never closed clients.
+ *   past clients, never bulk imports, never closed clients, and never once
+ *   the client has replied (clients.drip_paused_at).
  * - Idempotent: each client's next step is claimed with a conditional update
  *   on (automation_day, last_automation_at) before anything is written, so two
  *   tabs racing can't both create the same draft.
@@ -66,7 +68,7 @@ export async function POST() {
 
   const { data: clients, error } = await supabase
     .from("clients")
-    .select("id, name, status, town, budget_min, budget_max, last_engagement_at, created_at, automation_day, last_automation_at, source, lead_source, contact_group")
+    .select("id, name, status, town, budget_min, budget_max, last_engagement_at, created_at, automation_day, last_automation_at, source, lead_source, contact_group, drip_paused_at")
     .eq("agent_id", user.id)
     .in("status", ACTIVE_LEAD_STATUSES)
     .lt("automation_day", STEPS[STEPS.length - 1].day)
@@ -80,6 +82,8 @@ export async function POST() {
   const due: { client: ClientRow; step: Step }[] = [];
   for (const c of (clients ?? []) as ClientRow[]) {
     if (isBulkImported(c) || c.contact_group === "sphere" || c.contact_group === "past_client") continue;
+    // The client replied (WhatsApp): she's in a real conversation, the drip stops.
+    if (c.drip_paused_at) continue;
     const daysSince = Math.floor((now - new Date(c.created_at).getTime()) / DAY_MS);
     const automationDay = c.automation_day ?? 0;
     const lastAt = c.last_automation_at ? new Date(c.last_automation_at).getTime() : 0;

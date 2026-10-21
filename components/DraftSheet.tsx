@@ -99,6 +99,7 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
         leadScore: item.leadScore,
         activitySignal: item.activitySignal,
         commissionEst: item.commissionEst,
+        replyChannel: item.replyChannel,
       }),
     })
       .then((r) => r.json())
@@ -206,8 +207,18 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
               </p>
             </div>
 
+            {/* Their unanswered WhatsApp message */}
+            {item?.replyChannel === "whatsapp" && item.context ? (
+              <div className="mb-4 rounded-2xl rounded-bl-md bg-secondary px-4 py-3">
+                <p className="font-display text-caption text-muted-foreground">They wrote on WhatsApp</p>
+                <p className="mt-0.5 font-display text-body text-foreground">{item.context}</p>
+              </div>
+            ) : null}
+
             {/* Voice indicator */}
-            <p className="mb-2 font-display text-caption text-muted-foreground">Written in your voice</p>
+            <p className="mb-2 font-display text-caption text-muted-foreground">
+              {item?.replyChannel === "whatsapp" ? "Reply drafted from your WhatsApp thread, in your voice" : "Written in your voice"}
+            </p>
 
             {/* Draft textarea */}
             {loading ? (
@@ -261,13 +272,13 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
               </p>
             )}
 
-            {/* Send + WhatsApp buttons */}
-            <div className="flex gap-2 mb-3">
+            {/* Send + WhatsApp buttons (WhatsApp first when replying to a WhatsApp message) */}
+            <div className={`flex gap-2 mb-3 ${item?.replyChannel === "whatsapp" ? "flex-row-reverse" : ""}`}>
               <button
                 type="button"
                 onClick={() => logAndOpen("sms")}
                 disabled={!canSend}
-                className="flex-1 rounded-xl py-[17px] font-display text-body-lg font-semibold bg-primary text-primary-foreground disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
+                className={`flex-1 rounded-xl py-[17px] font-display text-body-lg font-semibold disabled:opacity-40 active:scale-[0.97] transition-transform duration-100 ${item?.replyChannel === "whatsapp" ? "border border-input bg-transparent text-foreground" : "bg-primary text-primary-foreground"}`}
                 style={{ minHeight: "56px" }}
               >
                 SMS
@@ -277,9 +288,13 @@ export function DraftSheet({ item, prefetchedDraft, onClose, onSent, onSkip }: D
                 onClick={() => logAndOpen("whatsapp")}
                 disabled={!canSend}
                 className="flex-1 rounded-xl py-[15px] font-display text-body-lg font-semibold border disabled:opacity-40 active:scale-[0.97] transition-transform duration-100"
-                style={{ minHeight: "56px", borderColor: "var(--brand-whatsapp)", color: "var(--brand-whatsapp)", background: "transparent" }}
+                style={
+                  item?.replyChannel === "whatsapp"
+                    ? { minHeight: "56px", borderColor: "var(--brand-whatsapp)", color: "var(--primary-foreground)", background: "var(--brand-whatsapp)" }
+                    : { minHeight: "56px", borderColor: "var(--brand-whatsapp)", color: "var(--brand-whatsapp)", background: "transparent" }
+                }
               >
-                WhatsApp
+                {item?.replyChannel === "whatsapp" ? "Reply on WhatsApp" : "WhatsApp"}
               </button>
             </div>
 

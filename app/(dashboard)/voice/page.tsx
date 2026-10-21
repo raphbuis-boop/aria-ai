@@ -277,7 +277,9 @@ export default function VoicePage() {
             .eq("agent_id", user.id)
             .eq("ai_draft", true)
             .eq("approved", false)
-            .eq("sent", false),
+            .eq("sent", false)
+            // Drip drafts paused because the client replied aren't waiting on her.
+            .is("metadata->>paused", null),
         ]);
 
         if (profileRes.status === "fulfilled" && profileRes.value.data?.full_name) {

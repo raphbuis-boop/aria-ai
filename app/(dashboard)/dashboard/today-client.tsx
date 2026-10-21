@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { AlertCircle, ArrowRight, CalendarDays, ChevronRight, Mail, Sparkles, Upload, UserPlus } from "lucide-react";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
+import { WhatsAppUnknownCards } from "@/components/WhatsAppUnknownCards";
 import { NotificationBell } from "@/components/NotificationPanel";
 import { LiveRefresh } from "@/components/LiveRefresh";
 import { Avatar, EmptyNote, Pill, Section } from "@/components/Section";
@@ -347,6 +348,7 @@ export function TodayClient(props: Props) {
         <Header firstName={props.firstName} agentInitials={props.agentInitials} />
 
         <AriaApprovals showingRequests={props.ariaShowingRequests} tasks={props.ariaTasks} />
+        <WhatsAppUnknownCards />
 
         {props.hasAnyClients ? (
           <>

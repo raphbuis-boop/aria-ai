@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Aria** is an AI-powered real estate CRM for New Jersey agents. It combines Claude AI, Supabase, and SimplyRETS MLS data to provide client management, property matching, and automated communications. Agent-composed SMS opens in the device's native Messages app via `sms:` deep links (see `lib/messaging-links.ts`). The Aria SMS lead flow (`lib/sms/`) is the one exception, and it is **off unless `ARIA_SMS_ENABLED=1`** (`lib/feature-flags.ts`; the number needs A2P 10DLC registration first). When on, it texts leads server-side over Twilio — lead intake (`POST /api/leads`), inbound webhook (`/api/webhooks/twilio/sms`) with Claude replies, showing approvals (`/api/showings/[id]/approve|decline`), and BBA link follow-through. Anything Aria needs the agent for (showing approvals, handoffs, failed texts) is a `showings` row with status `requested` or a `tasks` row with `kind` `aria_*`, surfaced on Today under "Aria needs you".
 
+**WhatsApp (receive-only, `lib/whatsapp/`).** Agents connect their WhatsApp Business app number in Settings via Embedded Signup (coexistence). Aria never sends over the WhatsApp API — she keeps sending from her phone; reply drafts open `wa.me`. `POST /api/webhooks/whatsapp` receives client messages (`messages`), her own sends (`smb_message_echoes`) and the optional backfill (`history`). **Privacy rule:** only messages whose other party matches an existing client's `clients.phones` (E.164) are stored, as `activities` with `type = 'whatsapp'`, `external_id = 'wa:<message id>'`; everything else is dropped in `lib/whatsapp/ingest.ts`, except a 24-hour "new number — add as client?" card (`whatsapp_unknown_senders`: number + first line only). Tokens are AES-GCM encrypted (`lib/whatsapp/crypto.ts`). Unanswered client messages become Follow-ups items (`lib/whatsapp/followups.ts`, threshold `agent_profiles.whatsapp_reply_alert_hours`).
+
 ## Commands
 
 ```bash
@@ -15,7 +17,7 @@ npm run start    # Run production build
 npm run lint     # ESLint (Next.js config)
 ```
 
-No test suite is configured.
+`npm test` runs the node:test suites in `tests/` (contact parsers, WhatsApp webhook parsing/privacy).
 
 ## Architecture
 
@@ -43,6 +45,7 @@ No test suite is configured.
 | `lib/supabase/client.ts` | Browser Supabase client |
 | `lib/supabase/admin.ts` | Service-role admin client (no auto-refresh) |
 | `lib/utils.ts` | `cn()`, `formatPhoneE164()`, `initials()`, `relTime()`, `fmtMoney()`, `fmtDate()` |
+| `lib/whatsapp/` | WhatsApp coexistence: `webhook.ts` (signature + payload parsing), `ingest.ts` (client-only storage, CRM effects), `graph.ts` (onboarding calls), `followups.ts` (unanswered-message rule), `thread.ts` (thread loading for drafts/Ask Aria) |
 | `lib/operator-intent-mappings.ts` | Founder/operator semantic intent → investigative workflows (`expandOperatorPrompt`, `SEMANTIC_DECOMPOSITION_TEMPLATES`). Use for broad prompts (“engineering risks”, “demo prep”, “what should I work on today”) instead of refusing for scope. |
 
 ### Operator / planner behavior
@@ -102,6 +105,10 @@ LEAD_WEBHOOK_SECRET                            # bearer token for external lead 
 LEAD_DEFAULT_AGENT_ID                          # agent for website/Meta/text-in leads (unset → not auto-created)
 META_APP_SECRET / META_VERIFY_TOKEN / META_PAGE_ACCESS_TOKEN / META_LEAD_AGENT_ID?  # /api/leads/meta
 GOOGLE_CALENDAR_WRITE=1                        # request calendar.events so approved showings go on Google Calendar
+WHATSAPP_APP_ID / WHATSAPP_APP_SECRET (falls back to META_APP_SECRET) / WHATSAPP_CONFIG_ID  # Embedded Signup (coexistence)
+WHATSAPP_VERIFY_TOKEN                          # webhook verify token for /api/webhooks/whatsapp
+WHATSAPP_TOKEN_KEY                             # 32 random bytes (base64) — encrypts stored WhatsApp tokens
+WHATSAPP_GRAPH_VERSION?                        # default v26.0
 # SMS_DRY_RUN=1 logs texts instead of sending (local testing only)
 ```
 

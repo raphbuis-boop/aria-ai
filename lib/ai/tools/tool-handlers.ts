@@ -4,6 +4,7 @@ import { loadLeadScores } from "@/lib/lead-score";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ingestLead, LeadError } from "@/lib/sms/lead";
 import { formatPhoneE164 } from "@/lib/utils";
+import { loadWhatsAppThread } from "@/lib/whatsapp/thread";
 
 export interface ToolContext {
   supabase: SupabaseClient;
@@ -38,9 +39,13 @@ export async function executeTool(
 
       // Same computed score the Clients screen shows.
       const score = (await loadLeadScores(supabase, ctx.agentId, [data])).get(data.id);
+      // Their latest WhatsApp messages (coexistence), oldest first.
+      const recentWhatsApp = await loadWhatsAppThread(supabase, ctx.agentId, data.id, 10)
+        .then((msgs) => msgs.map((m) => ({ from: m.direction === "inbound" ? "client" : "agent", text: m.body, media: m.mediaType, at: m.created_at })))
+        .catch(() => []);
       return {
         success: true,
-        client: { ...data, lead_score: score?.score ?? null, lead_score_reason: score?.reason ?? null },
+        client: { ...data, lead_score: score?.score ?? null, lead_score_reason: score?.reason ?? null, recentWhatsApp },
       };
     }
 

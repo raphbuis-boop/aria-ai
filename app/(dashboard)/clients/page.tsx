@@ -58,12 +58,12 @@ export default async function ClientsPage() {
       .select("client_id, commission_pct")
       .eq("agent_id", user.id),
 
-    // Recent texts — newest first, so the first row per client is its last message.
+    // Recent texts and WhatsApp messages — newest first, so the first row per client is its last message.
     supabase
       .from("activities")
       .select("client_id, body, direction, created_at")
       .eq("agent_id", user.id)
-      .eq("type", "text")
+      .in("type", ["text", "whatsapp"])
       // Unapproved AI drafts were never sent.
       .or("ai_draft.is.null,ai_draft.is.false,approved.is.true,sent.is.true")
       .order("created_at", { ascending: false })

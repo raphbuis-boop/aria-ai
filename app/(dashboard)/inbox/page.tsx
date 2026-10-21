@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { buildTodayItems } from "@/lib/today-items";
 import type { TodayClient, TodayTransaction, TodayActivity, NewMatchItem, TodayEngagementEvent } from "@/lib/today-items";
 import { FollowUpsClient } from "./followups-client";
+import { findAwaitingReplies, loadReplyAlertHours, type ContactRow } from "@/lib/whatsapp/followups";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export default async function FollowUpsPage() {
 
       supabase
         .from("activities")
-        .select("client_id, created_at, type, direction, metadata")
+        .select("client_id, created_at, type, direction, metadata, body, ai_draft, sent")
         .eq("agent_id", user.id)
         .gte("created_at", minus30ISO)
         .order("created_at", { ascending: false }),
@@ -100,6 +101,10 @@ export default async function FollowUpsPage() {
     .eq("status", "closed");
   const closedClients = (closedClientRows ?? []) as TodayClient[];
 
+  const awaitingReplies = activities.some((a) => a.type === "whatsapp")
+    ? findAwaitingReplies((activitiesRes.data ?? []) as ContactRow[], await loadReplyAlertHours(supabase, user.id), now)
+    : [];
+
   const allItems = buildTodayItems(
     clients,
     transactions,
@@ -109,6 +114,7 @@ export default async function FollowUpsPage() {
     engagement,
     closedClients,
     bbaCommissionPctByClient,
+    awaitingReplies,
   );
   // Leads in an Aria SMS thread are answered from that thread (Aria's number).
   const ariaThreadClientIds = new Set(
@@ -119,12 +125,12 @@ export default async function FollowUpsPage() {
   const items = allItems
     .filter((i) => !dismissedIds.has(i.id))
     .map((i) =>
-      ariaThreadClientIds.has(i.clientId) && i.actionType === "text"
+      ariaThreadClientIds.has(i.clientId) && i.actionType === "text" && !i.replyChannel
         ? { ...i, actionType: "navigate" as const, navigateTo: `/clients/${i.clientId}#messages` }
         : i,
     )
-    // Ranked by value — highest commission at stake first.
-    .sort((a, b) => (b.commissionEst ?? 0) - (a.commissionEst ?? 0));
+    // Clients waiting on a reply first, then ranked by value — highest commission at stake first.
+    .sort((a, b) => Number(Boolean(b.replyChannel)) - Number(Boolean(a.replyChannel)) || (b.commissionEst ?? 0) - (a.commissionEst ?? 0));
 
 
   return <FollowUpsClient items={items} hasClients={(clientsRes.data ?? []).length > 0} />;

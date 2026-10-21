@@ -47,6 +47,8 @@ export type AgentSnapshot = {
   matchCountMap: Map<string, number>;
   /** clientId → ISO of the last real contact (unsent drafts and notes don't count). */
   lastContactMap: Map<string, string>;
+  /** Recent WhatsApp chats (last 14 days), most recently active client first, newest message first. */
+  recentWhatsApp: { clientName: string; messages: { inbound: boolean; body: string; at: string }[] }[];
 };
 
 // ── Formatting helpers ──────────────────────────────────────────────────────
@@ -109,6 +111,7 @@ export async function fetchAgentSnapshot(
     pendingDraftsRes,
     recentMatchesRes,
     recentActivitiesRes,
+    whatsAppRes,
   ] = await Promise.allSettled([
     supabase
       .from("agent_profiles")
@@ -139,7 +142,9 @@ export async function fetchAgentSnapshot(
       .eq("agent_id", agentId)
       .eq("ai_draft", true)
       .eq("approved", false)
-      .eq("sent", false),
+      .eq("sent", false)
+      // Drip drafts paused because the client replied aren't waiting on her.
+      .is("metadata->>paused", null),
 
     supabase
       .from("property_matches")
@@ -155,6 +160,16 @@ export async function fetchAgentSnapshot(
       .gte("created_at", minus30d)
       .order("created_at", { ascending: false })
       .limit(500),
+
+    // WhatsApp chats with clients (coexistence) — what they actually said.
+    supabase
+      .from("activities")
+      .select("client_id, direction, body, created_at, metadata, clients(name)")
+      .eq("agent_id", agentId)
+      .eq("type", "whatsapp")
+      .gte("created_at", new Date(Date.now() - 14 * 86_400_000).toISOString())
+      .order("created_at", { ascending: false })
+      .limit(300),
   ]);
 
   const agentName =
@@ -238,6 +253,23 @@ export async function fetchAgentSnapshot(
     }
   }
 
+  // Up to 8 clients, 4 messages each, newest first.
+  type WaRow = { client_id: string; direction: string | null; body: string | null; created_at: string; metadata: { media_type?: string } | null; clients: { name: string | null } | { name: string | null }[] | null };
+  const waRows = (whatsAppRes.status === "fulfilled" ? (whatsAppRes.value.data ?? []) : []) as WaRow[];
+  const waByClient = new Map<string, AgentSnapshot["recentWhatsApp"][number]>();
+  for (const r of waRows) {
+    let entry = waByClient.get(r.client_id);
+    if (!entry) {
+      if (waByClient.size >= 8) continue;
+      const c = Array.isArray(r.clients) ? r.clients[0] : r.clients;
+      entry = { clientName: c?.name ?? "a client", messages: [] };
+      waByClient.set(r.client_id, entry);
+    }
+    if (entry.messages.length >= 4) continue;
+    const text = (r.body ?? "").replace(/\s+/g, " ").trim() || `[${r.metadata?.media_type ?? "attachment"}]`;
+    entry.messages.push({ inbound: r.direction === "inbound", body: text.slice(0, 280), at: r.created_at });
+  }
+
   const todayLabel = now.toLocaleDateString("en-US", {
     timeZone: "America/New_York",
     weekday: "long",
@@ -257,6 +289,7 @@ export async function fetchAgentSnapshot(
     recentMatches,
     matchCountMap,
     lastContactMap,
+    recentWhatsApp: [...waByClient.values()],
   };
 }
 
@@ -284,6 +317,19 @@ function clientLines(snap: AgentSnapshot): string[] {
       `${fmtBudget(c.budget_min, c.budget_max)}, ` +
       `${c.status ?? "buyer"}${score} · ${contactNote}${matchNote}`
     );
+  });
+}
+
+/** "Dana: “Is Saturday still good?” (2h ago) · You: “Yes, 11am!” (1h ago)" — newest last. */
+function whatsAppLines(snap: AgentSnapshot): string[] {
+  return snap.recentWhatsApp.map((t) => {
+    const first = t.clientName.split(" ")[0];
+    const msgs = [...t.messages].reverse().map((m) => {
+      const hours = Math.floor((Date.now() - new Date(m.at).getTime()) / 3_600_000);
+      const ago = hours < 1 ? "just now" : hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+      return `${m.inbound ? first : "You"}: “${m.body}” (${ago})`;
+    });
+    return `• ${t.clientName} — ${msgs.join(" · ")}`;
   });
 }
 
@@ -359,6 +405,9 @@ export function renderContextBlock(snap: AgentSnapshot): string {
       ? `UPCOMING SHOWINGS (next 7 days):\n${showingLines(snap).join("\n")}`
       : "UPCOMING SHOWINGS: None scheduled in the next 7 days.",
     "",
+    snap.recentWhatsApp.length > 0
+      ? `RECENT WHATSAPP WITH CLIENTS (last 14 days, from her WhatsApp Business app; she replies from her phone):\n${whatsAppLines(snap).join("\n")}`
+      : "",
     snap.draftClientCount > 0
       ? `FOLLOW-UP DRAFTS: ready to review for ${draftsPhrase(snap)} (${snap.draftClientCount} client${snap.draftClientCount > 1 ? "s" : ""}). Background chore — bring up only when asked about drafts/follow-ups or when nothing more specific is pending; never lead with a raw draft count.`
       : "FOLLOW-UP DRAFTS: none waiting.",

@@ -1,5 +1,6 @@
 import { differenceInCalendarDays } from "date-fns";
 import { sellerPropensity } from "./ai/seller-propensity";
+import type { AwaitingReply } from "./whatsapp/followups";
 
 // Client status values (as of May 2026):
 //   new | contacted | showing | offer | under_contract | closed
@@ -94,6 +95,8 @@ export type TodayItem = {
   leadScoreReason: string | null;
   /** Plain-English label for the client's most recent logged activity, e.g. "Replied to your text 2 days ago". Null when there's no activity history. */
   activitySignal: string | null;
+  /** The client is waiting on a reply on this channel — the draft answers their thread and opens there. */
+  replyChannel?: "whatsapp";
   /**
    * Expected commission — deal value × the client's real BBA commission rate
    * (falls back to 2.5% if unsigned) × probability of the deal actually
@@ -432,6 +435,8 @@ export function activityVerb(type: string | null, direction: string | null): str
       return "Phone call logged";
     case "email":
       return inbound ? "Replied to your email" : "You emailed";
+    case "whatsapp":
+      return inbound ? "Messaged you on WhatsApp" : "You messaged on WhatsApp";
     case "showing":
       return "Toured a property with you";
     case "offer":
@@ -566,9 +571,42 @@ export function buildTodayItems(
   // BBA. Clients without a signed agreement fall back to the 2.5% default
   // inside computeMoneyEstimate.
   bbaCommissionPctByClient: Map<string, number> = new Map(),
+  // Clients whose WhatsApp message is still unanswered past the agent's alert
+  // threshold (lib/whatsapp/followups.ts).
+  awaitingReplies: AwaitingReply[] = [],
 ): TodayItem[] {
   const items: TodayItem[] = [];
   const now = new Date();
+
+  // ── 0. Client messaged you on WhatsApp and is waiting on a reply ─────────
+  for (const w of awaitingReplies) {
+    const client = clients.find((c) => c.id === w.clientId) ?? closedClients.find((c) => c.id === w.clientId);
+    if (!client) continue;
+    const { score, reason: scoreReason } = computeLeadScore(client, activities, transactions, engagement);
+    const hours = Math.max(1, Math.floor((now.getTime() - new Date(w.since).getTime()) / 3_600_000));
+    const ago = hours < 24 ? `${hours}h ago` : `${Math.floor(hours / 24)}d ago`;
+    items.push({
+      id: `wa-reply-${client.id}`,
+      clientId: client.id,
+      clientName: client.name,
+      clientPhone: client.phone,
+      clientTown: client.town,
+      clientBudgetMax: client.budget_max,
+      clientStatus: client.status,
+      leadScore: score,
+      leadHeat: heatFromScore(score),
+      leadScoreReason: scoreReason,
+      activitySignal: mostRecentActivityLabel(client.id, activities),
+      commissionEst: computeMoneyEstimate(client, transactions, bbaCommissionPctByClient).expectedCommission,
+      reason: `Messaged you on WhatsApp ${ago} — you haven't replied`,
+      context: w.preview,
+      actionLabel: `Reply to ${textRecipient(client.name)}`,
+      actionType: "text",
+      navigateTo: null,
+      urgencyRank: 0,
+      replyChannel: "whatsapp",
+    });
+  }
 
   // ── 1. At-risk transactions (closing ≤3 days) ─────────────────────────────
   for (const tx of transactions) {

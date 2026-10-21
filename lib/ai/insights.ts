@@ -397,7 +397,9 @@ export async function getTodayPriorities(
       .eq("agent_id", agentId)
       .eq("ai_draft", true)
       .eq("approved", false)
-      .eq("sent", false),
+      .eq("sent", false)
+      // Drip drafts paused because the client replied aren't waiting on her.
+      .is("metadata->>paused", null),
   ]);
 
   for (const [name, res] of Object.entries({ showingsRes, tasksRes, requestsRes, closingsRes, draftsRes })) {
