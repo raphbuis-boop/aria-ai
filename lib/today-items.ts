@@ -294,10 +294,14 @@ export function computeLeadScore(
     }
   }
 
+  // Momentum and high-intent signals count only this client's activities —
+  // `activities` is usually the agent's whole feed.
+  const clientActivities = activities.filter((a) => a.client_id === client.id);
+
   // Adjust score based on activity momentum (last 14 days)
   const twoWeeksAgo = new Date();
   twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
-  const recentActivities = activities.filter(activity =>
+  const recentActivities = clientActivities.filter(activity =>
     new Date(activity.created_at) >= twoWeeksAgo
   );
 
@@ -308,7 +312,7 @@ export function computeLeadScore(
   }
 
   // Engagement boost for high-intent activities
-  const hasHighIntentActivity = activities.some(activity =>
+  const hasHighIntentActivity = clientActivities.some(activity =>
     activity.type === "showing" || activity.type === "offer"
   );
   if (hasHighIntentActivity) {
