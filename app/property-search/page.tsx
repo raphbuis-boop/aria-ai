@@ -1,6 +1,7 @@
 import { MlsSearchClient } from "@/app/(dashboard)/listings/mls-search-client";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { BROKERAGE_NAME } from "@/lib/compliance";
+import { isSimplyRetsConfigured } from "@/lib/simplyrets";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 
@@ -29,7 +30,7 @@ export default function PropertySearchPage() {
           </div>
         }
       >
-        <MlsSearchClient variant="public" />
+        <MlsSearchClient variant="public" mlsConfigured={isSimplyRetsConfigured()} />
       </Suspense>
       <div className="mx-auto max-w-lg px-4 pb-8 pt-6">
         <IdxComplianceNotice logoSize="prominent" />

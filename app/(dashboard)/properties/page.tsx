@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { PropertiesClient } from "./properties-client";
+import { isSimplyRetsConfigured, njmlsSearchUrl } from "@/lib/simplyrets";
 
 type JoinedClient = { id: string; name: string | null };
 type MatchRow = {
@@ -51,5 +52,10 @@ export default async function PropertiesPage() {
     matches: matchMap[p.id as string] ?? [],
   }));
 
-  return <PropertiesClient initial={properties} />;
+  return (
+    <PropertiesClient
+      initial={properties}
+      mlsSearchHref={isSimplyRetsConfigured() ? null : njmlsSearchUrl()}
+    />
+  );
 }

@@ -2,15 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
+import { ExternalLink, Home as HomeIcon, Plus, Search, Sparkles, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/Section";
-import { Toaster, toast } from "@/components/ui/sonner";
-import { createClient } from "@/lib/supabase/client";
+import { Toaster } from "@/components/ui/sonner";
 import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
+import { AddPropertySheet } from "@/components/AddPropertySheet";
 import { fmtMoney } from "@/lib/utils";
 import { humanizeMatchReasons } from "@/lib/match-language";
 import type { PropertyMatch } from "./page";
@@ -131,104 +130,14 @@ function PropertyRow({ p }: { p: Property }) {
   );
 }
 
-const STATUS_OPTIONS = [
-  ["available", "Available"],
-  ["pending", "Pending"],
-  ["sold", "Sold"],
-  ["off_market", "Off market"],
-] as const;
-
-const FIELD =
-  "w-full rounded-xl border border-input bg-secondary px-4 py-3 font-display text-body text-foreground outline-none placeholder:text-muted-foreground focus:border-ring";
-
-/** Adds a home to the agent's own `properties` — the inventory Aria matches
- * against and recommends from over SMS. */
-function AddPropertySheet({ onClose }: { onClose: () => void }) {
-  const router = useRouter();
-  const [saving, setSaving] = useState(false);
-  const [f, setF] = useState({ address: "", town: "", price: "", beds: "", baths: "", sqft: "", status: "available", photo: "", description: "" });
-  const num = (v: string) => (v.trim() && Number.isFinite(Number(v.replace(/[$,]/g, ""))) ? Number(v.replace(/[$,]/g, "")) : null);
-
-  async function save() {
-    if (!f.address.trim() || !f.town.trim()) {
-      toast.error("Address and town are required");
-      return;
-    }
-    setSaving(true);
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) return;
-    const { data, error } = await supabase
-      .from("properties")
-      .insert({
-        agent_id: user.id,
-        address: f.address.trim(),
-        town: f.town.trim(),
-        price: num(f.price),
-        beds: num(f.beds),
-        baths: num(f.baths),
-        sqft: num(f.sqft),
-        status: f.status,
-        description: f.description.trim() || null,
-        photos: f.photo.trim() ? [f.photo.trim()] : [],
-      })
-      .select("id")
-      .single();
-    setSaving(false);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success("Home added");
-    onClose();
-    router.push(`/properties/${data.id}`);
-    router.refresh();
-  }
-
-  return (
-    <div className="fixed inset-0 z-[90] flex items-end justify-center bg-scrim sm:items-center" role="dialog" aria-modal="true" aria-label="Add a home">
-      <button type="button" aria-label="Close" tabIndex={-1}
-        className="absolute inset-0" onClick={onClose} />
-      <div className="relative z-10 max-h-[88vh] w-full max-w-lg overflow-y-auto rounded-t-[28px] border border-border bg-card px-5 pb-[calc(env(safe-area-inset-bottom)+24px)] pt-5 sm:rounded-[28px]">
-        <p className="font-heading text-[22px] text-foreground">Add a home</p>
-        <p className="mb-5 font-display text-caption text-muted-foreground">Available homes are matched to clients and can be recommended by Aria.</p>
-        <div className="space-y-3">
-          <input className={FIELD} placeholder="Street address *" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} aria-label="Street address" />
-          <div className="grid grid-cols-2 gap-2">
-            <input className={FIELD} placeholder="Town *" value={f.town} onChange={(e) => setF({ ...f, town: e.target.value })} aria-label="Town" />
-            <input className={FIELD} placeholder="Price" inputMode="numeric" value={f.price} onChange={(e) => setF({ ...f, price: e.target.value })} aria-label="Price" />
-          </div>
-          <div className="grid grid-cols-3 gap-2">
-            <input className={FIELD} placeholder="Beds" inputMode="numeric" value={f.beds} onChange={(e) => setF({ ...f, beds: e.target.value })} aria-label="Beds" />
-            <input className={FIELD} placeholder="Baths" inputMode="decimal" value={f.baths} onChange={(e) => setF({ ...f, baths: e.target.value })} aria-label="Baths" />
-            <input className={FIELD} placeholder="Sq ft" inputMode="numeric" value={f.sqft} onChange={(e) => setF({ ...f, sqft: e.target.value })} aria-label="Square feet" />
-          </div>
-          <select className={FIELD} value={f.status} onChange={(e) => setF({ ...f, status: e.target.value })} aria-label="Status">
-            {STATUS_OPTIONS.map(([v, l]) => (
-              <option key={v} value={v}>
-                {l}
-              </option>
-            ))}
-          </select>
-          <input className={FIELD} placeholder="Photo URL (optional)" inputMode="url" value={f.photo} onChange={(e) => setF({ ...f, photo: e.target.value })} aria-label="Photo URL" />
-          <textarea className={`${FIELD} resize-none`} rows={3} placeholder="Description (optional)" value={f.description} onChange={(e) => setF({ ...f, description: e.target.value })} aria-label="Description" />
-        </div>
-        <div className="mt-5 flex gap-2">
-          <Button onClick={save} disabled={saving} className="h-12 flex-1 rounded-xl text-body-lg font-semibold">
-            {saving ? "Saving…" : "Save home"}
-          </Button>
-          <Button variant="outline" onClick={onClose} className="h-12 rounded-xl">
-            Cancel
-          </Button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export function PropertiesClient({ initial }: { initial: Property[] }) {
+export function PropertiesClient({
+  initial,
+  mlsSearchHref,
+}: {
+  initial: Property[];
+  /** Set when no MLS feed is connected: "Search NJMLS" opens this site instead of in-app search. */
+  mlsSearchHref: string | null;
+}) {
   const [adding, setAdding] = useState(false);
   // /properties?add=1 (from "Add a property" on the MLS screen) opens the sheet.
   useEffect(() => {
@@ -320,7 +229,13 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
           </div>
           <div className="flex shrink-0 gap-2">
             <Button asChild variant="outline" className="h-9 rounded-full px-4 text-caption font-semibold">
-              <Link href="/listings">Search MLS</Link>
+              {mlsSearchHref ? (
+                <a href={mlsSearchHref} target="_blank" rel="noopener noreferrer">
+                  Search NJMLS <ExternalLink className="size-3.5" />
+                </a>
+              ) : (
+                <Link href="/listings">Search MLS</Link>
+              )}
             </Button>
             <Button onClick={() => setAdding(true)} className="h-9 rounded-full px-4 text-caption font-semibold">
               <Plus className="size-3.5" /> Add
@@ -418,7 +333,7 @@ export function PropertiesClient({ initial }: { initial: Property[] }) {
             </div>
             <p className="font-display text-body text-muted-foreground">
               {initial.length === 0
-                ? "No homes yet. Add one or save a listing from MLS search — Aria matches them to your clients."
+                ? "No homes yet. Add one — paste a Zillow, Realtor.com or NJMLS link, or an MLS # — and Aria matches it to your clients."
                 : "Try adjusting your search or filters."}
             </p>
           </div>

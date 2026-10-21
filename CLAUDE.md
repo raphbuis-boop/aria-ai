@@ -64,7 +64,7 @@ Broad founder or product language should be **decomposed into investigations**, 
   - `POST /api/ai` — General Aria Q&A (max 500 tokens, last 6 message history)
   - `POST /api/ai/draft-text` — Ghost-write SMS (max 150 tokens, saves to `activities` as unapproved AI draft)
   - `analyze-tone`, `cma`, `listing-narrative`, `showing-summary`, `extract-dates`, `market-insight`
-- **`/api/mls/`** — SimplyRETS (Basic Auth). `GET listings` fetches/normalizes; `POST apply-matches` runs matching against active clients.
+- **`/api/mls/`** — SimplyRETS (Basic Auth). `GET listings` fetches/normalizes; `POST apply-matches` runs matching against active clients. Every route that calls SimplyRETS answers `200 { connected: false, reason }` (plus its usual empty shape) when there's no working feed — never 502/503 (`lib/mls-response.ts`). NJMLS IDX branding (`IdxComplianceNotice`, photo marks) renders only when SimplyRETS is configured (`components/MlsStatus.tsx`). Without a feed, homes come in by hand or from a pasted Zillow/Realtor.com/NJMLS link or MLS # (`POST /api/properties/extract` → confirm → `POST /api/properties`, which runs client matching).
 - **`/api/activities/log-send`** — Records a message as sent (insert, or update by `activityId` for an approved draft) after the caller opens an `sms:`/`wa.me` deep link client-side. There is no server-side send.
 - **`/api/automation/`** — Scheduled/triggered automation flows.
 - **`/api/bba/`**, **`/api/bba-templates/`** — Buyer Broker Agreement generation and template management.
@@ -94,6 +94,7 @@ SUPABASE_SERVICE_ROLE_KEY
 ANTHROPIC_API_KEY
 NEXT_PUBLIC_SITE_URL
 SIMPLYRETS_API_KEY / SIMPLYRETS_API_SECRET / SIMPLYRETS_API_URL
+NJMLS_SEARCH_URL                               # optional; "Search NJMLS" link while no MLS feed (default https://www.njmls.com)
 ARIA_SMS_ENABLED=1                             # turn on the Twilio lead flow (default off → draft-only)
 TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN          # Aria SMS lead flow
 TWILIO_FROM_NUMBER (or TWILIO_PHONE_NUMBER) or TWILIO_MESSAGING_SERVICE_SID

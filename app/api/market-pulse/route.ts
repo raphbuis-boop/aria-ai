@@ -7,6 +7,7 @@ import {
   mapSimplyRetsListing,
   SIMPLYRETS_API_BASE,
 } from "@/lib/simplyrets";
+import { mlsNotConnected } from "@/lib/mls-response";
 
 export const dynamic = "force-dynamic";
 
@@ -57,42 +58,45 @@ export async function GET() {
   }
 
   if (!isSimplyRetsConfigured()) {
-    return NextResponse.json(
-      {
-        error: "SimplyRETS not configured",
-        towns: [] as TownPulse[],
-      },
-      { status: 503 },
-    );
+    return mlsNotConnected("not_configured", { towns: [] as TownPulse[] });
   }
 
   const base =
     process.env.SIMPLYRETS_API_URL?.replace(/\/$/, "") ?? SIMPLYRETS_API_BASE;
   const auth = getSimplyRetsAuthHeader();
 
-  async function fetchTown(city: string) {
+  /** Listings for one town, or null when SimplyRETS failed. */
+  async function fetchTown(city: string): Promise<Record<string, unknown>[] | null> {
     const params = new URLSearchParams({
       state: "NJ",
       cities: city,
       status: "Active",
       limit: "200",
     });
-    const res = await fetch(`${base}/properties?${params}`, {
-      headers: { Authorization: auth, Accept: "application/json" },
-      cache: "no-store",
-    });
-    if (!res.ok) {
-      logSimplyRetsFailure("market-pulse", `${base}/properties?${params}`, res, await res.text().catch(() => ""));
-      return [];
+    try {
+      const res = await fetch(`${base}/properties?${params}`, {
+        headers: { Authorization: auth, Accept: "application/json" },
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        logSimplyRetsFailure("market-pulse", `${base}/properties?${params}`, res, await res.text().catch(() => ""));
+        return null;
+      }
+      const data = await res.json();
+      return parseListingsPayload(data) as Record<string, unknown>[];
+    } catch (err) {
+      console.error("[market-pulse] fetch threw", city, err instanceof Error ? err.message : err);
+      return null;
     }
-    const data = await res.json();
-    return parseListingsPayload(data) as Record<string, unknown>[];
   }
 
   const towns: TownPulse[] = [];
+  let failures = 0;
 
   for (const town of NJ_TOWNS) {
-    const currentRaw = await fetchTown(town);
+    const fetched = await fetchTown(town);
+    if (fetched === null) failures++;
+    const currentRaw = fetched ?? [];
     const current = currentRaw.map((r) => mapSimplyRetsListing(r));
     const prices = current.map((l) => l.price).filter((p) => p > 0);
     const doms = current
@@ -122,5 +126,10 @@ export async function GET() {
     });
   }
 
-  return NextResponse.json({ towns });
+  // Every town failed: the feed itself is down or rejecting the credentials.
+  if (failures === NJ_TOWNS.length) {
+    return mlsNotConnected("unavailable", { towns: [] as TownPulse[] });
+  }
+
+  return NextResponse.json({ connected: true, towns });
 }

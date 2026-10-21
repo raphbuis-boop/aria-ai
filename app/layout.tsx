@@ -8,6 +8,8 @@ import { ToastProvider } from "@/components/ToastProvider";
 import { PostHogProvider } from "./providers";
 import { cn } from "@/lib/utils";
 import { THEME_BOOT_SCRIPT } from "@/lib/theme";
+import { MlsStatusProvider } from "@/components/MlsStatus";
+import { isSimplyRetsConfigured } from "@/lib/simplyrets";
 
 const geist = GeistSans;
 
@@ -69,10 +71,12 @@ export default function RootLayout({
 
         <SplashScreen />
         <PostHogProvider>
-          <ToastProvider>
-            {children}
-            <ConditionalComplianceFooter />
-          </ToastProvider>
+          <MlsStatusProvider live={isSimplyRetsConfigured()}>
+            <ToastProvider>
+              {children}
+              <ConditionalComplianceFooter />
+            </ToastProvider>
+          </MlsStatusProvider>
         </PostHogProvider>
       </body>
     </html>

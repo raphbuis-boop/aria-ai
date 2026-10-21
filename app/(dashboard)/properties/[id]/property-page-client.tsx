@@ -115,27 +115,25 @@ export function PropertyPageClient({
           cache: "no-store",
         });
         let data: {
-          listing?: MlsListingPayload;
+          connected?: boolean;
+          listing?: MlsListingPayload | null;
           error?: string;
           code?: string;
         };
         try {
           data = (await res.json()) as typeof data;
         } catch {
-          if (!cancelled) {
-            if (res.status === 502 || res.status === 503) setFeedUnavailable(true);
-            else setLoadError("Invalid response from listing service.");
-          }
+          if (!cancelled) setLoadError("Invalid response from listing service.");
+          return;
+        }
+        // No working MLS feed (not configured, or SimplyRETS not answering).
+        if (data.connected === false) {
+          if (!cancelled) setFeedUnavailable(true);
           return;
         }
         if (!res.ok) {
           if (res.status === 404 || data.code === "LISTING_GONE") {
             if (!cancelled) setNotFound(true);
-            return;
-          }
-          // 503 = no MLS credentials, 502 = SimplyRETS rejecting them.
-          if (res.status === 502 || res.status === 503) {
-            if (!cancelled) setFeedUnavailable(true);
             return;
           }
           const msg =
@@ -365,7 +363,7 @@ export function PropertyPageClient({
         </Link>
       ) : null}
 
-      <PhotoCarousel photos={listing.photos ?? []} className="mb-4" />
+      <PhotoCarousel photos={listing.photos ?? []} className="mb-4" idxMark={mode === "mls" || Boolean(listing.mlsNumber)} />
 
       <h1 className="font-heading text-[28px] leading-tight text-foreground">
         {fmtMoney(listing.price)}

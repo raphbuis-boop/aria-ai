@@ -6,7 +6,9 @@ import { useToast } from "@/components/ToastProvider";
 import type { MlsListingPayload } from "@/lib/simplyrets";
 import type { ParsedSearchFilters } from "@/app/api/ai/search-parse/route";
 import { fmtMoney } from "@/lib/utils";
-import { Bookmark, Search, Sparkles, X } from "lucide-react";
+import { Bookmark, ExternalLink, Link2, Search, Sparkles, X } from "lucide-react";
+import { AddPropertySheet } from "@/components/AddPropertySheet";
+import { Toaster } from "@/components/ui/sonner";
 import { SkeletonCards, SkeletonRegion } from "@/components/Skeleton";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -58,10 +60,8 @@ const SELECT_STYLE = {
   appearance: "none" as const,
 };
 
-/** 503 = no credentials set; 502 = SimplyRETS rejected/failed. Both mean "no working feed". */
-function isFeedUnavailable(status: number | undefined): boolean {
-  return status === 502 || status === 503;
-}
+/** /api/mls/listings answers `{ connected: false }` when there's no working MLS feed. */
+class FeedNotConnected extends Error {}
 
 function buildListingsQuery(sp: URLSearchParams): string {
   const q = new URLSearchParams();
@@ -91,9 +91,15 @@ function buildListingsQuery(sp: URLSearchParams): string {
 
 export function MlsSearchClient({
   variant = "member",
+  mlsConfigured = true,
+  njmlsSearchUrl = "https://www.njmls.com",
 }: {
   /** Public IDX: no CRM actions; listing detail under /property-search/[id]. */
   variant?: "member" | "public";
+  /** SimplyRETS credentials are set (server-side check). False → straight to the not-connected view. */
+  mlsConfigured?: boolean;
+  /** Where "Search NJMLS" goes while the feed isn't connected (NJMLS_SEARCH_URL). */
+  njmlsSearchUrl?: string;
 }) {
   const toast = useToast();
   const router = useRouter();
@@ -107,7 +113,10 @@ export function MlsSearchClient({
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [mlsUnconfigured, setMlsUnconfigured] = useState(false);
+  const [mlsUnconfigured, setMlsUnconfigured] = useState(!mlsConfigured);
+  /** True once the feed has actually answered — IDX branding only shows then. */
+  const [feedLive, setFeedLive] = useState(false);
+  const [addingFromLink, setAddingFromLink] = useState(false);
   const [savedMls, setSavedMls] = useState<Set<string>>(new Set());
   const [matchListing, setMatchListing] = useState<MlsListingPayload | null>(null);
 
@@ -164,17 +173,16 @@ export function MlsSearchClient({
       const res = await fetch(url);
       // A gateway error page isn't JSON — treat it like any other failed status.
       const data = (await res.json().catch(() => ({}))) as {
+        connected?: boolean;
         error?: string;
         listings?: MlsListingPayload[];
         total?: number | null;
         hasMore?: boolean;
         offset?: number;
       };
-      if (!res.ok) {
-        const err = new Error(data.error ?? "Search failed") as Error & { status?: number };
-        err.status = res.status;
-        throw err;
-      }
+      if (data.connected === false) throw new FeedNotConnected();
+      if (!res.ok) throw new Error(data.error ?? "Search failed");
+      setFeedLive(true);
       const batch = data.listings ?? [];
       setTotal(
         typeof data.total === "number" && Number.isFinite(data.total) ? data.total : null,
@@ -198,6 +206,11 @@ export function MlsSearchClient({
   );
 
   useEffect(() => {
+    // No credentials at all: nothing to ask the API.
+    if (!mlsConfigured) {
+      setLoading(false);
+      return;
+    }
     void (async () => {
       setErrorMessage(null);
       setLoading(true);
@@ -207,8 +220,7 @@ export function MlsSearchClient({
         await fetchPage(0, false);
         setMlsUnconfigured(false);
       } catch (e) {
-        const status = (e as { status?: number })?.status;
-        if (isFeedUnavailable(status)) {
+        if (e instanceof FeedNotConnected) {
           // No working MLS feed (not configured, or SimplyRETS rejecting the
           // credentials) — show the connect state, not an error.
           setMlsUnconfigured(true);
@@ -221,7 +233,7 @@ export function MlsSearchClient({
         setLoading(false);
       }
     })();
-  }, [searchParams, fetchPage]);
+  }, [searchParams, fetchPage, mlsConfigured]);
 
   useEffect(() => {
     if (variant === "public") return;
@@ -241,7 +253,7 @@ export function MlsSearchClient({
     try {
       await fetchPage(offset, true);
     } catch (e) {
-      if (isFeedUnavailable((e as { status?: number })?.status)) {
+      if (e instanceof FeedNotConnected) {
         setHasMore(false);
         setMlsUnconfigured(true);
       } else {
@@ -364,8 +376,8 @@ export function MlsSearchClient({
     <div className="min-h-[100dvh] bg-background pb-[130px] text-foreground">
       <div className="mx-auto max-w-lg px-5 pt-6">
 
-        {/* ── IDX compliance (member) ── */}
-        {variant === "member" && (
+        {/* ── IDX compliance (member) — only once a real feed has answered ── */}
+        {variant === "member" && feedLive && !mlsUnconfigured && (
           <div className="mb-4">
             <IdxComplianceNotice />
           </div>
@@ -376,11 +388,13 @@ export function MlsSearchClient({
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h1 className="font-heading text-[34px] leading-tight text-foreground">
-                Property Search
+                {mlsUnconfigured && variant === "member" ? "Properties" : "Property Search"}
               </h1>
-              <p className="mt-0.5 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
-                Live property listings
-              </p>
+              {!mlsUnconfigured ? (
+                <p className="mt-0.5 text-[13px]" style={{ color: "var(--muted-foreground)" }}>
+                  Live property listings
+                </p>
+              ) : null}
               {showingLine && (
                 <p className="mt-1 text-[12px]" style={{ color: "var(--muted-foreground)" }}>
                   {showingLine}
@@ -410,27 +424,30 @@ export function MlsSearchClient({
           <div className="rounded-[18px] border border-border bg-card p-6 text-center">
             <Search size={28} className="mx-auto text-muted-foreground" />
             <p className="mt-3 font-display text-[15px] font-semibold text-foreground">
-              {variant === "member" ? "Connect your MLS feed" : "Listing search is unavailable"}
+              {variant === "member" ? "Find homes on NJMLS, then add them here" : "Listing search is unavailable"}
             </p>
             <p className="mt-1.5 font-display text-[13px] leading-[1.55] text-muted-foreground">
               {variant === "member"
-                ? "Live MLS search isn't connected yet. Add the homes you're working with yourself — Aria matches them to your clients the same way."
+                ? "Search NJMLS in a new tab. When a home fits, paste its link or MLS # here — Aria fills in the details and matches it to your clients."
                 : "Live listings aren't available right now. Please check back later."}
             </p>
             {variant === "member" && (
-              <div className="mt-4 flex flex-wrap justify-center gap-2">
-                <Link
-                  href="/properties?add=1"
-                  className="inline-flex h-10 items-center rounded-full bg-primary px-5 font-display text-[13px] font-semibold text-primary-foreground"
+              <div className="mt-4 flex flex-col items-stretch gap-2 sm:flex-row sm:justify-center">
+                <a
+                  href={njmlsSearchUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-5 font-display text-[14px] font-semibold text-primary-foreground"
                 >
-                  Add a property
-                </Link>
-                <Link
-                  href="/properties"
-                  className="inline-flex h-10 items-center rounded-full border border-input px-5 font-display text-[13px] font-semibold text-foreground"
+                  Search NJMLS <ExternalLink size={14} />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setAddingFromLink(true)}
+                  className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-input px-5 font-display text-[14px] font-semibold text-foreground"
                 >
-                  My properties
-                </Link>
+                  <Link2 size={14} /> Add from link or MLS #
+                </button>
               </div>
             )}
           </div>
@@ -722,13 +739,15 @@ export function MlsSearchClient({
                     </div>
                   )}
                   {/* NJMLS IDX trademark — required on every listing photo per IDX agreement */}
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/IDX_logo.JPG"
-                    alt="NJMLS IDX"
-                    className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
-                    draggable={false}
-                  />
+                  {feedLive ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src="/IDX_logo.JPG"
+                      alt="NJMLS IDX"
+                      className="absolute bottom-2 right-2 h-auto w-20 max-w-[30%] rounded-[4px] bg-paper px-2 py-1 object-contain shadow-sm"
+                      draggable={false}
+                    />
+                  ) : null}
                   {variant === "member" && saved && (
                     <span
                       className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full"
@@ -851,6 +870,9 @@ export function MlsSearchClient({
             listing={matchListing}
           />
         )}
+
+        {addingFromLink ? <AddPropertySheet startWithLink onClose={() => setAddingFromLink(false)} /> : null}
+        {variant === "member" ? <Toaster /> : null}
 
       </div>
     </div>
