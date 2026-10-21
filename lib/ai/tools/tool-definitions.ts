@@ -7,7 +7,7 @@ import type { Tool } from "@anthropic-ai/sdk/resources/messages";
 export const ariaTools: Tool[] = [
   {
     name: "get_client_profile",
-    description: "Get a client's profile information by ID",
+    description: "Get a client's profile information by ID, including their latest WhatsApp messages with the agent",
     input_schema: {
       type: "object",
       properties: {

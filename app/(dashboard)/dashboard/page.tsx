@@ -7,6 +7,7 @@ import { initials } from "@/lib/utils";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
 import { isBulkImported } from "@/lib/client-import";
+import { findAwaitingReplies, loadReplyAlertHours } from "@/lib/whatsapp/followups";
 
 export const dynamic = "force-dynamic";
 
@@ -157,6 +158,9 @@ export default async function DashboardPage() {
     newMatchItems.push({ clientId, propertyAddress: one(row.properties as Rel<{ address: string }>)?.address ?? null });
   }
   const dismissedIds = new Set((dismissedRes.data ?? []).map((r) => String(r.item_id)));
+  const awaitingReplies = activities.some((a) => a.type === "whatsapp")
+    ? findAwaitingReplies(activities, await loadReplyAlertHours(supabase, user.id), now)
+    : [];
   const items = buildTodayItems(
     clients,
     (transactionsRes.data ?? []) as TodayTransaction[],
@@ -170,12 +174,13 @@ export default async function DashboardPage() {
         .filter((r) => r.commission_pct != null)
         .map((r) => [String(r.client_id), Number(r.commission_pct)]),
     ),
+    awaitingReplies,
   )
     .filter((i) => !dismissedIds.has(i.id))
     // Leads in an Aria SMS thread are answered from that thread (Aria's
     // number), not the agent's own Messages app.
     .map((i) =>
-      ariaThreadClientIds.has(i.clientId) && i.actionType === "text"
+      ariaThreadClientIds.has(i.clientId) && i.actionType === "text" && !i.replyChannel
         ? { ...i, actionType: "navigate" as const, navigateTo: `/clients/${i.clientId}#messages` }
         : i,
     );

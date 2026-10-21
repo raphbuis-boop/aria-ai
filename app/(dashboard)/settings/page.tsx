@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { Building2, CalendarDays, ChevronRight, Copy, Download, FileSignature, Inbox, KeyRound, LogOut, Mail, MessageSquare, Mic, Monitor, Moon, PenLine as Pen, RotateCcw, Search, Sun, Trash2, Upload, Webhook } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BbaTemplatesSection } from "@/components/BbaTemplatesSection";
+import { WhatsAppSettings } from "@/components/WhatsAppSettings";
 import { Button } from "@/components/ui/button";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { applyThemePref, readThemePref, type ThemePref } from "@/lib/theme";
@@ -462,6 +463,7 @@ export default function SettingsPage() {
           <TwilioCheckRow />
           </>
           )}
+          <WhatsAppSettings />
           <Row
             Icon={Mail}
             label="Gmail"

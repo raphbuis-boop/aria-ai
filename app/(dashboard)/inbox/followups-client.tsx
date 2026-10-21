@@ -8,6 +8,7 @@ import { CheckCircle2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { TodayItem } from "@/lib/today-items";
 import { DraftSheet } from "@/components/DraftSheet";
+import { WhatsAppUnknownCards } from "@/components/WhatsAppUnknownCards";
 import { Card } from "@/components/ui/card";
 import { Toaster, toast } from "@/components/ui/sonner";
 import { smartTemplateDraft, isGenericAiFallback } from "@/lib/draft-templates";
@@ -126,6 +127,7 @@ export function FollowUpsClient({ items: initialItems, hasClients }: Props) {
             leadScore: item.leadScore,
             activitySignal: item.activitySignal,
             commissionEst: item.commissionEst,
+            replyChannel: item.replyChannel,
           }),
         })
           .then((r) => r.json())
@@ -188,6 +190,8 @@ export function FollowUpsClient({ items: initialItems, hasClients }: Props) {
               <p className="font-display text-body-lg text-muted-foreground">Nothing on the table right now.</p>
             ) : null}
           </header>
+
+          <WhatsAppUnknownCards />
 
           {items.length === 0 && !hasClients ? (
             <div className="flex flex-col items-center text-center rounded-2xl border border-dashed border-border px-6 py-14">

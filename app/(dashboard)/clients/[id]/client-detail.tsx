@@ -14,6 +14,8 @@ import { SendPropertySheet } from "@/components/aria/SendPropertySheet";
 import { statusShortLabel } from "@/lib/client-brief";
 import { fmtPhone, humanizeSource, relTime } from "@/lib/utils";
 import { MessagesThread, type AriaThreadState, type TextMessage } from "./aria-sms-panel";
+import { WhatsAppThread } from "./whatsapp-thread";
+import { firstLine } from "@/lib/whatsapp/followups";
 import {
   BbaAndDocsCard,
   HomesCard,
@@ -97,11 +99,39 @@ export function ClientDetail({ smsEnabled, client, activities, homes, showings, 
     });
   }
 
+  const whatsapp = activities.filter((a) => a.type === "whatsapp");
+  function openWhatsAppReply() {
+    const lastInbound = [...whatsapp].reverse().find((a) => a.direction === "inbound");
+    const waiting = whatsapp.at(-1)?.direction === "inbound";
+    setDrafting({
+      id: `client-wa-${id}`,
+      clientId: id,
+      clientName: name,
+      clientPhone: phone,
+      clientTown: str(client.town),
+      clientBudgetMax: num(client.budget_max),
+      clientStatus: str(client.status),
+      reason: waiting ? "Reply to their WhatsApp message" : "Follow up on your WhatsApp conversation",
+      context: waiting ? firstLine(lastInbound?.body ?? null) : null,
+      actionLabel: waiting ? `Reply to ${firstName}` : `Message ${firstName}`,
+      actionType: "text",
+      navigateTo: null,
+      urgencyRank: 0,
+      leadScore: null,
+      leadHeat: "cold",
+      leadScoreReason: null,
+      activitySignal: null,
+      commissionEst: null,
+      replyChannel: "whatsapp",
+    });
+  }
+
   // Unapproved AI drafts were never sent — they aren't part of the thread.
   const texts: TextMessage[] = activities
     .filter((a) => a.type === "text" && !(a.ai_draft && !a.approved && !a.sent))
     .map((a) => ({ id: a.id, direction: a.direction, body: a.body, sent: Boolean(a.sent), created_at: a.created_at, metadata: a.metadata }));
-  const timeline = activities.filter((a) => a.type !== "text").reverse();
+  // WhatsApp messages have their own thread below the header.
+  const timeline = activities.filter((a) => a.type !== "text" && a.type !== "whatsapp").reverse();
   const lastContact = activities.at(-1)?.created_at ?? null;
 
   const showingRequests = showings
@@ -175,6 +205,10 @@ export function ClientDetail({ smsEnabled, client, activities, homes, showings, 
             ) : null}
           </Card>
         )}
+
+        {whatsapp.length ? (
+          <WhatsAppThread firstName={firstName} messages={whatsapp} onReply={phone ? openWhatsAppReply : null} />
+        ) : null}
 
         <TasksCard tasks={tasks} />
 
