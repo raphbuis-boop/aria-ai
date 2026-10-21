@@ -2,13 +2,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { insertNotification } from "@/lib/notifications";
 import { sendClientSms, type SmsClient } from "@/lib/sms/outbound";
 import { firstNameOf } from "@/lib/sms/lead";
-
-/** The existing public signing page (app/bba/sign/[id]), keyed by client id.
- * It resolves the agent's default brokerage template on its own. */
-export function bbaSigningUrl(clientId: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL ?? "https://getariaai.com").replace(/\/$/, "");
-  return `${base}/bba/sign/${clientId}`;
-}
+import { openAriaTask } from "@/lib/sms/tasks";
+import { bbaSigningUrl, issueBbaRequest, latestOpenBbaRequest } from "@/lib/bba";
 
 export async function hasSignedBba(
   supabase: SupabaseClient,
@@ -23,7 +18,11 @@ export async function hasSignedBba(
   return Boolean(data);
 }
 
-/** Texts the existing BBA signing link, unless the client already signed. */
+/**
+ * Texts the BBA signing link, unless the client already signed. Terms are
+ * always the agent's: Aria reuses the agent's open link, re-issues it with the
+ * same terms if it expired, and asks the agent to set terms if there are none.
+ */
 export async function sendBbaLinkSms(
   supabase: SupabaseClient,
   client: SmsClient & { name: string },
@@ -31,9 +30,32 @@ export async function sendBbaLinkSms(
   if (await hasSignedBba(supabase, client.id)) {
     return { ok: true as const, skipped: "already_signed" as const };
   }
+
+  let request = await latestOpenBbaRequest(supabase, client.id);
+  if (request && new Date(request.expires_at).getTime() <= Date.now()) {
+    const reissued = await issueBbaRequest(supabase, {
+      clientId: client.id,
+      agentId: client.agent_id,
+      commissionPct: Number(request.commission_pct),
+      termStart: request.term_start,
+      termEnd: request.term_end,
+      searchArea: request.search_area,
+    });
+    request = reissued.ok ? reissued.request : null;
+  }
+  if (!request) {
+    await openAriaTask(supabase, {
+      agentId: client.agent_id,
+      clientId: client.id,
+      kind: "aria_handoff",
+      title: `Set ${client.name}'s Buyer Broker Agreement terms so Aria can send the signing link`,
+    });
+    return { ok: false as const, activityId: null, error: "No BBA terms set for this client" };
+  }
+
   const firstName = firstNameOf(client.name);
   // Same copy the agent sends from BbaSection, so clients see one message style.
-  const body = `Hi ${firstName} — before our showing, NJ requires a quick Buyer Broker Agreement. Takes 30 seconds on your phone: ${bbaSigningUrl(client.id)}`;
+  const body = `Hi ${firstName} — before our showing, NJ requires a quick Buyer Broker Agreement. Takes 30 seconds on your phone: ${bbaSigningUrl(request.token)}`;
   return sendClientSms(supabase, client, body, {
     aiDraft: false,
     metadata: { kind: "bba_link" },
@@ -41,7 +63,7 @@ export async function sendBbaLinkSms(
 }
 
 /**
- * Called by POST /api/bba/[clientId] after a signature is stored: tells the
+ * Called by POST /api/bba/sign/[token] after a signature is stored: tells the
  * agent, and thanks the client over SMS if Aria has been texting them.
  */
 export async function onBbaSigned(

@@ -10,6 +10,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
+import { loadLeadScores } from "@/lib/lead-score";
 
 const TZ = "America/New_York";
 const DAY_MS = 86_400_000;
@@ -144,7 +145,6 @@ type ClientRow = {
   name: string | null;
   town: string | null;
   status: string | null;
-  lead_score: number | null;
   budget_min: number | null;
   budget_max: number | null;
   last_engagement_at: string | null;
@@ -168,7 +168,7 @@ async function loadPipeline(supabase: SupabaseClient, agentId: string, now: Date
   const [clientsRes, actsRes] = await Promise.all([
     supabase
       .from("clients")
-      .select("id, name, town, status, lead_score, budget_min, budget_max, last_engagement_at, created_at, source")
+      .select("id, name, town, status, budget_min, budget_max, last_engagement_at, created_at, source")
       .eq("agent_id", agentId)
       .neq("status", "closed"),
     supabase
@@ -187,7 +187,11 @@ async function loadPipeline(supabase: SupabaseClient, agentId: string, now: Date
     if (!lastTouch.has(a.client_id) && isRealTouch(a)) lastTouch.set(a.client_id, a.created_at);
   }
 
-  return ((clientsRes.data ?? []) as ClientRow[]).map((c) => {
+  const clients = (clientsRes.data ?? []) as ClientRow[];
+  // Same computed score the Clients screen shows, not clients.lead_score.
+  const scores = await loadLeadScores(supabase, agentId, clients);
+
+  return clients.map((c) => {
     const touches = [lastTouch.get(c.id), c.last_engagement_at].filter((t): t is string => Boolean(t));
     const latest = touches.length ? Math.max(...touches.map((t) => new Date(t).getTime())) : null;
     return {
@@ -195,7 +199,7 @@ async function loadPipeline(supabase: SupabaseClient, agentId: string, now: Date
       name: (c.name ?? "").trim() || "Client",
       town: c.town,
       status: c.status,
-      leadScore: c.lead_score,
+      leadScore: scores.get(c.id)?.score ?? null,
       budget: fmtBudget(c.budget_min, c.budget_max),
       daysSinceContact: latest === null ? null : Math.max(0, Math.floor((now.getTime() - latest) / DAY_MS)),
       why: "",

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getHottestLeads, getStaleClients, getTodayPriorities } from "@/lib/ai/insights";
+import { loadLeadScores } from "@/lib/lead-score";
 
 export interface ToolContext {
   supabase: SupabaseClient;
@@ -23,7 +24,7 @@ export async function executeTool(
 
       const { data, error } = await supabase
         .from("clients")
-        .select("id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, source")
+        .select("id, name, town, status, budget_min, budget_max, phone, birthday, home_purchase_date, source")
         .eq("id", clientId)
         .eq("agent_id", ctx.agentId)
         .single();
@@ -32,7 +33,12 @@ export async function executeTool(
         return { success: false, error: error.message };
       }
 
-      return { success: true, client: data };
+      // Same computed score the Clients screen shows.
+      const score = (await loadLeadScores(supabase, ctx.agentId, [data])).get(data.id);
+      return {
+        success: true,
+        client: { ...data, lead_score: score?.score ?? null, lead_score_reason: score?.reason ?? null },
+      };
     }
 
     case "search_clients": {
@@ -43,18 +49,23 @@ export async function executeTool(
       // Search by name, town, or other fields
       let builder = supabase
         .from("clients")
-        .select("id, name, town, status, lead_score, budget_min, budget_max")
+        .select("id, name, town, status, budget_min, budget_max")
         .eq("agent_id", ctx.agentId);
       if (q) builder = builder.or(`name.ilike.%${q}%,town.ilike.%${q}%`);
-      const { data, error } = await builder
-        .order("lead_score", { ascending: false, nullsFirst: false })
-        .limit(limit);
+      const { data, error } = await builder;
 
       if (error) {
         return { success: false, error: error.message };
       }
 
-      return { success: true, clients: data };
+      // Hottest first, by the same computed score the Clients screen shows.
+      const scores = await loadLeadScores(supabase, ctx.agentId, data ?? []);
+      const clients = (data ?? [])
+        .map((c) => ({ ...c, lead_score: scores.get(c.id)?.score ?? null }))
+        .sort((a, b) => (b.lead_score ?? -1) - (a.lead_score ?? -1))
+        .slice(0, limit);
+
+      return { success: true, clients };
     }
 
     case "update_client_status": {

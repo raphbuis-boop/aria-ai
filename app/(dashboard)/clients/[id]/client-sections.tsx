@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
+  CalendarDays,
   Check,
   Copy,
   Download,
@@ -29,6 +30,7 @@ import { CLIENT_STATUSES } from "@/lib/client-brief";
 import { fmtMoney, fmtDateTime, formatPhoneE164, relTime } from "@/lib/utils";
 import type { SendableProperty } from "@/components/aria/SendPropertySheet";
 import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
+import { TaskDoneButton } from "@/components/TaskDoneButton";
 import { smsUrl } from "@/lib/messaging-links";
 
 // ── Preferences ────────────────────────────────────────────────────────────
@@ -352,6 +354,26 @@ export type SignedBba = {
   signed_pdf_url: string | null;
 } | null;
 
+/** The agent's open signing link (bba_requests) and the terms behind it. */
+export type BbaLink = {
+  token: string;
+  commission_pct: number;
+  term_start: string;
+  term_end: string;
+  search_area: string | null;
+  expires_at: string;
+} | null;
+
+function ymd(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
+function inMonths(n: number) {
+  const d = new Date();
+  d.setMonth(d.getMonth() + n);
+  return d;
+}
+
 type Doc = { id: string; category: string; file_name: string; uploaded_at: string; signed_url: string | null };
 
 const DOC_CATEGORIES = [
@@ -370,6 +392,7 @@ export function BbaAndDocsCard({
   clientId,
   firstName,
   bba,
+  bbaRequest,
   canText,
   smsEnabled,
   phone,
@@ -377,6 +400,7 @@ export function BbaAndDocsCard({
   clientId: string;
   firstName: string;
   bba: SignedBba;
+  bbaRequest: BbaLink;
   canText: boolean;
   smsEnabled: boolean;
   phone: string | null;
@@ -386,7 +410,44 @@ export function BbaAndDocsCard({
   const [category, setCategory] = useState<string>("other");
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
-  const signingUrl = typeof window === "undefined" ? `/bba/sign/${clientId}` : `${window.location.origin}/bba/sign/${clientId}`;
+  const [link, setLink] = useState<BbaLink>(bbaRequest);
+  const [editingTerms, setEditingTerms] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [terms, setTerms] = useState({
+    commissionPct: bbaRequest ? String(bbaRequest.commission_pct) : "",
+    termStart: bbaRequest?.term_start ?? ymd(new Date()),
+    termEnd: bbaRequest?.term_end ?? ymd(inMonths(6)),
+    searchArea: bbaRequest?.search_area ?? "",
+  });
+  const signingUrl = link
+    ? `${typeof window === "undefined" ? "" : window.location.origin}/bba/sign/${link.token}`
+    : null;
+
+  async function createLink() {
+    setCreating(true);
+    try {
+      const res = await fetch("/api/bba/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clientId,
+          commissionPct: Number(terms.commissionPct),
+          termStart: terms.termStart,
+          termEnd: terms.termEnd,
+          searchArea: terms.searchArea,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? "Couldn't create the link");
+      setLink(json.request as BbaLink);
+      setEditingTerms(false);
+      toast.success("Signing link ready");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't create the link");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   const loadDocs = useCallback(async () => {
     try {
@@ -422,6 +483,7 @@ export function BbaAndDocsCard({
   }
 
   async function textLink() {
+    if (!signingUrl) return;
     const body = `Hi ${firstName} — before we tour, NJ requires a quick Buyer Broker Agreement. It takes 30 seconds on your phone: ${signingUrl}`;
     if (!smsEnabled) {
       if (!phone) return;
@@ -474,11 +536,15 @@ export function BbaAndDocsCard({
                   </a>
                 ) : null}
               </>
-            ) : (
+            ) : link && !editingTerms ? (
               <>
                 <p className="font-display text-caption text-muted-foreground">
+                  {link.commission_pct}% · {link.term_start} → {link.term_end}
+                  {link.search_area ? ` · ${link.search_area}` : ""} · link expires {relTime(link.expires_at)}
+                </p>
+                <p className="mt-1 font-display text-caption text-muted-foreground">
                   {smsEnabled
-                    ? "Aria texts the signing link automatically when you approve a showing."
+                    ? "Aria texts this link when you approve a showing."
                     : `Send ${firstName} the signing link before your first showing.`}
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -492,6 +558,7 @@ export function BbaAndDocsCard({
                     variant="outline"
                     className="rounded-full"
                     onClick={() => {
+                      if (!signingUrl) return;
                       void navigator.clipboard?.writeText(signingUrl).then(
                         () => toast.success("Link copied"),
                         () => toast.error("Couldn't copy"),
@@ -500,6 +567,55 @@ export function BbaAndDocsCard({
                   >
                     <Copy className="size-3.5" /> Copy link
                   </Button>
+                  <Button size="sm" variant="outline" className="rounded-full" onClick={() => setEditingTerms(true)}>
+                    <Pencil className="size-3.5" /> Change terms
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="font-display text-caption text-muted-foreground">
+                  Set the terms {firstName} will sign. The link works once and expires in 7 days
+                  {link ? "; a new link replaces the current one." : "."}
+                </p>
+                <div className="mt-3 grid grid-cols-3 gap-2">
+                  <label className="block">
+                    <span className="font-display text-caption text-muted-foreground">Commission %</span>
+                    <input
+                      inputMode="decimal"
+                      value={terms.commissionPct}
+                      onChange={(e) => setTerms({ ...terms, commissionPct: e.target.value })}
+                      placeholder="2.5"
+                      className={FIELD}
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="font-display text-caption text-muted-foreground">Term start</span>
+                    <input type="date" value={terms.termStart} onChange={(e) => setTerms({ ...terms, termStart: e.target.value })} className={FIELD} />
+                  </label>
+                  <label className="block">
+                    <span className="font-display text-caption text-muted-foreground">Term end</span>
+                    <input type="date" value={terms.termEnd} onChange={(e) => setTerms({ ...terms, termEnd: e.target.value })} className={FIELD} />
+                  </label>
+                </div>
+                <label className="mt-2 block">
+                  <span className="font-display text-caption text-muted-foreground">Search area (optional)</span>
+                  <input
+                    value={terms.searchArea}
+                    onChange={(e) => setTerms({ ...terms, searchArea: e.target.value })}
+                    placeholder="e.g. Bergen County"
+                    className={FIELD}
+                  />
+                </label>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Button size="sm" onClick={createLink} disabled={creating || !terms.commissionPct.trim()} className="rounded-full">
+                    <FileSignature className="size-3.5" /> {creating ? "Creating…" : "Create signing link"}
+                  </Button>
+                  {link ? (
+                    <Button size="sm" variant="outline" className="rounded-full" onClick={() => setEditingTerms(false)}>
+                      Cancel
+                    </Button>
+                  ) : null}
                 </div>
               </>
             )}
@@ -559,6 +675,34 @@ export function BbaAndDocsCard({
             />
           </label>
         </div>
+      </Card>
+    </Section>
+  );
+}
+
+// ── Tasks (every open task for this client) ────────────────────────────────
+
+export type ClientTask = { id: string; title: string; dueAt: string | null; createdAt: string };
+
+export function TasksCard({ tasks }: { tasks: ClientTask[] }) {
+  if (!tasks.length) return null;
+  return (
+    <Section label="Tasks" count={tasks.length}>
+      <Card className="divide-y divide-border overflow-hidden">
+        {tasks.map((t) => (
+          <div key={t.id} className="flex items-center gap-3.5 px-5 py-3.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary">
+              <CalendarDays className="size-3.5 text-muted-foreground" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-display text-body font-semibold text-foreground">{t.title}</p>
+              <p className="font-display text-caption text-muted-foreground">
+                {t.dueAt ? `Due ${relTime(t.dueAt)}` : `Added ${relTime(t.createdAt)}`}
+              </p>
+            </div>
+            <TaskDoneButton taskId={t.id} />
+          </div>
+        ))}
       </Card>
     </Section>
   );

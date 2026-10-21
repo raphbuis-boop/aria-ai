@@ -9,6 +9,7 @@
 //                       /api/ai/assistant — Ask Aria).
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { loadLeadScores } from "@/lib/lead-score";
 
 export type GroundingMode = "chat" | "voice";
 
@@ -19,6 +20,7 @@ type ClientRow = {
   name: string;
   town: string | null;
   status: string | null;
+  /** Computed by loadLeadScores (lib/lead-score.ts), not the clients column. */
   lead_score: number | null;
   budget_min: number | null;
   budget_max: number | null;
@@ -114,14 +116,12 @@ export async function fetchAgentSnapshot(
       .eq("id", agentId)
       .maybeSingle(),
 
-    // Closed clients aren't leads; null scores sort last, not first.
+    // Closed clients aren't leads. Ranked by computed lead score below.
     supabase
       .from("clients")
-      .select("id, name, town, status, lead_score, budget_min, budget_max, last_engagement_at")
+      .select("id, name, town, status, budget_min, budget_max, last_engagement_at")
       .eq("agent_id", agentId)
-      .neq("status", "closed")
-      .order("lead_score", { ascending: false, nullsFirst: false })
-      .limit(10),
+      .neq("status", "closed"),
 
     supabase
       .from("showings")
@@ -135,7 +135,7 @@ export async function fetchAgentSnapshot(
 
     supabase
       .from("activities")
-      .select("client_id, clients(name, lead_score, status)", { count: "exact" })
+      .select("client_id, clients(name, status)", { count: "exact" })
       .eq("agent_id", agentId)
       .eq("ai_draft", true)
       .eq("approved", false)
@@ -162,9 +162,16 @@ export async function fetchAgentSnapshot(
       ? (profileRes.value.data?.full_name ?? "Agent")
       : "Agent";
 
-  const clients = (
+  // Top 10 by the same computed score the Clients screen shows (not the
+  // clients.lead_score column, which nothing keeps up to date).
+  const activeClients = (
     clientsRes.status === "fulfilled" ? (clientsRes.value.data ?? []) : []
-  ) as ClientRow[];
+  ) as Omit<ClientRow, "lead_score">[];
+  const scores = await loadLeadScores(supabase, agentId, activeClients);
+  const clients: ClientRow[] = activeClients
+    .map((c) => ({ ...c, lead_score: scores.get(c.id)?.score ?? null }))
+    .sort((a, b) => (b.lead_score ?? -1) - (a.lead_score ?? -1))
+    .slice(0, 10);
 
   const showings = (
     showingsRes.status === "fulfilled" ? (showingsRes.value.data ?? []) : []
@@ -206,7 +213,7 @@ export async function fetchAgentSnapshot(
     }
   }
 
-  type DraftClient = { name: string | null; lead_score: number | null; status: string | null };
+  type DraftClient = { name: string | null; status: string | null };
   type DraftRow = { client_id: string; clients: DraftClient | DraftClient[] | null };
   const draftRows = (
     pendingDraftsRes.status === "fulfilled" ? (pendingDraftsRes.value.data ?? []) : []
@@ -216,7 +223,7 @@ export async function fetchAgentSnapshot(
     const c = Array.isArray(d.clients) ? d.clients[0] : d.clients;
     if (!draftClients.has(d.client_id)) {
       // Past (closed) clients rank after the active pipeline.
-      const score = (c?.lead_score ?? -1) - (c?.status === "closed" ? 100 : 0);
+      const score = c?.status === "closed" ? -100 : (scores.get(d.client_id)?.score ?? -1);
       draftClients.set(d.client_id, { name: c?.name ?? "a client", score });
     }
   }

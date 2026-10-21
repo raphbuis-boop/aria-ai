@@ -3,7 +3,7 @@
 import SignatureCanvas from "react-signature-canvas";
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import {
   Check,
   Download,
@@ -27,18 +27,21 @@ function PdfLoading() {
 }
 
 type Loaded = {
-  client: { id: string; name: string };
+  client: { name: string };
   agent: { name: string };
-  bba: {
-    id: string;
-    signed_at: string;
+  /** Set by the agent; the buyer can only read them. */
+  terms: {
     commission_pct: number;
     term_start: string;
     term_end: string;
     search_area: string | null;
-    agent_name: string;
-    client_name: string;
-    template_id: string | null;
+  };
+  expires_at: string;
+  bba: {
+    signed_at: string;
+    commission_pct: number;
+    term_start: string;
+    term_end: string;
   } | null;
   signed_pdf_url: string | null;
   template: {
@@ -49,20 +52,9 @@ type Loaded = {
   } | null;
 };
 
-function addMonths(date: Date, n: number) {
-  const d = new Date(date);
-  d.setMonth(d.getMonth() + n);
-  return d;
-}
-function toYmd(d: Date) {
-  return d.toISOString().slice(0, 10);
-}
-
 export default function SignBbaPage() {
-  const params = useParams<{ id: string }>();
-  const search = useSearchParams();
-  const clientId = params?.id;
-  const templateOverride = search?.get("template");
+  const params = useParams<{ token: string }>();
+  const token = params?.token;
   const sigRef = useRef<SignatureCanvas | null>(null);
   const wrapRef = useRef<HTMLDivElement | null>(null);
   const [data, setData] = useState<Loaded | null>(null);
@@ -70,26 +62,17 @@ export default function SignBbaPage() {
   const [error, setError] = useState<string | null>(null);
   const [pdfWidth, setPdfWidth] = useState(540);
 
-  const today = new Date();
-  const [form, setForm] = useState({
-    clientName: "",
-    agentName: "",
-    commissionPct: "2.5",
-    termStart: toYmd(today),
-    termEnd: toYmd(addMonths(today, 6)),
-    searchArea: "",
-  });
+  const [clientName, setClientName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<{ signedPdfUrl: string | null } | null>(
     null,
   );
 
   useEffect(() => {
-    if (!clientId) return;
+    if (!token) return;
     (async () => {
       try {
-        const qs = templateOverride ? `?template=${templateOverride}` : "";
-        const res = await fetch(`/api/bba/${clientId}${qs}`, {
+        const res = await fetch(`/api/bba/sign/${encodeURIComponent(token)}`, {
           cache: "no-store",
         });
         const json = (await res.json()) as Loaded | { error: string };
@@ -99,18 +82,14 @@ export default function SignBbaPage() {
           return;
         }
         setData(json);
-        setForm((f) => ({
-          ...f,
-          clientName: json.client.name,
-          agentName: json.agent.name,
-        }));
+        setClientName(json.client.name);
         setLoading(false);
       } catch {
         setError("Network error");
         setLoading(false);
       }
     })();
-  }, [clientId, templateOverride]);
+  }, [token]);
 
   // Track container width for PDF rendering.
   useEffect(() => {
@@ -148,13 +127,13 @@ export default function SignBbaPage() {
   }
 
   async function submit() {
-    if (!clientId) return;
+    if (!token) return;
     const pad = sigRef.current;
     if (!pad || pad.isEmpty()) {
       setError("Please draw your signature to continue.");
       return;
     }
-    if (!form.clientName.trim()) {
+    if (!clientName.trim()) {
       setError("Please enter your full legal name.");
       return;
     }
@@ -162,19 +141,10 @@ export default function SignBbaPage() {
     setSubmitting(true);
     try {
       const signatureData = pad.getCanvas().toDataURL("image/png");
-      const res = await fetch(`/api/bba/${clientId}`, {
+      const res = await fetch(`/api/bba/sign/${encodeURIComponent(token)}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientName: form.clientName,
-          agentName: form.agentName,
-          commissionPct: Number(form.commissionPct || 2.5),
-          termStart: form.termStart,
-          termEnd: form.termEnd,
-          searchArea: form.searchArea,
-          signatureData,
-          templateId: data?.template?.id ?? null,
-        }),
+        body: JSON.stringify({ clientName, signatureData }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -221,9 +191,9 @@ export default function SignBbaPage() {
             Agreement signed
           </h1>
           <p className="text-[13px] text-muted-foreground mb-6">
-            Thanks, {form.clientName.split(" ")[0] || "there"}. Your Buyer Broker
-            Agreement has been sent to {form.agentName}. A copy is saved on
-            file.
+            Thanks, {clientName.split(" ")[0] || "there"}. Your Buyer Broker
+            Agreement has been sent to {data?.agent.name ?? "your agent"}. A
+            copy is saved on file.
           </p>
           {done.signedPdfUrl ? (
             <a
@@ -241,6 +211,8 @@ export default function SignBbaPage() {
   }
 
   const already = data?.bba;
+  const terms = data?.terms;
+  const agentName = data?.agent.name ?? "Agent";
   const templateUrl = data?.template?.url ?? null;
   const templateName = data?.template?.name ?? null;
 
@@ -318,22 +290,20 @@ export default function SignBbaPage() {
             </p>
             <p>
               <span className="text-foreground">
-                {form.clientName || "Client"}
+                {clientName || "Client"}
               </span>{" "}
               (&ldquo;Buyer&rdquo;) engages{" "}
-              <span className="text-foreground">
-                {form.agentName || "Agent"}
-              </span>{" "}
+              <span className="text-foreground">{agentName}</span>{" "}
               as exclusive buyer-representative for the purchase of residential
               real property in{" "}
               <span className="text-foreground">
-                {form.searchArea || "New Jersey"}
+                {terms?.search_area || "New Jersey"}
               </span>
               . Buyer agrees to a broker compensation of{" "}
-              <span className="text-foreground">{form.commissionPct}%</span> of
+              <span className="text-foreground">{terms?.commission_pct}%</span> of
               the gross purchase price, payable at closing, for the term{" "}
-              <span className="text-foreground">{form.termStart}</span> through{" "}
-              <span className="text-foreground">{form.termEnd}</span>. Agent
+              <span className="text-foreground">{terms?.term_start}</span> through{" "}
+              <span className="text-foreground">{terms?.term_end}</span>. Agent
               agrees to represent Buyer&apos;s interests with undivided loyalty,
               full disclosure, and confidentiality as required by New Jersey
               real estate law and the REALTOR® Code of Ethics.
@@ -346,57 +316,42 @@ export default function SignBbaPage() {
           </div>
         )}
 
-        {/* Editable fields */}
+        {/* Terms are set by the agent and can't be changed here. */}
+        <div className="mt-5 rounded-[14px] border-[0.5px] border-border bg-card px-4 py-3">
+          <p className="mb-2 text-[10px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
+            Terms set by your agent
+          </p>
+          <dl className="grid grid-cols-2 gap-x-3 gap-y-2 text-[13px]">
+            <ReadOnly label="Agent" value={agentName} />
+            <ReadOnly label="Commission" value={terms ? `${terms.commission_pct}%` : "—"} />
+            <ReadOnly label="Term start" value={terms?.term_start ?? "—"} />
+            <ReadOnly label="Term end" value={terms?.term_end ?? "—"} />
+            <ReadOnly label="Search area" value={terms?.search_area || "New Jersey"} />
+            <ReadOnly
+              label="Link expires"
+              value={
+                data
+                  ? new Date(data.expires_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "—"
+              }
+            />
+          </dl>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            If anything here looks wrong, ask {agentName} for a new link
+            before signing.
+          </p>
+        </div>
+
         <div className="mt-5 space-y-3">
           <Field label="Your full legal name">
             <input
-              value={form.clientName}
-              onChange={(e) => setForm({ ...form, clientName: e.target.value })}
+              value={clientName}
+              onChange={(e) => setClientName(e.target.value)}
               className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
               autoComplete="name"
-            />
-          </Field>
-          <Field label="Agent name">
-            <input
-              value={form.agentName}
-              onChange={(e) => setForm({ ...form, agentName: e.target.value })}
-              className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
-            />
-          </Field>
-          <div className="grid grid-cols-3 gap-2">
-            <Field label="Commission %">
-              <input
-                inputMode="decimal"
-                value={form.commissionPct}
-                onChange={(e) =>
-                  setForm({ ...form, commissionPct: e.target.value })
-                }
-                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40"
-              />
-            </Field>
-            <Field label="Term start">
-              <input
-                type="date"
-                value={form.termStart}
-                onChange={(e) => setForm({ ...form, termStart: e.target.value })}
-                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
-              />
-            </Field>
-            <Field label="Term end">
-              <input
-                type="date"
-                value={form.termEnd}
-                onChange={(e) => setForm({ ...form, termEnd: e.target.value })}
-                className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none"
-              />
-            </Field>
-          </div>
-          <Field label="Search area">
-            <input
-              value={form.searchArea}
-              onChange={(e) => setForm({ ...form, searchArea: e.target.value })}
-              placeholder="e.g. Bergen County, Westfield, Ridgewood"
-              className="w-full rounded-[10px] border border-input bg-background px-3 py-2.5 text-[14px] text-foreground outline-none focus:border-primary/40 placeholder:text-muted-foreground"
             />
           </Field>
         </div>
@@ -455,6 +410,17 @@ export default function SignBbaPage() {
           Powered by Aria · NJ Buyer Broker compliance
         </p>
       </div>
+    </div>
+  );
+}
+
+function ReadOnly({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <dt className="text-[10px] font-bold uppercase tracking-[1.2px] text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="truncate text-foreground">{value}</dd>
     </div>
   );
 }
