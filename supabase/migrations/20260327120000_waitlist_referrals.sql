@@ -1,4 +1,17 @@
 -- Waitlist referral columns + public count RPC for landing page (anon can execute RPC only).
+
+-- The base table used to live outside migrations (supabase/waitlist.sql), so a
+-- fresh database failed here. Created idempotently; a no-op where it exists.
+create table if not exists public.waitlist (
+  id uuid primary key default gen_random_uuid(),
+  email text unique not null,
+  created_at timestamptz default now()
+);
+
+-- Service role bypasses RLS; there are no public policies (server-side inserts
+-- only; anon reads the aggregate count through waitlist_public_stats()).
+alter table public.waitlist enable row level security;
+
 alter table public.waitlist add column if not exists referral_code text;
 alter table public.waitlist add column if not exists referral_count int not null default 0;
 alter table public.waitlist add column if not exists referred_by text;

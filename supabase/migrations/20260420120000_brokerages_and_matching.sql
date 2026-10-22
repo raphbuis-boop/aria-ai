@@ -22,6 +22,19 @@ create index if not exists brokerages_owner_idx
 
 alter table public.brokerages enable row level security;
 
+-- agent_profiles.brokerage_id must exist before the policies below reference
+-- it (it used to be added further down, which made this file fail on a fresh
+-- database).
+-- ---------------------------------------------------------------------------
+-- agent_profiles.brokerage_id
+-- ---------------------------------------------------------------------------
+alter table public.agent_profiles
+  add column if not exists brokerage_id uuid references public.brokerages(id)
+    on delete set null;
+
+create index if not exists agent_profiles_brokerage_idx
+  on public.agent_profiles (brokerage_id);
+
 drop policy if exists brokerages_member_select on public.brokerages;
 drop policy if exists brokerages_owner_write on public.brokerages;
 
@@ -42,16 +55,6 @@ create policy brokerages_owner_write on public.brokerages
   for all
   using (owner_agent_id = auth.uid())
   with check (owner_agent_id = auth.uid());
-
--- ---------------------------------------------------------------------------
--- agent_profiles.brokerage_id
--- ---------------------------------------------------------------------------
-alter table public.agent_profiles
-  add column if not exists brokerage_id uuid references public.brokerages(id)
-    on delete set null;
-
-create index if not exists agent_profiles_brokerage_idx
-  on public.agent_profiles (brokerage_id);
 
 -- ---------------------------------------------------------------------------
 -- clients.brokerage_id (future-proofing; matching still scopes by agent_id)
