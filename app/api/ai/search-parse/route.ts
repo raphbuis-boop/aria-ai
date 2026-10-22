@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { callClaude, getAnthropic, safeJsonParse } from "@/lib/ai";
-import { NJ_TOWN_OPTIONS, normalizeTown } from "@/lib/nj-towns";
+import { canonicalTown } from "@/lib/nj-towns";
 
 // Public — the client-facing /property-search portal also uses this, and it
 // carries no sensitive data (NL text in, structured filters out).
 export const dynamic = "force-dynamic";
 
 const PROPERTY_TYPES = ["Residential", "Condo", "Multi-Family", "Townhouse", "Land"] as const;
-const KNOWN_TOWNS = new Set<string>(NJ_TOWN_OPTIONS);
 
 export type ParsedSearchFilters = {
   towns: string[];
@@ -84,8 +83,9 @@ export async function POST(req: Request) {
           new Set(
             parsed.towns
               .filter((t): t is string => typeof t === "string")
-              .map((t) => normalizeTown(t))
-              .filter((t) => t && KNOWN_TOWNS.has(t)),
+              // Display names ("Montclair"), as the search UIs and MLS expect.
+              .map((t) => canonicalTown(t))
+              .filter((t): t is NonNullable<typeof t> => t !== null),
           ),
         ).slice(0, 5)
       : [];

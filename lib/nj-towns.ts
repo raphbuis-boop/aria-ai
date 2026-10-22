@@ -67,6 +67,13 @@ export function normalizeTown(raw: string | null | undefined): string {
     .trim();
 }
 
+const TOWN_BY_KEY = new Map<string, NjTown>(NJ_TOWN_OPTIONS.map((t) => [normalizeTown(t), t]));
+
+/** The display name of a supported NJ town ("montclair, nj" → "Montclair"), or null. */
+export function canonicalTown(raw: string | null | undefined): NjTown | null {
+  return TOWN_BY_KEY.get(normalizeTown(raw)) ?? null;
+}
+
 // Adjacency is expressed using normalized keys/values so lookups are simple.
 // Each town lists its geographically-adjacent towns (border-sharing or one
 // short drive away) within the same broad market. Bidirectional where
