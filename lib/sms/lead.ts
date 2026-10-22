@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { formatPhoneE164 } from "@/lib/utils";
 import { insertNotification } from "@/lib/notifications";
+import { emailAgentAboutLead } from "@/lib/lead-alerts";
 import { draftFirstTouchSms } from "@/lib/sms/conversation";
 import { sendClientSms, type SendResult } from "@/lib/sms/outbound";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
@@ -167,6 +168,14 @@ export async function ingestLead(
       title: created ? `New lead: ${client.name}` : `${client.name} inquired again`,
       body: inquiry || `Source: ${sourceLabel(input.source)}.`,
       related_client_id: client.id,
+    });
+    await emailAgentAboutLead(supabase, {
+      agentId: client.agent_id,
+      clientId: client.id,
+      clientName: client.name,
+      sourceLabel: sourceLabel(input.source),
+      inquiry: inquiry || null,
+      isNew: created,
     });
   }
 

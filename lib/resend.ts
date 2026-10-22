@@ -106,3 +106,34 @@ export function engagementAlertEmail(opts: {
 </body>
 </html>`;
 }
+
+/** Sent the moment a lead arrives — the agent's first-five-minutes alert. */
+export function newLeadEmail(opts: {
+  clientName: string;
+  sourceLabel: string;
+  inquiry: string | null;
+  clientUrl: string;
+  isNew: boolean;
+}): string {
+  const heading = opts.isNew
+    ? `New lead from ${escapeHtml(opts.sourceLabel)}`
+    : `${escapeHtml(opts.clientName)} reached out again`;
+  return `
+<!DOCTYPE html>
+<html>
+<body style="font-family:-apple-system,Segoe UI,sans-serif;background:#FAF6EE;color:#1C1C1A;padding:32px;max-width:520px;margin:0 auto;">
+  <div style="background:#FFFFFF;border:1px solid #E8E1D3;border-radius:16px;padding:28px;">
+    <p style="color:#1F5C46;font-size:13px;font-weight:600;margin:0 0 12px;text-transform:uppercase;letter-spacing:.08em;">${heading}</p>
+    <h2 style="font-size:22px;margin:0 0 12px;">${escapeHtml(opts.clientName)}</h2>
+    ${opts.inquiry ? `<p style="font-size:15px;line-height:1.5;margin:0 0 20px;color:#3A3A36;">${escapeHtml(opts.inquiry)}</p>` : ""}
+    <p style="font-size:13px;color:#6B6A63;margin:0 0 20px;">Leads answered in the first few minutes convert far more often. Aria has their details ready.</p>
+    <a href="${escapeHtml(opts.clientUrl)}"
+       style="display:inline-block;background:#1F5C46;color:#FFFFFF;font-size:14px;font-weight:600;padding:12px 20px;border-radius:10px;text-decoration:none;">
+      Open ${escapeHtml(opts.clientName)} in Aria →
+    </a>
+  </div>
+  <p style="color:#9A978C;font-size:11px;margin-top:20px;text-align:center;">Aria · getariaai.com</p>
+</body>
+</html>`;
+}
+

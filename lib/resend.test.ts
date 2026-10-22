@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { engagementAlertEmail, escapeHtml, showingReminderEmail } from "@/lib/resend";
+import { engagementAlertEmail, escapeHtml, newLeadEmail, showingReminderEmail } from "@/lib/resend";
 
 describe("email templates", () => {
   it("escapes lead-supplied text", () => {
@@ -23,5 +23,18 @@ describe("email templates", () => {
     });
     expect(reminder).not.toContain("<img src=x");
     expect(reminder).toContain("You have a showing today");
+  });
+
+  it("escapes lead text in the new-lead alert", () => {
+    const html = newLeadEmail({
+      clientName: "<b>Dana</b>",
+      sourceLabel: "Zillow",
+      inquiry: "<script>alert(1)</script>",
+      clientUrl: "https://app.example/clients/1",
+      isNew: true,
+    });
+    expect(html).not.toContain("<script>");
+    expect(html).not.toContain("<b>Dana</b>");
+    expect(html).toContain("New lead from Zillow");
   });
 });

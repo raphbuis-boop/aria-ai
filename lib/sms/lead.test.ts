@@ -7,9 +7,14 @@ vi.mock("@/lib/sms/conversation", () => ({
 vi.mock("@/lib/sms/outbound", () => ({
   sendClientSms: vi.fn(async () => ({ ok: true, activityId: "act-1", sid: "SM1" })),
 }));
+vi.mock("@/lib/resend", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/resend")>()),
+  sendEmail: vi.fn(async () => {}),
+}));
 
 const { ingestLead, sendFirstTouch } = await import("@/lib/sms/lead");
 const { sendClientSms } = await import("@/lib/sms/outbound");
+const { sendEmail } = await import("@/lib/resend");
 
 const AGENT = "agent-1";
 
@@ -35,7 +40,7 @@ describe("lead SMS consent", () => {
   });
 
   it("creates but never texts a lead whose source didn't say it consented", async () => {
-    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent" }] });
+    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }] });
     const result = await ingestLead(client, lead());
 
     expect(result.created).toBe(true);
@@ -46,7 +51,7 @@ describe("lead SMS consent", () => {
   });
 
   it("texts a consenting lead and marks them contacted", async () => {
-    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent" }] });
+    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }] });
     const result = await ingestLead(client, lead({ autoText: true }));
 
     expect(result.firstText).toMatchObject({ ok: true });
@@ -64,6 +69,42 @@ describe("lead SMS consent", () => {
   });
 });
 
+describe("new lead alerts", () => {
+  beforeEach(() => {
+    vi.mocked(sendEmail).mockClear();
+  });
+
+  it("emails the agent a link to the lead the moment it arrives", async () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://app.example");
+    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }] });
+    await ingestLead(client, lead());
+
+    expect(sendEmail).toHaveBeenCalledOnce();
+    const mail = vi.mocked(sendEmail).mock.calls[0][0];
+    expect(mail.to).toBe("sam@brokerage.test");
+    expect(mail.subject).toBe("New Zillow lead: Dana Buyer");
+    expect(mail.html).toContain(`https://app.example/clients/${db.clients[0].id}`);
+    expect(mail.html).toContain("Is 14 Elm still available?");
+    vi.unstubAllEnvs();
+  });
+
+  it("doesn't email agents about clients they typed in themselves", async () => {
+    const { client } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }] });
+    await ingestLead(client, lead({ source: "manual" }));
+    expect(sendEmail).not.toHaveBeenCalled();
+  });
+
+  it("still creates the lead when the alert can't be sent", async () => {
+    vi.mocked(sendEmail).mockImplementationOnce(async () => {
+      throw new Error("Resend down");
+    });
+    const { client, db } = fakeSupabase({ agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }] });
+    const result = await ingestLead(client, lead());
+    expect(result.created).toBe(true);
+    expect(db.clients).toHaveLength(1);
+  });
+});
+
 describe("sendFirstTouch (Start Aria on an existing client)", () => {
   beforeEach(() => {
     process.env.ARIA_SMS_ENABLED = "1";
@@ -78,7 +119,7 @@ describe("sendFirstTouch (Start Aria on an existing client)", () => {
   it("texts an existing client who has no text thread yet", async () => {
     const { client, db } = fakeSupabase({
       clients: [{ ...existing, status: "new" }],
-      agent_profiles: [{ id: AGENT, full_name: "Sam Agent" }],
+      agent_profiles: [{ id: AGENT, full_name: "Sam Agent", email: "sam@brokerage.test" }],
     });
     const result = await sendFirstTouch(client, existing, { source: "manual" });
     expect(result).toMatchObject({ ok: true });
