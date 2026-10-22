@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { google, calendar_v3 } from "googleapis";
-import { makeOAuth2Client } from "@/lib/gmail";
+import { getGoogleAuth } from "@/lib/gmail";
+import { DEFAULT_TIME_ZONE } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -13,60 +13,12 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabase = createAdminClient();
-    
-    // Get the Google integration for this user
-    const { data: integration, error } = await supabase
-      .from("gmail_integrations")
-      .select("access_token, refresh_token, token_expiry")
-      .eq("agent_id", user.id)
-      .single();
-
-    if (error || !integration) {
-      return NextResponse.json(
-        { error: "Google account not connected" }, 
-        { status: 400 }
-      );
+    // Decrypts and, when needed, refreshes the stored tokens.
+    const googleAuth = await getGoogleAuth(user.id);
+    if (!googleAuth) {
+      return NextResponse.json({ error: "Google account not connected" }, { status: 400 });
     }
-
-    // Create OAuth2 client and set credentials
-    const auth = makeOAuth2Client();
-    auth.setCredentials({
-      access_token: integration.access_token,
-      refresh_token: integration.refresh_token,
-      expiry_date: new Date(integration.token_expiry).getTime(),
-    });
-
-    // Auto-refresh if expired (or within 60s of expiry)
-    const expiryMs = new Date(integration.token_expiry).getTime();
-    if (Date.now() >= expiryMs - 60_000) {
-      try {
-        const { credentials } = await auth.refreshAccessToken();
-        auth.setCredentials(credentials);
-
-        if (credentials.access_token) {
-          await supabase
-            .from("gmail_integrations")
-            .update({
-              access_token: credentials.access_token,
-              token_expiry: new Date(credentials.expiry_date ?? Date.now() + 3600_000).toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("agent_id", user.id);
-        }
-      } catch (err) {
-        // Never log the raw Gaxios error: it embeds the refresh token.
-        console.error(
-          "[calendar] token refresh failed for agent",
-          user.id,
-          err instanceof Error ? err.message : "unknown error",
-        );
-        return NextResponse.json(
-          { error: "Failed to refresh Google token" }, 
-          { status: 401 }
-        );
-      }
-    }
+    const { auth } = googleAuth;
 
     // Create Google Calendar API client
     const calendar = google.calendar({ version: "v3", auth });
@@ -104,7 +56,8 @@ export async function GET() {
 
     return NextResponse.json({ events: simplifiedEvents });
   } catch (error) {
-    console.error("[calendar/events] Error fetching calendar events:", error);
+    // Message only: the raw Google client error embeds the refresh token.
+    console.error("[calendar/events] fetching events failed:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json(
       { error: "Failed to fetch calendar events" }, 
       { status: 500 }
@@ -119,21 +72,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const supabase = createAdminClient();
-    
-    // Get the Google integration for this user
-    const { data: integration, error } = await supabase
-      .from("gmail_integrations")
-      .select("access_token, refresh_token, token_expiry")
-      .eq("agent_id", user.id)
-      .single();
-
-    if (error || !integration) {
-      return NextResponse.json(
-        { error: "Google account not connected" }, 
-        { status: 400 }
-      );
+    // Decrypts and, when needed, refreshes the stored tokens.
+    const googleAuth = await getGoogleAuth(user.id);
+    if (!googleAuth) {
+      return NextResponse.json({ error: "Google account not connected" }, { status: 400 });
     }
+    const { auth } = googleAuth;
 
     // Parse request body
     const { title, description, startTime, endTime, location, attendees } = await request.json();
@@ -145,45 +89,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Create OAuth2 client and set credentials
-    const auth = makeOAuth2Client();
-    auth.setCredentials({
-      access_token: integration.access_token,
-      refresh_token: integration.refresh_token,
-      expiry_date: new Date(integration.token_expiry).getTime(),
-    });
-
-    // Auto-refresh if expired (or within 60s of expiry)
-    const expiryMs = new Date(integration.token_expiry).getTime();
-    if (Date.now() >= expiryMs - 60_000) {
-      try {
-        const { credentials } = await auth.refreshAccessToken();
-        auth.setCredentials(credentials);
-
-        if (credentials.access_token) {
-          await supabase
-            .from("gmail_integrations")
-            .update({
-              access_token: credentials.access_token,
-              token_expiry: new Date(credentials.expiry_date ?? Date.now() + 3600_000).toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("agent_id", user.id);
-        }
-      } catch (err) {
-        // Never log the raw Gaxios error: it embeds the refresh token.
-        console.error(
-          "[calendar] token refresh failed for agent",
-          user.id,
-          err instanceof Error ? err.message : "unknown error",
-        );
-        return NextResponse.json(
-          { error: "Failed to refresh Google token" }, 
-          { status: 401 }
-        );
-      }
-    }
-
     // Create Google Calendar API client
     const calendar = google.calendar({ version: "v3", auth });
 
@@ -193,11 +98,12 @@ export async function POST(request: Request) {
       description: description || "",
       start: {
         dateTime: startTime,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        // The agent's zone, not the server's (UTC).
+        timeZone: DEFAULT_TIME_ZONE,
       },
       end: {
         dateTime: endTime,
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timeZone: DEFAULT_TIME_ZONE,
       },
       ...(location && { location }),
       ...(attendees && attendees.length > 0 && {
@@ -215,7 +121,8 @@ export async function POST(request: Request) {
       event: createdEvent.data 
     });
   } catch (error) {
-    console.error("[calendar/events] Error creating calendar event:", error);
+    // Message only: the raw Google client error embeds the refresh token.
+    console.error("[calendar/events] creating event failed:", error instanceof Error ? error.message : "unknown error");
     return NextResponse.json(
       { error: "Failed to create calendar event" }, 
       { status: 500 }

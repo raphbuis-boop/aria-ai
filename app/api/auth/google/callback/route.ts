@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { makeOAuth2Client, gmailFor, GOOGLE_OAUTH_COOKIE } from "@/lib/gmail";
+import { openToken, sealToken } from "@/lib/token-crypto";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
@@ -71,7 +72,7 @@ export async function GET(req: NextRequest) {
         .select("refresh_token")
         .eq("agent_id", agentId)
         .maybeSingle();
-      refreshToken = (existing?.refresh_token as string | undefined) ?? null;
+      refreshToken = existing?.refresh_token ? openToken(existing.refresh_token as string) : null;
     }
     if (!tokens.access_token || !refreshToken) {
       console.error("[google/callback] missing tokens from Google");
@@ -82,8 +83,9 @@ export async function GET(req: NextRequest) {
       {
         agent_id: agentId,
         email,
-        access_token: tokens.access_token,
-        refresh_token: refreshToken,
+        // Encrypted at rest when GOOGLE_TOKEN_ENCRYPTION_KEY is set.
+        access_token: sealToken(tokens.access_token),
+        refresh_token: sealToken(refreshToken),
         token_expiry: new Date(tokens.expiry_date ?? Date.now() + 3600_000).toISOString(),
         scope: tokens.scope ?? null,
         updated_at: new Date().toISOString(),

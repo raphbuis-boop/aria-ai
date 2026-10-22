@@ -107,6 +107,7 @@ LEAD_WEBHOOK_SECRET                            # bearer token for external lead 
 LEAD_DEFAULT_AGENT_ID                          # agent for website/Meta/text-in leads (unset → not auto-created)
 META_APP_SECRET / META_VERIFY_TOKEN / META_PAGE_ACCESS_TOKEN / META_LEAD_AGENT_ID?  # /api/leads/meta
 GOOGLE_CALENDAR_WRITE=1                        # request calendar.events so approved showings go on Google Calendar
+GOOGLE_TOKEN_ENCRYPTION_KEY                    # 32 random bytes, base64 (`openssl rand -base64 32`); encrypts Google tokens at rest. Never rotate without re-sealing
 # SMS_DRY_RUN=1 logs texts instead of sending (local testing only)
 ```
 

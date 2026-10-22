@@ -41,7 +41,8 @@ export async function findCalendarConflicts(
       .filter((e) => e.status !== "cancelled" && e.transparency !== "transparent")
       .map((e) => e.summary || "Busy");
   } catch (error) {
-    console.error("[calendar] conflict check failed", error);
+    // Message only: the raw Google client error embeds the refresh token.
+    console.error("[calendar] conflict check failed", error instanceof Error ? error.message : "unknown error");
     return null;
   }
 }
@@ -72,7 +73,7 @@ export async function createShowingEvent(
     });
     return res.data.id ?? null;
   } catch (error) {
-    console.error("[calendar] create showing event failed", error);
+    console.error("[calendar] create showing event failed", error instanceof Error ? error.message : "unknown error");
     return null;
   }
 }

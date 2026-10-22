@@ -29,7 +29,8 @@ Companion documents: [ARIA_PRODUCT_STRATEGY.md](ARIA_PRODUCT_STRATEGY.md) · [AR
 | New: AI property search dropped every town | **Fixed** (found while adding tests) | `df8dae2` |
 | S3 no rate limits on public routes | **Fixed** — Postgres-backed per-IP limits on AI search, inquiry/waitlist forms, BBA signing, portal engagement (fails open) | `44f1478` |
 | R1 no real-time lead alert | **Partly fixed** — the agent gets an email with a link to the lead the moment it arrives; native push is still roadmap P4/ENG-05 | `189f0ec` |
-| S5 token encryption · S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/P9/ENG-11 | — |
+| S5 Google tokens stored in plaintext | **Fixed** — AES-256-GCM at rest once `GOOGLE_TOKEN_ENCRYPTION_KEY` is set; existing rows sealed on next use; raw Google errors (which embed the refresh token) no longer logged | token commit |
+| S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/ENG-11 | — |
 | Tests / CI | **Added** — 47 unit tests, 2 SQL test suites, `.github/workflows/ci.yml` | `a8b78d0` + CI commit |
 
 **Deploy order:** apply the new migrations (`20261022120000`–`20261022140000`) before deploying the code — the routes read `brokerage_members` and call `record_bba_signature()`. After applying, check `brokerage_membership_review` for agents whose profile pointed at someone else's brokerage.

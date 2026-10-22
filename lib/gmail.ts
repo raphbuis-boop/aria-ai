@@ -1,5 +1,6 @@
 import { google } from "googleapis";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { needsSealing, openToken, sealToken } from "@/lib/token-crypto";
 
 /** Local end-to-end testing only: points every Google API call (OAuth token
  * exchange, Gmail) at a stand-in server. Never set in production. */
@@ -35,12 +36,24 @@ export async function getGoogleAuth(agentId: string) {
 
   if (error || !integration) return null;
 
+  // Tokens are encrypted at rest when GOOGLE_TOKEN_ENCRYPTION_KEY is set.
+  let accessToken: string;
+  let refreshToken: string;
+  try {
+    accessToken = openToken(integration.access_token);
+    refreshToken = openToken(integration.refresh_token);
+  } catch (err) {
+    console.error("[gmail] can't read stored Google tokens for agent", agentId, err instanceof Error ? err.message : err);
+    return null;
+  }
+
   const auth = makeOAuth2Client();
   auth.setCredentials({
-    access_token: integration.access_token,
-    refresh_token: integration.refresh_token,
+    access_token: accessToken,
+    refresh_token: refreshToken,
     expiry_date: new Date(integration.token_expiry).getTime(),
   });
+  let refreshed = false;
 
   // Auto-refresh if expired (or within 60s of expiry)
   const expiryMs = new Date(integration.token_expiry).getTime();
@@ -50,10 +63,11 @@ export async function getGoogleAuth(agentId: string) {
       auth.setCredentials(credentials);
 
       if (credentials.access_token) {
+        refreshed = true;
         await supabase
           .from("gmail_integrations")
           .update({
-            access_token: credentials.access_token,
+            access_token: sealToken(credentials.access_token),
             token_expiry: new Date(credentials.expiry_date ?? Date.now() + 3600_000).toISOString(),
             updated_at: new Date().toISOString(),
           })
@@ -68,6 +82,14 @@ export async function getGoogleAuth(agentId: string) {
       console.error("[gmail] token refresh failed for agent", agentId, reason);
       return null;
     }
+  }
+
+  // Encrypt tokens stored before the key was configured.
+  const sealPatch: Record<string, string> = {};
+  if (needsSealing(integration.refresh_token)) sealPatch.refresh_token = sealToken(refreshToken);
+  if (!refreshed && needsSealing(integration.access_token)) sealPatch.access_token = sealToken(accessToken);
+  if (Object.keys(sealPatch).length) {
+    await supabase.from("gmail_integrations").update(sealPatch).eq("agent_id", agentId);
   }
 
   const scopes = String(integration.scope ?? "").split(/\s+/).filter(Boolean);
