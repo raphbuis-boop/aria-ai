@@ -30,14 +30,26 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
 
 // ─── Email templates ──────────────────────────────────────────────────────────
 
+/** Escapes text for HTML. Names and addresses come from lead forms and partner
+ * payloads, so every interpolated value goes through this. */
+export function escapeHtml(value: unknown): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 export function showingReminderEmail(opts: {
   agentName: string;
   address: string;
   clientName: string;
   showingDate: string;
-  hoursAway: number;
+  /** "today", "tomorrow", "Sunday", "in about 2 hours". */
+  when: string;
 }): string {
-  const when = opts.hoursAway <= 2 ? "in about 2 hours" : "tomorrow";
+  const when = escapeHtml(opts.when);
   return `
 <!DOCTYPE html>
 <html>
@@ -45,10 +57,10 @@ export function showingReminderEmail(opts: {
   <div style="background:#12121e;border:1px solid #1e1e2e;border-radius:16px;padding:28px;">
     <p style="color:#6f9bff;font-size:13px;font-weight:600;margin:0 0 16px;text-transform:uppercase;letter-spacing:.08em;">Showing Reminder</p>
     <h2 style="color:#ffffff;font-size:20px;margin:0 0 8px;">You have a showing ${when}</h2>
-    <p style="color:#888898;font-size:14px;margin:0 0 20px;">${opts.showingDate}</p>
+    <p style="color:#888898;font-size:14px;margin:0 0 20px;">${escapeHtml(opts.showingDate)}</p>
     <div style="background:#0e0e1a;border:1px solid #1e1e2e;border-radius:10px;padding:16px;margin-bottom:24px;">
-      <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#d0d0e0;">${opts.address}</p>
-      <p style="margin:0;font-size:13px;color:#666680;">Client: ${opts.clientName}</p>
+      <p style="margin:0 0 4px;font-size:14px;font-weight:600;color:#d0d0e0;">${escapeHtml(opts.address)}</p>
+      <p style="margin:0;font-size:13px;color:#666680;">Client: ${escapeHtml(opts.clientName)}</p>
     </div>
     <a href="https://getariaai.com/showings"
        style="display:inline-block;background:#4f7bff;color:#ffffff;font-size:13px;font-weight:600;padding:10px 20px;border-radius:10px;text-decoration:none;">
@@ -68,8 +80,8 @@ export function engagementAlertEmail(opts: {
     .map(
       (c) => `
     <tr>
-      <td style="padding:8px 0;font-size:13px;color:#d0d0e0;border-bottom:1px solid #1e1e2e;">${c.name}</td>
-      <td style="padding:8px 0;font-size:13px;color:#f59e0b;text-align:right;border-bottom:1px solid #1e1e2e;">${c.days} days silent</td>
+      <td style="padding:8px 0;font-size:13px;color:#d0d0e0;border-bottom:1px solid #1e1e2e;">${escapeHtml(c.name)}</td>
+      <td style="padding:8px 0;font-size:13px;color:#f59e0b;text-align:right;border-bottom:1px solid #1e1e2e;">${Number(c.days)} days silent</td>
     </tr>`,
     )
     .join("");

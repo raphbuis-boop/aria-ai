@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInZonedCalendarDays, monthDayKey } from "./time";
 import { sellerPropensity } from "./ai/seller-propensity";
 
 // Client status values (as of May 2026):
@@ -187,9 +187,7 @@ function fmtBudget(min: number | null, max: number | null): string | null {
 
 function isAnniversaryToday(dateStr: string | null): boolean {
   if (!dateStr) return false;
-  const today = new Date();
-  const d = new Date(dateStr + "T00:00:00");
-  return d.getMonth() === today.getMonth() && d.getDate() === today.getDate();
+  return monthDayKey(dateStr.slice(0, 10)) === monthDayKey(new Date());
 }
 
 function daysSinceContact(clientId: string, activities: TodayActivity[]): number | null {
@@ -198,7 +196,7 @@ function daysSinceContact(clientId: string, activities: TodayActivity[]): number
   const latest = clientActivities.reduce((a, b) =>
     new Date(a.created_at) > new Date(b.created_at) ? a : b,
   );
-  return differenceInCalendarDays(new Date(), new Date(latest.created_at));
+  return differenceInZonedCalendarDays(new Date(), new Date(latest.created_at));
 }
 
 export function heatFromScore(score: number | null): LeadHeat {
@@ -451,7 +449,7 @@ function mostRecentActivityLabel(clientId: string, activities: TodayActivity[]):
   const verb = activityVerb(latest.type, latest.direction);
   if (!verb) return null;
 
-  const days = differenceInCalendarDays(new Date(), new Date(latest.created_at));
+  const days = differenceInZonedCalendarDays(new Date(), new Date(latest.created_at));
   const when = days <= 0 ? "today" : days === 1 ? "yesterday" : `${days} days ago`;
   return `${verb} · ${when}`;
 }
@@ -480,7 +478,7 @@ const STAGE_CLOSE_PROBABILITY: Record<string, number> = {
 export function dealCloseProbability(status: string | null, closingDateIso: string | null): number {
   const base = STAGE_CLOSE_PROBABILITY[status ?? ""] ?? 0.1;
   if (!closingDateIso) return base;
-  const days = differenceInCalendarDays(new Date(closingDateIso), new Date());
+  const days = differenceInZonedCalendarDays(new Date(closingDateIso), new Date());
   if (days <= 0) return Math.max(base, 0.95);
   if (days <= 3) return Math.max(base, 0.92);
   if (days <= 7) return Math.max(base, 0.88);
@@ -573,7 +571,7 @@ export function buildTodayItems(
   // ── 1. At-risk transactions (closing ≤3 days) ─────────────────────────────
   for (const tx of transactions) {
     if (!tx.closing_date) continue;
-    const days = differenceInCalendarDays(new Date(tx.closing_date), now);
+    const days = differenceInZonedCalendarDays(new Date(tx.closing_date), now);
     if (days < 0 || days > 3) continue;
 
     const client = clients.find((c) => c.id === tx.client_id);
@@ -878,7 +876,7 @@ export function buildTodayItems(
 /** Days since the agent last contacted this client: activity in the loaded window or last_engagement_at. Null = never. */
 function lastContactDays(client: TodayClient, activities: TodayActivity[], now: Date): number | null {
   const fromActivity = daysSinceContact(client.id, activities);
-  const fromField = client.last_engagement_at ? differenceInCalendarDays(now, new Date(client.last_engagement_at)) : null;
+  const fromField = client.last_engagement_at ? differenceInZonedCalendarDays(now, new Date(client.last_engagement_at)) : null;
   if (fromActivity === null) return fromField;
   if (fromField === null) return fromActivity;
   return Math.min(fromActivity, fromField);

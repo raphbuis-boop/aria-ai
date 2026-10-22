@@ -6,6 +6,7 @@ import { TodayClient as TodayClientComponent, type NewLeadRow, type Conversation
 import { initials } from "@/lib/utils";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
+import { zonedDayBounds } from "@/lib/time";
 
 export const dynamic = "force-dynamic";
 
@@ -26,10 +27,8 @@ export default async function DashboardPage() {
   if (!user) redirect("/login");
 
   const now = new Date();
-  const todayStart = new Date(now);
-  todayStart.setHours(0, 0, 0, 0);
-  const tomorrowStart = new Date(todayStart);
-  tomorrowStart.setDate(tomorrowStart.getDate() + 1);
+  // The agent's calendar day, not the server's (UTC) one.
+  const { start: todayStart, end: tomorrowStart } = zonedDayBounds(now);
   const minus30ISO = new Date(now.getTime() - 30 * 86_400_000).toISOString();
   const minus7ISO = new Date(now.getTime() - 7 * 86_400_000).toISOString();
   const minus24hISO = new Date(now.getTime() - 86_400_000).toISOString();

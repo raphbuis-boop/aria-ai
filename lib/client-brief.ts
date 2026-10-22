@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from "date-fns";
+import { DEFAULT_TIME_ZONE, differenceInZonedCalendarDays } from "./time";
 import { commissionFor } from "./today-items";
 
 // ─── Input types ─────────────────────────────────────────────────────────────
@@ -58,17 +58,17 @@ function firstNameOf(name: string): string {
 function daysSinceContact(activities: BriefActivity[]): number | null {
   if (activities.length === 0) return null;
   const latest = activities.reduce((a, b) => (new Date(a.created_at) > new Date(b.created_at) ? a : b));
-  return differenceInCalendarDays(new Date(), new Date(latest.created_at));
+  return differenceInZonedCalendarDays(new Date(), new Date(latest.created_at));
 }
 
 /** "today" / "tomorrow" / "Thursday" / "Sep 12" depending on how far out. */
 function closingPhrase(closingDateIso: string): string {
   const d = new Date(closingDateIso);
-  const days = differenceInCalendarDays(d, new Date());
+  const days = differenceInZonedCalendarDays(d, new Date());
   if (days <= 0) return "today";
   if (days === 1) return "tomorrow";
-  if (days <= 6) return d.toLocaleDateString("en-US", { weekday: "long" });
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  if (days <= 6) return d.toLocaleDateString("en-US", { timeZone: DEFAULT_TIME_ZONE, weekday: "long" });
+  return d.toLocaleDateString("en-US", { timeZone: DEFAULT_TIME_ZONE, month: "short", day: "numeric" });
 }
 
 function contactPhrase(days: number | null): string {
@@ -162,7 +162,7 @@ export function buildClientBrief(
 
   if (activeTransaction) {
     const closingDate = activeTransaction.closing_date;
-    const closingSoon = closingDate ? differenceInCalendarDays(new Date(closingDate), new Date()) <= 5 : false;
+    const closingSoon = closingDate ? differenceInZonedCalendarDays(new Date(closingDate), new Date()) <= 5 : false;
 
     if (closingDate && closingSoon && quiet) {
       briefing = `${firstName} is closing ${closingPhrase(closingDate)} and ${contactPhrase(days)} — reach out today to keep the deal warm.`;

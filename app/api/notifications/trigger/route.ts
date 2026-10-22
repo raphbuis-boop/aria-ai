@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { insertNotification } from "@/lib/notifications";
 import { sendEmail, showingReminderEmail, engagementAlertEmail } from "@/lib/resend";
+import { dayKey, zonedDayBounds } from "@/lib/time";
+import { chunk, formatShowingWhen, latestByClient, showingDayLabel } from "@/lib/reminders";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -20,9 +22,14 @@ const ACTIVE_SHOWING_STATUSES = ["scheduled"];
 const REAL_CONTACT_FILTER =
   "and(type.in.(text,sms,whatsapp,email),or(sent.is.true,direction.eq.inbound)),and(type.in.(call,showing),sent.is.true)";
 
+/** Today's date in the agents' zone (YYYY-MM-DD), for once-a-day dedup keys. */
 function todayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+  return dayKey(new Date());
 }
+
+/** Days without real contact before a client counts as stale. */
+const STALE_DAYS = 21;
+const USERS_PAGE_SIZE = 1000;
 
 function verifyCron(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -113,20 +120,14 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
     const clientName =
       (showing.clients as { name?: string } | null)?.name ?? "Client";
     const address = showing.address ?? "Property";
-    const dateStr = new Date(showing.showing_date).toLocaleString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
+    const dateStr = formatShowingWhen(showing.showing_date);
 
     // ── Daily-cron-friendly "upcoming showing" reminder ──────────────────────
     // The Hobby-plan cron runs once a day, so exact 24h/2h threshold windows
     // (±0.5h) essentially never hit. Instead, remind once per calendar day for
     // every showing in the next ~25h. Dedup key includes the date so a showing
     // visible across two daily runs notifies once per day, not twice.
-    const dayLabel = hoursAway <= 12 ? "today" : "tomorrow";
+    const dayLabel = showingDayLabel(showing.showing_date, new Date(now));
     const upcomingDedup = `showing_reminder::${showing.id}::upcoming::${todayKey()}`;
     await insertNotification(supabase, {
       agent_id: showing.agent_id,
@@ -147,7 +148,7 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
           address,
           clientName,
           showingDate: dateStr,
-          hoursAway: Math.round(hoursAway),
+          when: dayLabel,
         }),
       });
     }
@@ -176,7 +177,7 @@ async function runShowingReminders(supabase: ReturnType<typeof createAdminClient
             address,
             clientName,
             showingDate: dateStr,
-            hoursAway: 2,
+            when: "in about 2 hours",
           }),
         });
       }
@@ -195,8 +196,17 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
   // ── Engagement alerts ──
   // The cron runs once a day (see vercel.json — 12:00 UTC, 7–8 AM ET), so
   // every agent who hasn't turned the digest off gets it on that run.
-  const { data: agents } = await supabase.auth.admin.listUsers();
-  const allUsers = agents?.users ?? [];
+  // listUsers is paginated (50 per page by default) — walk every page.
+  const allUsers: Array<{ id: string; email?: string; user_metadata?: { full_name?: string } }> = [];
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: USERS_PAGE_SIZE });
+    if (error) {
+      console.error("[cron-trigger] listUsers failed", error.message);
+      break;
+    }
+    allUsers.push(...data.users);
+    if (data.users.length < USERS_PAGE_SIZE) break;
+  }
 
   const { data: prefRows } = await supabase
     .from("agent_profiles")
@@ -234,26 +244,39 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
       if (t > (lastShowingAt.get(s.client_id) ?? 0)) lastShowingAt.set(s.client_id, t);
     }
 
+    // Newest real contact per client, a chunk of clients per query instead of
+    // one query per client. Rows come newest first, so if a chunk hits the
+    // row cap only the oldest rows drop out: a recently contacted client is
+    // never misread as stale (a long-stale one may show a larger day count).
+    const lastContactAt = new Map(lastShowingAt);
+    let contactsLoaded = true;
+    for (const ids of chunk(clients.map((c) => c.id as string), 25)) {
+      const { data: rows, error } = await supabase
+        .from("activities")
+        .select("client_id, created_at")
+        .in("client_id", ids)
+        .or(REAL_CONTACT_FILTER)
+        .order("created_at", { ascending: false });
+      if (error) {
+        console.error("[cron-trigger] loading contacts failed", { agent: user.id, error: error.message });
+        contactsLoaded = false;
+        break;
+      }
+      for (const [id, t] of latestByClient(rows ?? [])) {
+        if (t > (lastContactAt.get(id) ?? 0)) lastContactAt.set(id, t);
+      }
+    }
+    // Without contact history every client would look stale — skip this agent.
+    if (!contactsLoaded) continue;
+
     const staleClients: { name: string; days: number; id: string }[] = [];
 
     for (const client of clients) {
-      const { data: latest } = await supabase
-        .from("activities")
-        .select("created_at")
-        .eq("client_id", client.id)
-        .or(REAL_CONTACT_FILTER)
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
       // Never contacted → count from when the client was added.
-      const lastTs = Math.max(
-        latest?.created_at ? new Date(latest.created_at).getTime() : 0,
-        lastShowingAt.get(client.id) ?? 0,
-      ) || new Date(client.created_at).getTime();
+      const lastTs = lastContactAt.get(client.id) || new Date(client.created_at).getTime();
       const days = Math.floor((now - lastTs) / DAY_MS);
 
-      if (days >= 21) {
+      if (days >= STALE_DAYS) {
         const dedup = `engagement_alert::${client.id}::${todayKey()}`;
         await insertNotification(supabase, {
           agent_id: user.id,
@@ -282,15 +305,15 @@ async function runDaily(supabase: ReturnType<typeof createAdminClient>, now: num
   }
 
   // ── Task due ──
-  const todayStart = new Date(new Date().setHours(0, 0, 0, 0)).toISOString();
-  const todayEnd = new Date(new Date().setHours(23, 59, 59, 999)).toISOString();
+  // "Today" in the agents' zone — the server clock is UTC.
+  const { start: todayStart, end: tomorrowStart } = zonedDayBounds(new Date(now));
 
   const { data: dueTasks } = await supabase
     .from("tasks")
     .select("id, agent_id, title, client_id")
     .eq("done", false)
-    .gte("due_at", todayStart)
-    .lte("due_at", todayEnd);
+    .gte("due_at", todayStart.toISOString())
+    .lt("due_at", tomorrowStart.toISOString());
 
   for (const task of dueTasks ?? []) {
     const dedup = `task_due::${task.id}::${todayKey()}`;

@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx"
 import { extendTailwindMerge } from "tailwind-merge"
 import { formatDistanceToNow } from "date-fns"
+import { DEFAULT_TIME_ZONE, isDateOnly } from "./time"
 
 // The ivory type scale (tailwind.config.ts fontSize) must be registered, or
 // twMerge reads `text-caption` as a text color and drops `text-primary-foreground`.
@@ -67,11 +68,16 @@ export function fmtMoney(n: number | null | undefined): string {
   return `$${n}`;
 }
 
-/** Short date only: "Jun 20". */
+/** Short date only: "Jun 20". Bare dates ("2026-06-20") print as that date. */
 export function fmtDate(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return new Date(iso).toLocaleDateString("en-US", {
+      // Fixed zone + locale: the same text on the server (UTC) and in the browser.
+      timeZone: isDateOnly(iso) ? "UTC" : DEFAULT_TIME_ZONE,
+      month: "short",
+      day: "numeric",
+    });
   } catch {
     return "—";
   }
@@ -106,7 +112,8 @@ export function humanizeSource(source: string | null | undefined): string | null
 export function fmtDateTime(iso: string | null | undefined): string {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString(undefined, {
+    return new Date(iso).toLocaleString("en-US", {
+      timeZone: DEFAULT_TIME_ZONE,
       month: "short",
       day: "numeric",
       hour: "numeric",
