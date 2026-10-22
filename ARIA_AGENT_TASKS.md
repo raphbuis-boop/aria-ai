@@ -2,6 +2,16 @@
 
 _2026-10-22 · Each task is written to be picked up by an autonomous agent or a person without further context. Finding IDs (S1, C4, L1…) point to [ARIA_AUDIT.md](ARIA_AUDIT.md); P-numbers point to [ARIA_MVP_ROADMAP.md](ARIA_MVP_ROADMAP.md)._
 
+## Status (2026-10-22, branch `claude/aria-engineering-fixes`)
+
+- **ENG-01** done except confirming against a production schema dump (needs read-only prod access; D3/D4).
+- **ENG-02** done (C6 was a false positive — see the audit status table).
+- **ENG-03** phase 1 done: `brokerage_members` with roles, guard trigger, rewritten policies and routes. Invites, offboarding and per-brokerage integrations remain (ENG-11).
+- **ENG-05** started: the agent gets an email the moment a lead arrives. Native push, deep-link reply and the response clock remain.
+- **ENG-06** done: Next.js 16 / React 19, 0 production vulnerabilities, rate limiting on public routes, Google tokens encrypted at rest (set `GOOGLE_TOKEN_ENCRYPTION_KEY`).
+- **QA-02 / QA-03 / ENG-14 partial:** 65 unit tests, SQL tests for brokerage isolation, BBA versions and rate limits; CI runs everything on each PR.
+- Also fixed: Aria's first texts respect quiet hours; AI property search kept no towns; Deals now reachable from client detail.
+
 ## Ground rules for every agent
 
 1. **Never write to production.** Use the staging Supabase project (currently "aria mvp test", empty) or a local `supabase start`. Read-only production access only for schema dumps, and only when the founder provides it.
