@@ -1,7 +1,8 @@
 /**
  * Sentry config — client (browser).
  *
- * Loaded automatically by @sentry/nextjs in the browser bundle.
+ * Next.js runs instrumentation-client.ts in the browser before the app
+ * (it replaced sentry.client.config.ts, which Turbopack doesn't load).
  * DSN comes from NEXT_PUBLIC_SENTRY_DSN (must be public so it can
  * be embedded in the client bundle).
  */
@@ -46,3 +47,6 @@ Sentry.init({
     /^Loading chunk \d+ failed\./,
   ],
 });
+
+// Traces App Router navigations.
+export const onRouterTransitionStart = Sentry.captureRouterTransitionStart;
