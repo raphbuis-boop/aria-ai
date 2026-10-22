@@ -6,10 +6,8 @@ export const runtime = "nodejs";
 
 const VALID_STATUSES = ["new", "contacted", "converted", "archived"] as const;
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

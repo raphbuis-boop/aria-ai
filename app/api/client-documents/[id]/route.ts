@@ -11,10 +11,8 @@ const BUCKET = "client-documents";
  * DELETE /api/client-documents/[id]
  * Removes the DB row and the corresponding storage object. Agent-scoped.
  */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -51,10 +49,8 @@ export async function DELETE(
  * GET /api/client-documents/[id]
  * Returns a fresh signed URL for downloading / previewing a document.
  */
-export async function GET(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

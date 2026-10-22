@@ -7,13 +7,14 @@ export const dynamic = "force-dynamic";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export default function PublicPropertyDetailPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { return?: string };
-}) {
+export default async function PublicPropertyDetailPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ return?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   let id = params.id;
   try {
     id = decodeURIComponent(params.id);

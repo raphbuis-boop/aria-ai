@@ -4,10 +4,8 @@ import { getRouteSupabase } from "@/lib/api-auth";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { mlsId: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ mlsId: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -31,10 +29,8 @@ export async function DELETE(
   return NextResponse.json({ ok: true });
 }
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: { mlsId: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ mlsId: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

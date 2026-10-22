@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 // ranked by value instead of urgency, with every item treated as a message to
 // draft, edit, and send.
 export default async function FollowUpsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -20,7 +20,8 @@ export const maxDuration = 60;
  *              client sees one thread); closes Aria's "needs you" tasks.
  *              Optional `propertyId` records that home as sent to the client.
  */
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

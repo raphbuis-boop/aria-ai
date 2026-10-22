@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ShowingsClient } from "./showings-client";
 
 export default async function ShowingsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

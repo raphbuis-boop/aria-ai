@@ -25,7 +25,7 @@ function dedupeClients<T extends { id: string; email?: string | null; phone?: st
 }
 
 export default async function ClientsPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

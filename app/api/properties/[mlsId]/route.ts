@@ -6,9 +6,7 @@ export const runtime = "nodejs";
 export type { MlsListingPayload } from "@/lib/simplyrets";
 
 /** Public (IDX detail pages): one MLS listing. No feed → `{ connected: false, listing: null }`. */
-export async function GET(
-  _req: Request,
-  { params }: { params: { mlsId: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ mlsId: string }> }) {
+  const params = await props.params;
   return singleListingResponse(params.mlsId, "api/properties");
 }

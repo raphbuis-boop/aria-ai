@@ -4,11 +4,12 @@ import { MarketCard } from "@/components/MarketCard";
 import { PortalBeacon } from "@/components/PortalBeacon";
 import { PortalListingCard } from "@/components/PortalListingCard";
 
-export default async function PortalPage({
-  params,
-}: {
-  params: { token: string };
-}) {
+export default async function PortalPage(
+  props: {
+    params: Promise<{ token: string }>;
+  }
+) {
+  const params = await props.params;
   const admin = createAdminClient();
   const { data: client } = await admin
     .from("clients")

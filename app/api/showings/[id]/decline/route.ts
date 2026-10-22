@@ -7,7 +7,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** POST /api/showings/[id]/decline  { message?: string } — optional SMS to the client. */
-export async function POST(request: Request, { params }: { params: { id: string } }) {
+export async function POST(request: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

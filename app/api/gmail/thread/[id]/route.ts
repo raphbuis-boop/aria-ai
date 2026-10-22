@@ -8,7 +8,8 @@ export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /** GET /api/gmail/thread/[id] — one thread from the agent's own mailbox. */
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const g = await getGmail(user.id);

@@ -14,7 +14,7 @@ type MatchRow = {
 export type PropertyMatch = { clientId: string; clientName: string; score: number; reasons: string[] };
 
 export default async function PropertiesPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

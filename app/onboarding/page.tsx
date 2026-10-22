@@ -6,12 +6,13 @@ export const dynamic = "force-dynamic";
 
 const TONES: Tone[] = ["warm", "professional", "direct", "casual"];
 
-export default async function OnboardingPage({
-  searchParams,
-}: {
-  searchParams: { gmail?: string; restart?: string };
-}) {
-  const supabase = createClient();
+export default async function OnboardingPage(
+  props: {
+    searchParams: Promise<{ gmail?: string; restart?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

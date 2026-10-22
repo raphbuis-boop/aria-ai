@@ -11,7 +11,6 @@ const oneLine = (v: string) => v.replace(/[\r\n]+/g, " ").trim();
 
 /** RFC 2047 for non-ASCII subjects/names. */
 function encodeHeader(v: string): string {
-  // eslint-disable-next-line no-control-regex
   return /^[\x00-\x7F]*$/.test(v) ? v : `=?UTF-8?B?${Buffer.from(v, "utf-8").toString("base64")}?=`;
 }
 

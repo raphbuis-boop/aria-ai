@@ -41,10 +41,8 @@ type DealUpdate = Partial<{
  * Partial update. Only fields that are explicitly provided are changed,
  * which lets the UI "mark as closed" without also clearing other fields.
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -118,10 +116,8 @@ export async function PATCH(
 /**
  * DELETE /api/client-deals/[id]
  */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

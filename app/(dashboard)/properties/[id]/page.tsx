@@ -7,19 +7,20 @@ import { ariaSmsEnabled } from "@/lib/feature-flags";
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-export default async function PropertyByIdPage({
-  params,
-  searchParams,
-}: {
-  params: { id: string };
-  searchParams: { return?: string };
-}) {
+export default async function PropertyByIdPage(
+  props: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ return?: string }>;
+  }
+) {
+  const searchParams = await props.searchParams;
+  const params = await props.params;
   const id = decodeURIComponent(params.id);
   const returnTo =
     typeof searchParams.return === "string" ? searchParams.return : null;
 
   if (UUID_RE.test(id)) {
-    const supabase = createClient();
+    const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();

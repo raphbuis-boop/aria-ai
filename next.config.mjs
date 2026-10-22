@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { withSentryConfig } from "@sentry/nextjs/config";
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {};
@@ -42,12 +42,13 @@ export default withSentryConfig(nextConfig, {
   // that strict ad blockers may drop a small % of client error reports,
   // but reliability across the board is better this way.
 
-  // Skip the upload step entirely if no auth token is set
-  // (keeps local builds and PRs from contributors clean).
-  disableLogger: true,
-
-  // Automatically wrap server actions / RSCs so errors get captured.
-  automaticVercelMonitors: true,
+  // Production builds use webpack (`next build --webpack`), where these apply.
+  webpack: {
+    // Strip the SDK's own debug logging from the bundle.
+    treeshake: { removeDebugLogging: true },
+    // Create Sentry cron monitors for the Vercel Cron Jobs in vercel.json.
+    automaticVercelMonitors: true,
+  },
 
   sourcemaps: {
     disable: !sentryAuthOk,

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const state = searchParams.get("state"); // one-time nonce from /connect
 
   // Read return destination cookie early so all error paths can use it
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const returnTo = cookieStore.get("aria_return_to")?.value;
   const base = process.env.NEXT_PUBLIC_SITE_URL;
 

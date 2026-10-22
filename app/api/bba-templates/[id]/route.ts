@@ -37,10 +37,8 @@ const forbidden = () =>
  * Body: { template_name?: string, is_default?: boolean, replace_with_storage_path?: string }
  * Renames or sets as default. (Replace-file is handled by deleting + re-uploading.)
  */
-export async function PATCH(
-  req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function PATCH(req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -93,10 +91,8 @@ export async function PATCH(
  * DELETE /api/bba-templates/:id
  * Removes the DB row + the underlying storage object.
  */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

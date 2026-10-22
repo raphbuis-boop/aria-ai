@@ -43,7 +43,8 @@ async function loadTemplate(admin: Admin, templateId: string | null): Promise<Bb
  * preview, and any agreement already on file. Expired, voided or used links
  * get 410 with the reason.
  */
-export async function GET(_req: Request, { params }: { params: { token: string } }) {
+export async function GET(_req: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const admin = createAdminClient();
   const request = await loadRequest(admin, params.token);
   if (!request) {
@@ -170,7 +171,8 @@ async function embedSignatureInPdf(
  * The link is claimed before anything is written, so it can be signed once;
  * if saving the agreement fails the claim is released.
  */
-export async function POST(req: Request, { params }: { params: { token: string } }) {
+export async function POST(req: Request, props: { params: Promise<{ token: string }> }) {
+  const params = await props.params;
   const body = await req.json().catch(() => ({}));
   const clientName = String(body.clientName ?? "").trim().slice(0, 200);
   const signatureData = String(body.signatureData ?? "");

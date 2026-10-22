@@ -13,7 +13,8 @@ export const maxDuration = 60;
  * and a suggested reply. The thread is read server-side from the agent's own
  * mailbox; nothing from the request body reaches the prompt.
  */
-export async function POST(_req: Request, { params }: { params: { id: string } }) {
+export async function POST(_req: Request, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const g = await getGmail(user.id);

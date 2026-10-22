@@ -8,10 +8,8 @@ export const runtime = "nodejs";
 export type { MlsListingPayload } from "@/lib/simplyrets";
 
 /** @deprecated Prefer GET /api/properties/[mlsId] for listing detail (same behavior). */
-export async function GET(
-  _req: Request,
-  { params }: { params: { mlsId: string } },
-) {
+export async function GET(_req: Request, props: { params: Promise<{ mlsId: string }> }) {
+  const params = await props.params;
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

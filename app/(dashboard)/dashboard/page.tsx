@@ -20,7 +20,7 @@ const CLIENT_COLS =
   "id, name, town, status, lead_score, budget_min, budget_max, phone, birthday, home_purchase_date, last_engagement_at, created_at, lead_source, source, aria_paused, sms_opted_out";
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();

@@ -13,10 +13,8 @@ export const dynamic = "force-dynamic";
  * record, so it is marked revoked (superseded_reason = 'revoked'), never
  * deleted; the client then has no current BBA until they sign a new one.
  */
-export async function DELETE(
-  _req: Request,
-  { params }: { params: { clientId: string } },
-) {
+export async function DELETE(_req: Request, props: { params: Promise<{ clientId: string }> }) {
+  const params = await props.params;
   const { supabase, user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

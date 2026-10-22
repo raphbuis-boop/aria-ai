@@ -1,7 +1,8 @@
 /**
- * Sentry config — Edge runtime (middleware, edge route handlers).
+ * Sentry config — Edge runtime (edge route handlers).
  *
- * Aria uses middleware.ts for auth, so this is what catches errors there.
+ * Auth runs in proxy.ts, which Next.js 16 runs on the Node.js runtime, so
+ * sentry.server.config.ts covers it; this applies only to Edge code.
  */
 import * as Sentry from "@sentry/nextjs";
 
