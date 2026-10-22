@@ -239,7 +239,7 @@ function TwilioCheckRow() {
 export default function SettingsPage() {
   const router = useRouter();
   const [origin, setOrigin] = useState("");
-  const [profile, setProfile] = useState({ fullName: "", email: "", phone: "", brokerageName: "" });
+  const [profile, setProfile] = useState({ fullName: "", email: "", phone: "", brokerageName: "", canEditBrokerage: true });
   const [profileLoaded, setProfileLoaded] = useState(false);
   const [health, setHealth] = useState<Health | null>(null);
   const [google, setGoogle] = useState<Google | null>(null);
@@ -265,7 +265,13 @@ export default function SettingsPage() {
         .then((d) => d && set(d as T))
         .catch(() => {});
     void get<typeof profile>("/api/settings/profile", (d) =>
-      setProfile({ fullName: d.fullName ?? "", email: d.email ?? "", phone: d.phone ?? "", brokerageName: d.brokerageName ?? "" }),
+      setProfile({
+        fullName: d.fullName ?? "",
+        email: d.email ?? "",
+        phone: d.phone ?? "",
+        brokerageName: d.brokerageName ?? "",
+        canEditBrokerage: d.canEditBrokerage !== false,
+      }),
     ).finally(() => setProfileLoaded(true));
     void get<Health>("/api/health/env", setHealth);
     void get<Google>("/api/gmail/status", setGoogle);
@@ -423,7 +429,11 @@ export default function SettingsPage() {
         </Group>
 
         <Group title="Brokerage">
-          <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} loading={!profileLoaded} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
+          {profile.canEditBrokerage ? (
+            <EditRow Icon={Building2} label="Brokerage" value={profile.brokerageName} loading={!profileLoaded} placeholder="Your brokerage" onSave={(v) => void saveProfile("brokerageName", v)} />
+          ) : (
+            <Row Icon={Building2} label="Brokerage" right={<span className="truncate font-display text-body text-muted-foreground">{profile.brokerageName}</span>} />
+          )}
         </Group>
 
         <Group

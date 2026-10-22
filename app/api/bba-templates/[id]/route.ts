@@ -1,23 +1,36 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ensureBrokerage } from "@/lib/brokerages";
+import { canManageBrokerage, getBrokerageMembership } from "@/lib/brokerages";
 
 export const dynamic = "force-dynamic";
 
 const BUCKET = "bba-templates";
 
+/** The template, if it belongs to the agent's brokerage, plus whether they may change it. */
 async function loadTemplateForAgent(id: string, userId: string) {
   const admin = createAdminClient();
-  const brokerageId = await ensureBrokerage(admin, userId);
+  const membership = await getBrokerageMembership(admin, userId);
+  if (!membership) return { admin, brokerageId: null, canManage: false, template: null };
   const { data } = await admin
     .from("brokerage_bba_templates")
     .select("*")
     .eq("id", id)
-    .eq("brokerage_id", brokerageId)
+    .eq("brokerage_id", membership.brokerageId)
     .maybeSingle();
-  return { admin, brokerageId, template: data };
+  return {
+    admin,
+    brokerageId: membership.brokerageId,
+    canManage: canManageBrokerage(membership.role),
+    template: data,
+  };
 }
+
+const forbidden = () =>
+  NextResponse.json(
+    { error: "Only your brokerage's owner or admins can change agreement templates." },
+    { status: 403 },
+  );
 
 /**
  * PATCH /api/bba-templates/:id
@@ -34,14 +47,15 @@ export async function PATCH(
   }
 
   const body = await req.json().catch(() => ({}));
-  const { admin, brokerageId, template } = await loadTemplateForAgent(
+  const { admin, brokerageId, canManage, template } = await loadTemplateForAgent(
     params.id,
     user.id,
   );
 
-  if (!template) {
+  if (!template || !brokerageId) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  if (!canManage) return forbidden();
 
   const updates: Record<string, unknown> = {};
   if (typeof body.template_name === "string" && body.template_name.trim()) {
@@ -88,10 +102,11 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { admin, template } = await loadTemplateForAgent(params.id, user.id);
+  const { admin, canManage, template } = await loadTemplateForAgent(params.id, user.id);
   if (!template) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  if (!canManage) return forbidden();
 
   await admin.storage.from(BUCKET).remove([template.storage_path as string]);
 

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ensureBrokerage } from "@/lib/brokerages";
+import { canManageBrokerage, ensureBrokerage } from "@/lib/brokerages";
 
 export const dynamic = "force-dynamic";
 
@@ -31,7 +31,7 @@ export async function GET() {
   }
 
   const admin = createAdminClient();
-  const brokerageId = await ensureBrokerage(admin, user.id);
+  const { brokerageId, role } = await ensureBrokerage(admin, user.id);
 
   const { data, error } = await admin
     .from("brokerage_bba_templates")
@@ -54,7 +54,11 @@ export async function GET() {
     }),
   );
 
-  return NextResponse.json({ templates, brokerage_id: brokerageId });
+  return NextResponse.json({
+    templates,
+    brokerage_id: brokerageId,
+    can_manage: canManageBrokerage(role),
+  });
 }
 
 /**
@@ -67,6 +71,15 @@ export async function POST(req: Request) {
   const { user } = await getRouteSupabase();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const admin = createAdminClient();
+  const { brokerageId, role } = await ensureBrokerage(admin, user.id);
+  if (!canManageBrokerage(role)) {
+    return NextResponse.json(
+      { error: "Only your brokerage's owner or admins can change agreement templates." },
+      { status: 403 },
+    );
   }
 
   const form = await req.formData().catch(() => null);
@@ -99,9 +112,6 @@ export async function POST(req: Request) {
     );
   const templateName = rawName.slice(0, 120);
   const wantDefault = form.get("is_default") === "1";
-
-  const admin = createAdminClient();
-  const brokerageId = await ensureBrokerage(admin, user.id);
 
   // Reserve an ID so we can name the storage file deterministically.
   const id = crypto.randomUUID();

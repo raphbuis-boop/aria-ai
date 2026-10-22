@@ -9,7 +9,7 @@ begin
   foreach t in array array[
     'agent_profiles', 'clients', 'properties', 'activities', 'property_matches', 'showings',
     'transactions', 'tasks', 'listings', 'referrals', 'waitlist', 'buyer_broker_agreements',
-    'brokerages', 'brokerage_bba_templates', 'client_documents', 'client_deals',
+    'brokerages', 'brokerage_members', 'brokerage_bba_templates', 'client_documents', 'client_deals',
     'user_saved_properties', 'idx_listing_inquiries', 'notifications', 'gmail_integrations',
     'dismissed_opportunities', 'client_engagement_events', 'bba_requests', 'market_data'
   ] loop

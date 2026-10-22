@@ -26,6 +26,8 @@ export function BbaTemplatesSection() {
   const [preview, setPreview] = useState<TemplateDto | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<TemplateDto | null>(null);
   const [editingName, setEditingName] = useState<{ id: string; value: string } | null>(null);
+  // Owners and admins change templates; other members only use them.
+  const [canManage, setCanManage] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
@@ -36,6 +38,7 @@ export function BbaTemplatesSection() {
         setTemplates([]);
       } else {
         setTemplates((json.templates ?? []) as TemplateDto[]);
+        setCanManage(json.can_manage !== false);
       }
     } catch {
       toast.toast("Network error loading templates", "warn");
@@ -134,15 +137,17 @@ export function BbaTemplatesSection() {
     <div id="bba-templates" className="scroll-mt-6">
       <div className="flex items-center justify-between">
         <p className="font-display text-body font-semibold text-foreground">Agreement templates</p>
-        <button
-          type="button"
-          onClick={() => fileRef.current?.click()}
-          disabled={uploading}
-          className="inline-flex items-center gap-1.5 rounded-[8px] border border-border px-2.5 py-1 text-[11px] font-medium text-primary disabled:opacity-60"
-        >
-          <Upload size={12} />
-          {uploading ? "Uploading…" : "Upload PDF"}
-        </button>
+        {canManage ? (
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="inline-flex items-center gap-1.5 rounded-[8px] border border-border px-2.5 py-1 text-[11px] font-medium text-primary disabled:opacity-60"
+          >
+            <Upload size={12} />
+            {uploading ? "Uploading…" : "Upload PDF"}
+          </button>
+        ) : null}
         <input
           ref={fileRef}
           type="file"
@@ -155,38 +160,41 @@ export function BbaTemplatesSection() {
         />
       </div>
       <p className="mt-1 text-[12px] text-muted-foreground">
-        Upload your brokerage&apos;s Buyer Broker Agreement PDF. The default
-        template is auto-attached when you send a BBA signing link to a client.
+        {canManage
+          ? "Upload your brokerage's Buyer Broker Agreement PDF. The default template is auto-attached when you send a BBA signing link to a client."
+          : "Your brokerage's default agreement is attached when you send a BBA signing link. Only your brokerage's owner or admins can change templates."}
       </p>
 
-      <div
-        onDragOver={(e) => {
-          e.preventDefault();
-          setDragOver(true);
-        }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={(e) => {
-          e.preventDefault();
-          setDragOver(false);
-          const f = e.dataTransfer.files?.[0];
-          if (f) void upload(f);
-        }}
-        className={`mt-3 rounded-[12px] border border-dashed px-3 py-6 text-center text-[12px] transition ${
-          dragOver
-            ? "border-primary bg-primary/5 text-primary"
-            : "border-border text-muted-foreground"
-        }`}
-      >
-        Drop a PDF here to upload, or click{" "}
-        <button
-          type="button"
-          className="font-medium text-primary underline"
-          onClick={() => fileRef.current?.click()}
+      {canManage ? (
+        <div
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragOver(false);
+            const f = e.dataTransfer.files?.[0];
+            if (f) void upload(f);
+          }}
+          className={`mt-3 rounded-[12px] border border-dashed px-3 py-6 text-center text-[12px] transition ${
+            dragOver
+              ? "border-primary bg-primary/5 text-primary"
+              : "border-border text-muted-foreground"
+          }`}
         >
-          choose a file
-        </button>
-        . Max 15 MB.
-      </div>
+          Drop a PDF here to upload, or click{" "}
+          <button
+            type="button"
+            className="font-medium text-primary underline"
+            onClick={() => fileRef.current?.click()}
+          >
+            choose a file
+          </button>
+          . Max 15 MB.
+        </div>
+      ) : null}
 
       <div className="mt-4 space-y-2">
         {loading ? (
@@ -222,7 +230,7 @@ export function BbaTemplatesSection() {
                     }}
                     className="w-full rounded-[6px] border border-border bg-secondary px-2 py-1 text-[13px] text-foreground outline-none"
                   />
-                ) : (
+                ) : canManage ? (
                   <button
                     type="button"
                     onClick={() =>
@@ -232,6 +240,8 @@ export function BbaTemplatesSection() {
                   >
                     {t.template_name}
                   </button>
+                ) : (
+                  <p className="truncate text-[13px] font-medium text-foreground">{t.template_name}</p>
                 )}
                 <p className="text-[10px] text-muted-foreground">
                   Uploaded{" "}
@@ -246,7 +256,7 @@ export function BbaTemplatesSection() {
                 <span className="inline-flex items-center gap-1 rounded-full bg-warm/15 px-2 py-0.5 text-[10px] font-semibold text-warm">
                   <Star size={10} fill="currentColor" /> Default
                 </span>
-              ) : (
+              ) : canManage ? (
                 <button
                   type="button"
                   onClick={() => setDefault(t.id)}
@@ -254,7 +264,7 @@ export function BbaTemplatesSection() {
                 >
                   Set default
                 </button>
-              )}
+              ) : null}
               {t.signed_url ? (
                 <button
                   type="button"
@@ -264,14 +274,16 @@ export function BbaTemplatesSection() {
                   Preview
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={() => setConfirmDelete(t)}
-                className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-destructive"
-                aria-label={`Delete ${t.template_name}`}
-              >
-                <Trash2 size={12} />
-              </button>
+              {canManage ? (
+                <button
+                  type="button"
+                  onClick={() => setConfirmDelete(t)}
+                  className="rounded-[6px] border border-border px-2 py-1 text-[11px] text-destructive"
+                  aria-label={`Delete ${t.template_name}`}
+                >
+                  <Trash2 size={12} />
+                </button>
+              ) : null}
             </div>
           ))
         )}

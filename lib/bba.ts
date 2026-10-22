@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { getBrokerageMembership } from "@/lib/brokerages";
 
 /** A signing link works for this long after the agent creates it. */
 export const BBA_LINK_TTL_DAYS = 7;
@@ -76,7 +77,7 @@ export async function issueBbaRequest(
 ): Promise<{ ok: true; request: BbaRequest } | { ok: false; status: number; error: string }> {
   const { data: agent } = await supabase
     .from("agent_profiles")
-    .select("full_name, brokerage_id")
+    .select("full_name")
     .eq("id", input.agentId)
     .maybeSingle();
   const agentName = (agent?.full_name as string | null)?.trim();
@@ -84,12 +85,22 @@ export async function issueBbaRequest(
     return { ok: false, status: 400, error: "Add your name in Settings first — it goes on the agreement." };
   }
 
+  // Fail closed: if the brokerage can't be read, don't silently fall back to
+  // the generic agreement instead of the brokerage's template.
+  let membership: Awaited<ReturnType<typeof getBrokerageMembership>>;
+  try {
+    membership = await getBrokerageMembership(supabase, input.agentId);
+  } catch (err) {
+    console.error("[bba] brokerage lookup failed", err);
+    return { ok: false, status: 503, error: "Couldn't load your brokerage's agreement template. Try again in a minute." };
+  }
+
   let templateId: string | null = null;
-  if (agent?.brokerage_id) {
+  if (membership) {
     const { data: template } = await supabase
       .from("brokerage_bba_templates")
       .select("id")
-      .eq("brokerage_id", agent.brokerage_id)
+      .eq("brokerage_id", membership.brokerageId)
       .eq("is_default", true)
       .maybeSingle();
     templateId = (template?.id as string | undefined) ?? null;

@@ -10,7 +10,7 @@
     "build:ios": "cp next.config.mjs next.config.web.bak && cp next.config.mobile.mjs next.config.mjs && next build; mv next.config.web.bak next.config.mjs",
     "ios:sync": "npm run build:ios && npx cap sync ios",
     "ios:open": "npx cap open ios",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "node --max-old-space-size=4096 node_modules/typescript/bin/tsc --noEmit",
     "test": "vitest run",
     "test:db": "bash scripts/db/test.sh"
   },
