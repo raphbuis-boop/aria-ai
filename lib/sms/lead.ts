@@ -6,6 +6,8 @@ import { draftFirstTouchSms } from "@/lib/sms/conversation";
 import { sendClientSms, type SendResult } from "@/lib/sms/outbound";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
 import { clientSourceFor, type LeadSource } from "@/lib/sms/lead-sources";
+import { openAriaTask } from "@/lib/sms/tasks";
+import { isWithinTextingHours } from "@/lib/time";
 
 export type LeadInput = {
   agentId: string;
@@ -209,6 +211,17 @@ export async function sendFirstTouch(
 ): Promise<FirstTextResult> {
   if (!ariaSmsEnabled()) return notTexted("Not texted: Aria texting is off");
   if (!client.phone) return notTexted("Not texted: lead has no phone number");
+  // A text we start is a solicitation: TCPA quiet hours apply. (Replies to a
+  // lead who texted first are a conversation and aren't held.)
+  if (!isWithinTextingHours()) {
+    await openAriaTask(supabase, {
+      agentId: client.agent_id,
+      clientId: client.id,
+      kind: "aria_handoff",
+      title: `Text ${client.name} after 8 am — they came in during quiet hours`,
+    });
+    return notTexted("Not texted: quiet hours (texts start 8 am–9 pm)");
+  }
 
   const { data: priorText } = await supabase
     .from("activities").select("id")

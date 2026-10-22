@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   dayKey,
   differenceInZonedCalendarDays,
+  isWithinTextingHours,
   monthDayKey,
   startOfZonedDay,
   zonedDayBounds,
@@ -57,3 +58,14 @@ describe("zoned calendar math (America/New_York)", () => {
     expect(monthDayKey(new Date("2026-10-23T01:00:00Z"))).toBe("10-22");
   });
 });
+
+describe("texting hours", () => {
+  it("allows 8 am to 9 pm Eastern only", () => {
+    expect(isWithinTextingHours(new Date("2026-10-22T11:59:00Z"))).toBe(false); // 7:59 am EDT
+    expect(isWithinTextingHours(new Date("2026-10-22T12:00:00Z"))).toBe(true); //  8:00 am EDT
+    expect(isWithinTextingHours(new Date("2026-10-23T00:59:00Z"))).toBe(true); //  8:59 pm EDT
+    expect(isWithinTextingHours(new Date("2026-10-23T01:00:00Z"))).toBe(false); // 9:00 pm EDT
+    expect(isWithinTextingHours(new Date("2026-12-01T13:30:00Z"))).toBe(true); //  8:30 am EST
+  });
+});
+

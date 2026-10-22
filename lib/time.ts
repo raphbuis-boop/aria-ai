@@ -99,3 +99,15 @@ export function differenceInZonedCalendarDays(
 export function monthDayKey(at: Date | string, zone: string = DEFAULT_TIME_ZONE): string {
   return dayKey(at, zone).slice(5);
 }
+
+/** Hour of day (0–23) at instant `at` in `zone`. */
+export function zonedHour(at: Date, zone: string = DEFAULT_TIME_ZONE): number {
+  const hour = partsFormatter(zone).formatToParts(at).find((p) => p.type === "hour")?.value;
+  return Number(hour);
+}
+
+/** Texting hours for messages we start (TCPA): 8 am up to 9 pm, recipient's local time. */
+export function isWithinTextingHours(at: Date = new Date(), zone: string = DEFAULT_TIME_ZONE): boolean {
+  const hour = zonedHour(at, zone);
+  return hour >= 8 && hour < 21;
+}

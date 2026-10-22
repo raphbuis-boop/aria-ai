@@ -30,13 +30,19 @@ function lead(overrides: Record<string, unknown> = {}) {
   };
 }
 
+const DAYTIME = new Date("2026-10-22T15:00:00Z"); // 11 am Eastern
+const LATE_NIGHT = new Date("2026-10-23T03:30:00Z"); // 11:30 pm Eastern
+
 describe("lead SMS consent", () => {
   beforeEach(() => {
     process.env.ARIA_SMS_ENABLED = "1";
     vi.mocked(sendClientSms).mockClear();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(DAYTIME);
   });
   afterEach(() => {
     delete process.env.ARIA_SMS_ENABLED;
+    vi.useRealTimers();
   });
 
   it("creates but never texts a lead whose source didn't say it consented", async () => {
@@ -109,9 +115,12 @@ describe("sendFirstTouch (Start Aria on an existing client)", () => {
   beforeEach(() => {
     process.env.ARIA_SMS_ENABLED = "1";
     vi.mocked(sendClientSms).mockClear();
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(DAYTIME);
   });
   afterEach(() => {
     delete process.env.ARIA_SMS_ENABLED;
+    vi.useRealTimers();
   });
 
   const existing = { id: "client-1", agent_id: AGENT, name: "Dana Buyer", phone: "+12015550142", sms_opted_out: false, town: "Montclair" };
@@ -125,6 +134,17 @@ describe("sendFirstTouch (Start Aria on an existing client)", () => {
     expect(result).toMatchObject({ ok: true });
     expect(sendClientSms).toHaveBeenCalledOnce();
     expect(db.clients[0].status).toBe("contacted");
+  });
+
+  it("holds the first text during quiet hours and asks the agent to text in the morning", async () => {
+    vi.setSystemTime(LATE_NIGHT);
+    const { client, db } = fakeSupabase({ clients: [{ ...existing, status: "new" }] });
+    const result = await sendFirstTouch(client, existing, { source: "zillow" });
+
+    expect(result).toMatchObject({ ok: false, error: expect.stringMatching(/quiet hours/) });
+    expect(sendClientSms).not.toHaveBeenCalled();
+    expect(db.tasks[0]).toMatchObject({ client_id: existing.id, kind: "aria_handoff" });
+    expect(db.clients[0].status).toBe("new");
   });
 
   it("returns null when the client is already in a text thread", async () => {
