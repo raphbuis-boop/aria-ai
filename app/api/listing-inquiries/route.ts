@@ -10,6 +10,7 @@ import { NextResponse } from "next/server";
 import { waitUntil } from "@vercel/functions";
 import { ingestLead } from "@/lib/sms/lead";
 import { defaultLeadAgentId } from "@/lib/sms/lead-auth";
+import { rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -66,6 +67,9 @@ export async function POST(req: Request) {
   if (honeypot) {
     return NextResponse.json({ ok: true }, { status: 201 });
   }
+
+  const limited = await rateLimited(req, "inquiry");
+  if (limited) return limited;
 
   const intentRaw = trimStr(body.intent, 20);
   const intent =

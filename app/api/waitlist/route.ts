@@ -1,6 +1,7 @@
 import { randomBytes } from "crypto";
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -80,6 +81,9 @@ export async function POST(req: Request) {
         { status: 503 },
       );
     }
+
+    const limited = await rateLimited(req, "waitlist");
+    if (limited) return limited;
 
     const body = await req.json().catch(() => ({}));
     const email = String(body.email ?? "")

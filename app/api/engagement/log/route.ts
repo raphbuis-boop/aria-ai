@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -24,6 +25,9 @@ export async function POST(req: Request) {
   if (!token || !ALLOWED.has(eventType)) {
     return NextResponse.json({ error: "bad request" }, { status: 400 });
   }
+
+  const limited = await rateLimited(req, "engagement");
+  if (limited) return limited;
 
   const admin = createAdminClient();
 

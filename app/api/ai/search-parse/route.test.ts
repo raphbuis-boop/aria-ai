@@ -8,6 +8,8 @@ vi.mock("@/lib/ai", async (importOriginal) => ({
   ),
 }));
 
+vi.mock("@/lib/rate-limit", () => ({ rateLimited: vi.fn(async () => null) }));
+
 const { POST } = await import("./route");
 
 describe("POST /api/ai/search-parse", () => {

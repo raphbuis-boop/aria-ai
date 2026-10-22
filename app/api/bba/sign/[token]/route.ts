@@ -3,6 +3,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { onBbaSigned } from "@/lib/sms/bba";
 import { BBA_REQUEST_COLUMNS, bbaRequestClosedReason, isBbaToken, type BbaRequest } from "@/lib/bba";
+import { rateLimited } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs"; // pdf-lib needs Node runtime
@@ -183,6 +184,9 @@ export async function POST(req: Request, props: { params: Promise<{ token: strin
   if (!signatureData.startsWith("data:image/png;base64,") || signatureData.length > 2_000_000) {
     return NextResponse.json({ error: "Please draw your signature to continue." }, { status: 400 });
   }
+
+  const limited = await rateLimited(req, "bbaSign");
+  if (limited) return limited;
 
   const admin = createAdminClient();
   const request = await loadRequest(admin, params.token);

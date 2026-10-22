@@ -27,7 +27,8 @@ Companion documents: [ARIA_PRODUCT_STRATEGY.md](ARIA_PRODUCT_STRATEGY.md) · [AR
 | L2 partner leads texted without consent | **Fixed** — texting requires `smsConsent: true`; consent recorded on intake | `238d2ac` |
 | Portal would show internal tasks | **Fixed** | `21d0371` |
 | New: AI property search dropped every town | **Fixed** (found while adding tests) | `df8dae2` |
-| S3 rate limiting · S5 token encryption · S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/P9/ENG-11 | — |
+| S3 no rate limits on public routes | **Fixed** — Postgres-backed per-IP limits on AI search, inquiry/waitlist forms, BBA signing, portal engagement (fails open) | rate-limit commit |
+| S5 token encryption · S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/P9/ENG-11 | — |
 | Tests / CI | **Added** — 47 unit tests, 2 SQL test suites, `.github/workflows/ci.yml` | `a8b78d0` + CI commit |
 
 **Deploy order:** apply the new migrations (`20261022120000`–`20261022140000`) before deploying the code — the routes read `brokerage_members` and call `record_bba_signature()`. After applying, check `brokerage_membership_review` for agents whose profile pointed at someone else's brokerage.

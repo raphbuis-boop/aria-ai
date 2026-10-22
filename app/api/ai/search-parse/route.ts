@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { callClaude, getAnthropic, safeJsonParse } from "@/lib/ai";
 import { canonicalTown } from "@/lib/nj-towns";
+import { rateLimited } from "@/lib/rate-limit";
 
 // Public — the client-facing /property-search portal also uses this, and it
 // carries no sensitive data (NL text in, structured filters out).
@@ -70,6 +71,10 @@ export async function POST(req: Request) {
   if (!getAnthropic()) {
     return NextResponse.json({ filters: EMPTY_FILTERS, keywordFallback: query });
   }
+
+  // Public and each request is a Claude call — cap it per IP.
+  const limited = await rateLimited(req, "aiSearch");
+  if (limited) return limited;
 
   try {
     const raw = await callClaude(SYSTEM_PROMPT, `Buyer description: "${query}"`, 300);

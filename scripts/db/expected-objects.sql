@@ -11,7 +11,7 @@ begin
     'transactions', 'tasks', 'listings', 'referrals', 'waitlist', 'buyer_broker_agreements',
     'brokerages', 'brokerage_members', 'brokerage_bba_templates', 'client_documents', 'client_deals',
     'user_saved_properties', 'idx_listing_inquiries', 'notifications', 'gmail_integrations',
-    'dismissed_opportunities', 'client_engagement_events', 'bba_requests', 'market_data'
+    'dismissed_opportunities', 'client_engagement_events', 'bba_requests', 'market_data', 'rate_limits'
   ] loop
     if to_regclass('public.' || t) is null then missing := missing || ('table ' || t); end if;
   end loop;
