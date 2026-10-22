@@ -19,16 +19,18 @@ import {
   HomesCard,
   PreferencesCard,
   ShowingsCard,
+  DealsCard,
   TasksCard,
   TimelineCard,
   type BbaLink,
   type ClientTask,
   type MatchedHome,
   type ShowingItem,
+  type DealItem,
   type SignedBba,
 } from "./client-sections";
 
-export type { MatchedHome, ShowingItem };
+export type { MatchedHome, ShowingItem, DealItem };
 
 type Activity = {
   id: string;
@@ -49,6 +51,7 @@ type Props = {
   activities: Activity[];
   homes: MatchedHome[];
   showings: ShowingItem[];
+  deals: DealItem[];
   ariaTasks: AriaTaskRow[];
   /** Open tasks not shown under "Aria needs you". */
   tasks: ClientTask[];
@@ -60,7 +63,7 @@ type Props = {
 const str = (v: unknown) => (typeof v === "string" && v ? v : null);
 const num = (v: unknown) => (typeof v === "number" ? v : v != null && v !== "" && !Number.isNaN(Number(v)) ? Number(v) : null);
 
-export function ClientDetail({ smsEnabled, client, activities, homes, showings, ariaTasks, tasks, ariaThread, bba, bbaRequest }: Props) {
+export function ClientDetail({ smsEnabled, client, activities, homes, showings, deals, ariaTasks, tasks, ariaThread, bba, bbaRequest }: Props) {
   const router = useRouter();
   const [sending, setSending] = useState<MatchedHome | null>(null);
   const [drafting, setDrafting] = useState<TodayItem | null>(null);
@@ -201,6 +204,8 @@ export function ClientDetail({ smsEnabled, client, activities, homes, showings, 
         <HomesCard homes={homes} canSend={canText} onSend={setSending} />
 
         <ShowingsCard showings={showings} />
+
+        <DealsCard deals={deals} clientStatus={str(client.status)} />
 
         <BbaAndDocsCard clientId={id} firstName={firstName} bba={bba} bbaRequest={bbaRequest} canText={canText} smsEnabled={smsEnabled} phone={phone} />
 

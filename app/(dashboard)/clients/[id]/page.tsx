@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ARIA_RECOMMENDED_REASON, AGENT_SENT_REASON } from "@/lib/sms/recommend-reasons";
 import { ARIA_TASK_KINDS } from "@/lib/sms/tasks";
-import { ClientDetail, type MatchedHome, type ShowingItem } from "./client-detail";
+import { ClientDetail, type DealItem, type MatchedHome, type ShowingItem } from "./client-detail";
 import { ariaSmsEnabled } from "@/lib/feature-flags";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +35,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
     .maybeSingle();
   if (!client) notFound();
 
-  const [{ data: activities }, { data: matchRows }, { data: showings }, { data: bba }, { data: openTasks }, { data: bbaRequest }] =
+  const [{ data: activities }, { data: matchRows }, { data: showings }, { data: bba }, { data: openTasks }, { data: bbaRequest }, { data: deals }] =
     await Promise.all([
       supabase
         .from("activities")
@@ -83,6 +83,13 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle(),
+      supabase
+        .from("transactions")
+        .select("id, address, closing_date, status")
+        .eq("client_id", params.id)
+        .eq("agent_id", user.id)
+        .neq("status", "archived")
+        .order("closing_date", { ascending: true, nullsFirst: false }),
     ]);
 
   const smsEnabled = ariaSmsEnabled();
@@ -146,6 +153,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
       activities={allActivities}
       homes={homes}
       showings={(showings ?? []) as ShowingItem[]}
+      deals={(deals ?? []) as DealItem[]}
       ariaTasks={ariaTasks}
       tasks={tasks}
       bbaRequest={

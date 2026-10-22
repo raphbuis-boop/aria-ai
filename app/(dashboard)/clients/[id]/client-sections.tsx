@@ -6,6 +6,7 @@ import Link from "next/link";
 import {
   CalendarDays,
   Check,
+  ChevronRight,
   Copy,
   Download,
   FileSignature,
@@ -27,7 +28,7 @@ import { EmptyNote, Pill, Section } from "@/components/Section";
 import { IdxComplianceNotice } from "@/components/IdxComplianceNotice";
 import { createClient } from "@/lib/supabase/client";
 import { CLIENT_STATUSES } from "@/lib/client-brief";
-import { fmtMoney, fmtDateTime, formatPhoneE164, relTime } from "@/lib/utils";
+import { fmtDate, fmtMoney, fmtDateTime, formatPhoneE164, relTime } from "@/lib/utils";
 import type { SendableProperty } from "@/components/aria/SendPropertySheet";
 import { Skeleton, SkeletonRegion } from "@/components/Skeleton";
 import { TaskDoneButton } from "@/components/TaskDoneButton";
@@ -339,6 +340,43 @@ export function ShowingsCard({ showings }: { showings: ShowingItem[] }) {
           );
         })}
       </Card>
+    </Section>
+  );
+}
+
+// ── Deals ──────────────────────────────────────────────────────────────────
+
+export type DealItem = {
+  id: string;
+  address: string | null;
+  closing_date: string | null;
+  status: string | null;
+};
+
+/** The client's transactions, each one tap from its milestone page. Shown once
+ * there's a deal, or the client is at offer / under contract. */
+export function DealsCard({ deals, clientStatus }: { deals: DealItem[]; clientStatus: string | null }) {
+  if (!deals.length && clientStatus !== "offer" && clientStatus !== "under_contract") return null;
+  return (
+    <Section label="Deals" action={{ href: "/transactions", label: "All deals →" }}>
+      {deals.length ? (
+        <Card className="divide-y divide-border overflow-hidden">
+          {deals.map((d) => (
+            <Link key={d.id} href={`/transactions/${d.id}`} className="flex items-center gap-3.5 px-5 py-3.5 hover:bg-secondary/50">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-display text-body font-semibold text-foreground">{d.address ?? "Address TBD"}</p>
+                <p className="font-display text-caption text-muted-foreground">
+                  {d.closing_date ? `Closing ${fmtDate(d.closing_date)}` : "No closing date yet"}
+                </p>
+              </div>
+              {d.status && d.status !== "active" ? <Pill tone="neutral">{d.status}</Pill> : null}
+              <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+            </Link>
+          ))}
+        </Card>
+      ) : (
+        <EmptyNote>No deal tracked yet. Add one under Deals to track inspection, appraisal, commitment and closing dates.</EmptyNote>
+      )}
     </Section>
   );
 }

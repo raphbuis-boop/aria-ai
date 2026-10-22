@@ -219,6 +219,10 @@ export function ClientsPageClient({
             <p className="font-display text-caption text-muted-foreground mt-1">
               {rows.length} total{hotCount > 0 ? ` · ${hotCount} hot` : ""}
             </p>
+            <p className="mt-2 flex gap-4 font-display text-caption font-semibold text-primary">
+              <Link href="/showings">Showings →</Link>
+              <Link href="/transactions">Deals →</Link>
+            </p>
           </div>
           <Button onClick={() => setOpen(true)} className="rounded-full h-9 px-4 text-caption font-semibold">
             + Add
