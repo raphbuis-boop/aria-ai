@@ -21,7 +21,8 @@ export const maxDuration = 60;
  *
  * Body: the provider's JSON payload (Zillow / Realtor.com shapes are
  * recognized), or a flat { name, phone, email?, message?, town?, budgetMax?,
- * propertyAddress?, eventId? }. Meta Lead Ads use /api/leads/meta instead.
+ * propertyAddress?, eventId?, smsConsent? }. Aria texts a partner lead only
+ * when smsConsent is true. Meta Lead Ads use /api/leads/meta instead.
  * Signed-in agents may also send { towns[], budgetMin, beds, baths, notes,
  * clientRole, autoText } — the Clients "New client" form does.
  */
@@ -76,9 +77,10 @@ export async function POST(request: Request) {
       agentId,
       source,
       ...lead,
-      // Partners must say the lead agreed to texts; agents attest for their
-      // own, and can opt out (the Clients "New client" form does).
-      autoText: fromAgent ? body.autoText !== false : body.smsConsent !== false,
+      // Partners must send smsConsent: true (a missing field means no
+      // consent); agents attest for their own leads and can opt out (the
+      // Clients "New client" form does).
+      autoText: fromAgent ? body.autoText !== false : body.smsConsent === true,
       profile: fromAgent ? agentProfileFields(body) : undefined,
     });
     return NextResponse.json({ ok: true, ...result }, { status: result.created ? 201 : 200 });

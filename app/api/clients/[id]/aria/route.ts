@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { ingestLead } from "@/lib/sms/lead";
+import { sendFirstTouch } from "@/lib/sms/lead";
+import { normalizeLeadSource } from "@/lib/sms/lead-sources";
 import { sendClientSms } from "@/lib/sms/outbound";
 import { closeAriaTasks } from "@/lib/sms/tasks";
 import { recordAgentSentProperty } from "@/lib/sms/recommend";
@@ -46,17 +47,19 @@ export async function POST(request: Request, { params }: { params: { id: string 
 
   switch (payload.action) {
     case "start": {
-      const result = await ingestLead(admin, {
-        agentId: user.id,
-        source: "manual",
-        name: client.name,
-        phone: client.phone,
-        email: client.email,
+      // The agent asked Aria to text their own client, so they vouch for consent.
+      // (This used to go through ingestLead as a "manual" lead, which returns
+      // early for any existing client — so it always answered 409.)
+      const firstText = await sendFirstTouch(admin, client, {
+        source: normalizeLeadSource(client.lead_source ?? client.source ?? "manual"),
       });
-      if (result.firstText === null) {
+      if (firstText === null) {
         return NextResponse.json({ error: "Aria is already texting this client" }, { status: 409 });
       }
-      return NextResponse.json({ ok: result.firstText.ok, ...result }, { status: result.firstText.ok ? 200 : 400 });
+      return NextResponse.json(
+        { ok: firstText.ok, clientId: client.id, created: false, duplicate: false, firstText },
+        { status: firstText.ok ? 200 : 400 },
+      );
     }
     case "pause":
     case "resume": {

@@ -60,6 +60,8 @@ export async function POST(request: Request) {
           );
           if (!res.ok) throw new Error(`Graph ${res.status}: ${await res.text()}`);
           const lead = parseMetaLead(await res.json());
+          // No autoText: a lead form doesn't establish SMS consent, so Aria
+          // never texts these on its own — the agent starts the thread.
           await ingestLead(createAdminClient(), { agentId, source: "meta", ...lead });
         } catch (error) {
           console.error("[leads/meta] lead", id, "failed", error);

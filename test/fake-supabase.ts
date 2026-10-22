@@ -23,7 +23,11 @@ export function fakeSupabase(
     let onConflict: string | null = null;
     const filters: Array<(r: Row) => boolean> = [];
 
-    const matching = () => db[table].filter((r) => filters.every((f) => f(r)));
+    let limitTo: number | null = null;
+    const matching = () => {
+      const rows = db[table].filter((r) => filters.every((f) => f(r)));
+      return limitTo == null ? rows : rows.slice(0, limitTo);
+    };
 
     function run(): Result {
       if (op === "insert") {
@@ -65,6 +69,14 @@ export function fakeSupabase(
         (op = "upsert"), (payload = row), (onConflict = o?.onConflict ?? null), q
       ),
       eq: (col: string, val: unknown) => (filters.push((r) => r[col] === val), q),
+      neq: (col: string, val: unknown) => (filters.push((r) => r[col] !== val), q),
+      in: (col: string, vals: unknown[]) => (filters.push((r) => vals.includes(r[col])), q),
+      is: (col: string, val: unknown) => (filters.push((r) => (r[col] ?? null) === val), q),
+      ilike: (col: string, pattern: string) => (
+        filters.push((r) => String(r[col] ?? "").toLowerCase() === pattern.replace(/%/g, "").toLowerCase()), q
+      ),
+      order: () => q,
+      limit: (n: number) => ((limitTo = n), q),
       maybeSingle: async (): Promise<Result> => {
         const res = run();
         if (res.error) return res;

@@ -17,7 +17,9 @@ export type LeadInput = {
   budgetMax?: number | null;
   propertyAddress?: string | null;
   providerEventId?: string | null;
-  /** false → create/log the lead but don't text (e.g. no SMS consent). */
+  /** true → Aria may text this lead: they gave SMS consent, or the agent
+   * vouches for it. Anything else (missing included) → create and log the
+   * lead without texting. Consent is never assumed. */
   autoText?: boolean;
   /** Extra profile fields an agent fills in when adding a client by hand.
    * Only used when a new client is created. */
@@ -35,8 +37,11 @@ export type LeadResult = {
   clientId: string;
   created: boolean;
   duplicate: boolean;
-  firstText: SendResult | { ok: false; activityId: null; error: string } | null;
+  firstText: FirstTextResult;
 };
+
+/** null → not sent because the client is already in an Aria text thread. */
+export type FirstTextResult = SendResult | { ok: false; activityId: null; error: string } | null;
 
 const CLIENT_COLUMNS = "id, agent_id, name, phone, email, sms_opted_out, town";
 
@@ -147,7 +152,8 @@ export async function ingestLead(
     approved: true,
     sent: false,
     external_id: eventKey,
-    metadata: { kind: "lead_intake", source: input.source },
+    // What the lead source said about SMS consent when the lead arrived.
+    metadata: { kind: "lead_intake", source: input.source, sms_consent: input.autoText === true },
   });
   // 23505: a concurrent redelivery of the same provider event won the race.
   if (intakeError?.code === "23505") {
@@ -164,19 +170,42 @@ export async function ingestLead(
     });
   }
 
-  const noText = (error: string) => ({
-    clientId: client!.id, created, duplicate: false,
-    firstText: { ok: false as const, activityId: null, error },
+  if (input.autoText !== true) {
+    return {
+      clientId: client.id, created, duplicate: false,
+      firstText: notTexted("Not texted: no SMS consent for this lead"),
+    };
+  }
+  const firstText = await sendFirstTouch(supabase, client, {
+    source: input.source,
+    message: input.message ?? null,
+    propertyAddress: input.propertyAddress ?? null,
   });
-  if (!ariaSmsEnabled()) return noText("Not texted: Aria texting is off");
-  if (input.autoText === false) return noText("Not texted: no SMS consent for this lead");
-  if (!client.phone) return noText("Not texted: lead has no phone number");
+  return { clientId: client.id, created, duplicate: false, firstText };
+}
+
+const notTexted = (error: string) => ({ ok: false as const, activityId: null, error });
+
+/**
+ * Aria's first text to a client: drafted by Claude, sent over Twilio, and the
+ * client moved from "new" to "contacted". Used for new leads and when the
+ * agent asks Aria to start texting an existing client. Callers decide
+ * consent; this checks the flag, phone, opt-out (in sendClientSms) and that
+ * the client isn't already in a text thread.
+ */
+export async function sendFirstTouch(
+  supabase: SupabaseClient,
+  client: { id: string; agent_id: string; name: string; phone: string | null; sms_opted_out?: boolean | null; town: string | null },
+  context: { source: LeadSource; message?: string | null; propertyAddress?: string | null },
+): Promise<FirstTextResult> {
+  if (!ariaSmsEnabled()) return notTexted("Not texted: Aria texting is off");
+  if (!client.phone) return notTexted("Not texted: lead has no phone number");
 
   const { data: priorText } = await supabase
     .from("activities").select("id")
     .eq("client_id", client.id).eq("type", "text")
     .limit(1).maybeSingle();
-  if (priorText) return { clientId: client.id, created, duplicate: false, firstText: null };
+  if (priorText) return null;
 
   const { data: agent } = await supabase
     .from("agent_profiles").select("full_name")
@@ -185,12 +214,12 @@ export async function ingestLead(
   const body = await draftFirstTouchSms({
     agentName: agent?.full_name || "your agent",
     clientFirstName: firstNameOf(client.name),
-    source: sourceLabel(input.source),
-    leadMessage: input.message ?? null,
+    source: sourceLabel(context.source),
+    leadMessage: context.message ?? null,
     town: client.town,
-    propertyAddress: input.propertyAddress ?? null,
+    propertyAddress: context.propertyAddress ?? null,
   });
-  if (!body) return noText("Claude could not draft the first text");
+  if (!body) return notTexted("Claude could not draft the first text");
 
   const firstText = await sendClientSms(supabase, client, body, {
     metadata: { kind: "first_touch" },
@@ -198,7 +227,7 @@ export async function ingestLead(
   if (firstText.ok) {
     await supabase.from("clients").update({ status: "contacted" }).eq("id", client.id).eq("status", "new");
   }
-  return { clientId: client.id, created, duplicate: false, firstText };
+  return firstText;
 }
 
 export function firstNameOf(name: string): string {
