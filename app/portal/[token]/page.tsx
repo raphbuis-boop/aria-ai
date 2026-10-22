@@ -3,7 +3,6 @@ import { MarketsComingSoonNote } from "@/components/MarketsComingSoonNote";
 import { MarketCard } from "@/components/MarketCard";
 import { PortalBeacon } from "@/components/PortalBeacon";
 import { PortalListingCard } from "@/components/PortalListingCard";
-import { fmtDate } from "@/lib/utils";
 
 export default async function PortalPage({
   params,
@@ -27,12 +26,11 @@ export default async function PortalPage({
     );
   }
 
-  const town = String(client.town ?? "Ridgewood");
+  const town = client.town ? String(client.town) : null;
 
   const [
     { data: agent },
     { data: matches },
-    { data: tasks },
     { data: market },
   ] = await Promise.all([
     admin
@@ -45,16 +43,11 @@ export default async function PortalPage({
       .select("*, properties(*)")
       .eq("client_id", client.id)
       .order("match_score", { ascending: false }),
-    admin
-      .from("tasks")
-      .select("*")
-      .eq("client_id", client.id)
-      .order("due_at", { ascending: true }),
-    admin
-      .from("market_data")
-      .select("*")
-      .eq("town", town)
-      .maybeSingle(),
+    // The agent's tasks are internal ("Archive / re-qualify", "Reply to …") and
+    // are never shown to the client.
+    town
+      ? admin.from("market_data").select("*").eq("town", town).maybeSingle()
+      : Promise.resolve({ data: null }),
   ]);
 
   const first = String(client.name ?? "there").split(" ")[0];
@@ -86,29 +79,6 @@ export default async function PortalPage({
               />
             );
           })}
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <div className="text-[10px] font-medium uppercase tracking-[0.07em] text-muted-foreground">
-          Next steps
-        </div>
-        <div className="mt-3 space-y-2">
-          {(tasks ?? []).map((t) => (
-            <div
-              key={String(t.id)}
-              className="flex items-start justify-between gap-3 rounded-[10px] border border-border bg-card px-3 py-2"
-            >
-              <span
-                className={`text-[13px] ${t.done ? "text-muted-foreground line-through" : "text-foreground"}`}
-              >
-                {String(t.title)}
-              </span>
-              <span className="text-[11px] text-muted-foreground">
-                {fmtDate(t.due_at as string | null)}
-              </span>
-            </div>
-          ))}
         </div>
       </div>
 

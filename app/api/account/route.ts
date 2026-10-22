@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getRouteSupabase } from "@/lib/api-auth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { removeAgentFiles } from "@/lib/account-data";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -9,6 +10,8 @@ export const runtime = "nodejs";
  * DELETE /api/account  { confirm: "DELETE" }
  * Permanently deletes the signed-in agent. Every agent-owned table cascades
  * from auth.users except IDX listing inquiries, which are cleared first.
+ * Storage doesn't cascade, so uploaded documents and signed BBA PDFs are
+ * removed before the user is.
  */
 export async function DELETE(request: Request) {
   const { user } = await getRouteSupabase();
@@ -25,6 +28,9 @@ export async function DELETE(request: Request) {
     console.error("[account] clearing inquiries failed", inquiriesError.message);
     return NextResponse.json({ error: "Couldn't delete your account. Try again." }, { status: 500 });
   }
+
+  // Files first: their paths live in rows the user deletion cascades away.
+  await removeAgentFiles(admin, user.id);
 
   const { error } = await admin.auth.admin.deleteUser(user.id);
   if (error) {
