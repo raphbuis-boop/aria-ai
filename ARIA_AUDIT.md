@@ -27,7 +27,7 @@ Companion documents: [ARIA_PRODUCT_STRATEGY.md](ARIA_PRODUCT_STRATEGY.md) · [AR
 | L2 partner leads texted without consent | **Fixed** — texting requires `smsConsent: true`; consent recorded on intake | `238d2ac` |
 | Portal would show internal tasks | **Fixed** | `21d0371` |
 | New: AI property search dropped every town | **Fixed** (found while adding tests) | `df8dae2` |
-| S3 no rate limits on public routes | **Fixed** — Postgres-backed per-IP limits on AI search, inquiry/waitlist forms, BBA signing, portal engagement (fails open) | rate-limit commit |
+| S3 no rate limits on public routes | **Fixed** — Postgres-backed per-IP limits on AI search, inquiry/waitlist forms, BBA signing, portal engagement (fails open) | `44f1478` |
 | S5 token encryption · S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/P9/ENG-11 | — |
 | Tests / CI | **Added** — 47 unit tests, 2 SQL test suites, `.github/workflows/ci.yml` | `a8b78d0` + CI commit |
 
