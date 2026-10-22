@@ -64,7 +64,7 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/react-signature-canvas": "^1.0.7",
-    "eslint": "^9.39.5",
+    "eslint": "^10.13.0",
     "eslint-config-next": "^16.4.2",
     "postcss": "^8",
     "shadcn": "^4.19.0",
