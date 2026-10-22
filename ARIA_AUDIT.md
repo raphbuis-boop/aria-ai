@@ -6,6 +6,34 @@ Companion documents: [ARIA_PRODUCT_STRATEGY.md](ARIA_PRODUCT_STRATEGY.md) · [AR
 
 ---
 
+## Status update — 2026-10-22 (branch `claude/aria-engineering-fixes`)
+
+| Finding | Status | Commit |
+|---|---|---|
+| S1 self-assigned brokerage membership | **Fixed** — `brokerage_members` with roles, guard trigger, rewritten policies and routes; attack replayed in `supabase/tests/brokerage_isolation.sql` | `899b6ac` |
+| D1 migrations fail on a fresh DB | **Fixed** — all migrations replay; CI job runs them | `4745c12` |
+| D2 objects missing from migrations | **Fixed** — `market_data`, `clients.portal_token`, `files` bucket created idempotently | `4745c12` |
+| D3/D4 production schema unversioned | **Open** — needs a read-only production schema dump | — |
+| D5 BBA re-sign overwrote the signed agreement | **Fixed** — insert-only versions, `record_bba_signature()`, agents can't edit signed rows | `3cbe302` |
+| C1 Today used UTC days · C2 reminder labels · C3 digest stopped at 50 users | **Fixed** (`lib/time.ts`; zoned crons; paginated users; batched contact lookups) | `b355a8b` |
+| C4 browser-triggered automation fan-out | **Fixed** — removed; server-side cadence engine is roadmap P5 | `ca2e8e1` |
+| C5 "Start Aria" always 409 | **Fixed** | `238d2ac` |
+| C6 lead notifications open `/inquiries` | **Withdrawn — not a bug.** `hrefFor` checks `related_client_id` first and lead notifications set it; the audit read only one line | — |
+| C7 Transactions unreachable | **Fixed** — Deals section on client detail, links from Clients | `ad96163` |
+| C8 7-day signed URL persisted | **Fixed** | `3cbe302` |
+| S2 Next.js 14 EOL · dependency criticals | **Fixed** — Next 16.4 / React 19; `npm audit --omit=dev`: 0 vulnerabilities | `972ccfc`, `c37b2f4` |
+| S4 HTML injection in emails | **Fixed** | `b355a8b` |
+| S7 account deletion orphaned files | **Fixed** | `21d0371` |
+| L2 partner leads texted without consent | **Fixed** — texting requires `smsConsent: true`; consent recorded on intake | `238d2ac` |
+| Portal would show internal tasks | **Fixed** | `21d0371` |
+| New: AI property search dropped every town | **Fixed** (found while adding tests) | `df8dae2` |
+| S3 rate limiting · S5 token encryption · S6 cross-agent SMS match · L1 BBA legal content · L3 quiet hours | **Open** — roadmap P6/P9/ENG-11 | — |
+| Tests / CI | **Added** — 47 unit tests, 2 SQL test suites, `.github/workflows/ci.yml` | `a8b78d0` + CI commit |
+
+**Deploy order:** apply the new migrations (`20261022120000`–`20261022140000`) before deploying the code — the routes read `brokerage_members` and call `record_bba_signature()`. After applying, check `brokerage_membership_review` for agents whose profile pointed at someone else's brokerage.
+
+---
+
 ## 0. How to read this audit
 
 **Evidence labels** used throughout:
@@ -105,7 +133,7 @@ Status key: **Working** = complete code path, no defects found · **Partial** = 
 | Listing marketing suite | `/listings/new` | Dead | No inbound link; uploads to a `files` bucket no migration creates. |
 | Client portal | `app/portal/[token]` | Dead | Nothing ever sets `clients.portal_token`; column not in migrations. If enabled it would show clients **all** of the agent's internal tasks about them. |
 | Public property search (IDX) | `app/property-search` | Off | Needs MLS; uses public unauthenticated `search-parse` (Claude). |
-| Inquiries | `/inquiries` | Partial | IDX form leads for the single site owner. Notification bell sends **every** `inquiry_received` (incl. Zillow/website leads) to `/inquiries` instead of the client (`components/NotificationPanel.tsx:30`). |
+| Inquiries | `/inquiries` | Partial | IDX form leads for the single site owner. |
 | Notifications | bell + `/api/notifications/*` + crons | Partial | In-app only; daily digest email; showing reminder email. |
 | Settings | `/settings` | Working | Profile, integrations status, voice training, drafts tone, data reset, account delete. |
 | Brokerage admin | — | Missing | No roles, no team view, no reporting. |
@@ -155,7 +183,7 @@ Severity: **Critical** = data exposure, legal exposure, or blocks a pilot · **H
 | C3 | High | **Daily digest only reaches the first 50 users.** `supabase.auth.admin.listUsers()` without pagination (`app/api/notifications/trigger/route.ts:198`) returns one page. It also does one activities query per client per agent (N+1) inside a single function invocation. | **[Code]** | Paginate; drive from `agent_profiles`; set-based SQL for "last real contact". |
 | C4 | High | **Browser-driven automation fan-out.** `components/AutomationRunner.tsx:15` fires `/api/automation/run` on every app mount; the route loops every client serially and calls Claude per eligible client (`app/api/automation/run/route.ts`). It does not exclude imported sphere/past clients, closed clients or clients who replied; after a 300-contact import, the next day's first open triggers ~300 sequential Claude calls (timeouts, retries on every load, cost) and later creates 300 "5-day check-in" and 300 "Archive / re-qualify" tasks that flood Today. The generated drafts are filtered out of every screen except a count in Ask Aria. | **[Code]** | Delete the client trigger; replace with a server cron + stage-aware eligibility + batch cap (roadmap P5). |
 | C5 | High | **"Start Aria" on an existing client always fails.** `POST /api/clients/[id]/aria {action:"start"}` (`app/api/clients/[id]/aria/route.ts:48`) calls `ingestLead(source:"manual")`, which returns early with `firstText: null` for any existing client (`lib/sms/lead.ts:105`) → route answers 409 "already texting". If the client has no phone/email it instead creates a duplicate client. Only matters with SMS on. | **[Code]** | Give "start" its own path: draft first touch + `sendClientSms`. |
-| C6 | Medium | **Lead notifications open the wrong screen.** Every `inquiry_received` routes to `/inquiries` (`components/NotificationPanel.tsx:30`), but Zillow/website/text-in/Meta leads are clients, not IDX inquiries. | **[Code]** | Route to `/clients/{related_client_id}` when present. |
+| C6 | — | ~~Lead notifications open the wrong screen.~~ **Withdrawn:** `hrefFor` (`components/NotificationPanel.tsx:27`) already routes to `/clients/{related_client_id}` first, and lead notifications set it. | **[Code]** re-checked | None needed. |
 | C7 | Medium | **Transactions screen has no entry point.** Only `BottomNav` "activeFor" mentions `/transactions`; nothing links to it. | **[Code]** | Link from client detail, Today closings, and Clients. |
 | C8 | Medium | Signed BBA PDF URL saved to `signed_file_url` is a 7-day signed URL (`app/api/bba/sign/[token]/route.ts:250`) — stale after a week if anything reads the column. | **[Code]** | Store path only; sign on read. |
 | C9 | Low | Two hardcoded model IDs (`lib/sms/conversation.ts:10`, `lib/inbox/ai.ts:9`) bypass `AI_MODEL`; the CLAUDE.md warns that a retired model fails silently into fallbacks. | **[Code]** | Centralize model constants; add a startup/health probe. |

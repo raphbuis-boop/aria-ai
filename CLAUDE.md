@@ -9,17 +9,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Commands
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Production build
-npm run start    # Run production build
-npm run lint     # ESLint (Next.js config)
+npm run dev        # Start development server
+npm run build      # Production build
+npm run start      # Run production build
+npm run lint       # ESLint 9 flat config (eslint.config.mjs); `next lint` no longer exists
+npm run typecheck  # tsc with a 4 GB heap (the googleapis types are huge)
+npm test           # Vitest unit tests (*.test.ts next to the code)
+npm run test:db    # Replays every migration on a fresh Postgres, then runs supabase/tests/*.sql
+                   #   needs PGHOST/PGPORT/PGUSER/PGPASSWORD for a server where it can create databases
 ```
 
-No test suite is configured.
+`npm run dev` and `npm run build` use webpack (`--webpack`): Sentry's build plugin needs it and Turbopack can't resolve the style-condition CSS imports in `app/globals.css`. CI (`.github/workflows/ci.yml`) runs typecheck, lint, unit tests, build, and the DB replay + SQL tests on every PR.
 
 ## Architecture
 
-**Stack:** Next.js 14 App Router · TypeScript · Supabase (auth + DB) · Anthropic Claude · Tailwind CSS (ivory design system) · Capacitor (iOS wrapper)
+**Stack:** Next.js 16 App Router (React 19; `params`, `searchParams` and `cookies()` are async) · TypeScript · Supabase (auth + DB) · Anthropic Claude · Tailwind CSS (ivory design system) · Capacitor (iOS wrapper)
 
 ### Route Groups
 
@@ -38,7 +42,8 @@ No test suite is configured.
 | `lib/nj-towns.ts` | NJ town adjacency graph — `normalizeTown()`, `isTownAdjacentOrEqual()`, `getAdjacentTowns()` |
 | `lib/compliance.ts` | NJMLS IDX constants and `getIdxDisclaimerText()` — required on all pages displaying MLS data |
 | `lib/simplyrets.ts` | SimplyRETS API client helpers |
-| `lib/inbox-drafts.ts` | Draft persistence for inbox AI messages |
+| `lib/time.ts` | Calendar math in the agent's zone (`America/New_York`): `zonedDayBounds()`, `dayKey()`, `differenceInZonedCalendarDays()`. The server clock is UTC — never use `setHours`/`getDate` for "today" |
+| `lib/brokerages.ts` | `getBrokerageMembership()` / `ensureBrokerage()` — membership and role come from `brokerage_members`, never from `agent_profiles.brokerage_id` |
 | `lib/supabase/server.ts` | SSR Supabase client (cookie-based) |
 | `lib/supabase/client.ts` | Browser Supabase client |
 | `lib/supabase/admin.ts` | Service-role admin client (no auto-refresh) |
@@ -55,7 +60,7 @@ Broad founder or product language should be **decomposed into investigations**, 
 
 ### Auth Flow
 
-`middleware.ts` guards all routes except `/api/*`, `/portal/*`, `/login`, `/setup`, `/`, `/landing.html`. Authenticated users hitting `/` or `/login` are redirected to `/dashboard`. Unauthenticated users on protected routes go to `/login`.
+`proxy.ts` (Next 16's renamed middleware; Node.js runtime) guards all routes except `/api/*`, `/portal/*`, `/login`, `/setup`, `/`, `/landing.html`. Authenticated users hitting `/` or `/login` are redirected to `/dashboard`. Unauthenticated users on protected routes go to `/login`.
 
 ### API Routes (`app/api/`)
 
@@ -81,7 +86,7 @@ Capacitor wraps the production web app (`capacitor.config.ts` points to `https:/
 
 ### Database
 
-Migrations live in `supabase/migrations/`. Key schema additions (newest first): IDX listing inquiries, contracts & deals, saved properties, buyer broker agreements, showings status/client role, brokerage/matching tables, waitlist/referrals.
+Migrations live in `supabase/migrations/` and must build a fresh database (`npm run test:db`); RLS/tenancy tests live in `supabase/tests/`. Brokerage membership is `brokerage_members` (roles owner/admin/agent, server-written only). Signed BBAs are insert-only versions (`superseded_at` null = current; write via `record_bba_signature()`). Key schema additions (newest first): IDX listing inquiries, contracts & deals, saved properties, buyer broker agreements, showings status/client role, brokerage/matching tables, waitlist/referrals.
 
 ## Environment Variables
 
