@@ -1,7 +1,6 @@
 // AppShell — authenticated dashboard wrapper.
 //
 // Deliberately minimal. Renders only:
-//   - Background automation tasks (invisible)
 //   - Page fade animation shell
 //   - Fixed bottom navigation
 //
@@ -14,14 +13,12 @@
 //   Pages              — pb-28 via PageContainer (clears nav pill)
 //   Nothing else touches safe-area insets.
 
-import { AutomationRunner } from "@/components/AutomationRunner";
 import { BottomNav } from "@/components/BottomNav";
 import { PageShell } from "@/components/PageShell";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="app-shell min-h-[100dvh] w-full max-w-full bg-background text-foreground">
-      <AutomationRunner />
       <PageShell>{children}</PageShell>
       <BottomNav />
     </div>
