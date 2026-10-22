@@ -21,6 +21,7 @@ begin
     array['clients', 'brokerage_id'],
     array['clients', 'lead_source'],
     array['agent_profiles', 'brokerage_id'],
+    array['buyer_broker_agreements', 'superseded_at'],
     array['activities', 'metadata']
   ] loop
     if not exists (

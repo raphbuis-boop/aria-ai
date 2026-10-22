@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { runPropertyMatching } from "@/lib/matchProperties";
 import { getRouteSupabase } from "@/lib/api-auth";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { allowDemoSeed } from "@/lib/runtime-env";
 
 export const dynamic = "force-dynamic";
@@ -392,7 +393,8 @@ export async function POST() {
   if (lisa) {
     const lisaSignatureSvg =
       "data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHdpZHRoPScyNDAnIGhlaWdodD0nNjAnPjx0ZXh0IHg9JzEwJyB5PSc0MicgZm9udC1mYW1pbHk9J2N1cnNpdmUnIGZvbnQtc2l6ZT0nMzQnIGZpbGw9J2JsYWNrJz5MaXNhIFRob21wc29uPC90ZXh0Pjwvc3ZnPg==";
-    await supabase.from("buyer_broker_agreements").insert({
+    // Agents can't write agreements (RLS); the local-only seed uses the service role.
+    await createAdminClient().from("buyer_broker_agreements").insert({
       client_id: lisa,
       agent_id: agentId,
       agent_name: "Aria Agent",

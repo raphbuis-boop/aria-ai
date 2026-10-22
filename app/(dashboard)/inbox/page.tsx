@@ -53,7 +53,11 @@ export default async function FollowUpsPage() {
         .gte("created_at", minus24hISO)
         .order("match_score", { ascending: false }),
 
-      supabase.from("buyer_broker_agreements").select("client_id, commission_pct").eq("agent_id", user.id),
+      supabase
+        .from("buyer_broker_agreements")
+        .select("client_id, commission_pct")
+        .eq("agent_id", user.id)
+        .is("superseded_at", null),
 
       supabase
         .from("dismissed_opportunities")

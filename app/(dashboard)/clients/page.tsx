@@ -56,7 +56,8 @@ export default async function ClientsPage() {
     supabase
       .from("buyer_broker_agreements")
       .select("client_id, commission_pct")
-      .eq("agent_id", user.id),
+      .eq("agent_id", user.id)
+      .is("superseded_at", null),
 
     // Recent texts — newest first, so the first row per client is its last message.
     supabase

@@ -58,6 +58,7 @@ export async function GET(_req: Request, { params }: { params: { token: string }
       .from("buyer_broker_agreements")
       .select("signed_at, commission_pct, term_start, term_end, signed_storage_path")
       .eq("client_id", request.client_id)
+      .is("superseded_at", null)
       .maybeSingle(),
     loadTemplate(admin, request.template_id),
   ]);
@@ -208,13 +209,9 @@ export async function POST(req: Request, { params }: { params: { token: string }
   const termEnd = request.term_end;
   const template = await loadTemplate(admin, request.template_id);
 
-  // Reserve a BBA id up front so the signed PDF path is deterministic.
-  const reservedBbaId =
-    (await admin
-      .from("buyer_broker_agreements")
-      .select("id")
-      .eq("client_id", request.client_id)
-      .maybeSingle()).data?.id ?? crypto.randomUUID();
+  // Every signature is a new agreement version with its own PDF; earlier
+  // versions (and their files) are kept.
+  const bbaId = crypto.randomUUID();
 
   let signedStoragePath: string | null = null;
   let signedFileUrl: string | null = null;
@@ -236,18 +233,18 @@ export async function POST(req: Request, { params }: { params: { token: string }
         termEnd,
       });
 
-      signedStoragePath = `${template.brokerage_id}/signed/${reservedBbaId}.pdf`;
+      signedStoragePath = `${template.brokerage_id}/signed/${bbaId}.pdf`;
       const { error: upErr } = await admin.storage
         .from(BUCKET)
         .upload(signedStoragePath, Buffer.from(signedBytes), {
           contentType: "application/pdf",
-          upsert: true,
+          upsert: false,
         });
       if (upErr) throw new Error(upErr.message);
 
       const { data: signed } = await admin.storage
         .from(BUCKET)
-        .createSignedUrl(signedStoragePath, 60 * 60 * 24 * 7); // 7-day link
+        .createSignedUrl(signedStoragePath, 60 * 60); // for this response only; sign again on read
       signedFileUrl = signed?.signedUrl ?? null;
     } catch (err) {
       // PDF step failed — fall through to text-only agreement so we still
@@ -258,38 +255,35 @@ export async function POST(req: Request, { params }: { params: { token: string }
     }
   }
 
-  const { data, error } = await admin
-    .from("buyer_broker_agreements")
-    .upsert(
-      {
-        id: reservedBbaId,
-        client_id: request.client_id,
-        agent_id: request.agent_id,
-        agent_name: request.agent_name,
-        client_name: clientName,
-        commission_pct: commissionPct,
-        term_start: termStart,
-        term_end: termEnd,
-        search_area: request.search_area,
-        signature_data: signatureData,
-        signed_at: signedAt.toISOString(),
-        ip_address:
-          req.headers.get("x-forwarded-for") ??
-          req.headers.get("x-real-ip") ??
-          null,
-        user_agent: req.headers.get("user-agent") ?? null,
-        template_id: template?.id ?? null,
-        signed_storage_path: signedStoragePath,
-        signed_file_url: signedFileUrl,
-      },
-      { onConflict: "client_id" },
-    )
-    .select("id, signed_at")
-    .single();
+  // Supersedes the client's current agreement (if any) and inserts this one
+  // in a single transaction.
+  const { data, error } = await admin.rpc("record_bba_signature", {
+    agreement: {
+      id: bbaId,
+      client_id: request.client_id,
+      agent_id: request.agent_id,
+      agent_name: request.agent_name,
+      client_name: clientName,
+      commission_pct: commissionPct,
+      term_start: termStart,
+      term_end: termEnd,
+      search_area: request.search_area,
+      signature_data: signatureData,
+      signed_at: signedAt.toISOString(),
+      ip_address:
+        req.headers.get("x-forwarded-for") ??
+        req.headers.get("x-real-ip") ??
+        null,
+      user_agent: req.headers.get("user-agent") ?? null,
+      template_id: template?.id ?? null,
+      signed_storage_path: signedStoragePath,
+    },
+  });
 
-  if (error) {
+  if (error || !data) {
     await release();
-    console.error("[bba/sign] saving agreement failed:", error.message);
+    if (signedStoragePath) await admin.storage.from(BUCKET).remove([signedStoragePath]);
+    console.error("[bba/sign] saving agreement failed:", error?.message ?? "no row returned");
     return NextResponse.json({ error: "Could not save the agreement. Please try again." }, { status: 500 });
   }
 

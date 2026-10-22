@@ -17,7 +17,8 @@ export default async function ShowingsPage() {
   const { data: bbaRows } = await supabase
     .from("buyer_broker_agreements")
     .select("client_id")
-    .eq("agent_id", user.id);
+    .eq("agent_id", user.id)
+    .is("superseded_at", null);
 
   const signedClientIds = new Set(
     (bbaRows ?? []).map((r) => String(r.client_id)),

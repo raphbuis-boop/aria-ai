@@ -13,6 +13,7 @@ export async function hasSignedBba(
     .from("buyer_broker_agreements")
     .select("id")
     .eq("client_id", clientId)
+    .is("superseded_at", null)
     .not("signed_at", "is", null)
     .maybeSingle();
   return Boolean(data);

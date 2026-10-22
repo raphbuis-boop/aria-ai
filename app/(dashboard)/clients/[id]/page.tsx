@@ -61,6 +61,7 @@ export default async function ClientDetailPage({ params }: { params: { id: strin
         .select("commission_pct, signed_at, term_start, term_end, search_area, signed_storage_path")
         .eq("client_id", params.id)
         .eq("agent_id", user.id)
+        .is("superseded_at", null)
         .maybeSingle(),
       // Every open task for this client, whatever created it.
       supabase
