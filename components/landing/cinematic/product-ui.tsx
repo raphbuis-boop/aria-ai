@@ -325,7 +325,6 @@ export function PhoneToday({ showPriya = true, statusBar = true }: { showPriya?:
 const STATUS_STYLE: Record<ToolStatus, string> = {
   live: "bg-sidebar-accent text-sidebar-accent-foreground",
   import: "border border-sidebar-muted/50 text-sidebar-foreground",
-  soon: "border border-dashed border-taupe-light/70 text-taupe-light",
 };
 
 export function StatusPill({ status }: { status: ToolStatus }) {

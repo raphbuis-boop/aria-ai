@@ -106,21 +106,23 @@ function StepFromP({ p, i, range }: { p: MotionValue<number>; i: number; range: 
 
 /* ───────────── tools ───────────── */
 
-const TOOL_Y = [36, 186, 336, 486];
+const LEFT_COUNT = Math.ceil(TOOLS.length / 2);
 const CARD_W = 230;
 const LEFT_X = 40;
 const RIGHT_X = STAGE_W - 40 - CARD_W;
 const PHONE_SCALED = { left: 360, right: 600 }; // phone at 0.8 around the stage center
-const DASH: Record<ToolStatus, string | undefined> = { live: undefined, import: "2 6", soon: "9 6" };
-const STROKE: Record<ToolStatus, string> = { live: "stroke-sidebar-accent", import: "stroke-sidebar-muted", soon: "stroke-taupe-light" };
+const DASH: Record<ToolStatus, string | undefined> = { live: undefined, import: "2 6" };
+const STROKE: Record<ToolStatus, string> = { live: "stroke-sidebar-accent", import: "stroke-sidebar-muted" };
 
 function toolGeometry(i: number) {
-  const left = i < 4;
-  const row = i % 4;
-  const y = TOOL_Y[row];
+  // Cards stack 150px apart, each side centred on the stage (4 per side spans y 36–486).
+  const left = i < LEFT_COUNT;
+  const row = left ? i : i - LEFT_COUNT;
+  const count = left ? LEFT_COUNT : TOOLS.length - LEFT_COUNT;
+  const y = 261 - (count - 1) * 75 + row * 150;
   const x = left ? LEFT_X : RIGHT_X;
   const ay = y + 46;
-  const ey = 170 + row * 100;
+  const ey = 320 - (count - 1) * 50 + row * 100;
   const d = left
     ? `M ${x + CARD_W} ${ay} C ${x + CARD_W + 70} ${ay}, ${PHONE_SCALED.left - 70} ${ey}, ${PHONE_SCALED.left} ${ey}`
     : `M ${x} ${ay} C ${x - 70} ${ay}, ${PHONE_SCALED.right + 70} ${ey}, ${PHONE_SCALED.right} ${ey}`;
@@ -158,7 +160,7 @@ function ToolsLegend({ p }: { p: MotionValue<number> }) {
   const opacity = useTransform(p, (v) => progressIn(v, [0.93, 0.97]));
   return (
     <motion.div style={{ opacity }} className="absolute inset-x-0 flex justify-center gap-6 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-muted" >
-      {(["live", "import", "soon"] as const).map((s) => (
+      {(["live", "import"] as const).map((s) => (
         <span key={s} className="flex items-center gap-2" style={{ marginTop: 596 }}>
           <svg width="26" height="4" aria-hidden>
             <line x1="1" y1="2" x2="25" y2="2" strokeWidth={1.6} strokeLinecap="round" strokeDasharray={DASH[s]} className={STROKE[s]} />

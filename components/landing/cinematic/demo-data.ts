@@ -12,7 +12,7 @@
  *  - Nothing is texted or emailed without the agent approving it. Text drafts
  *    open in the agent's own Messages app; Gmail replies send on the agent's OK.
  *  - Outlook, Google Calendar sync, WhatsApp, Excel import and import undo are
- *    not available yet and may only appear labelled as coming soon.
+ *    not available yet, so the page does not mention them.
  */
 
 export const DEMO = {
@@ -46,20 +46,18 @@ export const SHOWINGS: { when: string; who: string; where: string }[] = [
 /** A past showing: logging the client's feedback gets an AI summary and a follow-up. */
 export const PAST_SHOWING = { when: "4:00 PM", who: "The Harts", where: "Wed · 9 Elm Pl · Feedback summarized, follow-up added" };
 
-export type ToolStatus = "live" | "import" | "soon";
+export type ToolStatus = "live" | "import";
 
 export const TOOL_STATUS_LABEL: Record<ToolStatus, string> = {
   live: "Connected",
   import: "CSV import",
-  soon: "Coming soon",
 };
 
 /**
  * The tools around Aria, each with its true relationship in production today.
  *  - live: works now through a real connection.
  *  - import: the CRM's CSV export is imported. No live sync.
- *  - soon: not available yet.
- * Order matters: on desktop the first four sit left of the phone, the rest right.
+ * Order matters: on desktop the first half (rounded up) sits left of the phone, the rest right.
  */
 export const TOOLS: { id: string; name: string; status: ToolStatus; relation: string; mark: string }[] = [
   { id: "gmail", name: "Gmail", status: "live", relation: "Summarizes threads. Drafts replies you approve.", mark: "G" },
@@ -67,7 +65,4 @@ export const TOOLS: { id: string; name: string; status: ToolStatus; relation: st
   { id: "contacts", name: "Google Contacts", status: "live", relation: "Direct import with Google sign-in.", mark: "@" },
   { id: "fub", name: "Follow Up Boss", status: "import", relation: "Import its CSV. Duplicates are skipped, never overwritten.", mark: "F" },
   { id: "crms", name: "kvCORE · Salesforce · LionDesk", status: "import", relation: "Import their CSV exports. Aria maps the columns.", mark: "+" },
-  { id: "gcal", name: "Google Calendar", status: "soon", relation: "Showings on your Google Calendar.", mark: "31" },
-  { id: "outlook", name: "Outlook", status: "soon", relation: "Outlook email beside Gmail.", mark: "O" },
-  { id: "whatsapp", name: "WhatsApp", status: "soon", relation: "Message Aria on WhatsApp.", mark: "W" },
 ];

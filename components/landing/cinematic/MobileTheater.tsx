@@ -52,7 +52,6 @@ function StepFromP({ p, i, range }: { p: MotionValue<number>; i: number; range: 
 const DOT: Record<ToolStatus, string> = {
   live: "bg-sidebar-accent",
   import: "border border-sidebar-muted bg-sidebar",
-  soon: "border border-dashed border-taupe-light bg-sidebar",
 };
 
 function ToolRow({ p, i }: { p: MotionValue<number>; i: number }) {
@@ -192,7 +191,7 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
       <motion.div className="absolute left-1/2 top-1 -translate-x-1/2" style={{ opacity: orbO }}>
         <AriaOrb size={44} energy={0.8} />
       </motion.div>
-      <motion.div className="absolute left-[21.5px] top-[62px] w-px origin-top bg-sidebar-muted/50" style={{ height: 476, scaleY: spine }} />
+      <motion.div className="absolute left-[21.5px] top-[62px] w-px origin-top bg-sidebar-muted/50" style={{ height: TOOLS.length * 59.5, scaleY: spine }} />
       <div className="absolute inset-x-0 top-[62px]">
         {TOOLS.map((t, i) => <ToolRow key={t.id} p={p} i={i} />)}
       </div>
