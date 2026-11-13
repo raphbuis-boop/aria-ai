@@ -172,7 +172,7 @@ export function SrNarrative() {
         </li>
         <li>Priya’s showing at 11:00 AM is on the agent’s Showings list, and the Monday follow-up waits in Follow-ups.</li>
         <li>The same day on Aria’s mobile Today screen: Priya’s showing at 11:00 AM and Elena Ruiz’s at 1:00 PM.</li>
-        <li>Aria alongside the agent’s tools: Gmail, Messages and Google Contacts are connected; Follow Up Boss, kvCORE, Salesforce and LionDesk come in through CSV import; Google Calendar, Outlook and WhatsApp are coming soon.</li>
+        <li>Aria alongside the agent’s tools: Gmail, Messages and Google Contacts are connected; Follow Up Boss, kvCORE, Salesforce and LionDesk come in through CSV import.</li>
       </ol>
     </div>
   );

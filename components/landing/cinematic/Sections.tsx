@@ -24,9 +24,9 @@ function Word({ word, i, total, p }: { word: string; i: number; total: number; p
 
 const LEDGER = [
   { k: "Texts", v: "Drafts open in your own Messages app. You press send, from your number." },
-  { k: "Email", v: "Gmail replies send only after you approve them. Outlook is coming soon." },
-  { k: "Showings", v: "Showings you book live on your Showings list and on Today. Google Calendar sync is coming soon." },
-  { k: "Your CRM", v: "Imports read your CRM’s CSV export. Duplicates are skipped, never overwritten. Excel files and import undo are coming soon." },
+  { k: "Email", v: "Gmail replies send only after you approve them." },
+  { k: "Showings", v: "Showings you book live on your Showings list and on Today." },
+  { k: "Your CRM", v: "Imports read your CRM’s CSV export. Duplicates are skipped, never overwritten." },
 ];
 
 export function Trust() {
@@ -81,19 +81,19 @@ const CAPS = [
   {
     title: "Gmail, summarized",
     tag: "Gmail",
-    body: "Open a thread and Aria summarizes it and drafts a reply for your approval. Outlook is coming soon.",
+    body: "Open a thread and Aria summarizes it and drafts a reply for your approval.",
     say: "Read less. Reply faster.",
   },
   {
     title: "Bring your book",
     tag: "CSV import",
-    body: "Import a CSV from Follow Up Boss, kvCORE, Salesforce, LionDesk or any spreadsheet; Google Contacts connects directly. Aria maps the columns, and duplicates are skipped, never overwritten. Excel files, import undo and live CRM sync are coming later.",
+    body: "Import a CSV from Follow Up Boss, kvCORE, Salesforce, LionDesk or any spreadsheet; Google Contacts connects directly. Aria maps the columns, and duplicates are skipped, never overwritten.",
     say: "Your CRM stays your CRM.",
   },
   {
     title: "Ask Aria anything",
     tag: "Web · Voice",
-    body: "Ask in plain words, typed or by voice: who’s hottest, who’s gone quiet, what’s on today. Messaging Aria on WhatsApp is coming later.",
+    body: "Ask in plain words, typed or by voice: who’s hottest, who’s gone quiet, what’s on today.",
     say: "“Who haven’t I talked to in a while?”",
   },
 ];
@@ -111,7 +111,7 @@ export function CapabilityIndex() {
             </h2>
           </div>
           <p className="max-w-[42ch] font-display text-[16px] leading-relaxed text-muted-foreground lg:justify-self-end">
-            Each of these works in Aria now. Where something is still coming, we say so.
+            Each of these works in Aria today.
           </p>
         </div>
 
