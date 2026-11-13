@@ -311,3 +311,71 @@ select:focus:not([data-focus-parent]) {
     @apply font-sans;
   }
 }
+/* ── Cinematic landing (components/landing/cinematic). Everything below is scoped
+   to .aria-landing or is a named keyframe, so the product app is unaffected. ── */
+@layer base {
+  /* Landing palette — forest, sage, warm ivory, taupe, espresso. Scoped to the
+     marketing landing (components/landing/cinematic) so the product app's
+     tokens are untouched. Text pairs meet WCAG AA:
+     ivory/forest 10.8:1 · sage-light/forest 6.7:1 · taupe-light/forest 6.3:1 ·
+     muted (taupe-brown)/ivory 5.7:1 · espresso/ivory 12.8:1. */
+  .aria-landing {
+    --forest:              #153D30;
+    --sage:                #789687;   /* decorative sage — rings, lines, orb shading */
+    --sage-light:          #B4C5B9;   /* sage for text/accents on forest */
+    --ivory:               #F5F2E9;
+    --taupe:               #A89580;   /* warmth, used sparingly */
+    --taupe-light:         #C9B9A5;   /* taupe for text on forest */
+    --espresso:            #30291F;
+    /* surfaces + text */
+    --background:          var(--ivory);
+    --foreground:          var(--espresso);
+    --card:                #FDFCF8;
+    --card-foreground:     var(--espresso);
+    --popover:             #FDFCF8;
+    --popover-foreground:  var(--espresso);
+    --secondary:           #ECE6D9;
+    --secondary-foreground:var(--espresso);
+    --muted:               #ECE6D9;
+    --muted-foreground:    #6A5D4D;
+    --accent:              #ECE6D9;
+    --accent-foreground:   var(--espresso);
+    --primary:             var(--forest);
+    --primary-foreground:  var(--ivory);
+    --ring:                var(--forest);
+    --signal:              #3F6B57;   /* ivory text 5.4:1 */
+    --border:              rgba(48, 41, 31, 0.11);
+    --shadow-color:        48 41 31;
+    /* forest shell */
+    --sidebar:             var(--forest);
+    --sidebar-foreground:  var(--ivory);
+    --sidebar-muted:       var(--sage-light);
+    --sidebar-accent:      var(--sage-light);
+    --sidebar-accent-foreground: var(--forest);
+    --sidebar-raised:      #1E4A3B;
+    /* Aria's pearl: ivory body, sage shading, warm highlight */
+    --orb:                 #DFE2D6;
+    --orb-light:           #FFFDF7;
+    --orb-deep:            var(--sage);
+    /* atmospheric light (replaces the old blue glow) */
+    --glow:                #8FAE9C;
+    --well:                #EFEADF;   /* recessed well in the mock calendar */
+  }
+}
+
+/* Landing motion vocabulary (used with motion-safe only). */
+@keyframes orb-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@keyframes line-rise { from { transform: translateY(108%); } to { transform: none; } }
+@keyframes rise-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+@keyframes scroll-cue { 0% { transform: scaleY(0); transform-origin: top; } 45% { transform: scaleY(1); transform-origin: top; } 55% { transform: scaleY(1); transform-origin: bottom; } 100% { transform: scaleY(0); transform-origin: bottom; } }
+@keyframes haze-a { from { transform: translate3d(-4%, -2%, 0) scale(1); } to { transform: translate3d(6%, 4%, 0) scale(1.08); } }
+@keyframes haze-b { from { transform: translate3d(3%, 2%, 0) scale(1.04); } to { transform: translate3d(-6%, -4%, 0) scale(0.96); } }
+@keyframes haze-c { from { transform: translate3d(0, 3%, 0) rotate(0deg); } to { transform: translate3d(-5%, -4%, 0) rotate(8deg); } }
+
+/* Landing only: body's overflow-x:hidden makes it a scroll container that never
+   scrolls, so the demo's position:sticky stage never sticks. clip prevents
+   horizontal overflow without that side effect. Scoped with :has() so the
+   app's own layout is unchanged. */
+body:has(.aria-landing) {
+  overflow-x: clip;
+}
