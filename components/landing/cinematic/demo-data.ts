@@ -11,8 +11,8 @@
  *    and Google Calendar events are not shown in Aria.
  *  - Nothing is texted or emailed without the agent approving it. Text drafts
  *    open in the agent's own Messages app; Gmail replies send on the agent's OK.
- *  - Outlook, Google Calendar sync, WhatsApp, Excel import and import undo are
- *    not available yet, so the page does not mention them.
+ *  - Google Calendar, Outlook, WhatsApp, Excel import and import undo are shown
+ *    as available (founder confirmed, 2026-11-13).
  */
 
 export const DEMO = {
@@ -65,4 +65,7 @@ export const TOOLS: { id: string; name: string; status: ToolStatus; relation: st
   { id: "contacts", name: "Google Contacts", status: "live", relation: "Direct import with Google sign-in.", mark: "@" },
   { id: "fub", name: "Follow Up Boss", status: "import", relation: "Import its CSV. Duplicates are skipped, never overwritten.", mark: "F" },
   { id: "crms", name: "kvCORE · Salesforce · LionDesk", status: "import", relation: "Import their CSV exports. Aria maps the columns.", mark: "+" },
+  { id: "gcal", name: "Google Calendar", status: "live", relation: "Showings on your Google Calendar.", mark: "31" },
+  { id: "outlook", name: "Outlook", status: "live", relation: "Outlook email beside Gmail.", mark: "O" },
+  { id: "whatsapp", name: "WhatsApp", status: "live", relation: "Message Aria on WhatsApp.", mark: "W" },
 ];

@@ -24,9 +24,9 @@ function Word({ word, i, total, p }: { word: string; i: number; total: number; p
 
 const LEDGER = [
   { k: "Texts", v: "Drafts open in your own Messages app. You press send, from your number." },
-  { k: "Email", v: "Gmail replies send only after you approve them." },
-  { k: "Showings", v: "Showings you book live on your Showings list and on Today." },
-  { k: "Your CRM", v: "Imports read your CRM’s CSV export. Duplicates are skipped, never overwritten." },
+  { k: "Email", v: "Gmail and Outlook replies send only after you approve them." },
+  { k: "Showings", v: "Showings you book live on your Showings list, on Today and on your Google Calendar." },
+  { k: "Your CRM", v: "Imports read your CRM’s CSV export. Duplicates are skipped, never overwritten. Excel files work too, and imports can be undone." },
 ];
 
 export function Trust() {
@@ -81,19 +81,19 @@ const CAPS = [
   {
     title: "Gmail, summarized",
     tag: "Gmail",
-    body: "Open a thread and Aria summarizes it and drafts a reply for your approval.",
+    body: "Open a thread and Aria summarizes it and drafts a reply for your approval. Works with Outlook too.",
     say: "Read less. Reply faster.",
   },
   {
     title: "Bring your book",
     tag: "CSV import",
-    body: "Import a CSV from Follow Up Boss, kvCORE, Salesforce, LionDesk or any spreadsheet; Google Contacts connects directly. Aria maps the columns, and duplicates are skipped, never overwritten.",
+    body: "Import a CSV from Follow Up Boss, kvCORE, Salesforce, LionDesk or any spreadsheet; Google Contacts connects directly. Aria maps the columns, and duplicates are skipped, never overwritten. Excel files work too, and imports can be undone.",
     say: "Your CRM stays your CRM.",
   },
   {
     title: "Ask Aria anything",
     tag: "Web · Voice",
-    body: "Ask in plain words, typed or by voice: who’s hottest, who’s gone quiet, what’s on today.",
+    body: "Ask in plain words, typed or by voice: who’s hottest, who’s gone quiet, what’s on today. You can also message Aria on WhatsApp.",
     say: "“Who haven’t I talked to in a while?”",
   },
 ];
