@@ -163,16 +163,16 @@ export function ChapterRail({
 export function SrNarrative() {
   return (
     <div className="sr-only">
-      <h2>Demo: one message to Aria</h2>
+      <h2>Demo: one question to Aria</h2>
       <ol>
         <li>The agent writes to Aria: “{DEMO.ask}”</li>
         <li>
-          Aria finds {DEMO.client.name}, books the showing and sets a reminder, then replies: “{DEMO.reply}” What changed in Aria:{" "}
-          {DEMO.changes.map((c) => `${c.status}: ${c.summary}.`).join(" ")}
+          Aria checks today’s priorities, ranks the hottest leads and finds who has gone quiet, then replies: “{DEMO.reply}” Found in Aria:{" "}
+          {DEMO.found.map((c) => `${c.status}: ${c.summary}.`).join(" ")}
         </li>
-        <li>The showing appears on Aria’s week calendar on Saturday at 11:00 AM, beside events read from the agent’s Google Calendar. Follow-ups now shows the Monday reminder.</li>
-        <li>The same day on Aria’s mobile Today screen: Priya’s showing at 11:00 AM and an open house from Google Calendar at 1:00 PM.</li>
-        <li>Aria alongside the agent’s tools: Gmail, Outlook, Google Calendar, Google Contacts and Messages are connected; Follow Up Boss, kvCORE, Salesforce and LionDesk come in through CSV or Excel import; WhatsApp is rolling out.</li>
+        <li>Priya’s showing at 11:00 AM is on the agent’s Showings list, and the Monday follow-up waits in Follow-ups.</li>
+        <li>The same day on Aria’s mobile Today screen: Priya’s showing at 11:00 AM and Elena Ruiz’s at 1:00 PM.</li>
+        <li>Aria alongside the agent’s tools: Gmail, Messages and Google Contacts are connected; Follow Up Boss, kvCORE, Salesforce and LionDesk come in through CSV import; Google Calendar, Outlook and WhatsApp are coming soon.</li>
       </ol>
     </div>
   );

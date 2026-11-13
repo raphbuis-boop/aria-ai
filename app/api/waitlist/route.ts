@@ -71,6 +71,16 @@ async function buildResponse(
 
 export async function POST(req: Request) {
   try {
+    // Preview deployments use a different Supabase project (Vercel "Preview"
+    // env), so a test signup there would land in the wrong waitlist. Only the
+    // production deployment (and local dev, off Vercel) accepts signups.
+    if (process.env.VERCEL === "1" && process.env.VERCEL_ENV !== "production") {
+      return NextResponse.json(
+        { error: "The waitlist is turned off on preview deployments." },
+        { status: 503 },
+      );
+    }
+
     if (
       !process.env.NEXT_PUBLIC_SUPABASE_URL ||
       !process.env.SUPABASE_SERVICE_ROLE_KEY

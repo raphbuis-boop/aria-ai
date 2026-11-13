@@ -371,3 +371,11 @@ select:focus:not([data-focus-parent]) {
 @keyframes haze-a { from { transform: translate3d(-4%, -2%, 0) scale(1); } to { transform: translate3d(6%, 4%, 0) scale(1.08); } }
 @keyframes haze-b { from { transform: translate3d(3%, 2%, 0) scale(1.04); } to { transform: translate3d(-6%, -4%, 0) scale(0.96); } }
 @keyframes haze-c { from { transform: translate3d(0, 3%, 0) rotate(0deg); } to { transform: translate3d(-5%, -4%, 0) rotate(8deg); } }
+
+/* Landing only: body's overflow-x:hidden makes it a scroll container that never
+   scrolls, so the demo's position:sticky stage never sticks. clip prevents
+   horizontal overflow without that side effect. Scoped with :has() so the
+   app's own layout is unchanged. */
+body:has(.aria-landing) {
+  overflow-x: clip;
+}

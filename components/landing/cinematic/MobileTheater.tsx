@@ -4,10 +4,10 @@
  * Mobile theater: designed for a phone, not a squeezed desktop shot (≈420vh).
  * The visitor's screen *is* the app:
  *   01 ask       the composer types the request
- *   02 work      steps resolve, the reply and "What changed" appear
- *   03 calendar  iOS-style push from the thread into Today; the showing lands
+ *   02 work      steps resolve, the answer and "Found in Aria" appear
+ *   03 calendar  iOS-style push from the thread into Today, showing highlighted
  *   04 device    reverse reveal: the phone shrinks into a device and Aria's
- *                desktop Calendar rises behind it, same showing highlighted
+ *                desktop Showings list rises behind it, same showing highlighted
  *   05 tools     a vertical spine from the orb to each tool, with true status
  */
 
@@ -15,22 +15,22 @@ import { useRef } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { cn } from "@/lib/utils";
 import { AriaOrb } from "./AriaOrb";
-import { DEMO, TOOLS, type ToolStatus } from "./demo-data";
+import { DEMO, SHOWINGS, TOOLS, type ToolStatus } from "./demo-data";
 import {
-  CalendarWeek,
   ChangeRow,
   ChatHeader,
   Composer,
-  EventBlock,
   PhoneToday,
   ReplyCard,
+  ShowingCard,
+  ShowingsList,
   Sidebar,
   StatusPill,
   StepRow,
   UserBubble,
   WIN,
   WindowChrome,
-  eventRect,
+  showingRowRect,
   tail,
 } from "./product-ui";
 import { Backdrop, Captions, ChapterRail, ScaledStage, SrNarrative } from "./theater-chrome";
@@ -52,7 +52,7 @@ function StepFromP({ p, i, range }: { p: MotionValue<number>; i: number; range: 
 const DOT: Record<ToolStatus, string> = {
   live: "bg-sidebar-accent",
   import: "border border-sidebar-muted bg-sidebar",
-  rolling: "border border-dashed border-taupe-light bg-sidebar",
+  soon: "border border-dashed border-taupe-light bg-sidebar",
 };
 
 function ToolRow({ p, i }: { p: MotionValue<number>; i: number }) {
@@ -116,22 +116,22 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
   const spine = useTween(p, [0.82, 0.96], 0, 1);
 
   const DESK_SCALE = 0.38;
-  const priya = eventRect({ day: DEMO.showing.day, hour: DEMO.showing.hour, span: 1 });
+  const priya = showingRowRect(0);
 
   return (
     <div className="relative font-display" style={{ width: M_W, height: M_H }}>
       <motion.div className="absolute inset-0" style={{ opacity: devicesO, scale: devicesS }}>
-        {/* Aria's desktop Calendar, rising behind the phone */}
+        {/* Aria's desktop Showings list, rising behind the phone */}
         <motion.div
           className="absolute left-[5px] top-[56px] origin-top-left"
           style={{ opacity: deskO, y: deskY, rotateX: deskRX, transformPerspective: 1000, scale: DESK_SCALE }}
         >
           <div className="relative overflow-hidden rounded-[16px] bg-card shadow-pop" style={{ width: WIN.w, height: WIN.h }}>
-            <WindowChrome url="getariaai.com/calendar" />
+            <WindowChrome url="getariaai.com/showings" />
             <Sidebar followups="3" />
-            <CalendarWeek />
+            <ShowingsList />
             <div className="absolute" style={{ left: priya.x, top: priya.y, width: priya.w, height: priya.h }}>
-              <EventBlock e={{ kind: "showing", title: DEMO.showing.where, who: DEMO.showing.who, hour: DEMO.showing.hour }} className="bg-card ring-4 ring-sage/50" />
+              <div className="h-full rounded-[16px] ring-4 ring-sage/50"><ShowingCard {...SHOWINGS[0]} /></div>
             </div>
           </div>
         </motion.div>
@@ -147,7 +147,7 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
             <motion.div className="absolute inset-0" style={{ x: chatX }}>
               <ChatHeader />
               <motion.div className="absolute right-4 top-[72px]" style={{ opacity: bubbleO, y: bubbleY }}>
-                <UserBubble className="h-auto w-[300px] text-[14px] leading-[21px]">{DEMO.ask}</UserBubble>
+                <UserBubble className="h-auto w-auto max-w-[300px] text-[14px] leading-[21px]">{DEMO.ask}</UserBubble>
               </motion.div>
               <motion.div className="absolute left-4 top-[196px] space-y-0.5" style={{ opacity: stepsO }}>
                 <StepFromP p={p} i={0} range={[0.2, 0.22]} />
@@ -157,8 +157,8 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
               <motion.div className="absolute left-4 top-[282px]" style={{ opacity: replyO, y: replyY }}>
                 <ReplyCard className="h-auto w-[328px] pb-3" textClassName="h-auto text-[13.5px] leading-[20px]">
                   <motion.div style={{ opacity: rowsO }} className="mt-1">
-                    <ChangeRow status="Done" summary="Showing booked: Priya, Sat 11:00 AM" />
-                    <ChangeRow status="Done" summary="Reminder for Monday: Send Priya comps" />
+                    <ChangeRow status="Showing" summary="Priya, today at 11:00 AM" />
+                    <ChangeRow status="Follow-up" summary="Send Priya comps, due Monday" />
                   </motion.div>
                 </ReplyCard>
               </motion.div>
@@ -166,7 +166,7 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
                 <div className="relative">
                   <Composer text={typed} caret={caret} className="w-[328px]" />
                   <motion.span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground" style={{ opacity: placeholder }}>
-                    Tell Aria what to do…
+                    Ask Aria anything…
                   </motion.span>
                 </div>
               </div>
@@ -181,7 +181,7 @@ export function MobileStage({ p }: { p: MotionValue<number> }) {
                 className="absolute inset-x-4 bottom-[84px] flex h-10 items-center gap-2 rounded-full bg-sidebar px-4 text-[12px] font-semibold text-sidebar-foreground shadow-float"
                 style={{ opacity: toastO, y: toastY }}
               >
-                <AriaOrb size={16} energy={0.5} breathe={false} /> Booked · on Today and the Calendar
+                <AriaOrb size={16} energy={0.5} breathe={false} /> On Today · 11:00 AM, 14 Linden Ave
               </motion.div>
             </motion.div>
           </div>

@@ -126,7 +126,7 @@ export function Hero() {
         </h1>
 
         <p className="mt-8 max-w-[44ch] font-display text-[17px] leading-relaxed text-sidebar-muted motion-safe:animate-[rise-in_1s_cubic-bezier(0.16,1,0.3,1)_both] lg:text-[19px]" style={rise(620)}>
-          Aria is the AI assistant that works alongside your CRM. Tell it what you need, a showing, a reminder, a reply, and it does the busywork.{" "}
+          Aria is the AI assistant that works alongside your CRM. Ask what needs you today, who’s hot, who’s gone quiet, what’s due, and it drafts the follow-up.{" "}
           <span className="text-background">You approve anything that goes out.</span>
         </p>
 

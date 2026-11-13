@@ -12,30 +12,30 @@ export type Chapter = { id: ChapterId; n: string; title: string; body: string; r
 
 const COPY: Record<ChapterId, { title: string; body: string }> = {
   ask: {
-    title: "You say it once.",
-    body: "Type it or say it, the way you’d tell a great assistant. No forms, no fields.",
+    title: "You ask once.",
+    body: "Type it or say it, the way you’d ask a great assistant. No reports, no filters.",
   },
   work: {
-    title: "Aria takes action.",
-    body: "It finds the right client, books the showing and sets the reminder, then shows you exactly what changed.",
+    title: "Aria does the digging.",
+    body: "It checks your showings, your follow-ups and who’s gone quiet, then answers with names, times and what’s due.",
   },
   calendar: {
-    title: "Your day updates itself.",
-    body: "The showing lands on Aria’s calendar, beside the events Aria reads from your Google Calendar. The reminder joins your follow-ups.",
+    title: "Everything in its place.",
+    body: "The showings you book live on your Showings list and on Today. The follow-ups you set wait in Follow-ups.",
   },
   device: {
     title: "And it travels with you.",
-    body: "The same day, rebuilt for your phone. Confirm, call or open a draft between showings.",
+    body: "The same day, rebuilt for your phone. Call, text or open a draft between showings.",
   },
   tools: {
     title: "Around the tools you already use.",
-    body: "Aria works alongside your CRM, inbox and calendar. It doesn’t replace them, and nothing goes out without your OK.",
+    body: "Aria works alongside your CRM, Gmail and phone. It doesn’t replace them, and nothing goes out without your OK.",
   },
 };
 
 const MOBILE_DEVICE_COPY = {
   title: "And it’s waiting at your desk.",
-  body: "Everything you did on your phone is already on Aria’s desktop calendar.",
+  body: "The same showings and follow-ups are on Aria at your desk.",
 };
 
 /** Desktop: one stage, five chapters across ~600vh of scroll. */

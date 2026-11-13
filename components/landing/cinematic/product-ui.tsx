@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * Faithful, static replicas of Aria's real interface for the landing theater:
- * the assistant thread ("What changed in Aria"), the Calendar week view, the
- * desktop shell nav and mobile Today. Labels mirror components/shell/nav.ts,
- * components/BottomNav.tsx and app/(dashboard)/assistant. Semantic tokens only.
+ * Static replicas of Aria's production interface for the landing theater:
+ * the Ask Aria thread (read-only answers), the Showings list, the desktop nav
+ * and mobile Today. Labels mirror components/BottomNav.tsx, app/(dashboard)/
+ * showings and app/(dashboard)/dashboard. Semantic tokens only.
  *
  * Geometry is fixed (px in a logical canvas) so scroll-driven "flights"
  * between scenes land exactly on their targets. Change a constant here and the
@@ -19,19 +19,17 @@ import {
   CalendarDays,
   Check,
   CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
   Handshake,
   Home,
-  Inbox,
+  Mail,
   Mic,
+  Plus,
   Search,
-  Settings,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AriaOrb } from "./AriaOrb";
-import { DEMO, GRID_HOURS, GRID_START_HOUR, TOOL_STATUS_LABEL, WEEK, WEEKDAYS, type ToolStatus, type WeekEvent } from "./demo-data";
+import { DEMO, PAST_SHOWING, SHOWINGS, TOOL_STATUS_LABEL, type ToolStatus } from "./demo-data";
 
 /* ───────────────────────── geometry ───────────────────────── */
 
@@ -40,18 +38,15 @@ export type { Rect };
 
 /** Desktop app window, relative to its own top-left. */
 export const WIN = { w: 920, h: 600, chrome: 36, sidebar: 176 } as const;
-export const GRID = { left: 244, top: 132, rowH: 62, colW: (WIN.w - 22 - 244) / 7 } as const;
+/** Showings list rows, relative to the window. */
+export const LIST = { left: WIN.sidebar + 22, top: 136, w: WIN.w - WIN.sidebar - 44, row: 64, gap: 8 } as const;
 /** Sidebar nav rows start under the wordmark. */
 export const NAV_TOP = WIN.chrome + 64;
 export const NAV_ROW = 34;
 
-export function eventRect(e: Pick<WeekEvent, "day" | "hour" | "span">): Rect {
-  return {
-    x: GRID.left + e.day * GRID.colW + 3,
-    y: GRID.top + (e.hour - GRID_START_HOUR) * GRID.rowH + 3,
-    w: GRID.colW - 6,
-    h: e.span * GRID.rowH - 6,
-  };
+/** Upcoming showing `i` on the Showings list (Priya is row 0). */
+export function showingRowRect(i: number): Rect {
+  return { x: LIST.left, y: LIST.top + i * (LIST.row + LIST.gap), w: LIST.w, h: LIST.row };
 }
 
 /** Chat panel internals, relative to the panel. */
@@ -75,7 +70,7 @@ export function ChatHeader() {
       <AriaOrb size={28} energy={0.5} breathe={false} />
       <div className="min-w-0 leading-tight">
         <p className="font-heading text-[20px] text-foreground">Aria</p>
-        <p className="truncate font-display text-[11.5px] text-muted-foreground">Ask anything, or tell me what to do.</p>
+        <p className="truncate font-display text-[11.5px] text-muted-foreground">Ask about your clients and your day.</p>
       </div>
       <span className="ml-auto shrink-0 whitespace-nowrap rounded-full bg-secondary px-2.5 py-1 font-display text-[11px] font-semibold text-muted-foreground">Web · Voice</span>
     </div>
@@ -115,13 +110,13 @@ export function ChangeRow({ status, summary, linkName }: { status: string; summa
   );
 }
 
-/** The reply with its "What changed in Aria" header. The change rows are placed by the caller (they fly out). */
+/** The reply with its "Found in Aria" header. The rows are placed by the caller (they fly out). */
 export function ReplyCard({ className, textClassName, children }: { className?: string; textClassName?: string; children?: ReactNode }) {
   return (
     <div className={cn("h-[196px] w-[512px] rounded-[18px] border border-border bg-card px-4 pt-4 shadow-card", className)}>
       <p className={cn("h-[66px] font-display text-[14.5px] leading-[22px] text-foreground", textClassName)}>{DEMO.reply}</p>
       <div className="mt-4 border-t border-border pt-2.5">
-        <p className="font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">What changed in Aria</p>
+        <p className="font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">Found in Aria</p>
       </div>
       {children}
     </div>
@@ -142,14 +137,14 @@ export function Composer({ text, caret = 1, className }: { text: MotionValue<str
   );
 }
 
-/* ───────────────────────── desktop shell + calendar ───────────────────────── */
+/* ───────────────────────── desktop shell + showings ───────────────────────── */
 
 const NAV = [
   { label: "Today", Icon: Home },
-  { label: "Inbox", Icon: Inbox },
+  { label: "Email", Icon: Mail },
   { label: "Clients", Icon: Users },
   { label: "Follow-ups", Icon: CheckCircle2, badge: true },
-  { label: "Calendar", Icon: CalendarDays, active: true },
+  { label: "Showings", Icon: CalendarDays, active: true },
   { label: "Properties", Icon: Building2 },
   { label: "Deals", Icon: Handshake },
 ] as const;
@@ -195,66 +190,39 @@ export function Sidebar({ followups }: { followups: MotionValue<string> | string
   );
 }
 
-const KIND: Record<WeekEvent["kind"], string> = {
-  showing: "border-l-sage bg-sage/15",
-  task: "border-l-primary bg-primary/10",
-  calendar: "border-l-muted-foreground/60 bg-secondary",
-};
-
-export function EventBlock({ e, className }: { e: Pick<WeekEvent, "kind" | "title" | "who" | "hour">; className?: string }) {
-  const time = `${((e.hour + 11) % 12) + 1}:00`;
+function ListLabel({ children, top }: { children: ReactNode; top: number }) {
   return (
-    <div className={cn("h-full overflow-hidden rounded-[8px] border-l-[3px] px-2 py-1 font-display text-[11px] leading-tight text-foreground", KIND[e.kind], className)}>
-      <span className="block truncate font-semibold">{e.kind === "showing" ? e.who : e.title}</span>
-      <span className="block truncate text-muted-foreground">
-        {e.kind === "showing" ? `${time} · ${e.title}` : e.kind === "calendar" ? `${time} · Google` : `${time} · ${e.who}`}
-      </span>
-    </div>
+    <p className="absolute font-display text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground" style={{ left: LIST.left, top }}>
+      {children}
+    </p>
   );
 }
 
-/** Calendar page body: header, weekday row, hour grid and the week's events (Priya's showing is rendered by the caller). */
-export function CalendarWeek() {
+/** Showings page body: header, upcoming showings and a past one (Priya's row is rendered by the caller). */
+export function ShowingsList() {
+  const pastTop = LIST.top + SHOWINGS.length * (LIST.row + LIST.gap) + 26;
   return (
     <>
-      <div className="absolute flex items-center gap-2" style={{ left: WIN.sidebar + 22, right: 22, top: WIN.chrome + 18, height: 44 }}>
-        <h3 className="font-heading text-[22px] text-foreground">This week</h3>
-        <div className="ml-4 flex items-center gap-3 font-display text-[11px] text-muted-foreground">
-          <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-sage" />Showing</span>
-          <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-primary" />Follow-up</span>
-          <span className="flex items-center gap-1.5"><i className="size-2 rounded-sm bg-muted-foreground/60" />Google Calendar · read-only</span>
-        </div>
-        <span className="ml-auto flex h-8 items-center rounded-full border border-border px-3 font-display text-[12px] font-semibold text-foreground">Today</span>
-        <span className="flex size-8 items-center justify-center rounded-full border border-border text-foreground"><ChevronLeft className="size-3.5" /></span>
-        <span className="flex size-8 items-center justify-center rounded-full border border-border text-foreground"><ChevronRight className="size-3.5" /></span>
-      </div>
-      {WEEKDAYS.map((d, i) => (
-        <span
-          key={d}
-          className={cn("absolute text-center font-display text-[11.5px] font-semibold", i === 5 ? "text-foreground" : "text-muted-foreground")}
-          style={{ left: GRID.left + i * GRID.colW, width: GRID.colW, top: GRID.top - 24 }}
-        >
-          {d}
+      <div className="absolute flex items-center gap-2" style={{ left: LIST.left, right: 22, top: WIN.chrome + 18, height: 44 }}>
+        <h3 className="font-heading text-[22px] text-foreground">Showings</h3>
+        <span className="ml-auto flex h-8 items-center gap-1.5 rounded-full bg-primary px-3.5 font-display text-[12px] font-semibold text-primary-foreground">
+          <Plus className="size-3.5" /> Log a showing
         </span>
-      ))}
-      {Array.from({ length: GRID_HOURS }, (_, h) => (
-        <div key={h} className="absolute border-t border-border" style={{ left: GRID.left - 46, right: 22, top: GRID.top + h * GRID.rowH, height: GRID.rowH }}>
-          <span className="absolute -top-2 left-0 bg-card pr-1 font-display text-[10px] text-muted-foreground">
-            {((GRID_START_HOUR + h + 11) % 12) + 1} {GRID_START_HOUR + h < 12 ? "AM" : "PM"}
-          </span>
-        </div>
-      ))}
-      {Array.from({ length: 8 }, (_, i) => (
-        <div key={i} className="absolute w-px bg-border" style={{ left: GRID.left + i * GRID.colW, top: GRID.top, height: GRID_HOURS * GRID.rowH }} />
-      ))}
-      {WEEK.map((e) => {
-        const r = eventRect(e);
+      </div>
+      <ListLabel top={LIST.top - 26}>Upcoming</ListLabel>
+      {SHOWINGS.map((s, i) => {
+        if (i === 0) return null;
+        const r = showingRowRect(i);
         return (
-          <div key={e.id} className="absolute" style={{ left: r.x, top: r.y, width: r.w, height: r.h }}>
-            <EventBlock e={e} />
+          <div key={s.who} className="absolute" style={{ left: r.x, top: r.y, width: r.w, height: r.h }}>
+            <ShowingCard {...s} />
           </div>
         );
       })}
+      <ListLabel top={pastTop - 26}>Past</ListLabel>
+      <div className="absolute" style={{ left: LIST.left, top: pastTop, width: LIST.w, height: LIST.row }}>
+        <ShowingCard {...PAST_SHOWING} tone="muted" />
+      </div>
     </>
   );
 }
@@ -274,10 +242,10 @@ export function StatusBar() {
 export function BottomNavBar() {
   const tabs = [
     { label: "Today", Icon: Home, active: true },
-    { label: "Inbox", Icon: Inbox },
+    { label: "Clients", Icon: Users },
     null,
     { label: "Follow-ups", Icon: CheckCircle2 },
-    { label: "Settings", Icon: Settings },
+    { label: "Properties", Icon: Building2 },
   ];
   return (
     <div className="absolute inset-x-0 bottom-0 flex h-[72px] items-start justify-around border-t border-border bg-card/95 px-2 pt-2.5">
@@ -304,7 +272,7 @@ export function SectionTitle({ children, link }: { children: ReactNode; link?: s
   );
 }
 
-export function ShowingCard({ when, who, where, tone = "showing" }: { when: string; who: string; where: string; tone?: "showing" | "calendar" }) {
+export function ShowingCard({ when, who, where, tone = "showing" }: { when: string; who: string; where: string; tone?: "showing" | "muted" }) {
   return (
     <div className={cn("flex h-16 items-center gap-3 rounded-[16px] border border-border bg-card px-3 shadow-card")}>
       <div className={cn("flex h-11 w-[52px] shrink-0 flex-col items-center justify-center rounded-[11px] font-display leading-none", tone === "showing" ? "bg-sage/15 text-foreground" : "bg-secondary text-muted-foreground")}>
@@ -328,24 +296,24 @@ export function PhoneToday({ showPriya = true, statusBar = true }: { showPriya?:
         <p className="font-display text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Saturday</p>
         <p className="mt-1 font-heading text-[28px] leading-none text-foreground">Today</p>
         <div className="mt-3 flex h-8 items-center gap-2 rounded-full bg-secondary px-3 font-display text-[11.5px] text-muted-foreground">
-          <Search className="size-3.5" /> Tell Aria what to do…
+          <Search className="size-3.5" /> Ask Aria anything…
         </div>
       </div>
-      <SectionTitle link="Calendar">Today&apos;s schedule</SectionTitle>
+      <SectionTitle link="Showings">Today&apos;s showings</SectionTitle>
       <div className="space-y-2 px-4">
         <div style={{ opacity: showPriya ? 1 : 0 }}>
           <ShowingCard when="11:00 AM" who={DEMO.client.name} where={`${DEMO.showing.where} · Showing`} />
         </div>
-        <ShowingCard when="1:00 PM" who="Open house" where="212 Valley Rd · Google Calendar" tone="calendar" />
+        <ShowingCard when="1:00 PM" who="Elena Ruiz" where="5 Orchard Ct · Showing" />
       </div>
-      <div className="mt-5"><SectionTitle link="All">Coming up</SectionTitle></div>
+      <div className="mt-5"><SectionTitle link="All">Follow-ups</SectionTitle></div>
       <div className="mx-4 flex h-[52px] items-center gap-3 rounded-[16px] border border-border bg-card px-3">
         <span className="size-[18px] rounded-full border-2 border-primary/50" />
         <div className="min-w-0 font-display">
           <p className="truncate text-[12.5px] font-semibold text-foreground">{DEMO.reminder.title}</p>
           <p className="text-[11px] text-muted-foreground">Monday · {DEMO.client.name}</p>
         </div>
-        <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 font-display text-[10px] font-semibold text-primary">Reminder</span>
+        <span className="ml-auto rounded-full bg-primary/10 px-2 py-0.5 font-display text-[10px] font-semibold text-primary">Follow-up</span>
       </div>
       <BottomNavBar />
     </div>
@@ -357,7 +325,7 @@ export function PhoneToday({ showPriya = true, statusBar = true }: { showPriya?:
 const STATUS_STYLE: Record<ToolStatus, string> = {
   live: "bg-sidebar-accent text-sidebar-accent-foreground",
   import: "border border-sidebar-muted/50 text-sidebar-foreground",
-  rolling: "border border-dashed border-taupe-light/70 text-taupe-light",
+  soon: "border border-dashed border-taupe-light/70 text-taupe-light",
 };
 
 export function StatusPill({ status }: { status: ToolStatus }) {

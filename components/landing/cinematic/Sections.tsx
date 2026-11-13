@@ -10,7 +10,7 @@ import { FINALE_GLOW, FINALE_GLOW_BG, ForestAtmosphere } from "./atmosphere";
 
 /* ───────────── Trust: scroll-lit statement + ledger ───────────── */
 
-const STATEMENT = "Nothing goes out without you. Aria drafts, books and reminds, but every text and every email waits for your OK.";
+const STATEMENT = "Nothing goes out without you. Aria reads, ranks and drafts, but every text and every email waits for your OK.";
 
 function Word({ word, i, total, p }: { word: string; i: number; total: number; p: MotionValue<number> }) {
   const start = (i / total) * 0.8;
@@ -24,9 +24,9 @@ function Word({ word, i, total, p }: { word: string; i: number; total: number; p
 
 const LEDGER = [
   { k: "Texts", v: "Drafts open in your own Messages app. You press send, from your number." },
-  { k: "Email", v: "Gmail and Outlook replies send only after you approve the exact words." },
-  { k: "Calendar", v: "Aria reads your Google Calendar. Showings you book with Aria live on Aria’s calendar." },
-  { k: "Your CRM", v: "Imports read your CRM’s export. Duplicates merge without overwriting, and any import can be undone." },
+  { k: "Email", v: "Gmail replies send only after you approve them. Outlook is coming soon." },
+  { k: "Showings", v: "Showings you book live on your Showings list and on Today. Google Calendar sync is coming soon." },
+  { k: "Your CRM", v: "Imports read your CRM’s CSV export. Duplicates are skipped, never overwritten. Excel files and import undo are coming soon." },
 ];
 
 export function Trust() {
@@ -69,31 +69,31 @@ const CAPS = [
   {
     title: "Follow-ups in your voice",
     tag: "Available",
-    body: "Aria drafts texts and emails from the whole thread. Texts open in your Messages app; emails send only after you approve them.",
-    say: "“Draft a check-in for the Harts.”",
+    body: "Aria drafts check-in texts and Gmail replies. Texts open in your Messages app; emails send only after you approve them.",
+    say: "Drafted. You press send.",
   },
   {
-    title: "Showings & reminders",
+    title: "Showings & follow-ups",
     tag: "Available",
-    body: "Book a showing or set a reminder in one sentence, typed or spoken. It lands on Today and the Calendar, and you see exactly what changed.",
-    say: "“Book Owen Thursday at 3 at 40 Grove St.”",
+    body: "Log a showing in a few taps. Add the client’s feedback and Aria summarizes it, suggests the next step and adds the follow-up. It all shows up on Today.",
+    say: "“What’s on today?”",
   },
   {
-    title: "One inbox",
-    tag: "Available",
-    body: "Gmail and Outlook side by side, with the threads that need you surfaced and replies drafted for your approval.",
-    say: "“Who’s waiting on a reply?”",
+    title: "Gmail, summarized",
+    tag: "Gmail",
+    body: "Open a thread and Aria summarizes it and drafts a reply for your approval. Outlook is coming soon.",
+    say: "Read less. Reply faster.",
   },
   {
     title: "Bring your book",
-    tag: "CSV / Excel import",
-    body: "Import from Follow Up Boss, kvCORE, Salesforce, LionDesk, Outlook or a spreadsheet; Google Contacts connects directly. Duplicates merge without overwriting, and any import can be undone. Live CRM sync isn’t available yet.",
+    tag: "CSV import",
+    body: "Import a CSV from Follow Up Boss, kvCORE, Salesforce, LionDesk or any spreadsheet; Google Contacts connects directly. Aria maps the columns, and duplicates are skipped, never overwritten. Excel files, import undo and live CRM sync are coming later.",
     say: "Your CRM stays your CRM.",
   },
   {
     title: "Ask Aria anything",
-    tag: "WhatsApp rolling out",
-    body: "Ask in plain words, on the web or by voice. Messaging Aria on WhatsApp is rolling out to early-access accounts.",
+    tag: "Web · Voice",
+    body: "Ask in plain words, typed or by voice: who’s hottest, who’s gone quiet, what’s on today. Messaging Aria on WhatsApp is coming later.",
     say: "“Who haven’t I talked to in a while?”",
   },
 ];
@@ -111,7 +111,7 @@ export function CapabilityIndex() {
             </h2>
           </div>
           <p className="max-w-[42ch] font-display text-[16px] leading-relaxed text-muted-foreground lg:justify-self-end">
-            No roadmap promises. Each of these works in Aria now, and the labels say exactly how it connects.
+            Each of these works in Aria now. Where something is still coming, we say so.
           </p>
         </div>
 

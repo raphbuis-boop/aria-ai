@@ -2,10 +2,11 @@
 
 /**
  * Desktop theater: one pinned, scroll-scrubbed shot (≈640vh).
- *   01 ask       the agent types one sentence to Aria
- *   02 work      Aria resolves the client, books the showing, sets the reminder
- *   03 calendar  the "What changed" rows lift off and fly into the real Calendar
- *                week and the Follow-ups badge; the room turns deep forest
+ *   01 ask       the agent asks Aria one question
+ *   02 work      Aria checks priorities, hot leads and who's gone quiet (read-only
+ *                tools) and answers with what it found
+ *   03 calendar  the "Found in Aria" rows lift off and fly to where they live: the
+ *                Showings list and Follow-ups; the room turns deep forest
  *   04 device    the desktop window narrows into a phone (clip-path), the showing
  *                flies into mobile Today
  *   05 tools     the phone pulls back; the agent's tools connect around it with
@@ -16,19 +17,18 @@ import { useId, useRef, type ReactNode } from "react";
 import { Check } from "lucide-react";
 import { motion, useScroll, useTransform, type MotionValue } from "motion/react";
 import { cn } from "@/lib/utils";
-import { DEMO, TOOLS, type ToolStatus } from "./demo-data";
+import { DEMO, SHOWINGS, TOOL_STATUS_LABEL, TOOLS, type ToolStatus } from "./demo-data";
 import {
-  CalendarWeek,
   ChangeRow,
   ChatHeader,
   Composer,
-  EventBlock,
   NAV_ROW,
   NAV_TOP,
   PHONE,
   PhoneToday,
   ReplyCard,
   ShowingCard,
+  ShowingsList,
   Sidebar,
   StepRow,
   ToolCard,
@@ -36,7 +36,7 @@ import {
   WIN,
   WindowChrome,
   changeRowRect,
-  eventRect,
+  showingRowRect,
   tail,
 } from "./product-ui";
 import { Backdrop, Captions, ChapterRail, ScaledStage, SrNarrative } from "./theater-chrome";
@@ -83,12 +83,13 @@ function Layer({ opacity, className, children }: { opacity: MotionValue<number>;
 }
 
 /** A soft ring that blooms once when something lands. */
-function LandingRing({ p, rect, range, className }: { p: MotionValue<number>; rect: Rect; range: Range; className?: string }) {
+/** `grow` is the extra scale at the end of the bloom; keep it small for wide targets. */
+function LandingRing({ p, rect, range, className, grow = 0.3 }: { p: MotionValue<number>; rect: Rect; range: Range; className?: string; grow?: number }) {
   const opacity = useTransform(p, (v) => {
     const t = progressIn(v, range);
     return t <= 0 || t >= 1 ? 0 : 0.9 * (1 - t);
   });
-  const scale = useTransform(p, (v) => 1 + 0.3 * ease(progressIn(v, range)));
+  const scale = useTransform(p, (v) => 1 + grow * ease(progressIn(v, range)));
   return (
     <motion.div
       className={cn("absolute rounded-[12px] border-2 border-sage", className)}
@@ -110,8 +111,8 @@ const CARD_W = 230;
 const LEFT_X = 40;
 const RIGHT_X = STAGE_W - 40 - CARD_W;
 const PHONE_SCALED = { left: 360, right: 600 }; // phone at 0.8 around the stage center
-const DASH: Record<ToolStatus, string | undefined> = { live: undefined, import: "2 6", rolling: "9 6" };
-const STROKE: Record<ToolStatus, string> = { live: "stroke-sidebar-accent", import: "stroke-sidebar-muted", rolling: "stroke-taupe-light" };
+const DASH: Record<ToolStatus, string | undefined> = { live: undefined, import: "2 6", soon: "9 6" };
+const STROKE: Record<ToolStatus, string> = { live: "stroke-sidebar-accent", import: "stroke-sidebar-muted", soon: "stroke-taupe-light" };
 
 function toolGeometry(i: number) {
   const left = i < 4;
@@ -157,12 +158,12 @@ function ToolsLegend({ p }: { p: MotionValue<number> }) {
   const opacity = useTransform(p, (v) => progressIn(v, [0.93, 0.97]));
   return (
     <motion.div style={{ opacity }} className="absolute inset-x-0 flex justify-center gap-6 font-mono text-[10px] font-semibold uppercase tracking-[0.12em] text-sidebar-muted" >
-      {(["live", "import", "rolling"] as const).map((s) => (
+      {(["live", "import", "soon"] as const).map((s) => (
         <span key={s} className="flex items-center gap-2" style={{ marginTop: 596 }}>
           <svg width="26" height="4" aria-hidden>
             <line x1="1" y1="2" x2="25" y2="2" strokeWidth={1.6} strokeLinecap="round" strokeDasharray={DASH[s]} className={STROKE[s]} />
           </svg>
-          {s === "live" ? "Connected" : s === "import" ? "CSV / Excel import" : "Rolling out"}
+          {TOOL_STATUS_LABEL[s]}
         </span>
       ))}
     </motion.div>
@@ -193,7 +194,6 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
   const winY = useTween(p, [0.35, 0.47], 190, 0);
   const winRX = useTween(p, [0.35, 0.47], 26, 0);
   const winS = useTween(p, [0.35, 0.47], 0.9, 1);
-  const badge = useTransform<number, string>(p, (v) => (v >= 0.555 ? "3" : "2"));
 
   // 04 device: clip the window down to a phone, swap desk content for mobile Today
   const clipPath = useTransform(p, (v) => {
@@ -208,9 +208,9 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
   const groupS = useTween(p, [0.8, 0.86], 1, 0.8);
   const toolsHalo = useTween(p, [0.8, 0.9], 0, 1);
 
-  // Priya's showing: a "What changed" row → calendar block → mobile Today card
+  // Priya's showing: a "Found in Aria" row → its row on the Showings list → mobile Today card
   const priyaRow = shift(changeRowRect(0), CHAT_AT);
-  const priyaCal = shift(eventRect({ day: DEMO.showing.day, hour: DEMO.showing.hour, span: 1 }), WIN_AT);
+  const priyaCal = shift(showingRowRect(0), WIN_AT);
   const priyaPhone: Rect = { x: PHONE_AT.x + 16, y: PHONE_AT.y + PHONE.cardTop, w: PHONE.w - 32, h: PHONE.card };
   const priyaStops: Stop[] = [
     { at: 0.4, rect: priyaRow },
@@ -224,7 +224,7 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
   const pEventO = useTransform(p, (v) => window01(v, [0.46, 0.5], [0.645, 0.68]));
   const pCardO = useTransform(p, (v) => progressIn(v, [0.665, 0.71]));
 
-  // Monday reminder: row → Follow-ups in the sidebar, where the badge ticks 2 → 3
+  // Monday follow-up: row → Follow-ups in the sidebar, where it already waits
   const remRow = shift(changeRowRect(1), CHAT_AT);
   const remNav: Rect = { x: WIN_AT.x + 12, y: WIN_AT.y + NAV_TOP + 3 * NAV_ROW, w: WIN.sidebar - 24, h: 30 };
   const remStops: Stop[] = [
@@ -259,9 +259,9 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
         >
           <motion.div className="absolute inset-0 overflow-hidden bg-card" style={{ clipPath }}>
             <Layer opacity={deskO}>
-              <WindowChrome url="getariaai.com/calendar" />
-              <Sidebar followups={badge} />
-              <CalendarWeek />
+              <WindowChrome url="getariaai.com/showings" />
+              <Sidebar followups="3" />
+              <ShowingsList />
             </Layer>
             <motion.div className="absolute top-0" style={{ left: INSET, width: PHONE.w, height: PHONE.h, opacity: phoneO }}>
               <PhoneToday showPriya={false} />
@@ -281,7 +281,7 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
       >
         <ChatHeader />
         <motion.div className="absolute right-6 top-[78px]" style={{ opacity: bubbleO, y: bubbleY }}>
-          <UserBubble>{DEMO.ask}</UserBubble>
+          <UserBubble className="h-auto w-auto max-w-[420px]">{DEMO.ask}</UserBubble>
         </motion.div>
         <motion.div className="absolute left-6 top-[186px] space-y-1" style={{ opacity: stepsO }}>
           <StepFromP p={p} i={0} range={[0.17, 0.19]} />
@@ -295,7 +295,7 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
           <div className="relative">
             <Composer text={typed} caret={caret} />
             <motion.span className="pointer-events-none absolute left-5 top-1/2 -translate-y-1/2 text-[14px] text-muted-foreground" style={{ opacity: placeholder }}>
-              Tell Aria what to do…
+              Ask Aria anything…
             </motion.span>
           </div>
         </div>
@@ -314,21 +314,21 @@ export function DesktopStage({ p }: { p: MotionValue<number> }) {
         <Flight p={p} stops={priyaStops}>
           <Layer opacity={pChipO} className="rounded-[12px] bg-card shadow-float ring-1 ring-sage/50" />
           <Layer opacity={pRowO} className="flex items-center px-0">
-            <ChangeRow status="Done" summary={DEMO.changes[0].summary} linkName={DEMO.client.first} />
+            <ChangeRow status={DEMO.found[0].status} summary={DEMO.found[0].summary} linkName={DEMO.client.first} />
           </Layer>
           <Layer opacity={pEventO}>
-            <EventBlock e={{ kind: "showing", title: DEMO.showing.where, who: DEMO.showing.who, hour: DEMO.showing.hour }} className="bg-card shadow-float" />
+            <ShowingCard {...SHOWINGS[0]} />
           </Layer>
           <Layer opacity={pCardO}>
             <ShowingCard when="11:00 AM" who={DEMO.client.name} where={`${DEMO.showing.where} · Showing`} />
           </Layer>
         </Flight>
-        <LandingRing p={p} rect={priyaCal} range={[0.5, 0.57]} />
+        <LandingRing p={p} rect={priyaCal} range={[0.5, 0.57]} grow={0.04} />
 
         <Flight p={p} stops={remStops}>
           <Layer opacity={rChipO} className="rounded-[10px] bg-card shadow-float ring-1 ring-primary/30" />
           <Layer opacity={rRowO} className="flex items-center">
-            <ChangeRow status="Done" summary={DEMO.changes[1].summary} />
+            <ChangeRow status={DEMO.found[1].status} summary={DEMO.found[1].summary} />
           </Layer>
           <Layer opacity={rPillO} className="flex items-center gap-2 px-3 text-[12px] font-semibold text-foreground">
             <Check className="size-3.5 text-primary" strokeWidth={3} />
